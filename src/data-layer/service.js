@@ -4,8 +4,20 @@ import { readNormalized, readSyncStatus, saveSourceData, updateSyncStatus } from
 
 const activeSyncs = new Map();
 
+// Node wraps every transport failure as a bare "fetch failed"; the actionable
+// detail (ETIMEDOUT vs ENOTFOUND vs a TLS error) only lives on error.cause.
+// Without walking the chain a network-level failure is undiagnosable in a
+// hosted deployment, where there is no shell to retry the request from.
+function errorChain(error, depth = 0) {
+  if (!error || depth > 3) return [];
+  const parts = [error.code, error.syscall, error.hostname, error.message].filter(Boolean);
+  return [[...new Set(parts)].join(" ")].concat(errorChain(error.cause, depth + 1));
+}
+
 function safeError(error) {
-  const message = error?.name === "AbortError" ? "Source request timed out." : String(error?.message || "Unknown sync error");
+  const message = error?.name === "AbortError"
+    ? "Source request timed out."
+    : errorChain(error).filter(Boolean).join(" <- ") || "Unknown sync error";
   return message.replace(/api_key=[^&\s]+/gi, "api_key=[redacted]").slice(0, 500);
 }
 
