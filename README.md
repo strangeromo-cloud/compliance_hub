@@ -86,6 +86,27 @@ npm run start:env
 
 把 Key 只写在本机 `.env`。`.env.example` 中只有空占位符。
 
+## 部署到 Zeabur
+
+仓库已经是可部署状态：`zbpack.json` 指定 Node 20 和 `HOST=0.0.0.0 node server.js`，`PORT` 由 Zeabur 注入。
+
+1. Zeabur Dashboard → New Project → Deploy Service → GitHub → 选择 `strangeromo-cloud/compliance_hub`。
+2. 在 Variables 里配置：
+
+| 变量 | 值 | 说明 |
+|---|---|---|
+| `SYNC_ON_BOOT` | `china-dual-use,china-control-entities,china-unreliable-entity,china-licence-catalogue,bis-ear-734,bis-ear-740,bis-ear-744` | 容器启动后台同步。**不要**放 `trade-csl` / `ofac-sls`，它们是几十 MB 全量下载 |
+| `COMPLIANCE_HUB_USER_AGENT` | `ComplianceHubPrototype/0.1 <你的邮箱>` | SEC 等政府接口要求可识别的 UA |
+
+3. Networking 里绑定域名。
+
+### 部署后必须注意
+
+- **容器文件系统是临时的**：每次重新部署 `data/runtime/` 都会清空，靠 `SYNC_ON_BOOT` 重新拉取。需要持久化就挂一个 Zeabur Volume 到 `data/runtime`。
+- **服务器侧不要配置 `OPENAI_API_KEY`**：公开 URL 上任何人都能调用 `/api/assess`，服务器侧的 Key 等于把模型额度对公网开放。演示时让使用者在页面“模型配置”里填自己的 Key（只存在浏览器会话中）。
+- `/api/data-sources/sync` 在公开部署上同样对所有人开放。它只能同步代码中预定义的官方来源，不接受任意 URL，但仍会消耗出网流量。
+- 首次启动时同步尚未完成，名单筛查会如实报告“来源未同步”，不会伪装成“无风险”。
+
 ## 数据同步与查询 API
 
 页面上的“立即同步”只允许调用代码中预定义的官方来源，不接受任意 URL。
