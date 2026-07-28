@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = fileURLToPath(new URL("../..", import.meta.url));
 const RUNTIME_DIR = join(ROOT, "data", "runtime");
+const FALLBACK_DIR = join(ROOT, "data", "fallback");
 const STATUS_PATH = join(RUNTIME_DIR, "sync-status.json");
 let statusWriteQueue = Promise.resolve();
 
@@ -53,8 +54,26 @@ export async function saveSourceData({ sourceId, extension, bytes, records, meta
   };
 }
 
+// A live snapshot always wins. The bundled copy exists only so a host that
+// cannot reach the official source still has something to screen against —
+// notably PRC sources, which are not reliably reachable from every region.
+// It is returned tagged, never silently, because presenting a point-in-time
+// list copy as the current list is the worst failure this tool could have.
 export async function readNormalized(sourceId) {
-  const path = join(RUNTIME_DIR, "normalized", `${sourceId}.json`);
-  try { return JSON.parse(await readFile(path, "utf8")); }
-  catch { return null; }
+  const livePath = join(RUNTIME_DIR, "normalized", `${sourceId}.json`);
+  try { return { ...JSON.parse(await readFile(livePath, "utf8")), provenance: "live_sync" }; }
+  catch { /* fall through to the bundled copy */ }
+
+  const fallbackPath = join(FALLBACK_DIR, `${sourceId}.json`);
+  try {
+    const snapshot = JSON.parse(await readFile(fallbackPath, "utf8"));
+    return { ...snapshot, provenance: "bundled_fallback_snapshot", isFallback: true };
+  } catch { return null; }
+}
+
+export async function readFallbackMeta(sourceId) {
+  try {
+    const snapshot = JSON.parse(await readFile(join(FALLBACK_DIR, `${sourceId}.json`), "utf8"));
+    return { available: true, bundledAt: snapshot.bundledAt || snapshot.capturedAt || null, recordCount: snapshot.records?.length || 0 };
+  } catch { return { available: false }; }
 }

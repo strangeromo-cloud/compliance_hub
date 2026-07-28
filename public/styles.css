@@ -364,3 +364,4 @@ dialog::backdrop { background: rgba(0,0,0,.55); }
   .data-status, .workspace-bar h1 { display: none; }
   .trace-cols { grid-template-columns: 1fr; }
 }
+.coverage-cell.is-warn b { color: var(--risk-medium); }

@@ -119,6 +119,16 @@ POST /api/data-sources/query  { "sourceId": "trade-csl", "query": "HUAWEI", "lim
 
 `success` 表示原始快照和标准化记录均已真实落盘。`failed` 会保留错误和时间，不影响其他来源。`configuration_required` 表示 Adapter 已实现但尚未配置免费 API Key。验证码或不允许稳定自动化的来源仍显示为 `manual_only`。
 
+### 兜底快照
+
+中国来源在部分海外节点无法访问（例如 Zeabur 曼谷区域）。`data/fallback/` 随仓库提交了四个中国来源的时点副本，本机没有同步结果时自动启用。
+
+**它不会显示为已同步。** 状态是独立的 `fallback_snapshot`，顶栏指示灯是黄色而非绿色，查询结果带 `provenance: "bundled_fallback_snapshot"`，Agent 的回答里也会明确写出"本次使用随仓库提交的时点快照（采集日期），此后发布的新增、暂停或废止公告不在其中"。
+
+把时点副本当作现行名单，是这个工具最不该犯的错误，所以它在每一层都是显式标注的。真实部署应当优先修复网络可达性（把服务放到香港区域），兜底只是保证演示可用。
+
+更新兜底快照：先在能访问的机器上同步，再把 `data/runtime/normalized/china-*.json` 复制进 `data/fallback/` 并补上 `provenance` / `bundledAt` / `note` 字段。
+
 ### 中国来源的边界
 
 - 使用商务部及安全与管制局站点自身的公开接口，**不绕过任何验证码**；带验证码的两用物项查询库仍是人工交叉核对入口。

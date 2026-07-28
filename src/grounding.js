@@ -23,7 +23,7 @@ async function loadListRecords() {
     // Notice-type records describe a measure, not a party; only party records
     // belong in a screening pass.
     const records = snapshot.records.filter((record) => record.recordType !== "notice");
-    return { ...source, capturedAt: snapshot.capturedAt, records };
+    return { ...source, capturedAt: snapshot.capturedAt, isFallback: Boolean(snapshot.isFallback), records };
   }));
   return loaded.filter(Boolean);
 }
@@ -45,7 +45,8 @@ async function screenQuestionParties(question) {
   const screenedIds = new Set(sources.map((source) => source.sourceId));
   return {
     matches: matches.slice(0, 12),
-    screenedSources: sources.map((source) => ({ sourceId: source.sourceId, label: source.label, recordCount: source.records.length, capturedAt: source.capturedAt })),
+    screenedSources: sources.map((source) => ({ sourceId: source.sourceId, label: source.label, recordCount: source.records.length, capturedAt: source.capturedAt, provenance: source.isFallback ? "bundled_fallback_snapshot" : "live_sync" })),
+    fallbackSources: sources.filter((source) => source.isFallback).map((source) => ({ sourceId: source.sourceId, capturedAt: source.capturedAt })),
     unsyncedSources: PARTY_LIST_SOURCES.filter((source) => !screenedIds.has(source.sourceId)).map((source) => source.sourceId)
   };
 }
@@ -145,9 +146,17 @@ export async function collectGrounding(question, agents = []) {
   if (agents.includes("trade") || agents.includes("tpdd")) {
     const screening = await screenQuestionParties(question);
     grounding.listMatches = screening.matches;
-    grounding.screening = { screenedSources: screening.screenedSources, unsyncedSources: screening.unsyncedSources };
+    grounding.screening = { screenedSources: screening.screenedSources, fallbackSources: screening.fallbackSources, unsyncedSources: screening.unsyncedSources };
     if (screening.unsyncedSources.length) {
       grounding.limitations.push(`以下名单来源尚未同步，本次未筛查：${screening.unsyncedSources.join("、")}。来源缺失不等于无风险。`);
+    }
+    if (screening.fallbackSources.length) {
+      // Surfaced as a limitation, not a footnote: the reader has to know the
+      // screening ran against a stored copy that later notices may supersede.
+      grounding.limitations.push(
+        `以下来源本机未同步，本次使用随仓库提交的时点快照：${screening.fallbackSources.map((source) => `${source.sourceId}（${String(source.capturedAt).slice(0, 10)}）`).join("、")}。`
+        + "快照之后发布的新增、暂停或废止公告不在其中，依赖结论前必须重新同步。"
+      );
     }
     if (!screening.screenedSources.length) {
       grounding.limitations.push("没有任何受限方名单已同步到本机，本次回答不包含任何名单筛查结果。");
@@ -183,8 +192,11 @@ export async function collectGrounding(question, agents = []) {
 
 export function groundingContext(grounding) {
   const screening = grounding.screening
-    ? `Screened list sources: ${grounding.screening.screenedSources.map((source) => `${source.sourceId} (${source.recordCount} records, captured ${source.capturedAt})`).join("; ") || "none"}`
+    ? `Screened list sources: ${grounding.screening.screenedSources.map((source) => `${source.sourceId} (${source.recordCount} records, captured ${source.capturedAt}, ${source.provenance})`).join("; ") || "none"}`
       + `\nNot synchronized, therefore not screened: ${grounding.screening.unsyncedSources.join(", ") || "none"}`
+      + (grounding.screening.fallbackSources?.length
+        ? `\nScreened against a bundled point-in-time copy rather than a live sync: ${grounding.screening.fallbackSources.map((source) => source.sourceId).join(", ")}. Say so in the answer; later notices may supersede it.`
+        : "")
     : "Party screening was not applicable to this question.";
 
   return [

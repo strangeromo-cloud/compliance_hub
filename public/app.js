@@ -13,8 +13,9 @@ const i18n = {
     modelSettings: "模型配置", settingsIntro: "支持 OpenAI-compatible Chat Completions API。", show: "显示", hide: "隐藏",
     keyNote: "API Key 仅保存在当前浏览器会话中，用于转发本次调用；不会写入服务器文件或日志。",
     testConnection: "测试连接", saveSession: "保存", analyzing: "正在检索官方来源并组织答案……",
-    dataLoading: "数据状态载入中", dataSynced: "个来源已同步", dataFailed: "个失败", dataNone: "暂无已同步来源",
-    sourcesSynced: "已同步来源", listRecords: "名单记录", cnSources: "中国来源", failedSources: "同步失败",
+    dataLoading: "数据状态载入中", dataSynced: "个来源已同步", dataFallback: "个用兜底快照", dataFailed: "个失败", dataNone: "暂无可用来源",
+    sourcesSynced: "已同步来源", listRecords: "名单记录", cnSources: "中国来源", fallbackSources: "兜底快照", failedSources: "同步失败",
+    fallbackTitle: "本机未同步，使用随仓库提交的时点快照，采集于",
     filterAll: "全部", filterTrade: "Trade", filterProduct: "Product", filterTpdd: "TPDD", filterCross: "跨域",
     runtimeRules: "规则模式", runtimeReady: "实时模型", runtimeMissing: "未配置模型",
     modeHint: "点击切换规则模式与实时模型",
@@ -44,8 +45,9 @@ const i18n = {
     modelSettings: "Model settings", settingsIntro: "Supports OpenAI-compatible Chat Completions APIs.", show: "Show", hide: "Hide",
     keyNote: "The API key stays in this browser session and is used only to forward this call. It is never written to server files or logs.",
     testConnection: "Test connection", saveSession: "Save", analyzing: "Retrieving official sources and composing the answer…",
-    dataLoading: "Loading data status", dataSynced: "sources synced", dataFailed: "failed", dataNone: "No sources synced",
-    sourcesSynced: "Sources synced", listRecords: "List records", cnSources: "PRC sources", failedSources: "Sync failures",
+    dataLoading: "Loading data status", dataSynced: "synced", dataFallback: "on bundled copy", dataFailed: "failed", dataNone: "No sources available",
+    sourcesSynced: "Sources synced", listRecords: "List records", cnSources: "PRC sources", fallbackSources: "Bundled copies", failedSources: "Sync failures",
+    fallbackTitle: "Not synced on this host; using the bundled point-in-time copy captured",
     filterAll: "All", filterTrade: "Trade", filterProduct: "Product", filterTpdd: "TPDD", filterCross: "Cross-domain",
     runtimeRules: "Rules mode", runtimeReady: "Live model", runtimeMissing: "No model configured",
     modeHint: "Toggle between rules mode and the live model",
@@ -384,24 +386,32 @@ async function loadCoverage() {
     if (!response.ok) return;
     const data = await response.json();
     const synced = data.sources.filter((source) => source.sync?.status === "success");
+    const fallback = data.sources.filter((source) => source.sync?.status === "fallback_snapshot");
     const failed = data.sources.filter((source) => source.sync?.status === "failed");
-    const records = synced.reduce((sum, source) => sum + (source.sync.recordCount || 0), 0);
-    const cnSynced = synced.filter((source) => source.country === "CN").length;
+    const usable = [...synced, ...fallback];
+    const records = usable.reduce((sum, source) => sum + (source.sync.recordCount || 0), 0);
+    const cnUsable = usable.filter((source) => source.country === "CN").length;
     const cnTotal = data.sources.filter((source) => source.country === "CN").length;
 
+    // A bundled copy never reads as green. It is a warning state, because the
+    // list it holds may already have been superseded.
     const status = $("dataStatus");
-    status.className = `data-status ${failed.length ? "warn" : synced.length ? "ok" : "bad"}`;
-    $("dataStatusText").innerHTML = synced.length
-      ? `<b>${synced.length}</b> ${t("dataSynced")}${failed.length ? ` · <b>${failed.length}</b> ${t("dataFailed")}` : ""}`
+    status.className = `data-status ${failed.length || fallback.length ? "warn" : synced.length ? "ok" : "bad"}`;
+    $("dataStatusText").innerHTML = usable.length
+      ? `<b>${synced.length}</b> ${t("dataSynced")}${fallback.length ? ` · <b>${fallback.length}</b> ${t("dataFallback")}` : ""}${failed.length ? ` · <b>${failed.length}</b> ${t("dataFailed")}` : ""}`
       : t("dataNone");
-    status.title = failed.length ? failed.map((source) => `${source.sourceId}: ${source.sync.error || ""}`).join("\n") : "";
+    status.title = [
+      ...fallback.map((source) => `${source.sourceId}: ${t("fallbackTitle")} ${String(source.sync.bundledAt || "").slice(0, 10)}`),
+      ...failed.map((source) => `${source.sourceId}: ${source.sync.error || ""}`)
+    ].join("\n");
 
     $("coverageStrip").innerHTML = [
       { value: `${synced.length}/${data.sources.length}`, label: t("sourcesSynced") },
       { value: records.toLocaleString(), label: t("listRecords") },
-      { value: `${cnSynced}/${cnTotal}`, label: t("cnSources") },
+      { value: `${cnUsable}/${cnTotal}`, label: t("cnSources") },
+      { value: String(fallback.length), label: t("fallbackSources"), warn: fallback.length > 0 },
       { value: String(failed.length), label: t("failedSources"), bad: failed.length > 0 }
-    ].map((cell) => `<div class="coverage-cell ${cell.bad ? "is-bad" : ""}"><b>${esc(cell.value)}</b><span>${esc(cell.label)}</span></div>`).join("");
+    ].map((cell) => `<div class="coverage-cell ${cell.bad ? "is-bad" : ""} ${cell.warn ? "is-warn" : ""}"><b>${esc(cell.value)}</b><span>${esc(cell.label)}</span></div>`).join("");
   } catch { /* Coverage is informational; the workbench stays usable without it. */ }
 }
 

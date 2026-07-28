@@ -1,0 +1,390 @@
+{
+  "sourceId": "china-dual-use",
+  "capturedAt": "2026-07-28T12:37:27.898Z",
+  "metadata": {
+    "sourceUpdatedAt": "2026-01-06",
+    "finalUrl": "https://exportcontrol.mofcom.gov.cn/edi_ecms_web_front/front/column/getColumnList",
+    "etag": null,
+    "syncScope": "official_notice_corpus_requires_human_qa"
+  },
+  "records": [
+    {
+      "sourceId": "china-dual-use",
+      "recordId": "商务部公告2026年第1号-0",
+      "noticeNumber": "商务部公告2026年第1号",
+      "noticeTitle": "商务部公告2026年第1号 关于加强两用物项对日本出口管制的公告",
+      "measureType": "item_control_measure",
+      "noticeAction": "issue",
+      "supersedesNotices": [],
+      "referencedNotices": [],
+      "issuingAuthorities": [
+        "商务部"
+      ],
+      "publishedAt": "2026-01-06",
+      "effectiveFrom": "2026-01-06",
+      "controlCodes": [],
+      "hsCodes": [],
+      "contentText": "【发布文号】商务部公告2026年第1号\n\n 根据《中华人民共和国出口管制法》等法律法规有关规定，为维护国家安全和利益、履行防扩散等国际义务，决定加强两用物项对日本出口管制。现将有关事项公告如下：\n\n 禁止所有两用物项对日本军事用户、军事用途，以及一切有助于提升日本军事实力的其他最终用户用途出口。\n\n 任何国家和地区的组织和个人，违反上述规定，将原产于中华人民共和国的相关两用物项转移或提供给日本的组织和个人，将依法追究法律责任。\n\n 本公告自公布之日起正式实施。\n\n 商务部\n\n 2026年1月6日",
+      "attachments": [],
+      "sourceUrl": "https://exportcontrol.mofcom.gov.cn/article/hgfw/lywxcx/gzqd/202601/1205.html",
+      "humanReviewRequired": true,
+      "rawRecord": {
+        "columnName": "管制清单",
+        "snapshotRecordIndex": 0
+      }
+    },
+    {
+      "sourceId": "china-dual-use",
+      "recordId": "notice-1",
+      "noticeNumber": null,
+      "noticeTitle": "商务部 海关总署公布2026年度《两用物项和技术进出口许可证管理目录》",
+      "measureType": "licence_catalogue",
+      "noticeAction": "issue",
+      "supersedesNotices": [],
+      "referencedNotices": [],
+      "issuingAuthorities": [
+        "商务部",
+        "海关总署",
+        "生态环境部"
+      ],
+      "publishedAt": "2025-12-31",
+      "effectiveFrom": "2026-01-01",
+      "controlCodes": [],
+      "hsCodes": [],
+      "contentText": "根据《中华人民共和国出口管制法》《中华人民共和国两用物项出口管制条例》和商务部、海关总署2005年第29号令（《两用物项和技术进出口许可证管理办法》），以及《中华人民共和国两用物项出口管制清单》、2026年《中华人民共和国进出口税则》，商务部、海关总署对《两用物项和技术进出口许可证管理目录》进行了调整，现将调整后的《两用物项和技术进出口许可证管理目录》予以公布。\n 进口经营者进口放射性同位素按《放射性同位素与射线装置安全和防护条例》和《两用物项和技术进出口许可证管理办法》有关规定，报生态环境部审批后，在商务部配额许可证事务局申领两用物项和技术进口许可证，凭证向海关办理进口手续。\n 本公告自2026年1月1日起正式实施，商务部、海关总署2024年第67号公告（《两用物项和技术进出口许可证管理目录》）同时废止。\n\n\n 商务部海关总署\n\n\n 2025年12月31日\n\n 2026年度《两用物项和技术进出口许可证管理目录》.pdf",
+      "attachments": [
+        {
+          "name": "2026年度《两用物项和技术进出口许可证管理目录》.pdf",
+          "url": "https://aqygzj.mofcom.gov.cn/cms_files/filemanager/600926013/attach/202511/3c4627a701c34039942fa04b153d2f74.pdf?fileName=2026%E5%B9%B4%E5%BA%A6%E3%80%8A%E4%B8%A4%E7%94%A8%E7%89%A9%E9%A1%B9%E5%92%8C%E6%8A%80%E6%9C%AF%E8%BF%9B%E5%87%BA%E5%8F%A3%E8%AE%B8%E5%8F%AF%E8%AF%81%E7%AE%A1%E7%90%86%E7%9B%AE%E5%BD%95%E3%80%8B.pdf"
+        }
+      ],
+      "sourceUrl": "https://exportcontrol.mofcom.gov.cn/article/hgfw/lywxcx/gzqd/202601/1203.html",
+      "humanReviewRequired": true,
+      "rawRecord": {
+        "columnName": "管制清单",
+        "snapshotRecordIndex": 1
+      }
+    },
+    {
+      "sourceId": "china-dual-use",
+      "recordId": "商务部公告2025年第70号-2",
+      "noticeNumber": "商务部公告2025年第70号",
+      "noticeTitle": "商务部、海关总署公告2025年第70号 公布暂停实施商务部、海关总署公告2025年第55号、56号、57号、58号及商务部公告2025年第61号、62号的决定",
+      "measureType": "other_notice",
+      "noticeAction": "suspend",
+      "supersedesNotices": [
+        "2025年第55号",
+        "2025年第61号"
+      ],
+      "referencedNotices": [
+        "2025年第55号",
+        "2025年第61号"
+      ],
+      "issuingAuthorities": [
+        "商务部",
+        "海关总署"
+      ],
+      "publishedAt": "2025-11-11",
+      "effectiveFrom": "2025-11-07",
+      "controlCodes": [],
+      "hsCodes": [],
+      "contentText": "【发布单位】安全与管制局\n 【发布文号】商务部公告2025年第70号\n 【发文日期】2025年11月07日\n 经批准，自即日起至2026年11月10日，商务部、海关总署公告2025年第55号、56号、57号、58号，及商务部公告2025年第61号、62号暂停实施。\n 商务部 海关总署\n 2025年11月7日",
+      "attachments": [],
+      "sourceUrl": "https://exportcontrol.mofcom.gov.cn/article/hgfw/lywxcx/gzqd/202511/1198.html",
+      "humanReviewRequired": true,
+      "rawRecord": {
+        "columnName": "管制清单",
+        "snapshotRecordIndex": 2
+      }
+    },
+    {
+      "sourceId": "china-dual-use",
+      "recordId": "商务部公告2025年第72号-3",
+      "noticeNumber": "商务部公告2025年第72号",
+      "noticeTitle": "商务部公告2025年第72号 公布调整实施商务部公告2024年第46号的决定",
+      "measureType": "item_control_measure",
+      "noticeAction": "adjust",
+      "supersedesNotices": [
+        "2024年第46号"
+      ],
+      "referencedNotices": [
+        "2024年第46号"
+      ],
+      "issuingAuthorities": [
+        "商务部"
+      ],
+      "publishedAt": "2025-11-11",
+      "effectiveFrom": "2025-11-09",
+      "controlCodes": [],
+      "hsCodes": [],
+      "contentText": "【发布单位】安全与管制局\n 【发布文号】商务部公告2025年第72号\n 【发文日期】2025年11月09日\n 经批准，自即日起至2026年11月27日，商务部公告2024年第46号（《关于加强相关两用物项对美国出口管制的公告》）第二款暂停实施。\n 商务部 \n 2025年11月9日",
+      "attachments": [],
+      "sourceUrl": "https://exportcontrol.mofcom.gov.cn/article/hgfw/lywxcx/gzqd/202511/1197.html",
+      "humanReviewRequired": true,
+      "rawRecord": {
+        "columnName": "管制清单",
+        "snapshotRecordIndex": 3
+      }
+    },
+    {
+      "sourceId": "china-dual-use",
+      "recordId": "商务部公告2025年第73号-4",
+      "noticeNumber": "商务部公告2025年第73号",
+      "noticeTitle": "商务部等5部门关于调整《向特定国家（地区）出口易制毒化学品管理目录》《特定国家（地区）目录》的公告",
+      "measureType": "item_control_measure",
+      "noticeAction": "issue",
+      "supersedesNotices": [],
+      "referencedNotices": [],
+      "issuingAuthorities": [
+        "商务部",
+        "海关总署",
+        "国家药监局",
+        "公安部",
+        "应急管理部"
+      ],
+      "publishedAt": "2025-11-11",
+      "effectiveFrom": "2025-11-10",
+      "controlCodes": [],
+      "hsCodes": [],
+      "contentText": "【发布单位】安全与管制局\n 【发布文号】商务部公告2025年第73号\n 【发文日期】2025年11月10日\n \n \n \n 为进一步做好易制毒化学品出口管理工作，根据《向特定国家（地区）出口易制毒化学品暂行管理规定》，商务部、公安部、应急管理部、海关总署和国家药监局决定对《向特定国家（地区）出口易制毒化学品管理目录》《特定国家（地区）目录》进行调整，将美国、墨西哥、加拿大增列入《特定国家（地区）目录》，并单独增列针对上述3个国家的13种易制毒化学品。\n 现将调整后的《向特定国家（地区）出口易制毒化学品管理目录》和《特定国家（地区）目录》予以公布。自本公告发布之日起，向美国、墨西哥、加拿大出口附件1第一部分所列化学品的，应按照《向特定国家（地区）出口易制毒化学品暂行管理规定》申请许可，向其他国家（地区）出口无需申请许可。\n 附件：1.向特定国家（地区）出口易制毒化学品管理目录.pdf\n 2.特定国家（地区）目录.pdf \n 商务部 \n 公安部 \n 应急管理部 \n 海关总署 \n 国家药监局 \n 2025年11月10日",
+      "attachments": [
+        {
+          "name": "1.向特定国家（地区）出口易制毒化学品管理目录.pdf",
+          "url": "http://aqygzj.mofcom.gov.cn/api-gateway/jpaas-web-server/front/document/download?fileUrl=YW5UzzlvCwcM%2FNHHX%2FtT6KYc7i4iYCs13RxyX1cYsF7ws3Uq96GWzikjZK8f0dVnSLFULAdiyOAe8EYw33MozWwleqDG%2B5JdeoqwkRfYTyA4yX3G0JFXN9MmZOOYpNun2N9yRxNNClHyCVmCeAzJdi5YJ0V%2F%2BVlpsd6ARWq4y68%3D&fileName=1.%E5%90%91%E7%89%B9%E5%AE%9A%E5%9B%BD%E5%AE%B6%EF%BC%88%E5%9C%B0%E5%8C%BA%EF%BC%89%E5%87%BA%E5%8F%A3%E6%98%93%E5%88%B6%E6%AF%92%E5%8C%96%E5%AD%A6%E5%93%81%E7%AE%A1%E7%90%86%E7%9B%AE%E5%BD%95.pdf"
+        },
+        {
+          "name": "2.特定国家（地区）目录.pdf",
+          "url": "http://aqygzj.mofcom.gov.cn/api-gateway/jpaas-web-server/front/document/download?fileUrl=YW5UzzlvCwcM%2FNHHX%2FtT6KYc7i4iYCs13RxyX1cYsF5CQhWpx6YtCbX1lDrB7BI9T9MWVA2hjveI9Uf4DXhnQj9eHfqusJ9XXPCtXM82tF84yX3G0JFXN9MmZOOYpNun2N9yRxNNClHyCVmCeAzJdi5YJ0V%2F%2BVlpsd6ARWq4y68%3D&fileName=2.%E7%89%B9%E5%AE%9A%E5%9B%BD%E5%AE%B6%EF%BC%88%E5%9C%B0%E5%8C%BA%EF%BC%89%E7%9B%AE%E5%BD%95.pdf"
+        }
+      ],
+      "sourceUrl": "https://exportcontrol.mofcom.gov.cn/article/hgfw/lywxcx/gzqd/202511/1190.html",
+      "humanReviewRequired": true,
+      "rawRecord": {
+        "columnName": "管制清单",
+        "snapshotRecordIndex": 4
+      }
+    },
+    {
+      "sourceId": "china-dual-use",
+      "recordId": "商务部公告2025年第10号-5",
+      "noticeNumber": "商务部公告2025年第10号",
+      "noticeTitle": "商务部 海关总署公告2025年第10号 公布对钨、碲、铋、钼、铟相关物项 实施出口管制的决定",
+      "measureType": "item_control_measure",
+      "noticeAction": "issue",
+      "supersedesNotices": [],
+      "referencedNotices": [],
+      "issuingAuthorities": [
+        "商务部",
+        "海关总署"
+      ],
+      "publishedAt": "2025-02-04",
+      "effectiveFrom": "2025-02-04",
+      "controlCodes": [
+        "1C117.d",
+        "1C226",
+        "1C117.c",
+        "1C241",
+        "1C004",
+        "1E004",
+        "1E101.b",
+        "6C002.a",
+        "6C002.b",
+        "6E002",
+        "6C002",
+        "6C001.a",
+        "1C229",
+        "6C001.b",
+        "6C001.c",
+        "6C001.d",
+        "6E001",
+        "6C001",
+        "1C117.b",
+        "3C004.a",
+        "3C004.b",
+        "3C004.c",
+        "3E004",
+        "3C004"
+      ],
+      "hsCodes": [
+        "2841801000",
+        "2825901200",
+        "2825901910",
+        "2825901920",
+        "2849902000",
+        "8101940001",
+        "8101991001",
+        "8101999001",
+        "7106919001",
+        "7106929001",
+        "2804500001",
+        "2842902000",
+        "3818009021",
+        "2842909025",
+        "2852100010",
+        "8106101091",
+        "8106101092",
+        "8106101099",
+        "8106109090",
+        "8106901019",
+        "8106901029",
+        "8106901099",
+        "8106909090",
+        "2841900041",
+        "2931900032",
+        "8102100001",
+        "2853904051"
+      ],
+      "contentText": "【发布单位】安全与管制局\n\n【发布文号】商务部公告2025年第10号\n\n【发文日期】2025年02月04日\n\n 根据《中华人民共和国出口管制法》《中华人民共和国对外贸易法》《中华人民共和国海关法》《中华人民共和国两用物项出口管制条例》有关规定，为维护国家安全和利益、履行防扩散等国际义务，经国务院批准，决定对下列物项实施出口管制：\n\n 一、钨相关物项\n\n （一）1C117.d．钨相关材料：\n\n 1．仲钨酸铵(参考海关商品编号：2841801000)；\n\n 2．氧化钨(参考海关商品编号：2825901200、2825901910、2825901920)；\n\n 3．非1C226项下管制的碳化钨(参考海关商品编号：2849902000)。\n\n （二）1C117.c．具有下述所有特性的固态钨：\n\n 1．具有下述任一特性的固态钨（不含颗粒、粉末状）：\n\n a．非1C226、1C241项下管制的钨及钨含量大于等于97%（按重量）的钨合金(参考海关商品编号：8101940001、8101991001、8101999001)；\n\n b．钨含量大于等于80%（按重量）的钨掺铜(参考海关商品编号：8101940001、8101991001、8101999001)；\n\n c．钨含量大于等于80%（按重量）的钨掺银（银含量大于等于2%）(参考海关商品编号：7106919001、7106929001)；\n\n 2．能被机械加工成任何下述任一产品：\n\n a．直径大于等于120mm、长度大于等于50mm的圆柱体；\n\n b．内径大于等于65mm、壁厚大于等于25mm且长度大于等于50mm的管材；\n\n c．尺寸大于等于120mm×120mm×50mm的块状物。\n\n （三）1C004 具有下述所有特性的钨镍铁合金(参考海关商品编号：8101940001、8101991001、8101999001)或钨镍铜合金(参考海关商品编号：8101940001、8101991001、8101999001)：\n\n a．密度大于17.5g/cm³；\n\n b．弹性极限超过800MPa；\n\n c．极限抗拉强度大于1270MPa；\n\n d．伸长率超过8%。\n\n （四）1E004、1E101.b．生产1C004、1C117.c、1C117.d项的技术及资料（含工艺规范、工艺参数、加工程序等）。\n\n 二、碲相关物项\n\n （一）6C002.a．金属碲(参考海关商品编号：2804500001)。\n\n （二）6C002.b．以下任何一种的碲化合物单晶或多晶制品（包括衬底或外延片）：\n\n 1．碲化镉(参考海关商品编号：2842902000、3818009021)；\n\n 2．碲化镉锌(参考海关商品编号：2842909025、3818009021)；\n\n 3．碲化镉汞(参考海关商品编号：2852100010、3818009021)。\n\n （三）6E002 生产6C002项的技术及资料（含工艺规范、工艺参数、加工程序等）。\n\n 三、铋相关物项\n\n （一）6C001.a．非1C229项下管制的金属铋及制品，包括但不限于锭、块、珠、颗粒、粉末等形态(参考海关商品编号：8106101091、8106101092、8106101099、8106109090、8106901019、8106901029、8106901099、8106909090)。\n\n （二）6C001.b．锗酸铋(参考海关商品编号：2841900041)。\n\n （三）6C001.c．三苯基铋(参考海关商品编号：2931900032)。\n\n （四）6C001.d．三对乙氧基苯基铋(参考海关商品编号：2931900032)。\n\n （五）6E001 生产6C001项的技术及资料（包括工艺规范、工艺参数、加工程序等）。\n\n 四、钼相关物项\n\n （一）1C117.b．钼粉：用于制造导弹部件的钼含量（按重量）大于等于97%、颗粒尺寸小于等于50×10⁻⁶m（50μm）的钼及合金颗粒(参考海关商品编号：8102100001)。\n\n （二）1E101.b．生产1C117.b项的技术及资料（含工艺规范、工艺参数、加工程序等）。\n\n 五、铟相关物项\n\n （一）3C004.a．磷化铟(参考海关商品编号：2853904051)。\n\n （二）3C004.b．三甲基铟(参考海关商品编号：2931900032)。\n\n （三）3C004.c．三乙基铟(参考海关商品编号：2931900032)。\n\n （四）3E004生产3C004项的技术及资料（含工艺规范、工艺参数、加工程序等）。\n\n 出口经营者出口上述物项应当依照《中华人民共和国出口管制法》《中华人民共和国两用物项出口管制条例》的相关规定向国务院商务主管部门申请许可。\n\n 本公告自发布之日起正式实施。《中华人民共和国两用物项出口管制清单》同步予以更新。\n\n商务部 海关总署\n\n2025年2月4日",
+      "attachments": [],
+      "sourceUrl": "https://exportcontrol.mofcom.gov.cn/article/hgfw/lywxcx/gzqd/202502/1102.html",
+      "humanReviewRequired": true,
+      "rawRecord": {
+        "columnName": "管制清单",
+        "snapshotRecordIndex": 5
+      }
+    },
+    {
+      "sourceId": "china-dual-use",
+      "recordId": "商务部公告2024年第51号-6",
+      "noticeNumber": "商务部公告2024年第51号",
+      "noticeTitle": "商务部 工业和信息化部 海关总署 国家密码局公告2024年第51号 关于发布《中华人民共和国两用物项出口管制清单》的公告",
+      "measureType": "dual_use_control_list",
+      "noticeAction": "issue",
+      "supersedesNotices": [],
+      "referencedNotices": [
+        "2003年第5号",
+        "2020年第63号"
+      ],
+      "issuingAuthorities": [
+        "商务部",
+        "海关总署",
+        "工业和信息化部",
+        "国家密码局"
+      ],
+      "publishedAt": "2024-11-21",
+      "effectiveFrom": "2024-12-01",
+      "controlCodes": [],
+      "hsCodes": [],
+      "contentText": "【发布单位】安全与管制局\n\n【发布文号】商务部公告2024年第51号\n\n【发文日期】2024年11月15日\n\n 根据《中华人民共和国出口管制法》《中华人民共和国两用物项出口管制条例》有关规定，现公布《中华人民共和国两用物项出口管制清单》（见附件1），自2024年12月1日起实施。同日，商务部、海关总署公告2003年第5号（《关于对磷酸三丁酯实施临时出口管制的公告》）等11个公告（见附件2）废止；商务部、国家密码局、海关总署公告2020年第63号（《关于发布商用密码进口许可清单、出口管制清单和相关管理措施的公告》）所附《商用密码出口管制清单》及商用密码出口许可程序相关内容不再适用。\n\n 附件：1.中华人民共和国两用物项出口管制清单.pdf\n\n 2.自2024年12月1日起废止的公告.pdf\n\n商务部 工业和信息化部 海关总署 国家密码局\n\n2024年11月15日",
+      "attachments": [
+        {
+          "name": "中华人民共和国两用物项出口管制清单.pdf",
+          "url": "https://exportcontrol.mofcom.gov.cn/upload/uploadfile/attach/202606/12/20260612151240357.pdf"
+        },
+        {
+          "name": "自2024年12月1日起废止的公告.pdf",
+          "url": "https://aqygzj.mofcom.gov.cn/api-gateway/jpaas-web-server/front/document/download?fileUrl=YW5UzzlvCwcM%2FNHHX%2FtT6KYc7i4iYCs13RxyX1cYsF7HXDP8cJnn9hTuvONm9cD227oWhy6NPwJM9BNkG1LYGDHmDnxQdPoKHYzU1gbXc1IVYH9lkGwkBa%2B6cj%2FVq5vPkEVDxk%2FkfsC6aWeywRawfft3bDXE4UNuZkQve4eObik%3D&fileName=%E8%87%AA2024%E5%B9%B412%E6%9C%881%E6%97%A5%E8%B5%B7%E5%BA%9F%E6%AD%A2%E7%9A%84%E5%85%AC%E5%91%8A.pdf"
+        }
+      ],
+      "sourceUrl": "https://exportcontrol.mofcom.gov.cn/article/hgfw/lywxcx/gzqd/202411/1067.html",
+      "humanReviewRequired": true,
+      "rawRecord": {
+        "columnName": "管制清单",
+        "snapshotRecordIndex": 6
+      }
+    },
+    {
+      "sourceId": "china-dual-use",
+      "recordId": "商务部公告2023年第66号-7",
+      "noticeNumber": "商务部公告2023年第66号",
+      "noticeTitle": "商务部 海关总署公告2023年第66号 关于发布2024年度《两用物项和技术进出口许可证管理目录》的公告",
+      "measureType": "licence_catalogue",
+      "noticeAction": "issue",
+      "supersedesNotices": [],
+      "referencedNotices": [],
+      "issuingAuthorities": [
+        "商务部",
+        "海关总署",
+        "生态环境部"
+      ],
+      "publishedAt": "2023-12-29",
+      "effectiveFrom": "2024-01-01",
+      "controlCodes": [],
+      "hsCodes": [],
+      "contentText": "中华人民共和国商务部\n\n中华人民共和国海关总署\n\n公 告\n\n2023年 第66号\n\n 根据《中华人民共和国出口管制法》和商务部、海关总署2005年第29号令《两用物项和技术进出口许可证管理办法》以及2024年《中华人民共和国进出口税则》，商务部和海关总署对《两用物项和技术进出口许可证管理目录》进行了调整，现将调整后的《两用物项和技术进出口许可证管理目录》（见附件）予以公布。\n\n 进口经营者进口放射性同位素按《放射性同位素与射线装置安全和防护条例》和《两用物项和技术进出口许可证管理办法》有关规定，报生态环境部审批后，在商务部配额许可证事务局申领两用物项和技术进口许可证，凭证向海关办理进口手续。\n\n 本公告自2024年1月1日起正式实施，商务部、海关总署2022年第42号公告公布的《两用物项和技术进出口许可证管理目录》同时废止。\n\n 附件：两用物项和技术进出口许可证管理目录.pdf\n\n商务部 海关总署\n\n2023年12月29日",
+      "attachments": [
+        {
+          "name": "两用物项和技术进出口许可证管理目录.pdf",
+          "url": "http://images.exportcontrol.mofcom.gov.cn/uploadfile/attach/202411/25/20241125154607481.pdf"
+        }
+      ],
+      "sourceUrl": "https://exportcontrol.mofcom.gov.cn/article/hgfw/lywxcx/gzqd/202312/941.html",
+      "humanReviewRequired": true,
+      "rawRecord": {
+        "columnName": "管制清单",
+        "snapshotRecordIndex": 7
+      }
+    },
+    {
+      "sourceId": "china-dual-use",
+      "recordId": "notice-8",
+      "noticeNumber": null,
+      "noticeTitle": "商务部 海关总署关于发布2023年度《两用物项和技术进出口许可证管理目录》的公告【已废止】",
+      "measureType": "licence_catalogue",
+      "noticeAction": "issue",
+      "supersedesNotices": [],
+      "referencedNotices": [],
+      "issuingAuthorities": [
+        "商务部",
+        "海关总署",
+        "生态环境部"
+      ],
+      "publishedAt": "2023-01-04",
+      "effectiveFrom": "2023-01-01",
+      "controlCodes": [],
+      "hsCodes": [],
+      "contentText": "中华人民共和国商务部\n\n中华人民共和国海关总署\n\n公 告\n\n2022年 第42号\n\n 根据《中华人民共和国出口管制法》和商务部、海关总署2005年第29号令《两用物项和技术进出口许可证管理办法》以及2023年《中华人民共和国进出口税则》，商务部和海关总署对《两用物项和技术进出口许可证管理目录》进行了调整，现将调整后的《两用物项和技术进出口许可证管理目录》（见附件）予以公布。\n\n 进口经营者进口放射性同位素按《放射性同位素与射线装置安全和防护条例》和《两用物项和技术进出口许可证管理办法》有关规定，报生态环境部审批后，在商务部配额许可证事务局申领两用物项和技术进口许可证，凭证向海关办理进口手续。\n\n 本公告自2023年1月1日起正式实施，商务部、海关总署2021年第48号公告公布的《两用物项和技术进出口许可证管理目录》同时废止。\n\n 附件：两用物项和技术进出口许可证管理目录.pdf\n\n 商务部 海关总署\n\n 2022年12月30日",
+      "attachments": [
+        {
+          "name": null,
+          "url": "http://images.exportcontrol.mofcom.gov.cn/uploadfile/attach/202301/04/20230104131908174.pdf"
+        },
+        {
+          "name": "两用物项和技术进出口许可证管理目录.pdf",
+          "url": "http://images.exportcontrol.mofcom.gov.cn/uploadfile/attach/202301/04/20230104143150357.pdf"
+        }
+      ],
+      "sourceUrl": "https://exportcontrol.mofcom.gov.cn/article/hgfw/lywxcx/gzqd/202301/759.html",
+      "humanReviewRequired": true,
+      "rawRecord": {
+        "columnName": "管制清单",
+        "snapshotRecordIndex": 8
+      }
+    },
+    {
+      "sourceId": "china-dual-use",
+      "recordId": "商务部公告2021年第48号-9",
+      "noticeNumber": "商务部公告2021年第48号",
+      "noticeTitle": "商务部 海关总署公告2021年第48号 《两用物项和技术进出口许可证管理目录》【已废止】",
+      "measureType": "licence_catalogue",
+      "noticeAction": "repeal",
+      "supersedesNotices": [],
+      "referencedNotices": [],
+      "issuingAuthorities": [
+        "商务部",
+        "海关总署",
+        "生态环境部"
+      ],
+      "publishedAt": "2021-12-31",
+      "effectiveFrom": "2022-01-01",
+      "controlCodes": [],
+      "hsCodes": [],
+      "contentText": "【发布单位】商务部\n 【发布文号】商务部公告2021年第48号\n 【发文日期】2021年12月31日\n 中华人民共和国商务部\n 中华人民共和国海关总署\n 公 告\n 2021年 第48号\n 根据《中华人民共和国出口管制法》和商务部、海关总署2005年第29号令《两用物项和技术进出口许可证管理办法》以及2022年《中华人民共和国进出口税则》，商务部和海关总署对《两用物项和技术进出口许可证管理目录》进行了调整，现将调整后的《两用物项和技术进出口许可证管理目录》（见附件）予以公布。\n 进口经营者进口放射性同位素按《放射性同位素与射线装置安全和防护条例》和《两用物项和技术进出口许可证管理办法》有关规定，报生态环境部审批后，在商务部配额许可证事务局申领两用物项和技术进口许可证，凭证向海关办理进口手续。\n 本公告自2022年1月1日起正式实施，商务部、海关总署2020年第75号公告公布的《两用物项和技术进出口许可证管理目录》同时废止。\n 附件：两用物项和技术进出口许可证管理目录.pdf\n 商务部 海关总署\n 2021年12月31日",
+      "attachments": [
+        {
+          "name": "两用物项和技术进出口许可证管理目录.pdf",
+          "url": "http://images.exportcontrol.mofcom.gov.cn/attach/202201/11/20220111124404968.pdf"
+        }
+      ],
+      "sourceUrl": "https://exportcontrol.mofcom.gov.cn/article/hgfw/lywxcx/gzqd/202111/225.html",
+      "humanReviewRequired": true,
+      "rawRecord": {
+        "columnName": "管制清单",
+        "snapshotRecordIndex": 9
+      }
+    }
+  ],
+  "provenance": "bundled_fallback_snapshot",
+  "bundledAt": "2026-07-28T12:37:27.898Z",
+  "note": "Committed fallback used only when the official source cannot be reached from the host. It is a point-in-time copy and may be superseded by later notices."
+}

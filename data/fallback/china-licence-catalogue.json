@@ -1,0 +1,151 @@
+{
+  "sourceId": "china-licence-catalogue",
+  "capturedAt": "2026-07-28T12:37:47.511Z",
+  "metadata": {
+    "sourceUpdatedAt": "2025-12-31",
+    "finalUrl": "https://exportcontrol.mofcom.gov.cn/edi_ecms_web_front/front/column/getColumnList",
+    "etag": null,
+    "syncScope": "annual_catalogue_notices_attachment_snapshot_only"
+  },
+  "records": [
+    {
+      "sourceId": "china-licence-catalogue",
+      "recordId": "notice-1",
+      "noticeNumber": null,
+      "noticeTitle": "商务部 海关总署公布2026年度《两用物项和技术进出口许可证管理目录》",
+      "measureType": "licence_catalogue",
+      "noticeAction": "issue",
+      "supersedesNotices": [],
+      "referencedNotices": [],
+      "issuingAuthorities": [
+        "商务部",
+        "海关总署",
+        "生态环境部"
+      ],
+      "publishedAt": "2025-12-31",
+      "effectiveFrom": "2026-01-01",
+      "controlCodes": [],
+      "hsCodes": [],
+      "contentText": "根据《中华人民共和国出口管制法》《中华人民共和国两用物项出口管制条例》和商务部、海关总署2005年第29号令（《两用物项和技术进出口许可证管理办法》），以及《中华人民共和国两用物项出口管制清单》、2026年《中华人民共和国进出口税则》，商务部、海关总署对《两用物项和技术进出口许可证管理目录》进行了调整，现将调整后的《两用物项和技术进出口许可证管理目录》予以公布。\n 进口经营者进口放射性同位素按《放射性同位素与射线装置安全和防护条例》和《两用物项和技术进出口许可证管理办法》有关规定，报生态环境部审批后，在商务部配额许可证事务局申领两用物项和技术进口许可证，凭证向海关办理进口手续。\n 本公告自2026年1月1日起正式实施，商务部、海关总署2024年第67号公告（《两用物项和技术进出口许可证管理目录》）同时废止。\n\n\n 商务部海关总署\n\n\n 2025年12月31日\n\n 2026年度《两用物项和技术进出口许可证管理目录》.pdf",
+      "attachments": [
+        {
+          "name": "2026年度《两用物项和技术进出口许可证管理目录》.pdf",
+          "url": "https://aqygzj.mofcom.gov.cn/cms_files/filemanager/600926013/attach/202511/3c4627a701c34039942fa04b153d2f74.pdf?fileName=2026%E5%B9%B4%E5%BA%A6%E3%80%8A%E4%B8%A4%E7%94%A8%E7%89%A9%E9%A1%B9%E5%92%8C%E6%8A%80%E6%9C%AF%E8%BF%9B%E5%87%BA%E5%8F%A3%E8%AE%B8%E5%8F%AF%E8%AF%81%E7%AE%A1%E7%90%86%E7%9B%AE%E5%BD%95%E3%80%8B.pdf"
+        }
+      ],
+      "sourceUrl": "https://exportcontrol.mofcom.gov.cn/article/hgfw/lywxcx/gzqd/202601/1203.html",
+      "humanReviewRequired": true,
+      "rawRecord": {
+        "columnName": "管制清单",
+        "snapshotRecordIndex": 1
+      },
+      "supersededByLaterEdition": false
+    },
+    {
+      "sourceId": "china-licence-catalogue",
+      "recordId": "商务部公告2023年第66号-7",
+      "noticeNumber": "商务部公告2023年第66号",
+      "noticeTitle": "商务部 海关总署公告2023年第66号 关于发布2024年度《两用物项和技术进出口许可证管理目录》的公告",
+      "measureType": "licence_catalogue",
+      "noticeAction": "issue",
+      "supersedesNotices": [],
+      "referencedNotices": [],
+      "issuingAuthorities": [
+        "商务部",
+        "海关总署",
+        "生态环境部"
+      ],
+      "publishedAt": "2023-12-29",
+      "effectiveFrom": "2024-01-01",
+      "controlCodes": [],
+      "hsCodes": [],
+      "contentText": "中华人民共和国商务部\n\n中华人民共和国海关总署\n\n公 告\n\n2023年 第66号\n\n 根据《中华人民共和国出口管制法》和商务部、海关总署2005年第29号令《两用物项和技术进出口许可证管理办法》以及2024年《中华人民共和国进出口税则》，商务部和海关总署对《两用物项和技术进出口许可证管理目录》进行了调整，现将调整后的《两用物项和技术进出口许可证管理目录》（见附件）予以公布。\n\n 进口经营者进口放射性同位素按《放射性同位素与射线装置安全和防护条例》和《两用物项和技术进出口许可证管理办法》有关规定，报生态环境部审批后，在商务部配额许可证事务局申领两用物项和技术进口许可证，凭证向海关办理进口手续。\n\n 本公告自2024年1月1日起正式实施，商务部、海关总署2022年第42号公告公布的《两用物项和技术进出口许可证管理目录》同时废止。\n\n 附件：两用物项和技术进出口许可证管理目录.pdf\n\n商务部 海关总署\n\n2023年12月29日",
+      "attachments": [
+        {
+          "name": "两用物项和技术进出口许可证管理目录.pdf",
+          "url": "http://images.exportcontrol.mofcom.gov.cn/uploadfile/attach/202411/25/20241125154607481.pdf"
+        }
+      ],
+      "sourceUrl": "https://exportcontrol.mofcom.gov.cn/article/hgfw/lywxcx/gzqd/202312/941.html",
+      "humanReviewRequired": true,
+      "rawRecord": {
+        "columnName": "管制清单",
+        "snapshotRecordIndex": 7
+      },
+      "supersededByLaterEdition": false
+    },
+    {
+      "sourceId": "china-licence-catalogue",
+      "recordId": "notice-8",
+      "noticeNumber": null,
+      "noticeTitle": "商务部 海关总署关于发布2023年度《两用物项和技术进出口许可证管理目录》的公告【已废止】",
+      "measureType": "licence_catalogue",
+      "noticeAction": "issue",
+      "supersedesNotices": [],
+      "referencedNotices": [],
+      "issuingAuthorities": [
+        "商务部",
+        "海关总署",
+        "生态环境部"
+      ],
+      "publishedAt": "2023-01-04",
+      "effectiveFrom": "2023-01-01",
+      "controlCodes": [],
+      "hsCodes": [],
+      "contentText": "中华人民共和国商务部\n\n中华人民共和国海关总署\n\n公 告\n\n2022年 第42号\n\n 根据《中华人民共和国出口管制法》和商务部、海关总署2005年第29号令《两用物项和技术进出口许可证管理办法》以及2023年《中华人民共和国进出口税则》，商务部和海关总署对《两用物项和技术进出口许可证管理目录》进行了调整，现将调整后的《两用物项和技术进出口许可证管理目录》（见附件）予以公布。\n\n 进口经营者进口放射性同位素按《放射性同位素与射线装置安全和防护条例》和《两用物项和技术进出口许可证管理办法》有关规定，报生态环境部审批后，在商务部配额许可证事务局申领两用物项和技术进口许可证，凭证向海关办理进口手续。\n\n 本公告自2023年1月1日起正式实施，商务部、海关总署2021年第48号公告公布的《两用物项和技术进出口许可证管理目录》同时废止。\n\n 附件：两用物项和技术进出口许可证管理目录.pdf\n\n 商务部 海关总署\n\n 2022年12月30日",
+      "attachments": [
+        {
+          "name": null,
+          "url": "http://images.exportcontrol.mofcom.gov.cn/uploadfile/attach/202301/04/20230104131908174.pdf"
+        },
+        {
+          "name": "两用物项和技术进出口许可证管理目录.pdf",
+          "url": "http://images.exportcontrol.mofcom.gov.cn/uploadfile/attach/202301/04/20230104143150357.pdf"
+        }
+      ],
+      "sourceUrl": "https://exportcontrol.mofcom.gov.cn/article/hgfw/lywxcx/gzqd/202301/759.html",
+      "humanReviewRequired": true,
+      "rawRecord": {
+        "columnName": "管制清单",
+        "snapshotRecordIndex": 8
+      },
+      "supersededByLaterEdition": true
+    },
+    {
+      "sourceId": "china-licence-catalogue",
+      "recordId": "商务部公告2021年第48号-9",
+      "noticeNumber": "商务部公告2021年第48号",
+      "noticeTitle": "商务部 海关总署公告2021年第48号 《两用物项和技术进出口许可证管理目录》【已废止】",
+      "measureType": "licence_catalogue",
+      "noticeAction": "repeal",
+      "supersedesNotices": [],
+      "referencedNotices": [],
+      "issuingAuthorities": [
+        "商务部",
+        "海关总署",
+        "生态环境部"
+      ],
+      "publishedAt": "2021-12-31",
+      "effectiveFrom": "2022-01-01",
+      "controlCodes": [],
+      "hsCodes": [],
+      "contentText": "【发布单位】商务部\n 【发布文号】商务部公告2021年第48号\n 【发文日期】2021年12月31日\n 中华人民共和国商务部\n 中华人民共和国海关总署\n 公 告\n 2021年 第48号\n 根据《中华人民共和国出口管制法》和商务部、海关总署2005年第29号令《两用物项和技术进出口许可证管理办法》以及2022年《中华人民共和国进出口税则》，商务部和海关总署对《两用物项和技术进出口许可证管理目录》进行了调整，现将调整后的《两用物项和技术进出口许可证管理目录》（见附件）予以公布。\n 进口经营者进口放射性同位素按《放射性同位素与射线装置安全和防护条例》和《两用物项和技术进出口许可证管理办法》有关规定，报生态环境部审批后，在商务部配额许可证事务局申领两用物项和技术进口许可证，凭证向海关办理进口手续。\n 本公告自2022年1月1日起正式实施，商务部、海关总署2020年第75号公告公布的《两用物项和技术进出口许可证管理目录》同时废止。\n 附件：两用物项和技术进出口许可证管理目录.pdf\n 商务部 海关总署\n 2021年12月31日",
+      "attachments": [
+        {
+          "name": "两用物项和技术进出口许可证管理目录.pdf",
+          "url": "http://images.exportcontrol.mofcom.gov.cn/attach/202201/11/20220111124404968.pdf"
+        }
+      ],
+      "sourceUrl": "https://exportcontrol.mofcom.gov.cn/article/hgfw/lywxcx/gzqd/202111/225.html",
+      "humanReviewRequired": true,
+      "rawRecord": {
+        "columnName": "管制清单",
+        "snapshotRecordIndex": 9
+      },
+      "supersededByLaterEdition": true
+    }
+  ],
+  "provenance": "bundled_fallback_snapshot",
+  "bundledAt": "2026-07-28T12:37:47.511Z",
+  "note": "Committed fallback used only when the official source cannot be reached from the host. It is a point-in-time copy and may be superseded by later notices."
+}

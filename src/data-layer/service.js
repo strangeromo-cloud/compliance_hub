@@ -1,6 +1,6 @@
 import { DATA_SOURCE_REGISTRY, dataSourceCoverage } from "../data-source-registry.js";
 import { ADAPTERS, queryRemoteSource } from "./adapters.js";
-import { readNormalized, readSyncStatus, saveSourceData, updateSyncStatus } from "./storage.js";
+import { readFallbackMeta, readNormalized, readSyncStatus, saveSourceData, updateSyncStatus } from "./storage.js";
 
 const activeSyncs = new Map();
 
@@ -26,11 +26,15 @@ function safeError(error) {
 
 export async function getDataSourceCoverage() {
   const statuses = await readSyncStatus();
+  const fallbacks = Object.fromEntries(await Promise.all(
+    DATA_SOURCE_REGISTRY.map(async (source) => [source.sourceId, await readFallbackMeta(source.sourceId)])
+  ));
   const sources = DATA_SOURCE_REGISTRY.map((source) => {
     const adapter = ADAPTERS[source.sourceId];
     const sync = statuses[source.sourceId] || null;
     const credentialConfigured = !adapter?.credential || Boolean(process.env[adapter.credential]);
     const hasSnapshot = sync?.status === "success";
+    const fallback = fallbacks[source.sourceId] || { available: false };
     const snapshotIsSample = hasSnapshot && String(sync.syncScope || "").startsWith("sample_");
     return {
       ...source,
@@ -43,7 +47,15 @@ export async function getDataSourceCoverage() {
         ...(snapshotIsSample ? ["sample only; use live query for case lookup"] : [])
       ] : source.dataCaptured,
       adapter: adapter ? { implemented: true, syncable: Boolean(adapter.sync), queryable: adapter.mode === "live_query" || source.sourceId === "gleif-lei", mode: adapter.mode, credential: adapter.credential, credentialConfigured } : { implemented: false, syncable: false, queryable: false, mode: null, credential: null, credentialConfigured: true },
-      sync: sync || { status: adapter?.credential && !credentialConfigured ? "configuration_required" : "not_synced" }
+      fallback,
+      // A bundled fallback is reported as its own state, never as "success".
+      // Rolling it into success would present a point-in-time list copy as the
+      // current list, which is the one mistake this tool must not make.
+      sync: hasSnapshot
+        ? sync
+        : fallback.available
+          ? { ...(sync || {}), status: "fallback_snapshot", recordCount: fallback.recordCount, bundledAt: fallback.bundledAt, liveSyncError: sync?.error || null }
+          : sync || { status: adapter?.credential && !credentialConfigured ? "configuration_required" : "not_synced" }
     };
   });
   return { ...dataSourceCoverage(), sources, syncCounts: sources.reduce((counts, source) => { counts[source.sync.status] = (counts[source.sync.status] || 0) + 1; return counts; }, {}) };
@@ -81,5 +93,12 @@ export async function queryDataSource(sourceId, query, limit = 20) {
   if (!normalized) throw Object.assign(new Error("This source has not been synchronized yet."), { status: 409 });
   const needle = cleanQuery.toLocaleLowerCase();
   const records = normalized.records.filter((record) => JSON.stringify(record).toLocaleLowerCase().includes(needle)).slice(0, Math.min(100, Math.max(1, Number(limit) || 20)));
-  return { sourceId, mode: "local_snapshot", capturedAt: normalized.capturedAt, records };
+  return {
+    sourceId,
+    mode: normalized.isFallback ? "bundled_fallback_snapshot" : "local_snapshot",
+    provenance: normalized.provenance,
+    capturedAt: normalized.capturedAt,
+    ...(normalized.isFallback ? { bundledAt: normalized.bundledAt, fallbackNotice: "Results come from a committed point-in-time copy because the official source was not synchronized on this host. Re-sync before relying on them." } : {}),
+    records
+  };
 }
