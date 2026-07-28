@@ -1,89 +1,120 @@
+import { GEMS, GEM_BY_ID, GEM_GROUPS, factCoverage, matchGems, toggleWorkspaceGem, workspaceGemIds } from "/gems.js";
+
 const i18n = {
   zh: {
-    brandSub: "合规情报原型", prototype: "Prototype", publicSources: "公开来源", modelSettings: "模型配置", scenarioLibrary: "测试场景", dataCoverage: "数据覆盖",
-    quickStart: "快速开始", scenarios: "验证情景", scenarioHelp: "选择一个情景，验证 Agent 路由与公开信息整合。",
-    testCases: "个测试场景", filterAll: "全部", filterTrade: "Trade", filterProduct: "Product", filterTpdd: "TPDD", filterCross: "跨域协同",
-    demoMode: "规则演示", demoModeHelp: "无需 API Key；覆盖内置政策和场景，不等于开放式实时问答", boundary: "仅做公开信息研究和风险分流，不替代律师审查，也不自动批准交易。",
-    masterAgent: "COMPLIANCE HUB MASTER AGENT", welcomeTitle: "直接描述你的交易或合规问题",
-    welcomeLead: "你只需要在一个对话框提问。Master Agent 会自动选择 Trade、Product、Ethics & TPDD Agent，并返回一份统一答案。",
-    hubAssistant: "Compliance Hub Assistant", autoRouting: "Master Agent 自动路由", newChat: "新对话", testLibrary: "TEST LIBRARY",
-    scenarioDialogHelp: "场景只用于快速填入主对话框，不会创建新的对话窗口。", specialistTrace: "查看专业 Agent 分析轨迹", routedTo: "已路由至",
-    questionLabel: "输入合规情景", questionPlaceholder: "描述交易方、产品、路线、最终用户、付款安排或服务范围……",
-    willRoute: "Master Agent 将在后台自动路由", analyze: "发送", composerCaption: "Prototype 不替代律师审查。不要输入商业秘密、个人敏感信息或未公开交易数据。",
-    traceability: "可追溯性", evidence: "证据与来源", evidenceEmpty: "完成一次分析后，这里会显示来源、实时获取状态和访问时间。",
-    modelConnection: "MODEL CONNECTION", settingsIntro: "支持 OpenAI-compatible Chat Completions API。配置仅用于本机 Prototype。", show: "显示", hide: "隐藏",
-    keyNote: "API Key 仅保存在当前浏览器会话中，发送给本机服务用于本次调用；不会写入项目文件或服务器日志。",
-    testConnection: "测试连接", saveSession: "保存到当前会话", analyzing: "正在编排合规分析", analyzingHelp: "正在检索公开来源并组织统一回答……",
-    needKey: "请先在模型配置中填写 API Key，或开启演示模式。", invalidQuestion: "请先描述一个具体的交易情景。", error: "分析失败",
-    saved: "模型配置已保存到当前会话", testing: "正在测试连接……", connected: "连接成功，可以使用实时模型。", connectionFailed: "连接失败，请检查 Base URL、模型、Key 或账户额度。",
-    model_auth_error: "认证失败（401）：API Key 无效、已过期，或不属于这个 API 服务。", model_permission_error: "权限被拒绝（403）：Key 已被识别，但账户、IP 或当前模型权限不允许调用。", model_endpoint_or_name_not_found: "接口或模型不存在（404）：请检查 Base URL 是否包含正确的 /v1 路径，以及模型名称。", model_quota_or_rate_limit: "请求被限流或账户额度不足（429）：请检查余额、额度和速率限制。", model_invalid_request: "模型接口拒绝了请求（400/422）：该接口可能不兼容 Chat Completions，或不支持当前模型参数。", model_invalid_response: "接口已响应，但不是兼容的 Chat Completions JSON：请检查 Base URL 是否指向 /v1，或供应商是否支持该协议。", model_timeout: "模型接口连接超时：请检查网络、代理或服务状态。", model_network_error: "无法连接模型接口：域名、网络、代理或 TLS 连接失败。", model_provider_error: "模型服务返回异常，请检查服务状态。", model_unknown_error: "连接失败，服务未返回可识别的错误。",
-    overallAssessment: "总体判断", nextStep: "建议下一步", findings: "主要发现", missingInfo: "仍需信息", actions: "建议行动", noItems: "暂无",
-    sourceLive: "实时获取", sourceMetadata: "元数据", sourceUnavailable: "获取失败", sourceNotFetched: "未获取", accessed: "访问",
-    mockLabel: "规则与公开数据", liveLabel: "实时模型 + 公开数据", openSource: "打开官方来源", riskLow: "低", riskMedium: "中", riskHigh: "高", riskUnknown: "待定",
-    routeLabel: "路由", resultAgents: "参与 Agent", themeLabel: "切换明暗主题", runtimeRules: "规则模式", runtimeReady: "实时模型已配置", runtimeMissing: "实时模型未配置"
+    prototype: "Prototype", skipLink: "跳到工作区", workbench: "出口管制工作台", newChat: "新对话",
+    scenarioLibrary: "测试场景", scenarioHelp: "场景只填入输入框，不会新建对话。",
+    startTitle: "描述交易，或用 / 选择一个 Gem",
+    startLead: "范围为美国与中国的出口管制。Master Agent 自动路由到贸易、产品和第三方尽调 Agent，返回一份带证据链的统一答案。",
+    gemsLabel: "GEMS", gemsHint: "在输入框键入 / 可随时调用", coverageLabel: "数据覆盖",
+    questionLabel: "输入合规情景", placeholder: "描述交易方、产品、路线、最终用户或付款安排……",
+    slashHint: "Gem", composerNote: "原型输出仅用于研究与风险分流，不构成法律意见。请勿输入商业秘密或未公开交易数据。",
+    evidence: "证据与来源", evidenceEmpty: "完成一次分析后，这里显示引用来源、获取状态与访问时间。",
+    modelSettings: "模型配置", settingsIntro: "支持 OpenAI-compatible Chat Completions API。", show: "显示", hide: "隐藏",
+    keyNote: "API Key 仅保存在当前浏览器会话中，用于转发本次调用；不会写入服务器文件或日志。",
+    testConnection: "测试连接", saveSession: "保存", analyzing: "正在检索官方来源并组织答案……",
+    dataLoading: "数据状态载入中", dataSynced: "个来源已同步", dataFailed: "个失败", dataNone: "暂无已同步来源",
+    sourcesSynced: "已同步来源", listRecords: "名单记录", cnSources: "中国来源", failedSources: "同步失败",
+    filterAll: "全部", filterTrade: "Trade", filterProduct: "Product", filterTpdd: "TPDD", filterCross: "跨域",
+    runtimeRules: "规则模式", runtimeReady: "实时模型", runtimeMissing: "未配置模型",
+    modeHint: "点击切换规则模式与实时模型",
+    routeLabel: "路由", routedTo: "已路由至", specialistTrace: "专业 Agent 分析轨迹",
+    overallAssessment: "总体判断", nextStep: "建议下一步", missingInfo: "仍需信息", actions: "建议行动", noItems: "暂无",
+    sourceLive: "实时获取", sourceMetadata: "元数据", sourceUnavailable: "获取失败", sourceNotFetched: "未获取",
+    mockLabel: "规则 + 公开数据", liveLabel: "实时模型 + 公开数据",
+    riskLow: "低", riskMedium: "中", riskHigh: "高", riskUnknown: "待定",
+    needKey: "请先在模型配置中填写 API Key，或使用规则模式。", invalidQuestion: "请先描述一个具体情景。", error: "分析失败",
+    saved: "已保存到当前会话", testing: "正在测试连接……", connected: "连接成功。", connectionFailed: "连接失败，请检查配置。",
+    gemInstruction: "指令", gemSources: "绑定数据源", gemFacts: "必填事实", gemOutput: "输出结构",
+    gemAdd: "添加到工作区", gemRemove: "从工作区移除", gemUse: "使用此 Gem", gemAdded: "已添加到工作区", gemRemoved: "已从工作区移除",
+    gemDetail: "详情", gemNoSources: "不绑定外部来源，基于当前对话生成", factsLabel: "必填事实",
+    factsMet: "已提供", boundLabel: "绑定来源",
+    paletteEmpty: "没有匹配的 Gem", paletteNav: "↑↓ 选择", paletteEnter: "Enter 使用", paletteEsc: "Esc 关闭",
+    model_auth_error: "认证失败（401）：API Key 无效或不属于该服务。", model_permission_error: "权限被拒绝（403）。", model_endpoint_or_name_not_found: "接口或模型不存在（404）：检查 Base URL 是否含 /v1。", model_quota_or_rate_limit: "被限流或额度不足（429）。", model_invalid_request: "接口拒绝了请求（400/422）。", model_invalid_response: "响应不是兼容的 Chat Completions JSON。", model_timeout: "连接超时。", model_network_error: "无法连接模型接口。", model_provider_error: "模型服务异常。", model_unknown_error: "连接失败。"
   },
   en: {
-    brandSub: "Compliance intelligence", prototype: "Prototype", publicSources: "Public sources", modelSettings: "Model settings", scenarioLibrary: "Test scenarios", dataCoverage: "Data coverage",
-    quickStart: "Quick start", scenarios: "Test scenarios", scenarioHelp: "Choose a scenario to validate routing and public-information consolidation.",
-    testCases: "test scenarios", filterAll: "All", filterTrade: "Trade", filterProduct: "Product", filterTpdd: "TPDD", filterCross: "Cross-domain",
-    demoMode: "Rules demo", demoModeHelp: "No API key; covers built-in policies and scenarios, not open-ended live Q&A", boundary: "For public-information research and risk triage only. Not legal review or transaction approval.",
-    masterAgent: "COMPLIANCE HUB MASTER AGENT", welcomeTitle: "Describe your transaction or compliance question",
-    welcomeLead: "Ask through one conversation. The Master Agent automatically selects Trade, Product, and Ethics & TPDD agents and returns one unified answer.",
-    hubAssistant: "Compliance Hub Assistant", autoRouting: "Automatic Master Agent routing", newChat: "New chat", testLibrary: "TEST LIBRARY",
-    scenarioDialogHelp: "Scenarios only fill the main composer; they do not create separate chat windows.", specialistTrace: "View specialist Agent analysis trace", routedTo: "Routed to",
-    questionLabel: "Enter a compliance scenario", questionPlaceholder: "Describe the party, product, route, ultimate user, payment arrangement or service scope…",
-    willRoute: "Master Agent routes in the background", analyze: "Send", composerCaption: "This prototype does not replace legal review. Do not enter trade secrets, sensitive personal data, or confidential transaction details.",
-    traceability: "Traceability", evidence: "Evidence & sources", evidenceEmpty: "After an analysis, official sources, retrieval status and access time appear here.",
-    modelConnection: "MODEL CONNECTION", settingsIntro: "Supports OpenAI-compatible Chat Completions APIs. Configuration is for this local prototype only.", show: "Show", hide: "Hide",
-    keyNote: "The API key stays in this browser session and is sent to the local service for calls. It is never written to project files or server logs.",
-    testConnection: "Test connection", saveSession: "Save for this session", analyzing: "Orchestrating compliance analysis", analyzingHelp: "Retrieving public sources and composing one answer…",
-    needKey: "Add an API key in Model settings, or enable Demo mode.", invalidQuestion: "Describe a specific transaction scenario first.", error: "Analysis failed",
-    saved: "Model settings saved for this session", testing: "Testing connection…", connected: "Connection successful. Live-model mode is ready.", connectionFailed: "Connection failed. Check the Base URL, model, key, and account quota.",
-    model_auth_error: "Authentication failed (401): the API key is invalid, expired, or belongs to another API service.", model_permission_error: "Permission denied (403): the key was recognized, but the account, IP, or selected model is not permitted.", model_endpoint_or_name_not_found: "Endpoint or model not found (404): check that the Base URL includes the correct /v1 path and that the model name exists.", model_quota_or_rate_limit: "Rate limit or insufficient quota (429): check balance, quota, and rate limits.", model_invalid_request: "The model API rejected the request (400/422): it may not support Chat Completions or the selected parameters.", model_invalid_response: "The endpoint responded, but not with compatible Chat Completions JSON. Check that the Base URL points to /v1 and that the provider supports this protocol.", model_timeout: "The model API timed out. Check the network, proxy, or provider status.", model_network_error: "The model API could not be reached. Check the hostname, network, proxy, or TLS connection.", model_provider_error: "The model provider returned an error. Check provider status.", model_unknown_error: "Connection failed with an unrecognized error.",
-    overallAssessment: "Overall assessment", nextStep: "Recommended next step", findings: "Key findings", missingInfo: "Missing information", actions: "Recommended actions", noItems: "None",
-    sourceLive: "Live retrieved", sourceMetadata: "Metadata", sourceUnavailable: "Unavailable", sourceNotFetched: "Not fetched", accessed: "Accessed",
-    mockLabel: "Rules + public data", liveLabel: "Live model + public data", openSource: "Open official source", riskLow: "Low", riskMedium: "Medium", riskHigh: "High", riskUnknown: "Unknown",
-    routeLabel: "Route", resultAgents: "Participating agents", themeLabel: "Toggle light/dark theme", runtimeRules: "Rules mode", runtimeReady: "Live model configured", runtimeMissing: "Live model not configured"
+    prototype: "Prototype", skipLink: "Skip to workspace", workbench: "Export control workbench", newChat: "New",
+    scenarioLibrary: "Test scenarios", scenarioHelp: "Scenarios only fill the composer; they do not start a new thread.",
+    startTitle: "Describe the transaction, or press / for a gem",
+    startLead: "Scope is US and PRC export control. The Master Agent routes to the trade, product and third-party diligence agents and returns one answer with its evidence chain.",
+    gemsLabel: "GEMS", gemsHint: "type / in the composer at any time", coverageLabel: "Data coverage",
+    questionLabel: "Enter a compliance scenario", placeholder: "Describe the party, product, route, end user or payment arrangement…",
+    slashHint: "Gem", composerNote: "Prototype output is for research and triage only and is not legal advice. Do not enter trade secrets or confidential transaction data.",
+    evidence: "Evidence & sources", evidenceEmpty: "After an analysis, cited sources, retrieval status and access time appear here.",
+    modelSettings: "Model settings", settingsIntro: "Supports OpenAI-compatible Chat Completions APIs.", show: "Show", hide: "Hide",
+    keyNote: "The API key stays in this browser session and is used only to forward this call. It is never written to server files or logs.",
+    testConnection: "Test connection", saveSession: "Save", analyzing: "Retrieving official sources and composing the answer…",
+    dataLoading: "Loading data status", dataSynced: "sources synced", dataFailed: "failed", dataNone: "No sources synced",
+    sourcesSynced: "Sources synced", listRecords: "List records", cnSources: "PRC sources", failedSources: "Sync failures",
+    filterAll: "All", filterTrade: "Trade", filterProduct: "Product", filterTpdd: "TPDD", filterCross: "Cross-domain",
+    runtimeRules: "Rules mode", runtimeReady: "Live model", runtimeMissing: "No model configured",
+    modeHint: "Toggle between rules mode and the live model",
+    routeLabel: "Route", routedTo: "Routed to", specialistTrace: "Specialist agent trace",
+    overallAssessment: "Overall assessment", nextStep: "Next step", missingInfo: "Missing information", actions: "Recommended actions", noItems: "None",
+    sourceLive: "Live", sourceMetadata: "Metadata", sourceUnavailable: "Unavailable", sourceNotFetched: "Not fetched",
+    mockLabel: "Rules + public data", liveLabel: "Live model + public data",
+    riskLow: "Low", riskMedium: "Medium", riskHigh: "High", riskUnknown: "Unknown",
+    needKey: "Add an API key in Model settings, or stay in rules mode.", invalidQuestion: "Describe a specific scenario first.", error: "Analysis failed",
+    saved: "Saved for this session", testing: "Testing…", connected: "Connected.", connectionFailed: "Connection failed. Check the settings.",
+    gemInstruction: "Instruction", gemSources: "Bound sources", gemFacts: "Required facts", gemOutput: "Output",
+    gemAdd: "Add to workspace", gemRemove: "Remove from workspace", gemUse: "Use this gem", gemAdded: "Added to workspace", gemRemoved: "Removed from workspace",
+    gemDetail: "Details", gemNoSources: "No external sources; works from the current thread", factsLabel: "Required facts",
+    factsMet: "provided", boundLabel: "Bound sources",
+    paletteEmpty: "No matching gem", paletteNav: "↑↓ navigate", paletteEnter: "Enter to use", paletteEsc: "Esc to close",
+    model_auth_error: "Authentication failed (401): the API key is invalid or belongs to another service.", model_permission_error: "Permission denied (403).", model_endpoint_or_name_not_found: "Endpoint or model not found (404): check that the Base URL includes /v1.", model_quota_or_rate_limit: "Rate limited or out of quota (429).", model_invalid_request: "The endpoint rejected the request (400/422).", model_invalid_response: "The response was not compatible Chat Completions JSON.", model_timeout: "The request timed out.", model_network_error: "The model endpoint could not be reached.", model_provider_error: "The provider returned an error.", model_unknown_error: "Connection failed."
   }
 };
 
 const scenarios = {
   zh: [
-    { id: "T01", category: "trade", icon: "T1", title: "受限方品牌名与具体签约实体", meta: "实体识别 · 限制范围", agents: ["trade"], question: "我们计划与华为体系内一家公司签订远程技术支持合同。请说明如何确认具体签约实体、该实体可能适用的清单限制，以及纯服务、软件更新和技术访问应分别核查什么。" },
-    { id: "T02", category: "trade", icon: "T2", title: "非名单客户的受限所有权风险", meta: "OFAC 50% Rule · UBO", agents: ["trade", "tpdd"], question: "客户本身没有出现在制裁名单上，但两家受制裁公司分别持有其30%和25%股权。我们能否交易？还需要取得哪些UBO及所有权资料？" },
-    { id: "T03", category: "trade", icon: "T3", title: "同名名单命中的误报处理", meta: "Name match · 地址与身份", agents: ["trade"], question: "系统提示客户 Apex Global Trading 与限制名单中的名称相似，但国家、地址和注册号不同。应如何判断是真实命中还是 false positive，并保留哪些证据？" },
-    { id: "P01", category: "product", icon: "P1", title: "H100 经加拿大出口至墨西哥", meta: "分类 · 路线 · 许可证", agents: ["product"], question: "NVIDIA H100 从美国出口，经加拿大中转到墨西哥，是否需要许可证？请列出准确判断所需的产品、收货方、最终安装地点和最终用途信息。" },
-    { id: "P02", category: "product", icon: "P2", title: "加密网络设备出口至印度", meta: "ECCN · Encryption · 例外", agents: ["product"], question: "一台包含VPN和高强度加密功能的美国原产网络安全设备拟出口到印度商业银行。应如何确认ECCN、加密分类、可能的许可例外和申报要求？" },
-    { id: "P03", category: "product", icon: "P3", title: "中国两用物项出口至欧盟", meta: "中国出口管制 · 最终用途", agents: ["product", "trade"], question: "中国供应商拟向欧盟客户出口可能属于两用物项的镓相关材料。需要核查哪些中国出口管制清单、产品参数、最终用户和最终用途信息？" },
-    { id: "D01", category: "tpdd", icon: "D1", title: "顾问成功费与 BVI 收款账户", meta: "费用 · 付款路径 · UBO", agents: ["tpdd"], question: "一家新成立的第三方顾问要求15%成功费，并要求付款到BVI账户。需要开展哪些尽调？" },
-    { id: "D02", category: "tpdd", icon: "D2", title: "新经销商缺少经营实质", meta: "Shell indicators · UBO", agents: ["tpdd"], question: "一家成立三个月的经销商使用共享办公地址、没有公开员工信息，并拒绝提供UBO。哪些是风险指标？需要哪些文件才能判断其经营实质？" },
-    { id: "D03", category: "tpdd", icon: "D3", title: "政府招标中的本地顾问", meta: "PEP · 服务证明 · 反腐败", agents: ["tpdd"], question: "本地顾问声称能帮助赢得政府招标，要求向个人账户支付月费和成功费。我们应如何审查PEP关系、服务范围、费用合理性和实际履约证据？" },
-    { id: "X01", category: "cross", icon: "X1", title: "H100 经分销商转供中国最终用户", meta: "转运 · 最终用户 · 经销商", agents: ["trade", "product", "tpdd"], question: "H100 销售给墨西哥经销商，但邮件显示最终用户位于中国。请同时评估受限方、产品许可、转运规避和经销商尽调风险。" },
-    { id: "X02", category: "cross", icon: "X2", title: "被拒订单改由货代与第三方付款", meta: "Circumvention · Payment", agents: ["trade", "product", "tpdd"], question: "一个出口订单因最终用户信息不完整被拒后，销售要求改由新加坡货代收货，并由无关第三方付款。应触发哪些Trade、Product和TPDD检查？" },
-    { id: "X03", category: "cross", icon: "X3", title: "新供应商、敏感 BOM 与异常付款", meta: "BOM · Vendor · Transaction", agents: ["trade", "product", "tpdd"], question: "采购拟从新供应商购买含美国加密芯片和中国两用物项部件的设备，供应商要求预付款到关联公司账户。请整合产品分类、交易方筛查和第三方尽调问题。" }
+    { id: "T01", category: "trade", title: "受限方品牌名与具体签约实体", meta: "实体识别 · 限制范围", question: "我们计划与华为体系内一家公司签订远程技术支持合同。请说明如何确认具体签约实体、该实体可能适用的清单限制，以及纯服务、软件更新和技术访问应分别核查什么。" },
+    { id: "T02", category: "trade", title: "非名单客户的受限所有权风险", meta: "OFAC 50% Rule · UBO", question: "客户 Meridian Data Systems Pte. Ltd. 本身没有出现在制裁名单上，但两家受制裁公司分别持有其 30% 和 25% 股权。我们能否交易？还需要取得哪些 UBO 及所有权资料？" },
+    { id: "T03", category: "trade", title: "同名名单命中的误报处理", meta: "身份要素比对", question: "客户 Aveox Technologies (Shenzhen) Co., Ltd.，注册号 91440300778812XKA，中国深圳，直销客户。系统提示与管控名单中的名称相似，请判断是真实命中还是误报，并说明保留哪些证据。" },
+    { id: "P01", category: "product", title: "AI 系统经加拿大出口至墨西哥", meta: "分类 · 路线 · 许可证", question: "ECCN 4A090.a 的 AI 训练系统从美国出口，经加拿大中转到墨西哥经销商，是否需要许可证？请列出准确判断所需的产品、收货方、最终安装地点和最终用途信息。" },
+    { id: "P02", category: "product", title: "加密网络设备出口至印度", meta: "ECCN · 加密 · 例外", question: "NW-4400-VPN 网络安全设备包含 IPsec VPN 和 AES-256 加密，美国原产，拟出口到印度商业银行。应如何确认 ECCN、加密分类、可能的许可例外和申报要求？" },
+    { id: "P03", category: "product", title: "中国两用物项出口至欧盟", meta: "中国管制 · 最终用途", question: "PT-7700-GA 镓基射频功放模块从深圳出口至德国电信客户，用于基站维修。需要核查哪些中国两用物项管制编码、公告文号、生效状态和许可要求？" },
+    { id: "DM1", category: "product", title: "中国制造含美国内容出口第三国", meta: "EAR 734 · de minimis", question: "TS-6200-DM 在合肥制造，受控美国原产内容占比 28%，出口至印度企业数据中心。是否 subject to the EAR？请先做 Part 734 的 de minimis 和外国直接产品规则分析。" },
+    { id: "D01", category: "tpdd", title: "顾问成功费与 BVI 收款账户", meta: "费用 · 付款路径 · UBO", question: "新顾问 Silverline Advisory Ltd.（BVI 注册）要求 15% 成功费并付款到 BVI 账户，未披露 UBO，也没有明确交付物。需要开展哪些尽调？" },
+    { id: "D02", category: "tpdd", title: "新经销商缺少经营实质", meta: "红旗 · 经营证据", question: "经销商 Orchard Networks Pte. Ltd. 成立三个月，使用共享办公地址、没有公开员工信息，并拒绝提供 UBO。哪些是风险指标？需要哪些文件才能判断其经营实质？" },
+    { id: "D03", category: "tpdd", title: "政府招标中的本地顾问", meta: "PEP · 反腐败", question: "本地顾问 Highfield Public Affairs Pvt. Ltd. 声称能帮助赢得政府招标，要求向个人账户支付月费和成功费。应如何审查 PEP 关系、服务范围、费用合理性和履约证据？" },
+    { id: "X01", category: "cross", title: "AI 系统经分销商转供中国最终用户", meta: "转运 · 最终用户 · 经销商", question: "AI-8100-H1 销售给墨西哥经销商 Vantage Trading S.A. de C.V.，但资料显示最终用户为中国的 Clearwater Computing。请同时评估受限方、产品许可、转运规避和经销商尽调风险。" },
+    { id: "X02", category: "cross", title: "被拒订单改由货代与第三方付款", meta: "规避模式 · 付款", question: "一个出口订单因最终用户信息不完整被拒后，销售要求改由新加坡货代 Westgate Logistics 收货，并由无关第三方付款。应触发哪些 Trade、Product 和 TPDD 检查？" },
+    { id: "X03", category: "cross", title: "新供应商、敏感 BOM 与异常付款", meta: "BOM · 供应商 · 交易", question: "采购拟从新供应商 Copperfield Industrial 购买含美国加密芯片和中国两用物项部件的设备，供应商要求付款到香港关联公司账户。请整合产品分类、交易方筛查和第三方尽调问题。" }
   ],
   en: [
-    { id: "T01", category: "trade", icon: "T1", title: "Restricted brand vs contracting entity", meta: "Entity identity · Restriction scope", agents: ["trade"], question: "We plan to sign a remote technical-support contract with a company in the Huawei group. Explain how to identify the contracting entity, determine applicable list restrictions, and separately assess pure services, software updates, and technology access." },
-    { id: "T02", category: "trade", icon: "T2", title: "Blocked ownership of an unlisted customer", meta: "OFAC 50% Rule · UBO", agents: ["trade", "tpdd"], question: "The customer is not named on a sanctions list, but two blocked companies own 30% and 25% respectively. Can we transact, and what UBO and ownership evidence is required?" },
-    { id: "T03", category: "trade", icon: "T3", title: "Resolving a potential name-match false positive", meta: "Name match · Identity evidence", agents: ["trade"], question: "Screening flags Apex Global Trading as similar to a restricted-list name, but its country, address, and registration number differ. How should we resolve the match and document the evidence?" },
-    { id: "P01", category: "product", icon: "P1", title: "H100 from the US via Canada to Mexico", meta: "Classification · Route · License", agents: ["product"], question: "Does exporting an NVIDIA H100 from the United States via Canada to Mexico require a license? List the product, consignee, installation location, and end-use facts required for the analysis." },
-    { id: "P02", category: "product", icon: "P2", title: "Encrypted network appliance to India", meta: "ECCN · Encryption · Exception", agents: ["product"], question: "A US-origin network-security appliance with VPN and strong encryption will be exported to an Indian commercial bank. How should we confirm the ECCN, encryption classification, possible license exception, and reporting requirements?" },
-    { id: "P03", category: "product", icon: "P3", title: "PRC dual-use item exported to the EU", meta: "PRC controls · End use", agents: ["product", "trade"], question: "A Chinese supplier plans to export gallium-related material that may be dual-use to an EU customer. Which PRC control lists, technical parameters, end-user facts, and end-use facts must be checked?" },
-    { id: "D01", category: "tpdd", icon: "D1", title: "Success fee and BVI payment account", meta: "Fee · Payment path · UBO", agents: ["tpdd"], question: "A newly formed third-party consultant requests a 15% success fee paid to a BVI account. What due diligence is required?" },
-    { id: "D02", category: "tpdd", icon: "D2", title: "New distributor with little business substance", meta: "Shell indicators · UBO", agents: ["tpdd"], question: "A distributor formed three months ago uses a shared-office address, has no public employee information, and refuses to provide its UBO. Which indicators matter, and what evidence is needed to assess business substance?" },
-    { id: "D03", category: "tpdd", icon: "D3", title: "Local consultant for a government tender", meta: "PEP · Performance · Anti-bribery", agents: ["tpdd"], question: "A local consultant claims it can help win a government tender and requests a monthly fee plus a success fee paid to an individual account. How should we assess PEP links, scope, fee reasonableness, and performance evidence?" },
-    { id: "X01", category: "cross", icon: "X1", title: "H100 diverted through a distributor to China", meta: "Diversion · End user · Distributor", agents: ["trade", "product", "tpdd"], question: "An H100 is sold to a Mexican distributor, but emails indicate that the ultimate user is in China. Assess restricted-party, product-license, diversion, and distributor-due-diligence risks together." },
-    { id: "X02", category: "cross", icon: "X2", title: "Rejected order rerouted with third-party payment", meta: "Circumvention · Payment", agents: ["trade", "product", "tpdd"], question: "After an export order was rejected for missing end-user information, Sales proposes delivery to a Singapore freight forwarder with payment from an unrelated third party. Which Trade, Product, and TPDD checks should trigger?" },
-    { id: "X03", category: "cross", icon: "X3", title: "New supplier, sensitive BOM and unusual payment", meta: "BOM · Vendor · Transaction", agents: ["trade", "product", "tpdd"], question: "Procurement wants to buy equipment containing US encryption chips and PRC dual-use components from a new supplier that requests prepayment to an affiliate account. Consolidate product-classification, party-screening, and third-party-due-diligence questions." }
+    { id: "T01", category: "trade", title: "Restricted brand vs contracting entity", meta: "Entity identity · Restriction scope", question: "We plan to sign a remote technical-support contract with a company in the Huawei group. Explain how to identify the contracting entity, which list restrictions may apply, and what to check separately for pure services, software updates and technology access." },
+    { id: "T02", category: "trade", title: "Blocked ownership of an unlisted customer", meta: "OFAC 50% Rule · UBO", question: "Customer Meridian Data Systems Pte. Ltd. is not itself listed, but two blocked companies own 30% and 25%. Can we transact, and what UBO and ownership evidence is required?" },
+    { id: "T03", category: "trade", title: "Resolving a name-match false positive", meta: "Identity elements", question: "Customer Aveox Technologies (Shenzhen) Co., Ltd., registration 91440300778812XKA, Shenzhen China, direct customer. Screening flags a name similar to a control-list entry. Is this a real hit or a false positive, and what evidence should be retained?" },
+    { id: "P01", category: "product", title: "AI system via Canada to Mexico", meta: "Classification · Route · Licence", question: "Does exporting an ECCN 4A090.a AI training system from the US via Canada to a Mexican distributor require a licence? List the product, consignee, installation location and end-use facts required." },
+    { id: "P02", category: "product", title: "Encrypted network appliance to India", meta: "ECCN · Encryption · Exception", question: "NW-4400-VPN network appliance with IPsec VPN and AES-256, US origin, to be exported to an Indian commercial bank. How should we confirm the ECCN, encryption classification, possible exception and reporting?" },
+    { id: "P03", category: "product", title: "PRC dual-use item exported to the EU", meta: "PRC controls · End use", question: "PT-7700-GA gallium RF amplifier module exported from Shenzhen to a German telecom customer for base-station repair. Which PRC control codes, notice numbers, in-force status and licence requirements apply?" },
+    { id: "DM1", category: "product", title: "China-made with US content to a third country", meta: "EAR 734 · de minimis", question: "TS-6200-DM is manufactured in Hefei with 28% controlled US-origin content and exported to an enterprise data centre in India. Is it subject to the EAR? Run the Part 734 de minimis and foreign direct product analysis first." },
+    { id: "D01", category: "tpdd", title: "Success fee and BVI payment account", meta: "Fee · Payment path · UBO", question: "New consultant Silverline Advisory Ltd. (BVI) requests a 15% success fee to a BVI account, has not disclosed its UBO, and has no defined deliverables. What due diligence is required?" },
+    { id: "D02", category: "tpdd", title: "New distributor with little substance", meta: "Red flags · Evidence", question: "Distributor Orchard Networks Pte. Ltd. was formed three months ago, uses a shared-office address, has no public employee information and refuses to provide its UBO. Which indicators matter and what evidence is needed?" },
+    { id: "D03", category: "tpdd", title: "Local consultant for a government tender", meta: "PEP · Anti-bribery", question: "Local consultant Highfield Public Affairs Pvt. Ltd. claims it can help win a government tender and asks for a monthly fee plus success fee to a personal account. How should we assess PEP links, scope, fee reasonableness and performance evidence?" },
+    { id: "X01", category: "cross", title: "AI system diverted through a distributor", meta: "Diversion · End user", question: "AI-8100-H1 is sold to Mexican distributor Vantage Trading S.A. de C.V., but records show the end user is Clearwater Computing in China. Assess restricted-party, product-licence, diversion and distributor-diligence risk together." },
+    { id: "X02", category: "cross", title: "Rejected order rerouted with third-party payment", meta: "Circumvention · Payment", question: "After an export order was rejected for missing end-user information, Sales proposes delivery to Singapore forwarder Westgate Logistics with payment from an unrelated third party. Which Trade, Product and TPDD checks should trigger?" },
+    { id: "X03", category: "cross", title: "New supplier, sensitive BOM, unusual payment", meta: "BOM · Vendor · Transaction", question: "Procurement wants to buy equipment containing US encryption chips and PRC dual-use components from new supplier Copperfield Industrial, which asks for payment to a Hong Kong affiliate account. Consolidate classification, screening and diligence questions." }
   ]
 };
 
-const state = { locale: localStorage.getItem("compliance-locale") || "zh", busy: false, scenarioCategory: "all", conversation: [], serverModelConfigured: false };
-const $ = (id) => document.getElementById(id);
+const state = {
+  locale: localStorage.getItem("compliance-locale") || "zh",
+  busy: false,
+  scenarioCategory: "all",
+  conversation: [],
+  serverModelConfigured: false,
+  rulesMode: true,
+  activeGem: null,
+  palette: { open: false, items: [], index: 0 }
+};
 
-function t(key) { return i18n[state.locale][key] || key; }
-function agentName(agent) { return ({ trade: "Trade Compliance", product: "Product Compliance", tpdd: "Ethics & TPDD" })[agent] || agent; }
-function escapeHtml(value = "") { return String(value).replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[char]); }
+const $ = (id) => document.getElementById(id);
+const t = (key) => i18n[state.locale][key] || key;
+const localized = (value) => (value && typeof value === "object" ? value[state.locale] || value.zh : value);
+const agentName = (agent) => ({ trade: "Trade", product: "Product", tpdd: "Ethics & TPDD" })[agent] || agent;
+const esc = (value = "") => String(value).replace(/[&<>'"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[c]);
+
 function getConfig() {
   return {
     baseUrl: localStorage.getItem("compliance-base-url") || "https://api.openai.com/v1",
@@ -92,44 +123,11 @@ function getConfig() {
   };
 }
 
-function renderScenarios() {
-  const visible = scenarios[state.locale].filter((scenario) => state.scenarioCategory === "all" || scenario.category === state.scenarioCategory);
-  $("visibleScenarioCount").textContent = visible.length;
-  $("scenarioFilters").innerHTML = ["all", "trade", "product", "tpdd", "cross"].map((category) => `
-    <button type="button" class="filter-button ${state.scenarioCategory === category ? "active" : ""}" data-category="${category}" aria-pressed="${state.scenarioCategory === category}">${t(`filter${category.charAt(0).toUpperCase()}${category.slice(1)}`)}</button>`).join("");
-  $("scenarioList").innerHTML = visible.map((scenario) => `
-    <button type="button" class="scenario-button" data-scenario="${scenario.id}">
-      <span class="scenario-icon">${scenario.icon}</span>
-      <span><strong>${escapeHtml(scenario.title)}</strong><small>${escapeHtml(scenario.meta)}</small><span class="scenario-route">${scenario.agents.map((agent) => `<i>${agentName(agent)}</i>`).join("")}</span></span>
-    </button>`).join("");
-}
-
-function renderStarterPrompts() {
-  const starterIds = ["T03", "P02", "D02", "X02"];
-  const selected = starterIds.map((id) => scenarios[state.locale].find((scenario) => scenario.id === id)).filter(Boolean);
-  $("starterPrompts").innerHTML = selected.map((scenario) => `<button type="button" class="starter-prompt" data-starter="${scenario.id}"><b>${scenario.id} · ${scenario.agents.map(agentName).join(" + ")}</b>${escapeHtml(scenario.title)}</button>`).join("");
-}
-
-function applyLocale(locale) {
-  state.locale = locale;
-  localStorage.setItem("compliance-locale", locale);
-  document.documentElement.lang = locale === "zh" ? "zh-CN" : "en";
-  document.querySelectorAll("[data-i18n]").forEach((el) => { el.textContent = t(el.dataset.i18n); });
-  document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => { el.placeholder = t(el.dataset.i18nPlaceholder); });
-  $("zhBtn").classList.toggle("active", locale === "zh"); $("zhBtn").setAttribute("aria-pressed", locale === "zh");
-  $("enBtn").classList.toggle("active", locale === "en"); $("enBtn").setAttribute("aria-pressed", locale === "en");
-  $("themeBtn").ariaLabel = t("themeLabel");
-  $("scenarioLibraryBtn").ariaLabel = t("scenarioLibrary");
-  $("settingsBtn").ariaLabel = t("modelSettings");
-  $("newChatBtn").ariaLabel = t("newChat");
-  renderScenarios();
-  renderStarterPrompts();
-  updateRuntimeStatus();
-}
-
 function toast(message) {
-  $("toast").textContent = message; $("toast").classList.add("show");
-  clearTimeout(toast.timer); toast.timer = setTimeout(() => $("toast").classList.remove("show"), 2600);
+  $("toast").textContent = message;
+  $("toast").classList.add("show");
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => $("toast").classList.remove("show"), 2400);
 }
 
 function setTheme(theme) {
@@ -137,125 +135,392 @@ function setTheme(theme) {
   localStorage.setItem("compliance-theme", theme);
 }
 
-function updateRuntimeStatus() {
-  const status = $("runtimeStatus");
-  if (!status) return;
-  const rulesMode = $("mockToggle").checked;
-  const ready = state.serverModelConfigured || Boolean(sessionStorage.getItem("compliance-api-key"));
-  status.className = `runtime-status ${rulesMode ? "runtime-rules" : ready ? "runtime-ready" : "runtime-missing"}`;
-  status.textContent = rulesMode ? t("runtimeRules") : ready ? t("runtimeReady") : t("runtimeMissing");
+/* ------------------------------------------------------------------ gems */
+
+function gemIconMarkup(gem) { return `<span class="gem-icon" aria-hidden="true">${gem.icon}</span>`; }
+
+function renderGemGrid() {
+  const pinned = workspaceGemIds();
+  // Workspace gems float to the top so a user's own set is the default surface.
+  const ordered = [...GEMS].sort((a, b) => (pinned.includes(b.id) ? 1 : 0) - (pinned.includes(a.id) ? 1 : 0));
+  $("gemGrid").innerHTML = ordered.slice(0, 6).map((gem) => `
+    <button type="button" class="gem-card" data-gem="${gem.id}">
+      ${gemIconMarkup(gem)}
+      <span>
+        <strong>${esc(localized(gem.name))} <code>${esc(gem.command)}</code></strong>
+        <small>${esc(localized(gem.summary))}</small>
+      </span>
+    </button>`).join("");
 }
 
+function renderActiveGem() {
+  const host = $("gemActive");
+  if (!state.activeGem) { host.classList.add("hidden"); host.innerHTML = ""; return; }
+  const gem = state.activeGem;
+  const facts = factCoverage(gem, $("questionInput").value);
+  const metCount = facts.filter((fact) => fact.met).length;
+  host.classList.remove("hidden");
+  host.innerHTML = `
+    <div class="gem-active-head">
+      ${gemIconMarkup(gem)}
+      <strong>${esc(localized(gem.name))}</strong>
+      <code>${esc(gem.command)}</code>
+      <span class="spacer"></span>
+      <button type="button" class="link-btn" data-gem-detail="${gem.id}">${t("gemDetail")}</button>
+      <button type="button" class="gem-drop" id="gemDropBtn" aria-label="remove gem">
+        <svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <div class="gem-facts">
+      <div class="gem-facts-label">${t("factsLabel")} · ${metCount}/${facts.length} ${t("factsMet")}</div>
+      <ul>${facts.map((fact) => `<li class="${fact.met ? "met" : ""}">${esc(localized({ zh: fact.zh, en: fact.en }))}</li>`).join("")}</ul>
+    </div>
+    ${gem.boundSources.length
+      ? `<div class="gem-sources"><b>${t("boundLabel")}:</b> ${gem.boundSources.map(esc).join(" · ")}</div>`
+      : `<div class="gem-sources">${t("gemNoSources")}</div>`}`;
+}
+
+function activateGem(gemId, { focus = true } = {}) {
+  const gem = GEM_BY_ID.get(gemId);
+  if (!gem) return;
+  state.activeGem = gem;
+  closePalette();
+  const input = $("questionInput");
+  input.placeholder = localized(gem.placeholder) || t("placeholder");
+  renderActiveGem();
+  updateRouteHint();
+  if (focus) input.focus();
+}
+
+function clearGem() {
+  state.activeGem = null;
+  $("questionInput").placeholder = t("placeholder");
+  renderActiveGem();
+}
+
+/* ------------------------------------------------------- slash palette */
+
+function paletteQuery() {
+  const value = $("questionInput").value;
+  // The palette only opens on a slash that starts the draft, so a URL or a date
+  // typed mid-sentence never hijacks the composer.
+  const match = value.match(/^\/([\w-]*)$/);
+  return match ? match[1] : null;
+}
+
+function openPalette(query) {
+  const items = matchGems(query);
+  state.palette = { open: true, items, index: 0 };
+  renderPalette();
+}
+
+function closePalette() {
+  if (!state.palette.open) return;
+  state.palette.open = false;
+  $("palette").classList.add("hidden");
+}
+
+function renderPalette() {
+  const host = $("palette");
+  const { items, index } = state.palette;
+  host.classList.remove("hidden");
+  if (!items.length) { host.innerHTML = `<div class="palette-empty">${t("paletteEmpty")}</div>`; return; }
+  const groups = Object.keys(GEM_GROUPS).filter((group) => items.some((gem) => gem.group === group));
+  host.innerHTML = groups.map((group) => `
+    <div class="palette-group">
+      <div class="palette-group-label">${esc(localized(GEM_GROUPS[group]))}</div>
+      ${items.filter((gem) => gem.group === group).map((gem) => `
+        <button type="button" class="palette-item ${items.indexOf(gem) === index ? "active" : ""}" data-gem="${gem.id}" role="option">
+          ${gemIconMarkup(gem)}
+          <span><strong>${esc(localized(gem.name))}</strong><small>${esc(localized(gem.summary))}</small></span>
+          <code>${esc(gem.command)}</code>
+        </button>`).join("")}
+    </div>`).join("")
+    + `<div class="palette-foot"><span>${t("paletteNav")}</span><span>${t("paletteEnter")}</span><span>${t("paletteEsc")}</span></div>`;
+  host.querySelector(".palette-item.active")?.scrollIntoView({ block: "nearest" });
+}
+
+function movePalette(step) {
+  const { items } = state.palette;
+  if (!items.length) return;
+  state.palette.index = (state.palette.index + step + items.length) % items.length;
+  renderPalette();
+}
+
+function choosePalette() {
+  const gem = state.palette.items[state.palette.index];
+  if (!gem) return;
+  $("questionInput").value = "";
+  activateGem(gem.id);
+}
+
+/* -------------------------------------------------------- gem detail */
+
+function openGemDetail(gemId) {
+  const gem = GEM_BY_ID.get(gemId);
+  if (!gem) return;
+  const pinned = workspaceGemIds().includes(gem.id);
+  $("gemDialogBody").innerHTML = `
+    <div class="card-head">
+      <div class="gem-detail-head">
+        ${gemIconMarkup(gem)}
+        <div>
+          <h2>${esc(localized(gem.name))} <code>${esc(gem.command)}</code></h2>
+          <p>${esc(localized(gem.summary))}</p>
+        </div>
+      </div>
+      <button class="icon-btn" data-close-gem type="button" aria-label="Close">
+        <svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <dl class="gem-spec">
+      <div class="gem-spec-row"><dt>${t("gemInstruction")}</dt><dd>${esc(localized(gem.instruction))}</dd></div>
+      <div class="gem-spec-row"><dt>${t("gemSources")}</dt><dd>${gem.boundSources.length
+        ? `<div class="chip-row">${gem.boundSources.map((id) => `<span class="chip mono">${esc(id)}</span>`).join("")}</div>`
+        : esc(t("gemNoSources"))}</dd></div>
+      <div class="gem-spec-row"><dt>${t("gemFacts")}</dt><dd><div class="chip-row">${gem.requiredFacts.map((fact) => `<span class="chip">${esc(localized({ zh: fact.zh, en: fact.en }))}</span>`).join("")}</div></dd></div>
+      <div class="gem-spec-row"><dt>${t("gemOutput")}</dt><dd>${esc(localized(gem.outputTemplate))}</dd></div>
+    </dl>
+    <div class="card-actions">
+      <button class="btn" data-toggle-workspace="${gem.id}" type="button">${pinned ? t("gemRemove") : t("gemAdd")}</button>
+      <button class="btn btn-primary" data-use-gem="${gem.id}" type="button">${t("gemUse")}</button>
+    </div>`;
+  $("gemDialog").showModal();
+}
+
+/* ----------------------------------------------------------- rendering */
+
+function riskLabel(level) { return t(`risk${level.charAt(0).toUpperCase()}${level.slice(1)}`); }
+function renderList(items) { return items?.length ? `<ul>${items.map((item) => `<li>${esc(item)}</li>`).join("")}</ul>` : `<p>${t("noItems")}</p>`; }
+
 function estimatedRoute(question) {
-  const lower = question.toLowerCase(); const agents = [];
-  if (/华为|huawei|名单|entity|sdn|交易方|restricted|sanction|party|ownership|所有权|最终用户|end.user|最终用途|end.use|false positive|screening/.test(lower)) agents.push("trade");
-  if (/h100|gpu|cpu|芯片|产品|eccn|加密|encryption|license|许可证|product|出口|export|两用物项|dual.use|bom|镓|gallium/.test(lower)) agents.push("product");
-  if (/顾问|consultant|成功费|success fee|bvi|付款|payment|第三方|third.party|尽调|due diligence|shell|ubo|经销商|distributor|共享办公|shared.office|政府招标|government tender|货代|freight.forwarder|关联公司|affiliate account/.test(lower)) agents.push("tpdd");
+  const lower = question.toLowerCase();
+  const agents = [];
+  if (/华为|huawei|名单|entity|sdn|交易方|restricted|sanction|party|ownership|所有权|最终用户|end.user|最终用途|end.use|false positive|screening|管控名单|筛查/.test(lower)) agents.push("trade");
+  if (/h100|gpu|cpu|芯片|产品|eccn|加密|encryption|licen|许可|product|出口|export|两用物项|dual.use|bom|镓|gallium|de minimis|734|管辖/.test(lower)) agents.push("product");
+  if (/顾问|consultant|成功费|success fee|bvi|付款|payment|第三方|third.party|尽调|due diligence|shell|ubo|经销商|distributor|共享办公|政府招标|货代|freight|关联公司|affiliate/.test(lower)) agents.push("tpdd");
   return agents.length ? [...new Set(agents)] : ["trade", "product", "tpdd"];
 }
 
-function updateRoutePreview() {
+function updateRouteHint() {
   const value = $("questionInput").value.trim();
-  if (!value) { $("routePreview").innerHTML = `<span>${t("willRoute")}</span>`; return; }
-  const looksLikeFollowUp = /^(那|那么|如果|再|另外|对于|上述|这个|该|what if|then|and if|how about|for that)/i.test(value);
-  const latestUserContext = [...state.conversation].reverse().find((item) => item.role === "user")?.content || "";
-  const previewAgents = looksLikeFollowUp && latestUserContext ? [...new Set([...estimatedRoute(latestUserContext), ...estimatedRoute(value)])] : estimatedRoute(value);
-  $("routePreview").innerHTML = `<span>${t("routeLabel")}:</span>${previewAgents.map((agent) => `<span class="route-tag">${agentName(agent)}</span>`).join("")}`;
+  const host = $("routeHint");
+  if (!value) { host.innerHTML = ""; return; }
+  const agents = estimatedRoute(value);
+  host.innerHTML = `<span>${t("routeLabel")}</span>${agents.map((a) => `<span class="route-tag">${agentName(a)}</span>`).join("")}`;
 }
 
-function riskLabel(level) { return t(`risk${level.charAt(0).toUpperCase()}${level.slice(1)}`); }
-function renderList(items) { return items?.length ? `<ul>${items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>` : `<p>${t("noItems")}</p>`; }
-
-function renderResults(data) {
-  $("emptyState").classList.add("hidden"); $("loadingState").classList.add("hidden");
-  const synthesis = data.synthesis;
-  const answerId = `answer-${data.id}`;
-  $("resultState").insertAdjacentHTML("beforeend", `
-    <article class="chat-message assistant-message" id="${escapeHtml(answerId)}">
-      <span class="assistant-avatar" aria-hidden="true">CH</span>
-      <div class="assistant-content">
-        <div class="assistant-meta"><strong>Compliance Hub</strong><span>${escapeHtml(data.id)}</span><span>${data.mode === "live-model" ? t("liveLabel") : t("mockLabel")}</span></div>
-        <div class="route-strip">${t("routedTo")}: ${data.agents.map((agent) => `<span>${agentName(agent)}</span>`).join("")}</div>
-        <section class="unified-answer">
-          <div class="unified-answer-head"><span class="risk-mark risk-${synthesis.overallRisk}">${escapeHtml(riskLabel(synthesis.overallRisk))}</span>
-            <div><p class="eyebrow">${t("overallAssessment")}</p><h2>${escapeHtml(synthesis.headline)}</h2><p>${escapeHtml(synthesis.executiveSummary)}</p></div>
-          </div>
-          <div class="next-step"><strong>${t("nextStep")}</strong><p>${escapeHtml(synthesis.nextStep)}</p></div>
-        </section>
-        <details class="analysis-trace">
-          <summary>${t("specialistTrace")}</summary>
-          <div class="trace-body">${data.results.map((result) => `
-            <section class="trace-agent">
-              <div class="trace-agent-head"><strong>${agentName(result.agent)}</strong><span class="risk-chip risk-${result.riskLevel}">${escapeHtml(riskLabel(result.riskLevel))}</span></div>
-              <p>${escapeHtml(result.summary)}</p>
-              <ul class="trace-findings">${(result.findings || []).map((finding) => `<li><b>${escapeHtml(finding.title)}：</b>${escapeHtml(finding.detail)} <span class="citation-chips">${(finding.evidenceSourceIds || []).map((id) => `<span>${escapeHtml(id)}</span>`).join("")}</span></li>`).join("")}</ul>
-              <div class="trace-columns"><div><h3>${t("missingInfo")}</h3>${renderList(result.missingInfo)}</div><div><h3>${t("actions")}</h3>${renderList(result.recommendedActions)}</div></div>
-            </section>`).join("")}</div>
-        </details>
-        <p class="message-disclaimer">${escapeHtml(data.disclaimer)}</p>
-      </div>
-    </article>`);
-  renderEvidence(data.sources || []);
-  document.getElementById(answerId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+function showEvidencePanel(show) {
+  $("workspace").classList.toggle("no-evidence", !show);
 }
 
-function sourceStatus(source) {
-  return { live: t("sourceLive"), metadata_only: t("sourceMetadata"), unavailable: t("sourceUnavailable"), not_fetched: t("sourceNotFetched") }[source.liveStatus] || source.liveStatus;
-}
 function renderEvidence(sources) {
-  $("sourceCount").textContent = sources.length; $("evidenceEmpty").classList.toggle("hidden", sources.length > 0);
+  $("sourceCount").textContent = sources.length;
+  showEvidencePanel(sources.length > 0);
+  if (!sources.length) { $("evidenceList").innerHTML = `<p class="evidence-empty">${t("evidenceEmpty")}</p>`; return; }
+  const statusLabel = (source) => ({ live: t("sourceLive"), metadata_only: t("sourceMetadata"), unavailable: t("sourceUnavailable"), not_fetched: t("sourceNotFetched") }[source.liveStatus] || source.liveStatus);
   $("evidenceList").innerHTML = sources.map((source) => `
-    <article class="source-card"><div class="source-authority">${escapeHtml(source.authority)}</div>
-      <a href="${escapeHtml(source.url)}" target="_blank" rel="noopener noreferrer" title="${t("openSource")}">${escapeHtml(source.title)}</a>
-      <div class="source-meta"><span class="source-status ${escapeHtml(source.liveStatus)}">${escapeHtml(sourceStatus(source))}</span><time>${source.retrievedAt ? new Date(source.retrievedAt).toLocaleTimeString(state.locale === "zh" ? "zh-CN" : "en-US", { hour: "2-digit", minute: "2-digit" }) : "—"}</time></div>
+    <article class="source-card">
+      <div class="authority">${esc(source.authority)}</div>
+      <a href="${esc(source.url)}" target="_blank" rel="noopener noreferrer">${esc(source.title)}</a>
+      <div class="source-meta">
+        <span class="source-status ${esc(source.liveStatus)}">${esc(statusLabel(source))}</span>
+        <time>${source.retrievedAt ? new Date(source.retrievedAt).toLocaleTimeString(state.locale === "zh" ? "zh-CN" : "en-US", { hour: "2-digit", minute: "2-digit" }) : "—"}</time>
+      </div>
     </article>`).join("");
 }
 
+function renderResult(data) {
+  const synthesis = data.synthesis;
+  const anchor = `answer-${data.id}`;
+  $("threadInner").insertAdjacentHTML("beforeend", `
+    <article class="msg msg-assistant" id="${esc(anchor)}">
+      <span class="avatar" aria-hidden="true">CH</span>
+      <div>
+        <div class="msg-meta">
+          <span class="tag">${esc(data.id)}</span><span class="sep">·</span>
+          <span>${data.mode === "live-model" ? t("liveLabel") : t("mockLabel")}</span><span class="sep">·</span>
+          <span>${t("routedTo")} ${data.agents.map(agentName).join(", ")}</span>
+        </div>
+        <section class="answer">
+          <div class="answer-head">
+            <span class="risk-mark risk-${esc(synthesis.overallRisk)}">${esc(riskLabel(synthesis.overallRisk))}</span>
+            <div>
+              <h3>${esc(synthesis.headline)}</h3>
+              <p>${esc(synthesis.executiveSummary)}</p>
+            </div>
+          </div>
+          <div class="next-step"><b>${t("nextStep")}</b>${esc(synthesis.nextStep)}</div>
+        </section>
+        <details class="trace">
+          <summary>${t("specialistTrace")}</summary>
+          <div class="trace-body">${data.results.map((result) => `
+            <section class="trace-agent">
+              <div class="trace-agent-head">
+                <strong>${agentName(result.agent)}</strong>
+                <span class="risk-chip risk-${esc(result.riskLevel)}">${esc(riskLabel(result.riskLevel))}</span>
+              </div>
+              <p>${esc(result.summary)}</p>
+              <ul class="trace-findings">${(result.findings || []).map((finding) => `
+                <li><b>${esc(finding.title)}</b> ${esc(finding.detail)}<span class="cite">${(finding.evidenceSourceIds || []).map((id) => `<span>${esc(id)}</span>`).join("")}</span></li>`).join("")}</ul>
+              <div class="trace-cols">
+                <div><h4>${t("missingInfo")}</h4>${renderList(result.missingInfo)}</div>
+                <div><h4>${t("actions")}</h4>${renderList(result.recommendedActions)}</div>
+              </div>
+            </section>`).join("")}</div>
+        </details>
+        <p class="msg-note">${esc(data.disclaimer)}</p>
+      </div>
+    </article>`);
+  renderEvidence(data.sources || []);
+  $(anchor)?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+/* ------------------------------------------------------------- coverage */
+
+async function loadCoverage() {
+  try {
+    const response = await fetch("/api/data-sources");
+    if (!response.ok) return;
+    const data = await response.json();
+    const synced = data.sources.filter((source) => source.sync?.status === "success");
+    const failed = data.sources.filter((source) => source.sync?.status === "failed");
+    const records = synced.reduce((sum, source) => sum + (source.sync.recordCount || 0), 0);
+    const cnSynced = synced.filter((source) => source.country === "CN").length;
+    const cnTotal = data.sources.filter((source) => source.country === "CN").length;
+
+    const status = $("dataStatus");
+    status.className = `data-status ${failed.length ? "warn" : synced.length ? "ok" : "bad"}`;
+    $("dataStatusText").innerHTML = synced.length
+      ? `<b>${synced.length}</b> ${t("dataSynced")}${failed.length ? ` · <b>${failed.length}</b> ${t("dataFailed")}` : ""}`
+      : t("dataNone");
+    status.title = failed.length ? failed.map((source) => `${source.sourceId}: ${source.sync.error || ""}`).join("\n") : "";
+
+    $("coverageStrip").innerHTML = [
+      { value: `${synced.length}/${data.sources.length}`, label: t("sourcesSynced") },
+      { value: records.toLocaleString(), label: t("listRecords") },
+      { value: `${cnSynced}/${cnTotal}`, label: t("cnSources") },
+      { value: String(failed.length), label: t("failedSources"), bad: failed.length > 0 }
+    ].map((cell) => `<div class="coverage-cell ${cell.bad ? "is-bad" : ""}"><b>${esc(cell.value)}</b><span>${esc(cell.label)}</span></div>`).join("");
+  } catch { /* Coverage is informational; the workbench stays usable without it. */ }
+}
+
+/* ------------------------------------------------------------- analysis */
+
 async function analyze(event) {
-  event.preventDefault(); if (state.busy) return;
-  const question = $("questionInput").value.trim(); const mock = $("mockToggle").checked; const config = getConfig();
-  if (question.length < 5) return toast(t("invalidQuestion"));
-  if (!mock && !config.apiKey && !state.serverModelConfigured) { toast(t("needKey")); openSettings(); return; }
+  event.preventDefault();
+  if (state.busy) return;
+  closePalette();
+  const raw = $("questionInput").value.trim();
+  if (raw.length < 5) return toast(t("invalidQuestion"));
+  const gem = state.activeGem;
+  const config = getConfig();
+  const mock = state.rulesMode;
+  if (!mock && !config.apiKey && !state.serverModelConfigured) { toast(t("needKey")); return openSettings(); }
+
+  // The gem contributes its instruction and its bound-source whitelist; the
+  // user's text stays verbatim so the transcript shows what was actually asked.
+  const question = gem
+    ? `${localized(gem.instruction)}\n\n${gem.boundSources.length ? `仅使用以下来源作为依据：${gem.boundSources.join(", ")}。\n\n` : ""}${raw}`
+    : raw;
+
   const priorHistory = state.conversation.slice(-6);
   state.conversation.push({ role: "user", content: question });
-  $("emptyState").classList.add("hidden");
-  $("resultState").insertAdjacentHTML("beforeend", `<article class="chat-message user-message"><div class="user-bubble">${escapeHtml(question)}</div></article>`);
-  $("questionInput").value = ""; updateRoutePreview();
-  state.busy = true; $("submitBtn").disabled = true; $("loadingState").classList.remove("hidden");
+  $("startPanel").classList.add("hidden");
+  $("threadInner").insertAdjacentHTML("beforeend", `
+    <article class="msg msg-user"><div class="bubble">${gem ? `<span class="gem-tag">${esc(gem.command)}</span><br>` : ""}${esc(raw)}</div></article>`);
+  $("questionInput").value = "";
+  updateRouteHint();
+  renderActiveGem();
+
+  state.busy = true;
+  $("submitBtn").disabled = true;
+  $("loadingState").classList.remove("hidden");
   $("loadingState").scrollIntoView({ behavior: "smooth", block: "end" });
+
   try {
-    const response = await fetch("/api/assess", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question, locale: state.locale, mock, config, history: priorHistory }) });
-    const data = await response.json(); if (!response.ok) throw new Error(data.error || t("error"));
-    state.conversation.push({ role: "assistant", content: `${data.synthesis.headline}\n${data.synthesis.executiveSummary}\n${data.synthesis.nextStep}` });
-    renderResults(data);
+    const response = await fetch("/api/assess", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question, locale: state.locale, mock, config, history: priorHistory })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || t("error"));
+    state.conversation.push({ role: "assistant", content: `${data.synthesis.headline}\n${data.synthesis.executiveSummary}` });
+    $("loadingState").classList.add("hidden");
+    renderResult(data);
   } catch (error) {
     $("loadingState").classList.add("hidden");
-    $("resultState").insertAdjacentHTML("beforeend", `<article class="chat-message assistant-message"><span class="assistant-avatar">CH</span><div class="assistant-content"><div class="unified-answer"><strong>${t("error")}</strong><p>${escapeHtml(error.message)}</p></div></div></article>`);
+    $("threadInner").insertAdjacentHTML("beforeend", `
+      <article class="msg msg-assistant"><span class="avatar">CH</span><div><section class="answer"><div class="answer-head">
+        <span class="risk-mark risk-unknown">!</span><div><h3>${t("error")}</h3><p>${esc(error.message)}</p></div>
+      </div></section></div></article>`);
     toast(`${t("error")}: ${error.message}`);
-  } finally { state.busy = false; $("submitBtn").disabled = false; }
+  } finally {
+    state.busy = false;
+    $("submitBtn").disabled = false;
+  }
 }
 
 function newConversation() {
   state.conversation = [];
-  $("resultState").innerHTML = "";
-  $("emptyState").classList.remove("hidden");
+  $("threadInner").innerHTML = "";
+  $("startPanel").classList.remove("hidden");
   $("loadingState").classList.add("hidden");
   $("questionInput").value = "";
+  clearGem();
   renderEvidence([]);
-  updateRoutePreview();
+  updateRouteHint();
   $("questionInput").focus();
 }
 
+/* -------------------------------------------------------------- settings */
+
+function updateModePill() {
+  const pill = $("modePill");
+  const ready = state.serverModelConfigured || Boolean(sessionStorage.getItem("compliance-api-key"));
+  pill.classList.toggle("live", !state.rulesMode && ready);
+  pill.title = t("modeHint");
+  $("modePillText").textContent = state.rulesMode ? t("runtimeRules") : ready ? t("runtimeReady") : t("runtimeMissing");
+}
+
 function openSettings() {
-  const config = getConfig(); $("baseUrlInput").value = config.baseUrl; $("modelInput").value = config.model; $("apiKeyInput").value = config.apiKey; $("connectionStatus").textContent = "";
+  const config = getConfig();
+  $("baseUrlInput").value = config.baseUrl;
+  $("modelInput").value = config.model;
+  $("apiKeyInput").value = config.apiKey;
+  $("connectionStatus").textContent = "";
+  $("connectionStatus").className = "status-line";
   $("settingsDialog").showModal();
 }
+
 function saveSettings(event) {
-  event.preventDefault(); localStorage.setItem("compliance-base-url", $("baseUrlInput").value.trim()); localStorage.setItem("compliance-model", $("modelInput").value.trim());
-  const key = $("apiKeyInput").value.trim(); if (key) sessionStorage.setItem("compliance-api-key", key); else sessionStorage.removeItem("compliance-api-key");
-  if (key) $("mockToggle").checked = false;
-  updateRuntimeStatus();
-  $("settingsDialog").close(); toast(t("saved"));
+  event.preventDefault();
+  localStorage.setItem("compliance-base-url", $("baseUrlInput").value.trim());
+  localStorage.setItem("compliance-model", $("modelInput").value.trim());
+  const key = $("apiKeyInput").value.trim();
+  if (key) { sessionStorage.setItem("compliance-api-key", key); state.rulesMode = false; }
+  else sessionStorage.removeItem("compliance-api-key");
+  updateModePill();
+  $("settingsDialog").close();
+  toast(t("saved"));
+}
+
+async function testConnection() {
+  const status = $("connectionStatus");
+  status.className = "status-line";
+  status.textContent = t("testing");
+  $("testConnectionBtn").disabled = true;
+  try {
+    const config = { baseUrl: $("baseUrlInput").value.trim(), model: $("modelInput").value.trim(), apiKey: $("apiKeyInput").value.trim() };
+    const response = await fetch("/api/test-connection", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ config }) });
+    const data = await response.json();
+    if (!response.ok || !data.ok) throw new Error(i18n[state.locale][data.code] || data.error || t("connectionFailed"));
+    status.className = "status-line ok";
+    status.textContent = t("connected");
+  } catch (error) {
+    status.className = "status-line err";
+    status.textContent = error.message || t("connectionFailed");
+  } finally { $("testConnectionBtn").disabled = false; }
 }
 
 async function loadRuntimeCapabilities() {
@@ -264,42 +529,136 @@ async function loadRuntimeCapabilities() {
     if (!response.ok) return;
     const capabilities = await response.json();
     state.serverModelConfigured = Boolean(capabilities.liveModelConfigured);
-    if (state.serverModelConfigured && !sessionStorage.getItem("compliance-force-demo")) $("mockToggle").checked = false;
-    updateRuntimeStatus();
-  } catch { /* The rules demo remains available when capability discovery fails. */ }
-}
-async function testConnection() {
-  const status = $("connectionStatus"); status.className = "connection-status"; status.textContent = t("testing"); $("testConnectionBtn").disabled = true;
-  try {
-    const config = { baseUrl: $("baseUrlInput").value.trim(), model: $("modelInput").value.trim(), apiKey: $("apiKeyInput").value.trim() };
-    const response = await fetch("/api/test-connection", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ config }) });
-    const data = await response.json();
-    if (!response.ok || !data.ok) {
-      const message = i18n[state.locale][data.code] || data.error || t("connectionFailed");
-      const error = new Error(message); error.code = data.code; throw error;
-    }
-    status.classList.add("success"); status.textContent = t("connected");
-  } catch (error) { status.classList.add("error"); status.textContent = error.message || t("connectionFailed"); }
-  finally { $("testConnectionBtn").disabled = false; }
+    if (state.serverModelConfigured) state.rulesMode = false;
+    updateModePill();
+  } catch { /* Rules mode remains available when capability discovery fails. */ }
 }
 
-$("scenarioFilters").addEventListener("click", (event) => { const button = event.target.closest("[data-category]"); if (!button) return; state.scenarioCategory = button.dataset.category; renderScenarios(); });
-$("scenarioList").addEventListener("click", (event) => { const button = event.target.closest("[data-scenario]"); if (!button) return; const scenario = scenarios[state.locale].find((item) => item.id === button.dataset.scenario); if (!scenario) return; $("questionInput").value = scenario.question; $("scenarioDialog").close(); updateRoutePreview(); $("questionInput").focus(); });
-$("starterPrompts").addEventListener("click", (event) => { const button = event.target.closest("[data-starter]"); if (!button) return; const scenario = scenarios[state.locale].find((item) => item.id === button.dataset.starter); if (!scenario) return; $("questionInput").value = scenario.question; updateRoutePreview(); $("questionInput").focus(); });
-$("questionForm").addEventListener("submit", analyze); $("questionInput").addEventListener("input", updateRoutePreview);
-$("mockToggle").addEventListener("change", updateRuntimeStatus);
-$("questionInput").addEventListener("keydown", (event) => { if ((event.metaKey || event.ctrlKey) && event.key === "Enter") $("questionForm").requestSubmit(); });
-$("zhBtn").addEventListener("click", () => applyLocale("zh")); $("enBtn").addEventListener("click", () => applyLocale("en"));
-$("themeBtn").addEventListener("click", () => setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark"));
-$("scenarioLibraryBtn").addEventListener("click", () => $("scenarioDialog").showModal());
-$("closeScenarioDialog").addEventListener("click", () => $("scenarioDialog").close());
-$("scenarioDialog").addEventListener("click", (event) => { if (event.target === $("scenarioDialog")) $("scenarioDialog").close(); });
+/* ------------------------------------------------------------ scenarios */
+
+function renderScenarios() {
+  const visible = scenarios[state.locale].filter((item) => state.scenarioCategory === "all" || item.category === state.scenarioCategory);
+  $("scenarioFilters").innerHTML = ["all", "trade", "product", "tpdd", "cross"].map((category) => `
+    <button type="button" class="filter-btn ${state.scenarioCategory === category ? "active" : ""}" data-category="${category}">${t(`filter${category.charAt(0).toUpperCase()}${category.slice(1)}`)}</button>`).join("");
+  $("scenarioList").innerHTML = visible.map((item) => `
+    <button type="button" class="scenario-btn" data-scenario="${item.id}">
+      <span class="gem-icon" aria-hidden="true">${esc(item.id)}</span>
+      <span><strong>${esc(item.title)}</strong><small>${esc(item.meta)}</small></span>
+    </button>`).join("");
+}
+
+function applyLocale(locale) {
+  state.locale = locale;
+  localStorage.setItem("compliance-locale", locale);
+  document.documentElement.lang = locale === "zh" ? "zh-CN" : "en";
+  document.querySelectorAll("[data-i18n]").forEach((el) => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => { el.placeholder = t(el.dataset.i18nPlaceholder); });
+  $("zhBtn").classList.toggle("active", locale === "zh");
+  $("enBtn").classList.toggle("active", locale === "en");
+  $("zhBtn").setAttribute("aria-pressed", String(locale === "zh"));
+  $("enBtn").setAttribute("aria-pressed", String(locale === "en"));
+  if (state.activeGem) $("questionInput").placeholder = localized(state.activeGem.placeholder);
+  renderScenarios();
+  renderGemGrid();
+  renderActiveGem();
+  updateModePill();
+  loadCoverage();
+  if (!$("evidenceList").children.length || $("evidenceList").querySelector(".evidence-empty")) renderEvidence([]);
+}
+
+/* --------------------------------------------------------------- events */
+
+$("questionInput").addEventListener("input", () => {
+  const query = paletteQuery();
+  if (query !== null) openPalette(query); else closePalette();
+  updateRouteHint();
+  if (state.activeGem) renderActiveGem();
+});
+
+$("questionInput").addEventListener("keydown", (event) => {
+  if (state.palette.open) {
+    if (event.key === "ArrowDown") { event.preventDefault(); return movePalette(1); }
+    if (event.key === "ArrowUp") { event.preventDefault(); return movePalette(-1); }
+    if (event.key === "Enter" || event.key === "Tab") { event.preventDefault(); return choosePalette(); }
+    if (event.key === "Escape") { event.preventDefault(); return closePalette(); }
+  }
+  if (event.key === "Escape" && state.activeGem) { clearGem(); return; }
+  // Backspacing into an empty composer drops the gem, matching how chips behave
+  // elsewhere, so the gem never feels stuck.
+  if (event.key === "Backspace" && !$("questionInput").value && state.activeGem) { event.preventDefault(); clearGem(); return; }
+  if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); $("questionForm").requestSubmit(); }
+});
+
+$("palette").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-gem]");
+  if (!button) return;
+  $("questionInput").value = "";
+  activateGem(button.dataset.gem);
+});
+
+$("gemGrid").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-gem]");
+  if (button) activateGem(button.dataset.gem);
+});
+
+$("gemActive").addEventListener("click", (event) => {
+  if (event.target.closest("#gemDropBtn")) return clearGem();
+  const detail = event.target.closest("[data-gem-detail]");
+  if (detail) openGemDetail(detail.dataset.gemDetail);
+});
+
+$("gemDialog").addEventListener("click", (event) => {
+  if (event.target === $("gemDialog") || event.target.closest("[data-close-gem]")) return $("gemDialog").close();
+  const use = event.target.closest("[data-use-gem]");
+  if (use) { $("gemDialog").close(); return activateGem(use.dataset.useGem); }
+  const toggle = event.target.closest("[data-toggle-workspace]");
+  if (toggle) {
+    const added = toggleWorkspaceGem(toggle.dataset.toggleWorkspace);
+    toggle.textContent = added ? t("gemRemove") : t("gemAdd");
+    renderGemGrid();
+    toast(added ? t("gemAdded") : t("gemRemoved"));
+  }
+});
+
+document.addEventListener("click", (event) => {
+  if (state.palette.open && !event.target.closest(".composer")) closePalette();
+});
+
+$("questionForm").addEventListener("submit", analyze);
 $("newChatBtn").addEventListener("click", newConversation);
-$("settingsBtn").addEventListener("click", openSettings); $("closeSettings").addEventListener("click", () => $("settingsDialog").close());
-$("settingsForm").addEventListener("submit", saveSettings); $("testConnectionBtn").addEventListener("click", testConnection);
-$("showKeyBtn").addEventListener("click", () => { const field = $("apiKeyInput"); field.type = field.type === "password" ? "text" : "password"; $("showKeyBtn").textContent = field.type === "password" ? t("show") : t("hide"); });
+$("modePill").addEventListener("click", () => { state.rulesMode = !state.rulesMode; updateModePill(); });
+$("zhBtn").addEventListener("click", () => applyLocale("zh"));
+$("enBtn").addEventListener("click", () => applyLocale("en"));
+$("themeBtn").addEventListener("click", () => setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark"));
+$("settingsBtn").addEventListener("click", openSettings);
+$("closeSettings").addEventListener("click", () => $("settingsDialog").close());
+$("settingsForm").addEventListener("submit", saveSettings);
+$("testConnectionBtn").addEventListener("click", testConnection);
+$("showKeyBtn").addEventListener("click", () => {
+  const field = $("apiKeyInput");
+  field.type = field.type === "password" ? "text" : "password";
+  $("showKeyBtn").textContent = field.type === "password" ? t("show") : t("hide");
+});
 $("settingsDialog").addEventListener("click", (event) => { if (event.target === $("settingsDialog")) $("settingsDialog").close(); });
+$("scenarioBtn").addEventListener("click", () => $("scenarioDialog").showModal());
+$("closeScenarioDialog").addEventListener("click", () => $("scenarioDialog").close());
+$("scenarioDialog").addEventListener("click", (event) => {
+  if (event.target === $("scenarioDialog")) return $("scenarioDialog").close();
+  const filter = event.target.closest("[data-category]");
+  if (filter) { state.scenarioCategory = filter.dataset.category; return renderScenarios(); }
+  const pick = event.target.closest("[data-scenario]");
+  if (!pick) return;
+  const scenario = scenarios[state.locale].find((item) => item.id === pick.dataset.scenario);
+  if (!scenario) return;
+  $("questionInput").value = scenario.question;
+  $("scenarioDialog").close();
+  updateRouteHint();
+  if (state.activeGem) renderActiveGem();
+  $("questionInput").focus();
+});
 
 setTheme(localStorage.getItem("compliance-theme") || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark"));
-if (sessionStorage.getItem("compliance-api-key")) $("mockToggle").checked = false;
-applyLocale(state.locale); updateRoutePreview(); updateRuntimeStatus(); loadRuntimeCapabilities();
+if (sessionStorage.getItem("compliance-api-key")) state.rulesMode = false;
+applyLocale(state.locale);
+renderEvidence([]);
+loadRuntimeCapabilities();

@@ -10,8 +10,11 @@ const activeSyncs = new Map();
 // hosted deployment, where there is no shell to retry the request from.
 function errorChain(error, depth = 0) {
   if (!error || depth > 3) return [];
-  const parts = [error.code, error.syscall, error.hostname, error.message].filter(Boolean);
-  return [[...new Set(parts)].join(" ")].concat(errorChain(error.cause, depth + 1));
+  const parts = [error.code, error.syscall, error.hostname, error.address, error.message].filter(Boolean);
+  // A failed connection surfaces as an AggregateError with one entry per address
+  // family tried; its own message is empty, so the detail is only in .errors.
+  const nested = error.cause ? [error.cause] : Array.isArray(error.errors) ? error.errors.slice(0, 2) : [];
+  return [[...new Set(parts)].join(" ")].concat(...nested.map((item) => errorChain(item, depth + 1)));
 }
 
 function safeError(error) {
