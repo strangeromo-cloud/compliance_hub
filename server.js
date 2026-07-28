@@ -8,7 +8,15 @@ import { getDataSourceCoverage, queryDataSource, syncSource } from "./src/data-l
 
 const ROOT = fileURLToPath(new URL(".", import.meta.url));
 const PUBLIC_DIR = join(ROOT, "public");
-const PORT = Number(process.env.PORT || 4180);
+
+// A containerized app runs as PID 1. That is also why shutdown has to be
+// handled explicitly further down, so the two checks share one definition.
+const isManagedRuntime = process.pid === 1 || Boolean(process.env.ZEABUR_SERVICE_ID);
+
+// Platforms normally inject PORT. When one does not, probing 4180 would fail
+// because nothing conventional listens there, so a hosted run falls back to
+// 8080 — the port a platform assumes when it has to guess.
+const PORT = Number(process.env.PORT || (isManagedRuntime ? 8080 : 4180));
 const MAX_BODY_BYTES = 64 * 1024;
 
 const MIME_TYPES = {
@@ -153,10 +161,6 @@ const server = createServer(async (request, response) => {
   }
 });
 
-// A containerized app runs as PID 1. That is also why shutdown has to be
-// handled explicitly below, so the two checks share one definition.
-const isManagedRuntime = process.pid === 1 || Boolean(process.env.ZEABUR_SERVICE_ID);
-
 // Local runs stay on the loopback interface so a prototype that accepts an API
 // key is not put on the network by accident. A container has to reach the
 // platform's proxy, so it binds all interfaces without needing a start command
@@ -203,7 +207,21 @@ function shutdown(signal) {
 
 for (const signal of ["SIGTERM", "SIGINT"]) process.on(signal, () => shutdown(signal));
 
+// Anything unexpected must reach the runtime log. A container that dies without
+// printing why is the hardest possible thing to diagnose from a dashboard.
+process.on("uncaughtException", (error) => console.error("Uncaught exception:", error));
+process.on("unhandledRejection", (error) => console.error("Unhandled rejection:", error));
+
+console.log(`Compliance Hub starting: pid=${process.pid} managedRuntime=${isManagedRuntime} host=${HOST} port=${PORT} portFromEnv=${Boolean(process.env.PORT)} node=${process.version}`);
+
+server.on("error", (error) => {
+  console.error(`Server failed to bind ${HOST}:${PORT} — ${error.code || ""} ${error.message}`);
+  process.exit(1);
+});
+
 server.listen(PORT, HOST, () => {
-  console.log(`Compliance Hub listening on ${HOST}:${PORT} (pid ${process.pid}, managed runtime: ${isManagedRuntime})`);
-  syncOnBoot();
+  console.log(`Compliance Hub listening on ${HOST}:${PORT}`);
+  // Deferred so the platform's first health check lands on an idle process
+  // rather than competing with several source downloads.
+  setTimeout(syncOnBoot, 3000).unref();
 });
