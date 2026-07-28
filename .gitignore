@@ -1,0 +1,11 @@
+.env
+.env.local
+data/runtime/
+node_modules/
+.DS_Store
+
+# Office lock files
+~$*
+
+# Internal source material - not for the public repository
+docs/

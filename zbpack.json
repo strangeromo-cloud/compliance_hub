@@ -1,0 +1,6 @@
+{
+  "start_command": "HOST=0.0.0.0 node server.js",
+  "node": {
+    "version": "20"
+  }
+}

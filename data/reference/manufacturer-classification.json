@@ -1,0 +1,42 @@
+{
+  "dataClass": "verified_public_manufacturer_snapshot",
+  "disclaimer": "Values transcribed from the manufacturer's public export-classification table on the checked date. Manufacturers revise these tables; a value here is not a licence determination and does not replace the current published table.",
+  "authority": "NVIDIA",
+  "sourceId": "nvidia-export",
+  "sourceUrl": "https://www.nvidia.com/en-us/about-nvidia/company-policies/export-regulations/",
+  "checkedAt": "2026-07-15",
+  "fieldNotes": {
+    "tppPerGpu": "The manufacturer table labels this field TPP per GPU. It is not APP.",
+    "app": "APP is requested by BIS for Category 4 computer/system licence applications and depends on the specific system configuration, so it cannot be read off a per-GPU table."
+  },
+  "recordCount": 3,
+  "records": [
+    {
+      "model": "H100 PCIe",
+      "matchTerms": ["h100 pcie", "900-21010-0000-000"],
+      "partNumbers": ["900-21010-0000-000"],
+      "formFactor": "PCIe",
+      "tppPerGpu": 12224,
+      "eccn": "4A090.a",
+      "appValueAvailable": false
+    },
+    {
+      "model": "H100 NVL",
+      "matchTerms": ["h100 nvl", "900-21010-0020-000", "900-21010-0020-001"],
+      "partNumbers": ["900-21010-0020-000", "900-21010-0020-001"],
+      "formFactor": "NVL",
+      "tppPerGpu": 14144,
+      "eccn": "4A090.a",
+      "appValueAvailable": false
+    },
+    {
+      "model": "HGX H100 SXM5",
+      "matchTerms": ["h100 sxm", "hgx h100", "sxm5"],
+      "partNumbers": [],
+      "formFactor": "SXM5",
+      "tppPerGpu": 15840,
+      "eccn": "4A090.a",
+      "appValueAvailable": false
+    }
+  ]
+}

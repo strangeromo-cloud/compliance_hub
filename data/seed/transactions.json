@@ -1,0 +1,619 @@
+{
+  "dataClass": "synthetic",
+  "disclaimer": "SYNTHETIC DEMO DATA. Invented parts, companies, classifications and ownership. Not authoritative compliance data.",
+  "generatedFor": "compliance-hub-prototype iteration 1",
+  "generator": "scripts/generate-seed.mjs",
+  "seed": 20260728,
+  "recordType": "transaction",
+  "recordCount": 26,
+  "records": [
+    {
+      "documentId": "SO-80001",
+      "dataClass": "synthetic",
+      "documentType": "SO",
+      "createdAt": "2026-04-10",
+      "partNumbers": [
+        "TP-1027-80"
+      ],
+      "quantity": 184,
+      "valueUsd": 428649,
+      "shipFrom": "MX-MONTERREY",
+      "transitCountries": [],
+      "shipTo": "US",
+      "soldTo": "BP-00012",
+      "consignee": "BP-00012",
+      "endUser": "BP-00012",
+      "endUse": "data centre expansion",
+      "payerParty": "BP-00012",
+      "payerCountry": "MX",
+      "incoterm": "FCA",
+      "redFlags": []
+    },
+    {
+      "documentId": "SO-80002",
+      "dataClass": "synthetic",
+      "documentType": "SO",
+      "createdAt": "2026-05-18",
+      "partNumbers": [
+        "AI-1003-99"
+      ],
+      "quantity": 234,
+      "valueUsd": 348875,
+      "shipFrom": "CN-SHENZHEN",
+      "transitCountries": [],
+      "shipTo": "SG",
+      "soldTo": "BP-00097",
+      "consignee": "BP-00097",
+      "endUser": "BP-00097",
+      "endUse": "retail resale",
+      "payerParty": "BP-00097",
+      "payerCountry": "JP",
+      "incoterm": "FCA",
+      "redFlags": []
+    },
+    {
+      "documentId": "SO-80003",
+      "dataClass": "synthetic",
+      "documentType": "SO",
+      "createdAt": "2026-06-13",
+      "partNumbers": [
+        "TP-1028-21"
+      ],
+      "quantity": 98,
+      "valueUsd": 251757,
+      "shipFrom": "MX-MONTERREY",
+      "transitCountries": [],
+      "shipTo": "US",
+      "soldTo": "BP-00131",
+      "consignee": "BP-00131",
+      "endUser": "BP-00131",
+      "endUse": "retail resale",
+      "payerParty": "BP-00131",
+      "payerCountry": "US",
+      "incoterm": "FOB",
+      "redFlags": []
+    },
+    {
+      "documentId": "SO-80004",
+      "dataClass": "synthetic",
+      "documentType": "SO",
+      "createdAt": "2026-04-20",
+      "partNumbers": [
+        "NW-1050-56"
+      ],
+      "quantity": 197,
+      "valueUsd": 716462,
+      "shipFrom": "HU-ULLO",
+      "transitCountries": [],
+      "shipTo": "IN",
+      "soldTo": "BP-00036",
+      "consignee": "BP-00036",
+      "endUser": "BP-00036",
+      "endUse": "managed service delivery",
+      "payerParty": "BP-00036",
+      "payerCountry": "US",
+      "incoterm": "DAP",
+      "redFlags": []
+    },
+    {
+      "documentId": "SO-80005",
+      "dataClass": "synthetic",
+      "documentType": "SO",
+      "createdAt": "2026-07-12",
+      "partNumbers": [
+        "TP-1044-92"
+      ],
+      "quantity": 176,
+      "valueUsd": 827774,
+      "shipFrom": "HU-ULLO",
+      "transitCountries": [],
+      "shipTo": "IN",
+      "soldTo": "BP-00162",
+      "consignee": "BP-00162",
+      "endUser": "BP-00162",
+      "endUse": "managed service delivery",
+      "payerParty": "BP-00162",
+      "payerCountry": "IN",
+      "incoterm": "FCA",
+      "redFlags": []
+    },
+    {
+      "documentId": "SO-80006",
+      "dataClass": "synthetic",
+      "documentType": "SO",
+      "createdAt": "2026-04-10",
+      "partNumbers": [
+        "NW-1039-32"
+      ],
+      "quantity": 31,
+      "valueUsd": 188954,
+      "shipFrom": "CN-SHENZHEN",
+      "transitCountries": [],
+      "shipTo": "SG",
+      "soldTo": "BP-00053",
+      "consignee": "BP-00053",
+      "endUser": "BP-00053",
+      "endUse": "data centre expansion",
+      "payerParty": "BP-00053",
+      "payerCountry": "MX",
+      "incoterm": "FCA",
+      "redFlags": []
+    },
+    {
+      "documentId": "SO-80007",
+      "dataClass": "synthetic",
+      "documentType": "SO",
+      "createdAt": "2026-05-21",
+      "partNumbers": [
+        "TP-1010-81"
+      ],
+      "quantity": 137,
+      "valueUsd": 279072,
+      "shipFrom": "CN-SHENZHEN",
+      "transitCountries": [],
+      "shipTo": "SG",
+      "soldTo": "BP-00173",
+      "consignee": "BP-00173",
+      "endUser": "BP-00173",
+      "endUse": "retail resale",
+      "payerParty": "BP-00173",
+      "payerCountry": "IN",
+      "incoterm": "FOB",
+      "redFlags": []
+    },
+    {
+      "documentId": "SO-80008",
+      "dataClass": "synthetic",
+      "documentType": "SO",
+      "createdAt": "2026-05-18",
+      "partNumbers": [
+        "AI-1005-56"
+      ],
+      "quantity": 190,
+      "valueUsd": 660044,
+      "shipFrom": "CN-HEFEI",
+      "transitCountries": [],
+      "shipTo": "DE",
+      "soldTo": "BP-00188",
+      "consignee": "BP-00188",
+      "endUser": "BP-00188",
+      "endUse": "enterprise IT refresh",
+      "payerParty": "BP-00188",
+      "payerCountry": "IN",
+      "incoterm": "FCA",
+      "redFlags": []
+    },
+    {
+      "documentId": "SO-80009",
+      "dataClass": "synthetic",
+      "documentType": "SO",
+      "createdAt": "2026-07-01",
+      "partNumbers": [
+        "AI-1030-41"
+      ],
+      "quantity": 186,
+      "valueUsd": 119584,
+      "shipFrom": "CN-HEFEI",
+      "transitCountries": [],
+      "shipTo": "DE",
+      "soldTo": "BP-00007",
+      "consignee": "BP-00007",
+      "endUser": "BP-00007",
+      "endUse": "retail resale",
+      "payerParty": "BP-00007",
+      "payerCountry": "US",
+      "incoterm": "CIF",
+      "redFlags": []
+    },
+    {
+      "documentId": "SO-80010",
+      "dataClass": "synthetic",
+      "documentType": "SO",
+      "createdAt": "2026-04-16",
+      "partNumbers": [
+        "TS-1065-88"
+      ],
+      "quantity": 236,
+      "valueUsd": 379212,
+      "shipFrom": "MX-MONTERREY",
+      "transitCountries": [],
+      "shipTo": "US",
+      "soldTo": "BP-00141",
+      "consignee": "BP-00141",
+      "endUser": "BP-00141",
+      "endUse": "data centre expansion",
+      "payerParty": "BP-00141",
+      "payerCountry": "SG",
+      "incoterm": "DAP",
+      "redFlags": []
+    },
+    {
+      "documentId": "SO-80011",
+      "dataClass": "synthetic",
+      "documentType": "SO",
+      "createdAt": "2026-04-01",
+      "partNumbers": [
+        "TP-1080-66"
+      ],
+      "quantity": 109,
+      "valueUsd": 834210,
+      "shipFrom": "HU-ULLO",
+      "transitCountries": [],
+      "shipTo": "IN",
+      "soldTo": "BP-00016",
+      "consignee": "BP-00016",
+      "endUser": "BP-00016",
+      "endUse": "data centre expansion",
+      "payerParty": "BP-00016",
+      "payerCountry": "NL",
+      "incoterm": "EXW",
+      "redFlags": []
+    },
+    {
+      "documentId": "SO-80012",
+      "dataClass": "synthetic",
+      "documentType": "SO",
+      "createdAt": "2026-06-28",
+      "partNumbers": [
+        "TS-1042-30"
+      ],
+      "quantity": 73,
+      "valueUsd": 434329,
+      "shipFrom": "CN-SHENZHEN",
+      "transitCountries": [],
+      "shipTo": "SG",
+      "soldTo": "BP-00008",
+      "consignee": "BP-00008",
+      "endUser": "BP-00008",
+      "endUse": "managed service delivery",
+      "payerParty": "BP-00008",
+      "payerCountry": "DE",
+      "incoterm": "FCA",
+      "redFlags": []
+    },
+    {
+      "documentId": "SO-80013",
+      "dataClass": "synthetic",
+      "documentType": "SO",
+      "createdAt": "2026-04-03",
+      "partNumbers": [
+        "PT-1008-98"
+      ],
+      "quantity": 232,
+      "valueUsd": 524404,
+      "shipFrom": "CN-SHENZHEN",
+      "transitCountries": [],
+      "shipTo": "SG",
+      "soldTo": "BP-00043",
+      "consignee": "BP-00043",
+      "endUser": "BP-00043",
+      "endUse": "retail resale",
+      "payerParty": "BP-00043",
+      "payerCountry": "NL",
+      "incoterm": "CIF",
+      "redFlags": []
+    },
+    {
+      "documentId": "SO-80014",
+      "dataClass": "synthetic",
+      "documentType": "SO",
+      "createdAt": "2026-07-13",
+      "partNumbers": [
+        "NW-1015-34"
+      ],
+      "quantity": 16,
+      "valueUsd": 453186,
+      "shipFrom": "CN-SHENZHEN",
+      "transitCountries": [],
+      "shipTo": "SG",
+      "soldTo": "BP-00051",
+      "consignee": "BP-00051",
+      "endUser": "BP-00051",
+      "endUse": "enterprise IT refresh",
+      "payerParty": "BP-00051",
+      "payerCountry": "MX",
+      "incoterm": "CIF",
+      "redFlags": []
+    },
+    {
+      "documentId": "SO-80015",
+      "dataClass": "synthetic",
+      "documentType": "SO",
+      "createdAt": "2026-07-19",
+      "partNumbers": [
+        "TP-1081-27"
+      ],
+      "quantity": 183,
+      "valueUsd": 590794,
+      "shipFrom": "CN-HEFEI",
+      "transitCountries": [],
+      "shipTo": "DE",
+      "soldTo": "BP-00029",
+      "consignee": "BP-00029",
+      "endUser": "BP-00029",
+      "endUse": "managed service delivery",
+      "payerParty": "BP-00029",
+      "payerCountry": "JP",
+      "incoterm": "EXW",
+      "redFlags": []
+    },
+    {
+      "documentId": "SO-80016",
+      "dataClass": "synthetic",
+      "documentType": "SO",
+      "createdAt": "2026-04-04",
+      "partNumbers": [
+        "NW-1037-48"
+      ],
+      "quantity": 62,
+      "valueUsd": 87806,
+      "shipFrom": "CN-HEFEI",
+      "transitCountries": [],
+      "shipTo": "JP",
+      "soldTo": "BP-00042",
+      "consignee": "BP-00042",
+      "endUser": "BP-00042",
+      "endUse": "retail resale",
+      "payerParty": "BP-00042",
+      "payerCountry": "US",
+      "incoterm": "CIF",
+      "redFlags": []
+    },
+    {
+      "documentId": "SO-80017",
+      "dataClass": "synthetic",
+      "documentType": "SO",
+      "createdAt": "2026-07-07",
+      "partNumbers": [
+        "TS-1070-93"
+      ],
+      "quantity": 89,
+      "valueUsd": 276618,
+      "shipFrom": "MX-MONTERREY",
+      "transitCountries": [],
+      "shipTo": "US",
+      "soldTo": "BP-00147",
+      "consignee": "BP-00147",
+      "endUser": "BP-00147",
+      "endUse": "enterprise IT refresh",
+      "payerParty": "BP-00147",
+      "payerCountry": "JP",
+      "incoterm": "DAP",
+      "redFlags": []
+    },
+    {
+      "documentId": "SO-80018",
+      "dataClass": "synthetic",
+      "documentType": "SO",
+      "createdAt": "2026-05-10",
+      "partNumbers": [
+        "TP-1075-82"
+      ],
+      "quantity": 114,
+      "valueUsd": 26436,
+      "shipFrom": "US-RTP",
+      "transitCountries": [],
+      "shipTo": "NL",
+      "soldTo": "BP-00101",
+      "consignee": "BP-00101",
+      "endUser": "BP-00101",
+      "endUse": "data centre expansion",
+      "payerParty": "BP-00101",
+      "payerCountry": "SG",
+      "incoterm": "FCA",
+      "redFlags": []
+    },
+    {
+      "documentId": "SO-90001",
+      "dataClass": "synthetic",
+      "scenarioRef": "P01",
+      "documentType": "SO",
+      "createdAt": "2026-07-02",
+      "partNumbers": [
+        "AI-8100-H1"
+      ],
+      "quantity": 4,
+      "valueUsd": 1480000,
+      "shipFrom": "US-RTP",
+      "transitCountries": [
+        "CA"
+      ],
+      "shipTo": "MX",
+      "soldTo": "BP-90004",
+      "consignee": "BP-90004",
+      "endUser": null,
+      "endUse": null,
+      "payerParty": "BP-90004",
+      "payerCountry": "MX",
+      "incoterm": "DAP",
+      "redFlags": [
+        "ultimate_end_user_not_stated",
+        "transit_route_declared_late"
+      ]
+    },
+    {
+      "documentId": "SO-90002",
+      "dataClass": "synthetic",
+      "scenarioRef": "X01",
+      "documentType": "SO",
+      "createdAt": "2026-07-10",
+      "partNumbers": [
+        "AI-8100-H1"
+      ],
+      "quantity": 8,
+      "valueUsd": 2960000,
+      "shipFrom": "US-RTP",
+      "transitCountries": [
+        "MX"
+      ],
+      "shipTo": "CN",
+      "soldTo": "BP-90004",
+      "consignee": "BP-90004",
+      "endUser": "Clearwater Computing Co., Ltd.",
+      "endUse": "AI model training",
+      "payerParty": "BP-90004",
+      "payerCountry": "MX",
+      "incoterm": "DAP",
+      "redFlags": [
+        "distributor_resells_to_destination_of_concern",
+        "advanced_computing_item_to_country_group_d"
+      ]
+    },
+    {
+      "documentId": "SO-90003",
+      "dataClass": "synthetic",
+      "scenarioRef": "X02",
+      "documentType": "SO",
+      "createdAt": "2026-07-18",
+      "partNumbers": [
+        "NW-4400-VPN"
+      ],
+      "quantity": 40,
+      "valueUsd": 310000,
+      "shipFrom": "US-RTP",
+      "transitCountries": [],
+      "shipTo": "SG",
+      "soldTo": "BP-90008",
+      "consignee": "Westgate Freight (forwarder)",
+      "endUser": null,
+      "endUse": null,
+      "payerParty": "Northwind Trading Pte. Ltd.",
+      "payerCountry": "SG",
+      "incoterm": "FCA",
+      "previousDocumentId": "SO-88817",
+      "previousDocumentOutcome": "rejected_by_compliance",
+      "redFlags": [
+        "order_resubmitted_after_rejection",
+        "consignee_is_freight_forwarder",
+        "third_party_payer"
+      ]
+    },
+    {
+      "documentId": "SO-90004",
+      "dataClass": "synthetic",
+      "scenarioRef": "P03",
+      "documentType": "SO",
+      "createdAt": "2026-06-28",
+      "partNumbers": [
+        "PT-7700-GA"
+      ],
+      "quantity": 500,
+      "valueUsd": 128000,
+      "shipFrom": "CN-SHENZHEN",
+      "transitCountries": [],
+      "shipTo": "DE",
+      "soldTo": "BP-00042",
+      "consignee": "BP-00042",
+      "endUser": "BP-00042",
+      "endUse": "telecom base station repair",
+      "payerParty": "BP-00042",
+      "payerCountry": "DE",
+      "incoterm": "FOB",
+      "redFlags": [
+        "prc_dual_use_export_licence_check_required"
+      ]
+    },
+    {
+      "documentId": "SO-90005",
+      "dataClass": "synthetic",
+      "scenarioRef": "DM01",
+      "documentType": "SO",
+      "createdAt": "2026-07-05",
+      "partNumbers": [
+        "TS-6200-DM"
+      ],
+      "quantity": 120,
+      "valueUsd": 1020000,
+      "shipFrom": "CN-HEFEI",
+      "transitCountries": [],
+      "shipTo": "IN",
+      "soldTo": "BP-00117",
+      "consignee": "BP-00117",
+      "endUser": "BP-00117",
+      "endUse": "enterprise data centre",
+      "payerParty": "BP-00117",
+      "payerCountry": "IN",
+      "incoterm": "CIF",
+      "redFlags": [
+        "us_content_above_de_minimis_threshold_requires_ear_scope_analysis"
+      ]
+    },
+    {
+      "documentId": "PO-90006",
+      "dataClass": "synthetic",
+      "scenarioRef": "X03",
+      "documentType": "PO",
+      "createdAt": "2026-07-14",
+      "partNumbers": [
+        "NW-4400-VPN"
+      ],
+      "quantity": 0,
+      "valueUsd": 640000,
+      "shipFrom": "CN-SHENZHEN",
+      "transitCountries": [],
+      "shipTo": "CN-HEFEI",
+      "soldTo": null,
+      "consignee": "CN-HEFEI",
+      "endUser": null,
+      "endUse": "component supply",
+      "vendorId": "VND-90001",
+      "payerParty": "Copperfield Trading HK Ltd.",
+      "payerCountry": "HK",
+      "incoterm": "DDP",
+      "redFlags": [
+        "payment_account_differs_from_contracting_entity",
+        "supplier_bom_contains_controlled_parts"
+      ]
+    },
+    {
+      "documentId": "SO-90007",
+      "dataClass": "synthetic",
+      "scenarioRef": "T02",
+      "documentType": "SO",
+      "createdAt": "2026-07-20",
+      "partNumbers": [
+        "TS-6200-DM"
+      ],
+      "quantity": 20,
+      "valueUsd": 170000,
+      "shipFrom": "CN-HEFEI",
+      "transitCountries": [],
+      "shipTo": "SG",
+      "soldTo": "BP-90003",
+      "consignee": "BP-90003",
+      "endUser": "BP-90003",
+      "endUse": "hosting services",
+      "payerParty": "BP-90003",
+      "payerCountry": "SG",
+      "incoterm": "CIF",
+      "redFlags": [
+        "counterparty_ownership_aggregation_pending"
+      ]
+    },
+    {
+      "documentId": "SO-90008",
+      "dataClass": "synthetic",
+      "scenarioRef": "T03",
+      "documentType": "SO",
+      "createdAt": "2026-07-22",
+      "partNumbers": [
+        "TS-6200-DM"
+      ],
+      "quantity": 6,
+      "valueUsd": 51000,
+      "shipFrom": "CN-HEFEI",
+      "transitCountries": [],
+      "shipTo": "CN",
+      "soldTo": "BP-90001",
+      "consignee": "BP-90001",
+      "endUser": "BP-90001",
+      "endUse": "internal IT",
+      "payerParty": "BP-90001",
+      "payerCountry": "CN",
+      "incoterm": "EXW",
+      "redFlags": [
+        "counterparty_name_resembles_designated_entity"
+      ]
+    }
+  ]
+}
