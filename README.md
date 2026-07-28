@@ -98,7 +98,17 @@ npm run start:env
 | `SYNC_ON_BOOT` | `china-dual-use,china-control-entities,china-unreliable-entity,china-licence-catalogue,bis-ear-734,bis-ear-740,bis-ear-744` | 容器启动后台同步。**不要**放 `trade-csl` / `ofac-sls`，它们是几十 MB 全量下载 |
 | `COMPLIANCE_HUB_USER_AGENT` | `ComplianceHubPrototype/0.1 <你的邮箱>` | SEC 等政府接口要求可识别的 UA |
 
+`HOST` 不需要手工配置：进程检测到自己是容器里的 PID 1（或存在 `ZEABUR_SERVICE_ID`）时会自动绑定 `0.0.0.0`，本机运行仍然只绑回环。
+
 3. Networking 里绑定域名。
+
+### 为什么必须显式处理 SIGTERM
+
+容器里应用是 PID 1，而 Linux 内核**不对 PID 1 应用默认信号处理**：没有注册 handler 的 `SIGTERM` 会被直接忽略。结果是平台发停止信号后进程毫无反应，服务永久卡在 `Stopping`，新部署也排不上队。
+
+`server.js` 因此显式注册了 `SIGTERM` / `SIGINT`：关闭监听、断开空闲连接，并设置 5 秒兜底强制退出——一个 keep-alive 连接或正在下载的官方数据源不应该有能力把容器一直挂住。
+
+同理，启动命令不要写成 `HOST=0.0.0.0 node server.js`。这种内联赋值依赖 shell 展开，一旦被 exec-form 直接执行就是 `ENOENT`。
 
 ### 部署后必须注意
 

@@ -153,10 +153,17 @@ const server = createServer(async (request, response) => {
   }
 });
 
-// Local runs stay bound to the loopback interface so a prototype that accepts an
-// API key is not exposed on the network by accident. A hosted deployment must
-// opt in explicitly by setting HOST=0.0.0.0.
-const HOST = process.env.HOST || "127.0.0.1";
+// A containerized app runs as PID 1. That is also why shutdown has to be
+// handled explicitly below, so the two checks share one definition.
+const isManagedRuntime = process.pid === 1 || Boolean(process.env.ZEABUR_SERVICE_ID);
+
+// Local runs stay on the loopback interface so a prototype that accepts an API
+// key is not put on the network by accident. A container has to reach the
+// platform's proxy, so it binds all interfaces without needing a start command
+// that only works when a shell expands it.
+const HOST = process.env.HOST || (isManagedRuntime ? "0.0.0.0" : "127.0.0.1");
+
+let shuttingDown = false;
 
 // A hosted container starts with an empty data/runtime, so the hub would have no
 // list data until someone pressed sync. SYNC_ON_BOOT fills it in the background:
@@ -167,16 +174,36 @@ async function syncOnBoot() {
   if (!requested.length) return;
   console.log(`Boot sync requested for: ${requested.join(", ")}`);
   for (const sourceId of requested) {
+    if (shuttingDown) return console.log("Boot sync abandoned: shutting down.");
     try {
       const result = await syncSource(sourceId);
       console.log(`Boot sync ${sourceId}: ${result.status} (${result.recordCount ?? 0} records)`);
     } catch (error) {
-      console.log(`Boot sync ${sourceId}: failed - ${String(error.message).slice(0, 160)}`);
+      console.log(`Boot sync ${sourceId}: failed - ${String(error.message).slice(0, 200)}`);
     }
   }
 }
 
+// The kernel applies no default signal disposition to PID 1, so a container
+// process without an explicit handler simply ignores SIGTERM and the platform
+// hangs in "Stopping" until it gives up. Handling it is not optional here.
+function shutdown(signal) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  console.log(`Received ${signal}; shutting down.`);
+  server.close(() => process.exit(0));
+  server.closeIdleConnections?.();
+  // A keep-alive socket or an in-flight source download must not be able to
+  // hold the container open past the platform's stop window.
+  setTimeout(() => {
+    console.log("Forcing exit after the shutdown grace period.");
+    process.exit(0);
+  }, 5000).unref();
+}
+
+for (const signal of ["SIGTERM", "SIGINT"]) process.on(signal, () => shutdown(signal));
+
 server.listen(PORT, HOST, () => {
-  console.log(`Compliance Hub prototype: http://${HOST === "0.0.0.0" ? "127.0.0.1" : HOST}:${PORT}`);
+  console.log(`Compliance Hub listening on ${HOST}:${PORT} (pid ${process.pid}, managed runtime: ${isManagedRuntime})`);
   syncOnBoot();
 });
