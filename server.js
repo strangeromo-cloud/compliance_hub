@@ -180,12 +180,26 @@ const server = createServer(async (request, response) => {
 });
 
 // Local runs stay on the loopback interface so a prototype that accepts an API
-// key is not put on the network by accident. A container has to reach the
-// platform's proxy, so it binds all interfaces without needing a start command
-// that only works when a shell expands it.
-const HOST = process.env.HOST || (isManagedRuntime ? "0.0.0.0" : "127.0.0.1");
+// key is not put on the network by accident.
+//
+// A container must not pin 0.0.0.0: that binds IPv4 only, so a platform whose
+// service network reaches the pod over IPv6 cannot connect and the proxy
+// answers 502 while the process sits there apparently healthy. Passing no host
+// lets Node bind :: dual-stack and accept both families, which is strictly more
+// permissive. An explicit HOST still overrides.
+const HOST = process.env.HOST || (isManagedRuntime ? undefined : "127.0.0.1");
+const HOST_LABEL = HOST ?? ":: (dual-stack)";
 
 let shuttingDown = false;
+
+// "fetch failed" alone says nothing. The errno lives on cause, or on
+// AggregateError.errors when a connection attempt fails outright.
+function describeSyncError(error, depth = 0) {
+  if (!error || depth > 3) return "";
+  const parts = [error.code, error.syscall, error.address, error.message].filter(Boolean);
+  const nested = error.cause ? [error.cause] : Array.isArray(error.errors) ? error.errors.slice(0, 1) : [];
+  return [[...new Set(parts)].join(" "), ...nested.map((item) => describeSyncError(item, depth + 1))].filter(Boolean).join(" <- ");
+}
 
 // A hosted container starts with an empty data/runtime, so the hub would have no
 // list data until someone pressed sync. SYNC_ON_BOOT fills it in the background:
@@ -201,7 +215,7 @@ async function syncOnBoot() {
       const result = await syncSource(sourceId);
       console.log(`Boot sync ${sourceId}: ${result.status} (${result.recordCount ?? 0} records)`);
     } catch (error) {
-      console.log(`Boot sync ${sourceId}: failed - ${String(error.message).slice(0, 200)}`);
+      console.log(`Boot sync ${sourceId}: failed - ${describeSyncError(error).slice(0, 220)}`);
     }
   }
 }
@@ -230,15 +244,16 @@ for (const signal of ["SIGTERM", "SIGINT"]) process.on(signal, () => shutdown(si
 process.on("uncaughtException", (error) => console.error("Uncaught exception:", error));
 process.on("unhandledRejection", (error) => console.error("Unhandled rejection:", error));
 
-console.log(`Compliance Hub starting: pid=${process.pid} managedRuntime=${isManagedRuntime} host=${HOST} port=${PORT} portFromEnv=${Boolean(process.env.PORT)} node=${process.version}`);
+console.log(`Compliance Hub starting: pid=${process.pid} managedRuntime=${isManagedRuntime} host=${HOST_LABEL} port=${PORT} portFromEnv=${Boolean(process.env.PORT)} node=${process.version}`);
 
 server.on("error", (error) => {
-  console.error(`Server failed to bind ${HOST}:${PORT} — ${error.code || ""} ${error.message}`);
+  console.error(`Server failed to bind ${HOST_LABEL}:${PORT} — ${error.code || ""} ${error.message}`);
   process.exit(1);
 });
 
-server.listen(PORT, HOST, () => {
-  console.log(`Compliance Hub listening on ${HOST}:${PORT}`);
+server.listen(...(HOST ? [PORT, HOST] : [PORT]), () => {
+  const bound = server.address();
+  console.log(`Compliance Hub listening on ${bound.address}:${bound.port} (family ${bound.family})`);
   // Deferred so the platform's first health check lands on an idle process
   // rather than competing with several source downloads.
   setTimeout(syncOnBoot, 3000).unref();
