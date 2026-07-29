@@ -88,7 +88,9 @@ npm run start:env
 
 ## 部署到 Zeabur
 
-仓库已经是可部署状态：`zbpack.json` 指定 Node 20 和 `HOST=0.0.0.0 node server.js`，`PORT` 由 Zeabur 注入。
+仓库用 `Dockerfile` 定义构建，不依赖 buildpack 自动识别。基础镜像 `node:20-alpine`，启动命令是 exec form 的 `node server.js`（让 node 成为 PID 1 并直接收到 SIGTERM），端口默认 8080、`PORT` 注入时以注入值为准。
+
+之所以显式写 Dockerfile：buildpack 路径出现过"构建成功但容器从未运行、runtime log 完全为空"的情况，这种失败无法诊断——看不出进程有没有起来、绑了哪个端口、为什么退出。
 
 1. Zeabur Dashboard → New Project → Deploy Service → GitHub → 选择 `strangeromo-cloud/compliance_hub`。
 2. 在 Variables 里配置：
