@@ -581,3 +581,8 @@ dialog::backdrop { background: rgba(0,0,0,.55); }
 .registry-details > div { display: grid; grid-template-columns: 76px 1fr; gap: 9px; }
 .registry-details dt { color: var(--text-3); font-size: 10.5px; }
 .registry-details dd { margin: 0; color: var(--text-2); min-width: 0; word-break: break-word; }
+/* An archived copy is real captured text, but not a live retrieval; a
+   citation-only source was never fetched because its publisher refuses
+   automated access. Neither is a failure, and neither is "live". */
+.source-status.archived { color: var(--risk-medium); }
+.source-status.citation_only { color: var(--text-3); }

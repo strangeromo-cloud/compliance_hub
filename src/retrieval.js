@@ -66,6 +66,11 @@ export async function retrievePublicSources(sources) {
   try {
     return await Promise.all(
     sources.map(async (source) => {
+      if (source.fetchPolicy === "citation_only") {
+        // The publisher refuses automated access; citing it without fetching is
+        // both accurate and the right thing to do.
+        return { ...source, liveStatus: "citation_only", excerpt: source.summary, retrievedAt: null };
+      }
       if (!liveSet.has(source.id)) {
         return { ...source, liveStatus: "not_fetched", excerpt: source.summary, retrievedAt: null };
       }

@@ -65,10 +65,13 @@ export const SOURCES = [
   {
     id: "china-dual-use-regulation",
     agents: ["product", "trade"],
-    authority: "State Council / National Laws and Regulations Database",
+    authority: "State Council / MOFCOM",
     title: "PRC Regulations on Export Control of Dual-Use Items (State Council Order No. 792)",
     titleZh: "中华人民共和国两用物项出口管制条例（国务院令第792号）",
-    url: "https://flk.npc.gov.cn/detail?fileId=&id=ff808181927f0e7b019294a6bf08358f&type=",
+    // The National Laws database renders client-side and yields no text to a
+    // fetch; MOFCOM publishes the same regulation as server-rendered HTML.
+    url: "https://exportcontrol.mofcom.gov.cn/article/zcfg/gnzcfg/gzjgfxwj/202410/1057.html",
+    canonicalUrl: "https://flk.npc.gov.cn/detail?fileId=&id=ff808181927f0e7b019294a6bf08358f&type=",
     summary: "The governing PRC administrative regulation for dual-use exports, effective 1 December 2024.",
     keywords: ["中国", "PRC", "dual-use", "两用物项", "policy", "政策", "法规", "license", "许可"]
   },
@@ -118,7 +121,19 @@ export const SOURCES = [
     title: "Corruption risks in commodity trading transactions",
     titleZh: "OECD 交易与第三方腐败风险",
     url: "https://www.oecd.org/en/publications/typology-of-corruption-risks-in-commodity-trading-transactions_590e80e8-en/full-report/component-4.html",
-    summary: "OECD discussion of beneficial ownership, anonymous shell companies, intermediaries and transaction red flags."
+    summary: "OECD discussion of beneficial ownership, anonymous shell companies, intermediaries and transaction red flags.",
+    // OECD refuses automated requests with 403. Cited by reference rather than
+    // retried into a permanent failure.
+    fetchPolicy: "citation_only"
+  },
+  {
+    id: "unodc-corruption",
+    agents: ["tpdd"],
+    authority: "United Nations Office on Drugs and Crime",
+    title: "UNODC guidance on corruption and beneficial ownership",
+    titleZh: "UNODC 反腐败与受益所有权指引",
+    url: "https://www.unodc.org/unodc/en/corruption/index.html",
+    summary: "UN guidance on corruption typologies, beneficial ownership transparency and third-party integrity risk."
   }
 ];
 

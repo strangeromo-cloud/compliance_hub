@@ -59,7 +59,7 @@ async function chinaNoticeFacts(question) {
     const snapshot = await readNormalized(sourceId);
     if (!snapshot?.records?.length) continue;
     const relevant = snapshot.records
-      .filter((record) => record.recordType !== "guidance" && record.noticeAction !== "repeal")
+      .filter((record) => !["guidance", "regulation"].includes(record.recordType) && record.noticeAction !== "repeal")
       .sort((left, right) => String(right.publishedAt || "").localeCompare(String(left.publishedAt || "")))
       .slice(0, 4);
     for (const record of relevant) {

@@ -208,6 +208,15 @@ async function syncChinaDualUseNotices() {
       if (page >= (guidance.payload?.pageInfo?.maxPageNum || 1)) break;
     }
   } catch { /* control-list notices are still valid on their own */ }
+
+  try {
+    const laws = await fetchExportControlColumn(EXPORT_CONTROL_COLUMNS.domesticRegulation);
+    const rows = (laws.payload?.pageInfo?.rows || []).map((row, index) => ({
+      ...normalizeExportControlNotice(row, records.length + index),
+      recordType: "regulation", measureType: "regulation", noticeAction: "regulation"
+    }));
+    records.push(...await Promise.all(rows.map(backfillContent)));
+  } catch { /* the notices remain the primary payload */ }
   // Attachments carry the actual list PDFs, so fetch them for the newest notices.
   for (const record of records.slice(0, 12)) {
     record.attachments = await noticeAttachments(record.sourceUrl);
