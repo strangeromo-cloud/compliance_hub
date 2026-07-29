@@ -268,15 +268,36 @@ html[data-theme="light"] .moon-icon { display: block; }
 .action-count { font: 600 9.5px/1.6 var(--mono); min-width: 16px; text-align: center; border-radius: 8px; padding: 0 5px; }
 .action-block.gaps .action-count { color: var(--risk-medium); background: rgba(217,154,61,.15); }
 .action-block.actions .action-count { color: var(--accent-text); background: var(--accent-soft); }
-.action-block ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 5px; }
-.action-block li { font-size: 12.5px; color: var(--text-2); padding-left: 13px; position: relative; line-height: 1.55; }
-.action-block li::before { content: ""; position: absolute; left: 0; top: 8px; width: 5px; height: 5px; border-radius: 1px; }
-.action-block.gaps li::before { background: var(--risk-medium); }
-.action-block.actions li::before { background: var(--accent); }
-.action-block .from { display: block; font: 400 10px/1.6 var(--mono); color: var(--text-3); margin-top: 1px; }
+.action-items { list-style: none; padding: 0; margin: 0; display: grid; gap: 7px; counter-reset: none; }
+.action-items li { display: grid; grid-template-columns: 17px minmax(0, 1fr); gap: 9px; align-items: start; font-size: 12.5px; color: var(--text-2); line-height: 1.55; }
+.action-items .marker {
+  width: 17px; height: 17px; margin-top: 1px; flex: 0 0 auto;
+  display: grid; place-items: center; border-radius: 4px;
+  font: 600 10px/1 var(--mono); font-variant-numeric: tabular-nums;
+}
+/* Actions are worked through in order, so the marker is a step number. */
+.action-block.actions .marker { color: var(--accent-text); background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 34%, transparent); }
+/* Gaps are collected, not sequenced, so the marker is an empty checkbox. */
+.action-block.gaps .marker { border: 1px solid color-mix(in srgb, var(--risk-medium) 55%, var(--border)); border-radius: 3px; background: rgba(217,154,61,.09); }
+.action-items .item-body { min-width: 0; }
+.action-items code { font-family: var(--mono); font-size: 11px; background: var(--surface-3); border-radius: 3px; padding: 0 4px; }
+.action-items strong { color: var(--text); font-weight: 600; }
+.action-block .from { display: block; font: 400 10px/1.6 var(--mono); color: var(--text-3); margin-top: 2px; }
 
 .next-step { border-top: 1px solid var(--border); background: var(--surface-2); padding: 11px 16px; font-size: 13px; color: var(--text); }
-.next-step b { display: block; font: 600 9.5px/1.6 var(--mono); letter-spacing: .11em; text-transform: uppercase; color: var(--text-3); margin-bottom: 3px; }
+.next-step b { display: block; font: 600 9.5px/1.6 var(--mono); letter-spacing: .11em; text-transform: uppercase; color: var(--text-3); margin-bottom: 4px; }
+
+/* Model prose keeps whatever structure the model gave it. */
+.prose > :first-child { margin-top: 0; }
+.prose > :last-child { margin-bottom: 0; }
+.prose p { margin: 0 0 7px; }
+.prose ul, .prose ol { margin: 5px 0 7px; padding-left: 20px; display: grid; gap: 4px; }
+.prose li { line-height: 1.6; }
+.prose li::marker { color: var(--text-3); font-variant-numeric: tabular-nums; }
+.prose code, .finding-detail code { font-family: var(--mono); font-size: 11.5px; background: var(--surface-3); border-radius: 3px; padding: 0 4px; }
+.prose strong, .finding-detail strong { color: var(--text); font-weight: 600; }
+.prose em, .finding-detail em { font-style: normal; color: var(--text); }
+.next-step .prose p { margin: 0 0 5px; }
 
 details.trace { margin-top: 8px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
 details.trace > summary { cursor: pointer; list-style: none; padding: 8px 12px; font-size: 11.5px; color: var(--text-2); display: flex; align-items: center; gap: 6px; }

@@ -129,6 +129,47 @@ const localized = (value) => (value && typeof value === "object" ? value[state.l
 const agentName = (agent) => ({ trade: "Trade", product: "Product", tpdd: "Ethics & TPDD" })[agent] || agent;
 const esc = (value = "") => String(value).replace(/[&<>'"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[c]);
 
+// Models write markdown; rendering it as literal asterisks and hyphens wastes
+// structure the model already provided. Everything is escaped first and only
+// then given tags, so no model output can inject markup.
+function formatInline(value = "") {
+  return esc(value)
+    .replace(/`([^`\n]+)`/g, "<code>$1</code>")
+    .replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/(?<![\w*])\*([^*\n]+)\*(?![\w*])/g, "<em>$1</em>");
+}
+
+const LIST_ITEM = /^\s*(?:[-*•·]|\d+[.)]|[（(]\d+[）)])\s+(.*)$/;
+
+// Turns a model's prose into paragraphs and lists. An ordered source list stays
+// ordered, because in compliance guidance the sequence usually carries meaning.
+function formatBlock(value = "") {
+  const lines = String(value).split(/\r?\n/);
+  const out = [];
+  let list = null;
+  const closeList = () => { if (list) { out.push(`<${list.tag}>${list.items.join("")}</${list.tag}>`); list = null; } };
+  for (const line of lines) {
+    const match = line.match(LIST_ITEM);
+    if (match) {
+      const ordered = /^\s*(?:\d+[.)]|[（(]\d+[）)])/.test(line);
+      const tag = ordered ? "ol" : "ul";
+      if (!list || list.tag !== tag) { closeList(); list = { tag, items: [] }; }
+      list.items.push(`<li>${formatInline(match[1])}</li>`);
+      continue;
+    }
+    closeList();
+    if (line.trim()) out.push(`<p>${formatInline(line)}</p>`);
+  }
+  closeList();
+  return out.join("") || `<p>${formatInline(value)}</p>`;
+}
+
+// An array item that already carries its own marker would otherwise be numbered
+// twice once the interface adds its own.
+function stripMarker(value = "") {
+  return String(value).replace(LIST_ITEM, "$1").trim();
+}
+
 function accessHeaders() {
   const password = localStorage.getItem("compliance-access-password") || "";
   return password ? { "x-access-password": password } : {};
@@ -359,7 +400,7 @@ function openGemDetail(gemId) {
 /* ----------------------------------------------------------- rendering */
 
 function riskLabel(level) { return t(`risk${level.charAt(0).toUpperCase()}${level.slice(1)}`); }
-function renderList(items) { return items?.length ? `<ul>${items.map((item) => `<li>${esc(item)}</li>`).join("")}</ul>` : `<p>${t("noItems")}</p>`; }
+function renderList(items) { return items?.length ? `<ul>${items.map((item) => `<li>${formatInline(stripMarker(item))}</li>`).join("")}</ul>` : `<p>${t("noItems")}</p>`; }
 
 function estimatedRoute(question) {
   const lower = question.toLowerCase();
@@ -422,11 +463,17 @@ function collectAcross(results, key, limit = 6) {
 
 function actionBlock(kind, label, items) {
   if (!items.length) return "";
+  // Recommended actions are worked through in order, so they are numbered.
+  // Missing information is a set to collect, so it gets checkboxes instead.
+  const ordered = kind === "actions";
   return `
     <section class="action-block ${kind}">
       <div class="action-head"><span class="action-label">${esc(label)}</span><span class="action-count">${items.length}</span></div>
-      <ul>${items.map((item) => `
-        <li>${esc(item.text)}${item.agents.length > 1 ? `<span class="from">${item.agents.map(agentName).join(" · ")}</span>` : ""}</li>`).join("")}</ul>
+      <${ordered ? "ol" : "ul"} class="action-items">${items.map((item, index) => `
+        <li>
+          <span class="marker" aria-hidden="true">${ordered ? index + 1 : ""}</span>
+          <span class="item-body">${formatInline(stripMarker(item.text))}${item.agents.length > 1 ? `<span class="from">${item.agents.map(agentName).join(" · ")}</span>` : ""}</span>
+        </li>`).join("")}</${ordered ? "ol" : "ul"}>
     </section>`;
 }
 
@@ -450,7 +497,7 @@ function answerMarkup(data) {
             <span class="risk-mark risk-${esc(synthesis.overallRisk)}">${esc(riskLabel(synthesis.overallRisk))}</span>
             <div>
               <h3>${esc(synthesis.headline)}</h3>
-              <p>${esc(synthesis.executiveSummary)}</p>
+              <div class="prose">${formatBlock(synthesis.executiveSummary)}</div>
             </div>
           </div>
 
@@ -459,13 +506,13 @@ function answerMarkup(data) {
             ${actionBlock("actions", t("actions"), actions)}
           </div>` : ""}
 
-          <div class="next-step"><b>${t("nextStep")}</b>${esc(synthesis.nextStep)}</div>
+          <div class="next-step"><b>${t("nextStep")}</b><div class="prose">${formatBlock(synthesis.nextStep)}</div></div>
         </section>
 
         ${limitations.length ? `
         <details class="trace limits">
           <summary>${t("limitations")}<span class="trace-count">${limitations.length}</span></summary>
-          <div class="trace-body"><ul class="limit-list">${limitations.map((item) => `<li>${esc(item)}</li>`).join("")}</ul></div>
+          <div class="trace-body"><ul class="limit-list">${limitations.map((item) => `<li>${formatInline(stripMarker(item))}</li>`).join("")}</ul></div>
         </details>` : ""}
 
         <details class="trace">
@@ -476,9 +523,9 @@ function answerMarkup(data) {
                 <strong>${agentName(result.agent)}</strong>
                 <span class="risk-chip risk-${esc(result.riskLevel)}">${esc(riskLabel(result.riskLevel))}</span>
               </div>
-              <p>${esc(result.summary)}</p>
+              <div class="prose">${formatBlock(result.summary)}</div>
               <ul class="trace-findings">${(result.findings || []).map((finding) => `
-                <li><b>${esc(finding.title)}</b> ${esc(finding.detail)}<span class="cite">${(finding.evidenceSourceIds || []).map((id) => `<span>${esc(id)}</span>`).join("")}</span></li>`).join("")}</ul>
+                <li><b>${esc(finding.title)}</b> <span class="finding-detail">${formatInline(finding.detail)}</span><span class="cite">${(finding.evidenceSourceIds || []).map((id) => `<span>${esc(id)}</span>`).join("")}</span></li>`).join("")}</ul>
               <div class="trace-cols">
                 <div><h4>${t("missingInfo")}</h4>${renderList((result.missingInfo || []))}</div>
                 <div><h4>${t("actions")}</h4>${renderList((result.recommendedActions || []))}</div>
