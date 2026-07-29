@@ -718,3 +718,93 @@ dialog::backdrop { background: rgba(0,0,0,.55); }
   .guide-gutter { padding-top: 0; }
 }
 .stream-notice { color: var(--risk-medium); }
+
+/* ---------------------------------------------------- the argument chain */
+
+details.trace.reasoning > summary { color: var(--text); font-weight: 600; }
+.rsteps { list-style: none; padding: 0; margin: 6px 0 0; display: grid; gap: 14px; counter-reset: rstep; }
+.rstep { position: relative; padding-left: 22px; }
+.rstep::before {
+  counter-increment: rstep; content: counter(rstep);
+  position: absolute; left: 0; top: 1px; width: 16px; height: 16px;
+  display: grid; place-items: center; border-radius: 4px;
+  font: 600 9.5px/1 var(--mono); color: var(--text-2);
+  background: var(--surface-3); border: 1px solid var(--border);
+}
+/* A hairline spine ties the steps together as one chain. */
+.rstep:not(:last-child)::after { content: ""; position: absolute; left: 8px; top: 21px; bottom: -14px; width: 1px; background: var(--border); }
+.rstep-head { display: flex; align-items: center; gap: 7px; font-size: 11.5px; font-weight: 600; color: var(--text-2); margin-bottom: 7px; }
+.rstep-count { font: 600 9.5px/1.6 var(--mono); color: var(--text-3); border: 1px solid var(--border); border-radius: 8px; padding: 0 5px; }
+.rstep-note { font-size: 10.5px; color: var(--risk-medium); margin-top: 5px; }
+
+.rsource-list { display: grid; gap: 3px; }
+.rsource { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 11px; color: var(--text-3); }
+.rsource code { font-family: var(--mono); font-size: 10.5px; color: var(--text-2); background: var(--surface-2); border-radius: 3px; padding: 0 5px; }
+.rsource .prov { color: var(--accent-text); }
+.rsource .prov.warn { color: var(--risk-medium); }
+.rsource time { font-variant-numeric: tabular-nums; }
+
+.rmatch { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface-2); padding: 8px 10px; margin-bottom: 5px; }
+.rmatch-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.rmatch-head strong { font-size: 12.5px; }
+.rmatch-head .alt { font-size: 11.5px; color: var(--text-2); }
+.rmatch-head .score { margin-left: auto; font: 500 10.5px/1.6 var(--mono); color: var(--text-3); }
+.rmatch-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 4px; font-size: 10.5px; color: var(--text-3); }
+.rmatch-meta code { font-family: var(--mono); background: var(--surface); border-radius: 3px; padding: 0 5px; }
+.rmatch-meta a { color: var(--accent-text); text-decoration: none; }
+.rmatch-meta a:hover { text-decoration: underline; }
+
+/* The comparison is the argument: each element, its verdict, both values. */
+.rverdict { border: 1px solid var(--border); border-left-width: 2px; border-radius: 0 var(--radius) var(--radius) 0; background: var(--surface-2); padding: 9px 11px; margin-bottom: 6px; }
+.rverdict.tone-ok { border-left-color: var(--accent); }
+.rverdict.tone-warn { border-left-color: var(--risk-medium); }
+.rverdict.tone-crit { border-left-color: var(--risk-high); }
+.rverdict.tone-muted { border-left-color: var(--border-strong); }
+.rverdict-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; margin-bottom: 7px; }
+.rverdict-head code { font-family: var(--mono); font-size: 10px; color: var(--text-3); background: var(--surface); border-radius: 3px; padding: 0 4px; margin-left: 5px; }
+.rv-vs { font: 500 10px/1 var(--mono); color: var(--text-3); }
+.cmp-table { display: grid; gap: 2px; }
+.cmp-row { display: grid; grid-template-columns: 62px 40px minmax(0, 1fr); gap: 9px; align-items: baseline; font-size: 11px; }
+.cmp-el { color: var(--text-3); }
+.cmp-status { font: 600 10px/1.6 var(--mono); }
+.cmp-agree .cmp-status { color: var(--accent-text); }
+.cmp-conflict .cmp-status { color: var(--risk-high); }
+.cmp-unavailable .cmp-status { color: var(--text-3); }
+.cmp-values { font-family: var(--mono); font-size: 10.5px; color: var(--text-2); min-width: 0; word-break: break-word; }
+.cmp-values b { color: var(--text); font-weight: 600; }
+.cmp-values i { font-style: normal; color: var(--text-3); margin: 0 6px; }
+.rverdict-call { margin-top: 8px; padding-top: 7px; border-top: 1px solid var(--border); font-size: 12px; font-weight: 600; }
+.tone-ok .rverdict-call { color: var(--accent-text); }
+.tone-warn .rverdict-call { color: var(--risk-medium); }
+.tone-crit .rverdict-call { color: var(--risk-high); }
+
+.rfacts { list-style: none; padding: 0; margin: 0; display: grid; gap: 5px; font-size: 11.5px; color: var(--text-2); }
+.rfacts li { display: flex; gap: 7px; align-items: baseline; flex-wrap: wrap; line-height: 1.6; }
+.rfacts code { font-family: var(--mono); font-size: 10px; color: var(--text-3); background: var(--surface-2); border-radius: 3px; padding: 0 5px; flex: 0 0 auto; }
+
+.next-steps { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; counter-reset: nstep; }
+.next-steps li { position: relative; padding-left: 24px; font-size: 13px; line-height: 1.55; }
+.next-steps li::before {
+  counter-increment: nstep; content: counter(nstep);
+  position: absolute; left: 0; top: 2px; width: 17px; height: 17px;
+  display: grid; place-items: center; border-radius: 4px;
+  font: 600 10px/1 var(--mono); color: #fff; background: var(--accent);
+}
+
+/* ------------------------------------------------------------- case list */
+
+.rail-label-spaced { margin-top: 16px; }
+.case-nav { list-style: none; padding: 0; margin: 0; display: grid; gap: 1px; }
+.case-nav button {
+  width: 100%; display: grid; grid-template-columns: 6px 1fr; gap: 9px; align-items: start;
+  padding: 6px 7px; border: 0; border-radius: var(--radius);
+  background: transparent; text-align: left; cursor: pointer; color: var(--text-2);
+}
+.case-nav button:hover { background: var(--surface-2); color: var(--text); }
+.case-risk { width: 6px; height: 6px; margin-top: 6px; border-radius: 50%; background: currentColor; }
+.case-text { min-width: 0; }
+.case-q { display: block; font-size: 11.5px; line-height: 1.45; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.case-when { display: block; font: 400 9.5px/1.6 var(--mono); color: var(--text-3); margin-top: 1px; font-variant-numeric: tabular-nums; }
+.case-empty { font-size: 11px; color: var(--text-3); padding: 4px 7px; }
+.app.rail .case-nav .case-text, .app.rail .rail-label-spaced { display: none; }
+.app.rail .case-nav button { grid-template-columns: 1fr; justify-items: center; }

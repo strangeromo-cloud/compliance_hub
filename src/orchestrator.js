@@ -160,11 +160,18 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
   onEvent({ type: "sources", sources: publicSources });
 
   const grounding = await collectGrounding(question, agents);
+  // The comparison detail is the argument behind the conclusion. Returning only
+  // counts left the reader with a verdict and no way to see how it was reached.
+  // designatedRecord is dropped because it is the bulky raw list entry, and
+  // everything worth reading from it is already projected onto the match.
   const groundingSummary = {
     factCount: grounding.facts.length,
     listMatchCount: grounding.listMatches.length,
     internalImpactCount: grounding.internalParties.length,
     screening: grounding.screening,
+    facts: grounding.facts.slice(0, 10),
+    listMatches: grounding.listMatches.slice(0, 8).map(({ designatedRecord, ...match }) => match),
+    internalParties: grounding.internalParties.slice(0, 5),
     limitations: grounding.limitations
   };
   onEvent({ type: "grounding", intent: grounding.intent, grounding: groundingSummary });

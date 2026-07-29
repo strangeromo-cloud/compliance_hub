@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { assessScenario } from "./src/orchestrator.js";
 import { classifyModelError, testModelConnection } from "./src/llm.js";
 import { getDataSourceCoverage, queryDataSource, syncSource } from "./src/data-layer/service.js";
+import { deleteCase, listCases, readCase, saveCase } from "./src/case-store.js";
 
 const ROOT = fileURLToPath(new URL(".", import.meta.url));
 const PUBLIC_DIR = join(ROOT, "public");
@@ -164,7 +165,9 @@ const server = createServer(async (request, response) => {
       const config = cleanConfig(body.config);
       const mock = Boolean(body.mock);
       if (!mock && !config.apiKey) throw Object.assign(new Error("API key is required for live-model mode."), { status: 400 });
-      const result = await assessScenario({ question, locale: body.locale === "en" ? "en" : "zh", config, mock, history: cleanHistory(body.history) });
+      const locale = body.locale === "en" ? "en" : "zh";
+      const result = await assessScenario({ question, locale, config, mock, history: cleanHistory(body.history) });
+      await saveCase(result, question, locale).catch(() => null);
       return sendJson(response, 200, result);
     }
 
@@ -191,10 +194,11 @@ const server = createServer(async (request, response) => {
       });
       const send = (event) => { if (!response.writableEnded) response.write(`${JSON.stringify(event)}\n`); };
       try {
-        const result = await assessScenario({
-          question, locale: body.locale === "en" ? "en" : "zh", config, mock,
-          history: cleanHistory(body.history), onEvent: send
-        });
+        const locale = body.locale === "en" ? "en" : "zh";
+        const result = await assessScenario({ question, locale, config, mock, history: cleanHistory(body.history), onEvent: send });
+        // Persist before announcing completion, but a storage failure must not
+        // discard an answer the user is already looking at.
+        await saveCase(result, question, locale).catch(() => null);
         send({ type: "done", result });
       } catch (error) {
         // The status line is already sent, so a failure has to arrive as an
@@ -202,6 +206,22 @@ const server = createServer(async (request, response) => {
         send({ type: "error", error: String(error.message || "Analysis failed.").slice(0, 300), code: error.modelError?.code || null });
       }
       return response.end();
+    }
+
+    if (request.method === "GET" && url.pathname === "/api/cases") {
+      return sendJson(response, 200, { cases: await listCases(url.searchParams.get("limit")) });
+    }
+
+    if (request.method === "GET" && url.pathname.startsWith("/api/cases/")) {
+      const record = await readCase(decodeURIComponent(url.pathname.slice("/api/cases/".length)));
+      if (!record) throw Object.assign(new Error("Case not found."), { status: 404 });
+      return sendJson(response, 200, record);
+    }
+
+    if (request.method === "DELETE" && url.pathname.startsWith("/api/cases/")) {
+      requireAccess(request);
+      await deleteCase(decodeURIComponent(url.pathname.slice("/api/cases/".length)));
+      return sendJson(response, 200, { ok: true });
     }
 
     if (request.method === "POST" && url.pathname === "/api/test-connection") {

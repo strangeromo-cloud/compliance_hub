@@ -18,6 +18,17 @@ const i18n = {
     fallbackTitle: "本机未同步，使用随仓库提交的时点快照，采集于",
     gemSourcesUnit: "个来源", gemRecordsUnit: "条记录", gemUnsynced: "个未同步", gemNoData: "无绑定来源", gemNoCoverage: "数据状态未知",
     factsShort: "必填", railCollapse: "收起侧边栏", railExpand: "展开侧边栏",
+    historyLabel: "历史记录", historyEmpty: "暂无记录", historyOpenFailed: "无法打开该记录", reasoningTrace: "论证过程", rsSearched: "已检索的名单来源", rsMatched: "名称命中", rsCompared: "身份要素比对", rsFacts: "已核验事实",
+    rsScore: "相似度", rsOpen: "查看原文", rsUnsynced: "未同步、本次未检索",
+    el_country: "国别", el_registration_number: "注册号", el_address: "地址",
+    st_agree: "一致", st_conflict: "冲突", st_unavailable: "缺失",
+    basis_normalized_name_identical: "规范化后名称完全一致", basis_one_normalized_name_contains_the_other: "一个名称包含另一个",
+    basis_token_overlap: "词元重叠", basis_weak_token_overlap: "弱词元重叠", basis_no_overlap: "无重叠", basis_no_comparable_name: "无可比对名称",
+    disp_strong_potential_match_escalate_for_human_confirmation: "身份要素一致 —— 建议升级人工确认",
+    disp_potential_match_requires_identity_review: "潜在命中 —— 需人工核对身份要素",
+    disp_weak_potential_match_requires_identity_review: "弱潜在命中 —— 需人工核对",
+    disp_likely_false_positive_identity_elements_conflict: "身份要素冲突 —— 判定为疑似误报（仍需人工用注册证据确认）",
+    disp_below_review_threshold: "低于复核阈值",
     noStreamNotice: "当前模型未返回流式响应，分析文本会在每个 Agent 完成后一次性显示。", step_routed: "选择 Agent", step_sources: "检索官方来源", step_grounding: "名单筛查与结构化事实", step_agents: "专业 Agent 分析", step_synthesizing: "综合结论",
     groundingNote: "已筛查 {screened} 个名单来源 · {matches} 条潜在命中 · {internal} 条内部主数据关联",
     filterAll: "全部", filterTrade: "Trade", filterProduct: "Product", filterTpdd: "TPDD", filterCross: "跨域",
@@ -54,6 +65,17 @@ const i18n = {
     fallbackTitle: "Not synced on this host; using the bundled point-in-time copy captured",
     gemSourcesUnit: "sources", gemRecordsUnit: "records", gemUnsynced: "not synced", gemNoData: "no bound sources", gemNoCoverage: "coverage unknown",
     factsShort: "Facts", railCollapse: "Collapse sidebar", railExpand: "Expand sidebar",
+    historyLabel: "History", historyEmpty: "No cases yet", historyOpenFailed: "That case could not be opened", reasoningTrace: "How this was reached", rsSearched: "Lists searched", rsMatched: "Name matches", rsCompared: "Identity comparison", rsFacts: "Verified facts",
+    rsScore: "Similarity", rsOpen: "Open source", rsUnsynced: "Not synced, therefore not searched",
+    el_country: "Country", el_registration_number: "Registration no.", el_address: "Address",
+    st_agree: "agree", st_conflict: "conflict", st_unavailable: "missing",
+    basis_normalized_name_identical: "normalized names identical", basis_one_normalized_name_contains_the_other: "one name contains the other",
+    basis_token_overlap: "token overlap", basis_weak_token_overlap: "weak token overlap", basis_no_overlap: "no overlap", basis_no_comparable_name: "no comparable name",
+    disp_strong_potential_match_escalate_for_human_confirmation: "Identity elements agree — escalate for human confirmation",
+    disp_potential_match_requires_identity_review: "Potential match — identity elements need review",
+    disp_weak_potential_match_requires_identity_review: "Weak potential match — needs review",
+    disp_likely_false_positive_identity_elements_conflict: "Identity elements conflict — likely false positive (still requires confirmation against registration evidence)",
+    disp_below_review_threshold: "Below review threshold",
     noStreamNotice: "This model does not return a streamed response; each specialist\u2019s text appears once it finishes.", step_routed: "Select agents", step_sources: "Retrieve official sources", step_grounding: "Screening and structured facts", step_agents: "Specialist analysis", step_synthesizing: "Synthesis",
     groundingNote: "{screened} list sources screened · {matches} potential matches · {internal} internal records touched",
     filterAll: "All", filterTrade: "Trade", filterProduct: "Product", filterTpdd: "TPDD", filterCross: "Cross-domain",
@@ -117,6 +139,7 @@ const state = {
   accessPasswordRequired: false,
   rulesMode: true,
   coverage: null,
+  cases: [],
   factsOpen: false,
   rail: localStorage.getItem("compliance-rail") === "1",
   activeGem: null,
@@ -246,6 +269,50 @@ function renderGemNav() {
         <span class="gem-name">${esc(localized(gem.name))}${pinned.includes(gem.id) ? ' <span class="pin">●</span>' : ""}</span>
       </button>
     </li>`).join("");
+}
+
+function renderCaseNav() {
+  const cases = state.cases || [];
+  $("caseNav").innerHTML = cases.length
+    ? cases.slice(0, 12).map((item) => `
+      <li><button type="button" data-case="${esc(item.id)}" title="${esc(item.question)}">
+        <span class="case-risk risk-${esc(item.overallRisk)}" aria-hidden="true"></span>
+        <span class="case-text">
+          <span class="case-q">${esc(item.question)}</span>
+          <span class="case-when">${esc(String(item.createdAt).slice(5, 16).replace("T", " "))}</span>
+        </span>
+      </button></li>`).join("")
+    : `<li class="case-empty">${esc(t("historyEmpty"))}</li>`;
+}
+
+async function loadCases() {
+  try {
+    const response = await fetch("/api/cases?limit=20");
+    if (!response.ok) return;
+    state.cases = (await response.json()).cases || [];
+    renderCaseNav();
+  } catch { /* history is a convenience; the workbench does not depend on it */ }
+}
+
+async function openCase(id) {
+  try {
+    const response = await fetch(`/api/cases/${encodeURIComponent(id)}`);
+    if (!response.ok) throw new Error("not found");
+    const record = await response.json();
+    state.conversation = [];
+    $("threadInner").innerHTML = "";
+    $("startPanel").classList.add("hidden");
+    $("threadInner").insertAdjacentHTML("beforeend",
+      `<article class="msg msg-user"><div class="bubble">${esc(record.question || "")}</div></article>`);
+    const node = document.createElement("article");
+    node.className = "msg msg-assistant";
+    node.id = `answer-${record.id}`;
+    node.innerHTML = answerMarkup(record);
+    $("threadInner").appendChild(node);
+    renderEvidence(record.sources || []);
+    closeDrawer();
+    node.scrollIntoView({ behavior: "smooth", block: "start" });
+  } catch { toast(t("historyOpenFailed")); }
 }
 
 function renderGemGrid() {
@@ -477,6 +544,116 @@ function actionBlock(kind, label, items) {
     </section>`;
 }
 
+const DISPOSITION_TONE = {
+  strong_potential_match_escalate_for_human_confirmation: "crit",
+  potential_match_requires_identity_review: "warn",
+  weak_potential_match_requires_identity_review: "warn",
+  likely_false_positive_identity_elements_conflict: "ok",
+  below_review_threshold: "muted"
+};
+
+function comparisonTable(comparisons) {
+  if (!comparisons?.length) return "";
+  return `<div class="cmp-table">${comparisons.map((row) => `
+    <div class="cmp-row cmp-${esc(row.status)}">
+      <span class="cmp-el">${esc(t(`el_${row.element}`))}</span>
+      <span class="cmp-status">${esc(t(`st_${row.status}`))}</span>
+      <span class="cmp-values"><b>${esc(row.queryValue ?? "—")}</b><i>vs</i>${esc(row.recordValue ?? "—")}</span>
+    </div>`).join("")}</div>`;
+}
+
+// The chain from "which lists were searched" to "why this is or is not a hit".
+// Without it the interface states a verdict and hides the argument.
+function reasoningMarkup(grounding) {
+  if (!grounding) return "";
+  const screened = grounding.screening?.screenedSources || [];
+  const matches = grounding.listMatches || [];
+  const internal = grounding.internalParties || [];
+  const facts = grounding.facts || [];
+  if (!screened.length && !matches.length && !facts.length) return "";
+
+  const steps = [];
+
+  if (screened.length) {
+    steps.push(`
+      <li class="rstep">
+        <div class="rstep-head">${esc(t("rsSearched"))}<span class="rstep-count">${screened.length}</span></div>
+        <div class="rsource-list">${screened.map((source) => `
+          <div class="rsource">
+            <code>${esc(source.sourceId)}</code>
+            <span>${Number(source.recordCount).toLocaleString()} ${esc(t("gemRecordsUnit"))}</span>
+            <span class="prov ${source.provenance === "bundled_fallback_snapshot" ? "warn" : ""}">${esc(t(source.provenance === "bundled_fallback_snapshot" ? "sourceArchived" : "sourceLive"))}</span>
+            <time>${esc(String(source.capturedAt || "").slice(0, 10))}</time>
+          </div>`).join("")}</div>
+        ${grounding.screening?.unsyncedSources?.length ? `<p class="rstep-note">${esc(t("rsUnsynced"))}: ${grounding.screening.unsyncedSources.map(esc).join(" · ")}</p>` : ""}
+      </li>`);
+  }
+
+  if (matches.length) {
+    steps.push(`
+      <li class="rstep">
+        <div class="rstep-head">${esc(t("rsMatched"))}<span class="rstep-count">${matches.length}</span></div>
+        ${matches.map((match) => `
+          <div class="rmatch">
+            <div class="rmatch-head">
+              <strong>${esc(match.entityName || match.matchedName)}</strong>
+              ${match.entityNameEn ? `<span class="alt">${esc(match.entityNameEn)}</span>` : ""}
+              <span class="score">${esc(t("rsScore"))} ${match.matchScore}</span>
+            </div>
+            <div class="rmatch-meta">
+              <code>${esc(match.sourceId)}</code>
+              ${match.noticeNumber ? `<span>${esc(match.noticeNumber)}</span>` : ""}
+              <span>${esc(t(`basis_${match.matchBasis}`))}</span>
+              ${match.sourceUrl ? `<a href="${esc(match.sourceUrl)}" target="_blank" rel="noopener noreferrer">${esc(t("rsOpen"))}</a>` : ""}
+            </div>
+          </div>`).join("")}
+      </li>`);
+  }
+
+  if (internal.length) {
+    steps.push(`
+      <li class="rstep">
+        <div class="rstep-head">${esc(t("rsCompared"))}<span class="rstep-count">${internal.reduce((n, e) => n + e.internalMatches.length, 0)}</span></div>
+        ${internal.flatMap((entry) => entry.internalMatches.map((item) => `
+          <div class="rverdict tone-${esc(DISPOSITION_TONE[item.matchDisposition] || "muted")}">
+            <div class="rverdict-head">
+              <span class="rv-party">${esc(item.entityName)}${item.partyId ? `<code>${esc(item.partyId)}</code>` : ""}</span>
+              <span class="rv-vs">vs</span>
+              <span class="rv-listed">${esc(item.designatedEntity || entry.designationName)}${item.designationNoticeNumber ? `<code>${esc(item.designationNoticeNumber)}</code>` : ""}</span>
+            </div>
+            ${comparisonTable(item.identityComparisons)}
+            <div class="rverdict-call">${esc(t(`disp_${item.matchDisposition}`))}</div>
+          </div>`)).join("")}
+      </li>`);
+  }
+
+  if (facts.length) {
+    steps.push(`
+      <li class="rstep">
+        <div class="rstep-head">${esc(t("rsFacts"))}<span class="rstep-count">${facts.length}</span></div>
+        <ul class="rfacts">${facts.map((fact) => `
+          <li><code>${esc(fact.sourceId)}</code>${fact.noticeNumber ? `<code>${esc(fact.noticeNumber)}</code>` : ""}<span>${formatInline(fact.fact)}</span></li>`).join("")}</ul>
+      </li>`);
+  }
+
+  return `
+    <details class="trace reasoning" open>
+      <summary>${esc(t("reasoningTrace"))}<span class="trace-count">${steps.length}</span></summary>
+      <div class="trace-body"><ol class="rsteps">${steps.join("")}</ol></div>
+    </details>`;
+}
+
+// A next step frequently arrives as one sentence of clauses separated by
+// semicolons or arrows. Those are steps; presenting them as a paragraph buries
+// the fact that there is more than one thing to do.
+function nextStepMarkup(value = "") {
+  const text = String(value).trim();
+  if (/\n/.test(text) || LIST_ITEM.test(text)) return `<div class="prose">${formatBlock(text)}</div>`;
+  const parts = text.split(/\s*(?:[；;]|→|->)\s*/).map((part) => part.replace(/[。.]$/, "").trim()).filter(Boolean);
+  if (parts.length < 2) return `<div class="prose">${formatBlock(text)}</div>`;
+  return `<ol class="next-steps">${parts.map((part) => `<li>${formatInline(part)}</li>`).join("")}</ol>`;
+}
+
 function answerMarkup(data) {
   const synthesis = data.synthesis;
   const gaps = collectAcross(data.results, "missingInfo");
@@ -506,8 +683,10 @@ function answerMarkup(data) {
             ${actionBlock("actions", t("actions"), actions)}
           </div>` : ""}
 
-          <div class="next-step"><b>${t("nextStep")}</b><div class="prose">${formatBlock(synthesis.nextStep)}</div></div>
+          <div class="next-step"><b>${t("nextStep")}</b>${nextStepMarkup(synthesis.nextStep)}</div>
         </section>
+
+        ${reasoningMarkup(data.grounding)}
 
         ${limitations.length ? `
         <details class="trace limits">
@@ -778,6 +957,7 @@ async function analyze(event) {
     live.innerHTML = answerMarkup(finished);
     renderEvidence(finished.sources || []);
     live.scrollIntoView({ behavior: "smooth", block: "start" });
+    loadCases();
   } catch (error) {
     live.innerHTML = `
       <span class="avatar" aria-hidden="true">CH</span>
@@ -897,6 +1077,7 @@ function applyLocale(locale) {
   renderScenarios();
   renderGemGrid();
   renderGemNav();
+  renderCaseNav();
   renderActiveGem();
   updateModePill();
   loadCoverage();
@@ -936,6 +1117,11 @@ $("palette").addEventListener("click", (event) => {
 $("gemGrid").addEventListener("click", (event) => {
   const button = event.target.closest("[data-gem]");
   if (button) activateGem(button.dataset.gem);
+});
+
+$("caseNav").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-case]");
+  if (button) openCase(button.dataset.case);
 });
 
 $("gemNav").addEventListener("click", (event) => {
@@ -1031,3 +1217,4 @@ setRail(state.rail);
 applyLocale(state.locale);
 renderEvidence([]);
 loadRuntimeCapabilities();
+loadCases();
