@@ -33,16 +33,36 @@ function extractJson(text) {
   }
 }
 
-async function requestCompletion(config, messages, jsonMode = true) {
+// Newer models reject request parameters that older ones require: some accept
+// only the default temperature, others do not implement response_format. Rather
+// than pin the prototype to one provider's dialect, unsupported parameters are
+// dropped one at a time and remembered per model, so the cost is one failed
+// request per model rather than one per call.
+const droppedParams = new Map();
+
+function modelKey(config) {
+  return `${normalizeBaseUrl(config.baseUrl)}::${config.model}`;
+}
+
+// Only treat a 400 as a capability signal when the provider names the parameter
+// it rejected. Anything else is a real error and must surface.
+function unsupportedParam(error, alreadyDropped) {
+  if (error?.status !== 400) return null;
+  const detail = String(error.message || "");
+  if (!alreadyDropped.has("temperature") && /temperature/i.test(detail)) return "temperature";
+  if (!alreadyDropped.has("response_format") && /response_format|json_object/i.test(detail)) return "response_format";
+  return null;
+}
+
+async function requestCompletion(config, messages, dropped = new Set()) {
   const endpoint = `${normalizeBaseUrl(config.baseUrl)}/chat/completions`;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 45_000);
-  const body = {
-    model: config.model,
-    messages,
-    temperature: 0.1
-  };
-  if (jsonMode) body.response_format = { type: "json_object" };
+  const body = { model: config.model, messages };
+  // A low temperature is preferable for compliance output, but not at the cost
+  // of the request failing outright.
+  if (!dropped.has("temperature")) body.temperature = 0.1;
+  if (!dropped.has("response_format")) body.response_format = { type: "json_object" };
 
   let response;
   try {
@@ -85,13 +105,20 @@ async function requestCompletion(config, messages, jsonMode = true) {
 }
 
 export async function callJsonModel(config, messages) {
-  try {
-    return await requestCompletion(config, messages, true);
-  } catch (error) {
-    const unsupportedJsonMode = error.status === 400 && /response_format|json/i.test(error.message);
-    if (!unsupportedJsonMode) throw error;
-    return requestCompletion(config, messages, false);
+  const key = modelKey(config);
+  const dropped = new Set(droppedParams.get(key) || []);
+  // At most one retry per droppable parameter, then the error is real.
+  for (let attempt = 0; attempt <= 2; attempt += 1) {
+    try {
+      return await requestCompletion(config, messages, dropped);
+    } catch (error) {
+      const param = unsupportedParam(error, dropped);
+      if (!param) throw error;
+      dropped.add(param);
+      droppedParams.set(key, new Set(dropped));
+    }
   }
+  throw Object.assign(new Error("The model rejected every supported parameter combination."), { modelError: { code: "model_invalid_request", providerStatus: 400 } });
 }
 
 export async function testModelConnection(config) {

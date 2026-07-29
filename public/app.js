@@ -16,6 +16,8 @@ const i18n = {
     dataLoading: "数据状态载入中", dataSynced: "个来源已同步", dataFallback: "个用兜底快照", dataFailed: "个失败", dataNone: "暂无可用来源",
     sourcesSynced: "已同步来源", listRecords: "名单记录", cnSources: "中国来源", fallbackSources: "兜底快照", failedSources: "同步失败",
     fallbackTitle: "本机未同步，使用随仓库提交的时点快照，采集于",
+    gemSourcesUnit: "个来源", gemRecordsUnit: "条记录", gemUnsynced: "个未同步", gemNoData: "无绑定来源", gemNoCoverage: "数据状态未知",
+    factsShort: "必填", railCollapse: "收起侧边栏", railExpand: "展开侧边栏",
     filterAll: "全部", filterTrade: "Trade", filterProduct: "Product", filterTpdd: "TPDD", filterCross: "跨域",
     runtimeRules: "规则模式", runtimeReady: "实时模型", runtimeMissing: "未配置模型",
     modeHint: "点击切换规则模式与实时模型",
@@ -48,6 +50,8 @@ const i18n = {
     dataLoading: "Loading data status", dataSynced: "synced", dataFallback: "on bundled copy", dataFailed: "failed", dataNone: "No sources available",
     sourcesSynced: "Sources synced", listRecords: "List records", cnSources: "PRC sources", fallbackSources: "Bundled copies", failedSources: "Sync failures",
     fallbackTitle: "Not synced on this host; using the bundled point-in-time copy captured",
+    gemSourcesUnit: "sources", gemRecordsUnit: "records", gemUnsynced: "not synced", gemNoData: "no bound sources", gemNoCoverage: "coverage unknown",
+    factsShort: "Facts", railCollapse: "Collapse sidebar", railExpand: "Expand sidebar",
     filterAll: "All", filterTrade: "Trade", filterProduct: "Product", filterTpdd: "TPDD", filterCross: "Cross-domain",
     runtimeRules: "Rules mode", runtimeReady: "Live model", runtimeMissing: "No model configured",
     modeHint: "Toggle between rules mode and the live model",
@@ -108,6 +112,9 @@ const state = {
   serverModelConfigured: false,
   accessPasswordRequired: false,
   rulesMode: true,
+  coverage: null,
+  factsOpen: false,
+  rail: localStorage.getItem("compliance-rail") === "1",
   activeGem: null,
   palette: { open: false, items: [], index: 0 }
 };
@@ -145,53 +152,101 @@ function setTheme(theme) {
 
 /* ------------------------------------------------------------------ gems */
 
-function gemIconMarkup(gem) { return `<span class="gem-icon" aria-hidden="true">${gem.icon}</span>`; }
+function gemIconMarkup(gem, size = "") {
+  return `<span class="gem-icon ${size}" aria-hidden="true">${gem.icon}</span>`;
+}
+
+// What a gem is actually standing on. Reporting the gaps as well as the totals
+// is the point: a gem bound to five sources of which three never synced should
+// say so rather than imply five sources' worth of coverage.
+function gemBacking(gem) {
+  if (!gem.boundSources.length) return { kind: "none" };
+  if (!state.coverage) return { kind: "unknown" };
+  const byId = new Map(state.coverage.sources.map((source) => [source.sourceId, source]));
+  const known = gem.boundSources.filter((id) => byId.has(id)).map((id) => byId.get(id));
+  if (!known.length) return { kind: "none" };
+  const usable = known.filter((source) => ["success", "fallback_snapshot"].includes(source.sync?.status));
+  return {
+    kind: "known",
+    total: known.length,
+    usable: usable.length,
+    missing: known.length - usable.length,
+    records: usable.reduce((sum, source) => sum + (source.sync.recordCount || 0), 0),
+    capturedAt: usable.map((source) => source.sync.completedAt || source.sync.bundledAt).filter(Boolean).sort().at(-1) || null
+  };
+}
+
+function gemBackingMarkup(gem) {
+  const backing = gemBacking(gem);
+  if (backing.kind === "none") return `<div class="gem-meta"><span class="none">${t("gemNoData")}</span></div>`;
+  if (backing.kind === "unknown") return `<div class="gem-meta"><span class="none">${t("gemNoCoverage")}</span></div>`;
+  const parts = [`${backing.total} ${t("gemSourcesUnit")}`];
+  if (backing.records) parts.push(`${backing.records.toLocaleString()} ${t("gemRecordsUnit")}`);
+  if (backing.capturedAt) parts.push(String(backing.capturedAt).slice(5, 10));
+  const gap = backing.missing ? `<span class="sep">·</span><span class="warn">${backing.missing} ${t("gemUnsynced")}</span>` : "";
+  return `<div class="gem-meta">${parts.map(esc).join('<span class="sep">·</span>')}${gap}</div>`;
+}
+
+function orderedGems() {
+  const pinned = workspaceGemIds();
+  return [...GEMS].sort((a, b) => (pinned.includes(b.id) ? 1 : 0) - (pinned.includes(a.id) ? 1 : 0));
+}
+
+function renderGemNav() {
+  const pinned = workspaceGemIds();
+  $("gemNav").innerHTML = orderedGems().map((gem) => `
+    <li>
+      <button type="button" data-gem="${gem.id}" class="${state.activeGem?.id === gem.id ? "active" : ""}" title="${esc(localized(gem.name))} ${esc(gem.command)}">
+        ${gemIconMarkup(gem)}
+        <span class="gem-name">${esc(localized(gem.name))}${pinned.includes(gem.id) ? ' <span class="pin">●</span>' : ""}</span>
+      </button>
+    </li>`).join("");
+}
 
 function renderGemGrid() {
-  const pinned = workspaceGemIds();
-  // Workspace gems float to the top so a user's own set is the default surface.
-  const ordered = [...GEMS].sort((a, b) => (pinned.includes(b.id) ? 1 : 0) - (pinned.includes(a.id) ? 1 : 0));
-  $("gemGrid").innerHTML = ordered.slice(0, 6).map((gem) => `
+  $("gemGrid").innerHTML = orderedGems().slice(0, 6).map((gem) => `
     <button type="button" class="gem-card" data-gem="${gem.id}">
-      ${gemIconMarkup(gem)}
+      ${gemIconMarkup(gem, "lg")}
       <span>
-        <strong>${esc(localized(gem.name))} <code>${esc(gem.command)}</code></strong>
+        <span class="gem-card-title"><strong>${esc(localized(gem.name))}</strong><code>${esc(gem.command)}</code></span>
         <small>${esc(localized(gem.summary))}</small>
+        ${gemBackingMarkup(gem)}
       </span>
     </button>`).join("");
 }
 
+// The gem row lives inside the composer box, so the required facts collapse to
+// a counter by default and the input never changes height when a gem changes.
 function renderActiveGem() {
-  const host = $("gemActive");
-  if (!state.activeGem) { host.classList.add("hidden"); host.innerHTML = ""; return; }
+  const host = $("gemRow");
+  if (!state.activeGem) { host.classList.add("hidden"); host.innerHTML = ""; renderGemNav(); return; }
   const gem = state.activeGem;
   const facts = factCoverage(gem, $("questionInput").value);
-  const metCount = facts.filter((fact) => fact.met).length;
+  const met = facts.filter((fact) => fact.met).length;
   host.classList.remove("hidden");
   host.innerHTML = `
-    <div class="gem-active-head">
-      ${gemIconMarkup(gem)}
-      <strong>${esc(localized(gem.name))}</strong>
-      <code>${esc(gem.command)}</code>
-      <span class="spacer"></span>
-      <button type="button" class="link-btn" data-gem-detail="${gem.id}">${t("gemDetail")}</button>
-      <button type="button" class="gem-drop" id="gemDropBtn" aria-label="remove gem">
-        <svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg>
-      </button>
-    </div>
-    <div class="gem-facts">
-      <div class="gem-facts-label">${t("factsLabel")} · ${metCount}/${facts.length} ${t("factsMet")}</div>
-      <ul>${facts.map((fact) => `<li class="${fact.met ? "met" : ""}">${esc(localized({ zh: fact.zh, en: fact.en }))}</li>`).join("")}</ul>
-    </div>
-    ${gem.boundSources.length
-      ? `<div class="gem-sources"><b>${t("boundLabel")}:</b> ${gem.boundSources.map(esc).join(" · ")}</div>`
-      : `<div class="gem-sources">${t("gemNoSources")}</div>`}`;
+    ${gemIconMarkup(gem)}
+    <span class="gem-row-name">${esc(localized(gem.name))}</span>
+    <code>${esc(gem.command)}</code>
+    <button type="button" class="facts-toggle ${met === facts.length ? "complete" : ""}" data-facts-toggle aria-expanded="${state.factsOpen}">
+      ${t("factsShort")} ${met}/${facts.length} ${state.factsOpen ? "⌃" : "⌄"}
+    </button>
+    <button type="button" class="gem-drop" data-gem-drop aria-label="remove gem">
+      <svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg>
+    </button>
+    ${state.factsOpen ? `
+      <div class="facts-panel">
+        <ul>${facts.map((fact) => `<li class="${fact.met ? "met" : ""}">${esc(localized({ zh: fact.zh, en: fact.en }))}</li>`).join("")}</ul>
+        <div class="facts-sources">${gem.boundSources.length ? `${t("boundLabel")}: ${gem.boundSources.map(esc).join(" · ")}` : t("gemNoSources")}</div>
+      </div>` : ""}`;
+  renderGemNav();
 }
 
 function activateGem(gemId, { focus = true } = {}) {
   const gem = GEM_BY_ID.get(gemId);
   if (!gem) return;
   state.activeGem = gem;
+  state.factsOpen = false;
   closePalette();
   const input = $("questionInput");
   input.placeholder = localized(gem.placeholder) || t("placeholder");
@@ -202,6 +257,7 @@ function activateGem(gemId, { focus = true } = {}) {
 
 function clearGem() {
   state.activeGem = null;
+  state.factsOpen = false;
   $("questionInput").placeholder = t("placeholder");
   renderActiveGem();
 }
@@ -319,7 +375,7 @@ function updateRouteHint() {
 }
 
 function showEvidencePanel(show) {
-  $("workspace").classList.toggle("no-evidence", !show);
+  $("app").classList.toggle("no-evidence", !show);
 }
 
 function renderEvidence(sources) {
@@ -391,6 +447,7 @@ async function loadCoverage() {
     const response = await fetch("/api/data-sources");
     if (!response.ok) return;
     const data = await response.json();
+    state.coverage = data;
     const synced = data.sources.filter((source) => source.sync?.status === "success");
     const fallback = data.sources.filter((source) => source.sync?.status === "fallback_snapshot");
     const failed = data.sources.filter((source) => source.sync?.status === "failed");
@@ -402,7 +459,7 @@ async function loadCoverage() {
     // A bundled copy never reads as green. It is a warning state, because the
     // list it holds may already have been superseded.
     const status = $("dataStatus");
-    status.className = `data-status ${failed.length || fallback.length ? "warn" : synced.length ? "ok" : "bad"}`;
+    status.className = `side-item ${failed.length || fallback.length ? "warn" : synced.length ? "ok" : "bad"}`;
     $("dataStatusText").innerHTML = usable.length
       ? `<b>${synced.length}</b> ${t("dataSynced")}${fallback.length ? ` · <b>${fallback.length}</b> ${t("dataFallback")}` : ""}${failed.length ? ` · <b>${failed.length}</b> ${t("dataFailed")}` : ""}`
       : t("dataNone");
@@ -418,6 +475,9 @@ async function loadCoverage() {
       { value: String(fallback.length), label: t("fallbackSources"), warn: fallback.length > 0 },
       { value: String(failed.length), label: t("failedSources"), bad: failed.length > 0 }
     ].map((cell) => `<div class="coverage-cell ${cell.bad ? "is-bad" : ""} ${cell.warn ? "is-warn" : ""}"><b>${esc(cell.value)}</b><span>${esc(cell.label)}</span></div>`).join("");
+
+    renderGemGrid();
+    renderGemNav();
   } catch { /* Coverage is informational; the workbench stays usable without it. */ }
 }
 
@@ -589,6 +649,7 @@ function applyLocale(locale) {
   if (state.activeGem) $("questionInput").placeholder = localized(state.activeGem.placeholder);
   renderScenarios();
   renderGemGrid();
+  renderGemNav();
   renderActiveGem();
   updateModePill();
   loadCoverage();
@@ -630,11 +691,42 @@ $("gemGrid").addEventListener("click", (event) => {
   if (button) activateGem(button.dataset.gem);
 });
 
-$("gemActive").addEventListener("click", (event) => {
-  if (event.target.closest("#gemDropBtn")) return clearGem();
-  const detail = event.target.closest("[data-gem-detail]");
-  if (detail) openGemDetail(detail.dataset.gemDetail);
+$("gemNav").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-gem]");
+  if (!button) return;
+  // Clicking the gem already in use opens its spec rather than re-selecting it.
+  if (state.activeGem?.id === button.dataset.gem) return openGemDetail(button.dataset.gem);
+  activateGem(button.dataset.gem);
+  closeDrawer();
 });
+
+$("gemRow").addEventListener("click", (event) => {
+  if (event.target.closest("[data-gem-drop]")) return clearGem();
+  if (event.target.closest("[data-facts-toggle]")) { state.factsOpen = !state.factsOpen; return renderActiveGem(); }
+});
+
+function setRail(collapsed) {
+  state.rail = collapsed;
+  localStorage.setItem("compliance-rail", collapsed ? "1" : "0");
+  $("app").classList.toggle("rail", collapsed);
+  $("railToggle").title = t(collapsed ? "railExpand" : "railCollapse");
+  document.querySelector(".sidebar-brand").title = collapsed ? t("railExpand") : "";
+}
+function closeDrawer() {
+  $("app").classList.remove("drawer-open");
+  $("scrim").hidden = true;
+}
+$("railToggle").addEventListener("click", () => setRail(true));
+// The toggle is hidden once collapsed, so the brand mark restores the sidebar.
+document.querySelector(".sidebar-brand").addEventListener("click", (event) => {
+  if (state.rail && !event.target.closest("#railToggle")) setRail(false);
+});
+$("drawerBtn").addEventListener("click", () => {
+  const open = !$("app").classList.contains("drawer-open");
+  $("app").classList.toggle("drawer-open", open);
+  $("scrim").hidden = !open;
+});
+$("scrim").addEventListener("click", closeDrawer);
 
 $("gemDialog").addEventListener("click", (event) => {
   if (event.target === $("gemDialog") || event.target.closest("[data-close-gem]")) return $("gemDialog").close();
@@ -688,6 +780,7 @@ $("scenarioDialog").addEventListener("click", (event) => {
 
 setTheme(localStorage.getItem("compliance-theme") || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark"));
 if (sessionStorage.getItem("compliance-api-key")) state.rulesMode = false;
+setRail(state.rail);
 applyLocale(state.locale);
 renderEvidence([]);
 loadRuntimeCapabilities();
