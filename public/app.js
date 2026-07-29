@@ -18,6 +18,8 @@ const i18n = {
     fallbackTitle: "本机未同步，使用随仓库提交的时点快照，采集于",
     gemSourcesUnit: "个来源", gemRecordsUnit: "条记录", gemUnsynced: "个未同步", gemNoData: "无绑定来源", gemNoCoverage: "数据状态未知",
     factsShort: "必填", railCollapse: "收起侧边栏", railExpand: "展开侧边栏",
+    step_routed: "选择 Agent", step_sources: "检索官方来源", step_grounding: "名单筛查与结构化事实", step_agents: "专业 Agent 分析", step_synthesizing: "综合结论",
+    groundingNote: "已筛查 {screened} 个名单来源 · {matches} 条潜在命中 · {internal} 条内部主数据关联",
     filterAll: "全部", filterTrade: "Trade", filterProduct: "Product", filterTpdd: "TPDD", filterCross: "跨域",
     runtimeRules: "规则模式", runtimeReady: "实时模型", runtimeMissing: "未配置模型",
     modeHint: "点击切换规则模式与实时模型",
@@ -52,6 +54,8 @@ const i18n = {
     fallbackTitle: "Not synced on this host; using the bundled point-in-time copy captured",
     gemSourcesUnit: "sources", gemRecordsUnit: "records", gemUnsynced: "not synced", gemNoData: "no bound sources", gemNoCoverage: "coverage unknown",
     factsShort: "Facts", railCollapse: "Collapse sidebar", railExpand: "Expand sidebar",
+    step_routed: "Select agents", step_sources: "Retrieve official sources", step_grounding: "Screening and structured facts", step_agents: "Specialist analysis", step_synthesizing: "Synthesis",
+    groundingNote: "{screened} list sources screened · {matches} potential matches · {internal} internal records touched",
     filterAll: "All", filterTrade: "Trade", filterProduct: "Product", filterTpdd: "TPDD", filterCross: "Cross-domain",
     runtimeRules: "Rules mode", runtimeReady: "Live model", runtimeMissing: "No model configured",
     modeHint: "Toggle between rules mode and the live model",
@@ -394,11 +398,9 @@ function renderEvidence(sources) {
     </article>`).join("");
 }
 
-function renderResult(data) {
+function answerMarkup(data) {
   const synthesis = data.synthesis;
-  const anchor = `answer-${data.id}`;
-  $("threadInner").insertAdjacentHTML("beforeend", `
-    <article class="msg msg-assistant" id="${esc(anchor)}">
+  return `
       <span class="avatar" aria-hidden="true">CH</span>
       <div>
         <div class="msg-meta">
@@ -434,10 +436,43 @@ function renderResult(data) {
             </section>`).join("")}</div>
         </details>
         <p class="msg-note">${esc(data.disclaimer)}</p>
-      </div>
-    </article>`);
+      </div>`;
+}
+
+const STEP_ORDER = ["routed", "sources", "grounding", "agents", "synthesizing"];
+
+// A live message that fills in as stages report, instead of a spinner that
+// hides a thirty-second wait behind a single dot.
+function createLiveMessage() {
+  const node = document.createElement("article");
+  node.className = "msg msg-assistant";
+  node.innerHTML = `
+    <span class="avatar" aria-hidden="true">CH</span>
+    <div>
+      <div class="msg-meta" data-live-meta></div>
+      <ol class="live-steps" data-live-steps></ol>
+      <div class="live-agents" data-live-agents></div>
+    </div>`;
+  $("threadInner").appendChild(node);
+  node.scrollIntoView({ behavior: "smooth", block: "end" });
+  return node;
+}
+
+function renderSteps(node, done, current) {
+  node.querySelector("[data-live-steps]").innerHTML = STEP_ORDER.map((step) => {
+    const state = done.has(step) ? "done" : step === current ? "active" : "idle";
+    return `<li class="${state}"><span class="tick" aria-hidden="true"></span>${esc(t(`step_${step}`))}</li>`;
+  }).join("");
+}
+
+function renderResult(data) {
+  const node = document.createElement("article");
+  node.className = "msg msg-assistant";
+  node.id = `answer-${data.id}`;
+  node.innerHTML = answerMarkup(data);
+  $("threadInner").appendChild(node);
   renderEvidence(data.sources || []);
-  $(anchor)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  node.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 /* ------------------------------------------------------------- coverage */
@@ -511,32 +546,109 @@ async function analyze(event) {
 
   state.busy = true;
   $("submitBtn").disabled = true;
-  $("loadingState").classList.remove("hidden");
-  $("loadingState").scrollIntoView({ behavior: "smooth", block: "end" });
+
+  const live = createLiveMessage();
+  const done = new Set();
+  const collected = { agents: [], sources: [] };
+  renderSteps(live, done, "routed");
+
+  const onEvent = (event) => {
+    if (event.type === "routed") {
+      done.add("routed");
+      live.querySelector("[data-live-meta]").innerHTML =
+        `<span class="tag">${esc(event.id)}</span><span class="sep">·</span>`
+        + `<span>${event.mode === "live-model" ? t("liveLabel") : t("mockLabel")}</span><span class="sep">·</span>`
+        + `<span>${t("routedTo")} ${event.agents.map(agentName).join(", ")}</span>`;
+      renderSteps(live, done, "sources");
+    }
+    if (event.type === "sources") {
+      done.add("sources");
+      collected.sources = event.sources;
+      // Evidence appears while the specialists are still thinking.
+      renderEvidence(event.sources);
+      renderSteps(live, done, "grounding");
+    }
+    if (event.type === "grounding") {
+      done.add("grounding");
+      const g = event.grounding;
+      const screened = g.screening?.screenedSources?.length || 0;
+      live.querySelector("[data-live-steps]").insertAdjacentHTML("afterend",
+        `<p class="live-note">${esc(t("groundingNote")
+          .replace("{screened}", screened)
+          .replace("{matches}", g.listMatchCount)
+          .replace("{internal}", g.internalImpactCount))}</p>`);
+      renderSteps(live, done, "agents");
+    }
+    if (event.type === "agent") {
+      collected.agents.push(event.result);
+      live.querySelector("[data-live-agents]").insertAdjacentHTML("beforeend", `
+        <section class="live-agent">
+          <div class="trace-agent-head">
+            <strong>${agentName(event.result.agent)}</strong>
+            <span class="risk-chip risk-${esc(event.result.riskLevel)}">${esc(riskLabel(event.result.riskLevel))}</span>
+          </div>
+          <p>${esc(event.result.summary)}</p>
+        </section>`);
+      live.scrollIntoView({ behavior: "smooth", block: "end" });
+    }
+    if (event.type === "synthesizing") {
+      done.add("agents");
+      renderSteps(live, done, "synthesizing");
+    }
+  };
 
   try {
-    const response = await fetch("/api/assess", {
+    const response = await fetch("/api/assess/stream", {
       method: "POST", headers: { "Content-Type": "application/json", ...accessHeaders() },
       body: JSON.stringify({ question, locale: state.locale, mock, config, history: priorHistory })
     });
-    // A gateway timeout returns plain text, not JSON. Parsing it blind produced
-    // an engine-specific parser error ("The string did not match the expected
-    // pattern." in Safari) that told the user nothing about what went wrong.
-    const raw = await response.text();
-    let data;
-    try { data = JSON.parse(raw); }
-    catch { throw new Error(`${t("badResponse")} (HTTP ${response.status}${raw.trim() ? `: ${raw.trim().slice(0, 60)}` : ""})`); }
     if (response.status === 401) { toast(t("accessRequired")); openSettings(); throw new Error(t("accessRequired")); }
-    if (!response.ok) throw new Error(data.error || t("error"));
-    state.conversation.push({ role: "assistant", content: `${data.synthesis.headline}\n${data.synthesis.executiveSummary}` });
-    $("loadingState").classList.add("hidden");
-    renderResult(data);
+    if (!response.ok || !response.body) {
+      const raw = await response.text();
+      let payload = null;
+      try { payload = JSON.parse(raw); } catch { /* a gateway error is not JSON */ }
+      throw new Error(payload?.error || `${t("badResponse")} (HTTP ${response.status})`);
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let finished = null;
+    let streamError = null;
+
+    // One JSON object per line; a chunk can split a line, so the remainder is
+    // carried over rather than parsed half-formed.
+    while (true) {
+      const { value, done: streamDone } = await reader.read();
+      if (value) buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = streamDone ? "" : lines.pop();
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        let event;
+        try { event = JSON.parse(line); } catch { continue; }
+        if (event.type === "done") finished = event.result;
+        else if (event.type === "error") streamError = event;
+        else onEvent(event);
+      }
+      if (streamDone) break;
+    }
+
+    if (streamError) throw new Error(streamError.error);
+    if (!finished) throw new Error(t("badResponse"));
+
+    state.conversation.push({ role: "assistant", content: `${finished.synthesis.headline}\n${finished.synthesis.executiveSummary}` });
+    live.id = `answer-${finished.id}`;
+    live.innerHTML = answerMarkup(finished);
+    renderEvidence(finished.sources || []);
+    live.scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (error) {
-    $("loadingState").classList.add("hidden");
-    $("threadInner").insertAdjacentHTML("beforeend", `
-      <article class="msg msg-assistant"><span class="avatar">CH</span><div><section class="answer"><div class="answer-head">
-        <span class="risk-mark risk-unknown">!</span><div><h3>${t("error")}</h3><p>${esc(error.message)}</p></div>
-      </div></section></div></article>`);
+    live.innerHTML = `
+      <span class="avatar" aria-hidden="true">CH</span>
+      <div><section class="answer"><div class="answer-head">
+        <span class="risk-mark risk-unknown">!</span>
+        <div><h3>${t("error")}</h3><p>${esc(error.message)}</p></div>
+      </div></section></div>`;
     toast(`${t("error")}: ${error.message}`);
   } finally {
     state.busy = false;
@@ -548,7 +660,6 @@ function newConversation() {
   state.conversation = [];
   $("threadInner").innerHTML = "";
   $("startPanel").classList.remove("hidden");
-  $("loadingState").classList.add("hidden");
   $("questionInput").value = "";
   clearGem();
   renderEvidence([]);

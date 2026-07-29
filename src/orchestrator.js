@@ -136,47 +136,65 @@ async function synthesize(question, locale, results, config, history, grounding)
   };
 }
 
-export async function assessScenario({ question, locale = "zh", config = {}, mock = false, history = [] }) {
+// Stages report as they land instead of the caller waiting on the whole run.
+// The specialists take the longest, so each one is emitted the moment it
+// resolves rather than after Promise.all settles.
+export async function assessScenario({ question, locale = "zh", config = {}, mock = false, history = [], onEvent = () => {} }) {
   const directAgents = routeQuestion(question, false);
   const contextualQuestion = `${history.filter((item) => item.role === "user").map((item) => item.content).join("\n")}\n${question}`;
   const contextualAgents = routeQuestion(contextualQuestion, false);
   const looksLikeFollowUp = /^(那|那么|如果|再|另外|对于|上述|这个|该|what if|then|and if|how about|for that)/i.test(question.trim());
   const routedAgents = looksLikeFollowUp ? [...new Set([...contextualAgents, ...directAgents])] : directAgents;
   const agents = routedAgents.length ? routedAgents : (contextualAgents.length ? contextualAgents : ["trade", "product", "tpdd"]);
+  const id = `CASE-${Date.now().toString(36).toUpperCase()}`;
+
+  onEvent({ type: "routed", id, agents, mode: mock ? "grounded-demo" : "live-model" });
+
   const selectedSources = sourcesForAgents(agents, question);
   const sources = await retrievePublicSources(selectedSources);
+  const publicSources = sources.map(({ excerpt, retrievalError, ...source }) => ({
+    ...source,
+    excerptPreview: excerpt.slice(0, 240),
+    retrievalError
+  }));
+  onEvent({ type: "sources", sources: publicSources });
+
   const grounding = await collectGrounding(question, agents);
+  const groundingSummary = {
+    factCount: grounding.facts.length,
+    listMatchCount: grounding.listMatches.length,
+    internalImpactCount: grounding.internalParties.length,
+    screening: grounding.screening,
+    limitations: grounding.limitations
+  };
+  onEvent({ type: "grounding", intent: grounding.intent, grounding: groundingSummary });
 
   let results;
   let synthesis;
   if (mock) {
     results = agents.map((agent) => createMockAgentResult(agent, locale, question, grounding));
+    for (const result of results) onEvent({ type: "agent", result });
     synthesis = createMockSynthesis(results, locale, question, grounding);
   } else {
-    results = await Promise.all(agents.map((agent) => runAgent(agent, question, locale, sources, config, history, grounding)));
+    results = await Promise.all(agents.map(async (agent) => {
+      const result = await runAgent(agent, question, locale, sources, config, history, grounding);
+      onEvent({ type: "agent", result });
+      return result;
+    }));
+    onEvent({ type: "synthesizing" });
     synthesis = await synthesize(question, locale, results, config, history, grounding);
   }
 
   return {
-    id: `CASE-${Date.now().toString(36).toUpperCase()}`,
+    id,
     createdAt: new Date().toISOString(),
     mode: mock ? "grounded-demo" : "live-model",
     intent: grounding.intent,
-    grounding: {
-      factCount: grounding.facts.length,
-      listMatchCount: grounding.listMatches.length,
-      internalImpactCount: grounding.internalParties.length,
-      screening: grounding.screening,
-      limitations: grounding.limitations
-    },
+    grounding: groundingSummary,
     agents,
     synthesis,
     results,
-    sources: sources.map(({ excerpt, retrievalError, ...source }) => ({
-      ...source,
-      excerptPreview: excerpt.slice(0, 240),
-      retrievalError
-    })),
+    sources: publicSources,
     disclaimer: locale === "en"
       ? "Prototype output for research and triage only. It is not legal advice or an automated approval decision."
       : "本结果仅用于 Prototype 信息研究与风险分流，不构成法律意见或自动审批决定。"

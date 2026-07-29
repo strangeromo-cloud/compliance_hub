@@ -168,6 +168,42 @@ const server = createServer(async (request, response) => {
       return sendJson(response, 200, result);
     }
 
+    // Streams one JSON object per line as each stage lands. EventSource cannot
+    // POST, so this is a chunked fetch body the client reads incrementally
+    // rather than SSE. /api/assess keeps returning a single JSON document.
+    if (request.method === "POST" && url.pathname === "/api/assess/stream") {
+      requireAccess(request);
+      const body = await readJson(request);
+      const question = String(body.question || "").trim();
+      if (question.length < 5 || question.length > 5000) {
+        throw Object.assign(new Error("Question must contain 5–5000 characters."), { status: 400 });
+      }
+      const config = cleanConfig(body.config);
+      const mock = Boolean(body.mock);
+      if (!mock && !config.apiKey) throw Object.assign(new Error("API key is required for live-model mode."), { status: 400 });
+
+      response.writeHead(200, {
+        "Content-Type": "application/x-ndjson; charset=utf-8",
+        "Cache-Control": "no-store",
+        "X-Content-Type-Options": "nosniff",
+        // Proxies that buffer would defeat the point of streaming.
+        "X-Accel-Buffering": "no"
+      });
+      const send = (event) => { if (!response.writableEnded) response.write(`${JSON.stringify(event)}\n`); };
+      try {
+        const result = await assessScenario({
+          question, locale: body.locale === "en" ? "en" : "zh", config, mock,
+          history: cleanHistory(body.history), onEvent: send
+        });
+        send({ type: "done", result });
+      } catch (error) {
+        // The status line is already sent, so a failure has to arrive as an
+        // event rather than as an HTTP error code.
+        send({ type: "error", error: String(error.message || "Analysis failed.").slice(0, 300), code: error.modelError?.code || null });
+      }
+      return response.end();
+    }
+
     if (request.method === "POST" && url.pathname === "/api/test-connection") {
       requireAccess(request);
       const body = await readJson(request);
