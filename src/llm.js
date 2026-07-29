@@ -67,13 +67,17 @@ function unsupportedParam(error, alreadyDropped) {
 // the order they appear, tolerating a string that is still being typed. The
 // agents are under a strict JSON contract, so the alternative to this would be
 // showing the user raw braces and keys.
-const READABLE_FIELDS = /"(summary|title|detail)"\s*:\s*"((?:[^"\\]|\\.)*)/g;
+// Every human-readable field across both schemas: the specialists write
+// summary/title/detail, the master agent writes headline/executiveSummary/
+// nextStep. Omitting the second set left the synthesis with nothing to show.
+const READABLE_FIELDS = /"(summary|title|detail|headline|executiveSummary|nextStep)"\s*:\s*"((?:[^"\\]|\\.)*)/g;
 
 export function readableProjection(partial) {
   const pieces = [];
   for (const match of String(partial).matchAll(READABLE_FIELDS)) {
     const text = match[2].replace(/\\n/g, " ").replace(/\\"/g, '"').replace(/\\\\/g, "\\");
-    if (text) pieces.push(match[1] === "title" ? `\n· ${text}` : text);
+    if (!text) continue;
+    pieces.push(["title", "nextStep"].includes(match[1]) ? `\n· ${text}` : text);
   }
   return pieces.join(" ").replace(/\s+/g, " ").replace(/ ?\n ?/g, "\n").trim();
 }
@@ -200,10 +204,14 @@ async function streamCompletion(config, messages, dropped, onText) {
         const delta = parsed.choices?.[0]?.delta?.content;
         if (!delta) continue;
         content += delta;
-        // Only the newly revealed readable text is sent, never the raw JSON.
+        // The full readable text is sent each time, not an increment. The
+        // projection re-normalizes whitespace on every pass, so an earlier
+        // prefix can legitimately change once a new field opens — diffing
+        // against the last send would then fail the monotonicity check and
+        // silence that agent for the rest of the run.
         const readable = readableProjection(content);
-        if (readable.length > reported.length && readable.startsWith(reported.slice(0, Math.min(reported.length, readable.length)))) {
-          onText(readable.slice(reported.length));
+        if (readable && readable !== reported) {
+          onText(readable);
           reported = readable;
         }
       }

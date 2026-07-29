@@ -3,7 +3,7 @@ import { GEMS, GEM_BY_ID, GEM_GROUPS, factCoverage, matchGems, toggleWorkspaceGe
 const i18n = {
   zh: {
     prototype: "Prototype", skipLink: "跳到工作区", workbench: "出口管制工作台", newChat: "新对话",
-    scenarioLibrary: "测试场景", scenarioHelp: "场景只填入输入框，不会新建对话。",
+    scenarioLibrary: "测试场景", guideLink: "使用说明", scenarioHelp: "场景只填入输入框，不会新建对话。",
     startTitle: "描述交易，或用 / 选择一个 Gem",
     startLead: "范围为美国与中国的出口管制。Master Agent 自动路由到贸易、产品和第三方尽调 Agent，返回一份带证据链的统一答案。",
     gemsLabel: "GEMS", gemsHint: "在输入框键入 / 可随时调用", coverageLabel: "数据覆盖",
@@ -39,7 +39,7 @@ const i18n = {
   },
   en: {
     prototype: "Prototype", skipLink: "Skip to workspace", workbench: "Export control workbench", newChat: "New",
-    scenarioLibrary: "Test scenarios", scenarioHelp: "Scenarios only fill the composer; they do not start a new thread.",
+    scenarioLibrary: "Test scenarios", guideLink: "Guide", scenarioHelp: "Scenarios only fill the composer; they do not start a new thread.",
     startTitle: "Describe the transaction, or press / for a gem",
     startLead: "Scope is US and PRC export control. The Master Agent routes to the trade, product and third-party diligence agents and returns one answer with its evidence chain.",
     gemsLabel: "GEMS", gemsHint: "type / in the composer at any time", coverageLabel: "Data coverage",
@@ -597,7 +597,7 @@ async function analyze(event) {
     if (event.type === "agent_delta") {
       const panel = live.querySelector(`[data-agent="${CSS.escape(event.agent)}"] [data-stream]`);
       if (panel) {
-        panel.textContent += event.text;
+        panel.textContent = event.text;
         // Only follow the stream while the reader is already at the bottom.
         const thread = $("thread");
         if (thread.scrollHeight - thread.scrollTop - thread.clientHeight < 120) thread.scrollTop = thread.scrollHeight;
@@ -622,7 +622,7 @@ async function analyze(event) {
           `<section class="live-agent thinking"><div class="trace-agent-head"><strong>${t("step_synthesizing")}</strong><span class="thinking-dot" aria-hidden="true"></span></div><p class="stream-text" data-synthesis-stream></p></section>`);
         panel = live.querySelector("[data-synthesis-stream]");
       }
-      panel.textContent += event.text;
+      panel.textContent = event.text;
       const thread = $("thread");
       if (thread.scrollHeight - thread.scrollTop - thread.clientHeight < 120) thread.scrollTop = thread.scrollHeight;
     }
