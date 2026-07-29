@@ -22,7 +22,7 @@ const i18n = {
     hfQuestion: "一个问题", hfAnswer: "统一答案", startersLabel: "快速开始", workspaceEmpty: "工作区还没有 Gem", gemBacking: "数据支撑",
     teachSlashTitle: "在输入框键入 /", teachSlashBody: "呼出 {n} 个 Gem 的完整目录，上下键选择，回车使用。",
     teachPinTitle: "把常用 Gem 加入工作区", teachPinBody: "在目录里点 ★，或在 Gem 详情里点「添加到工作区」，它会常驻左侧栏。",
-    historyLabel: "历史记录", historyEmpty: "暂无记录", historyOpenFailed: "无法打开该记录", reasoningTrace: "论证过程", rsSearched: "已检索的名单来源", rsMatched: "名称命中", rsCompared: "身份要素比对", rsFacts: "已核验事实",
+    historyLabel: "历史记录", historyEmpty: "暂无记录", turnUnit: "轮", historyOpenFailed: "无法打开该记录", reasoningTrace: "论证过程", rsSearched: "已检索的名单来源", rsMatched: "名称命中", rsCompared: "身份要素比对", rsFacts: "已核验事实",
     rsScore: "相似度", rsOpen: "查看原文", rsUnsynced: "未同步、本次未检索",
     el_country: "国别", el_registration_number: "注册号", el_address: "地址",
     st_agree: "一致", st_conflict: "冲突", st_unavailable: "缺失",
@@ -73,7 +73,7 @@ const i18n = {
     hfQuestion: "One question", hfAnswer: "One answer", startersLabel: "Start here", workspaceEmpty: "No gems in your workspace yet", gemBacking: "Data behind it",
     teachSlashTitle: "Press / in the composer", teachSlashBody: "Opens the full catalogue of {n} gems. Arrow keys select, Enter uses.",
     teachPinTitle: "Pin the ones you use", teachPinBody: "Add to workspace from a gem's details and it stays in the sidebar.",
-    historyLabel: "History", historyEmpty: "No cases yet", historyOpenFailed: "That case could not be opened", reasoningTrace: "How this was reached", rsSearched: "Lists searched", rsMatched: "Name matches", rsCompared: "Identity comparison", rsFacts: "Verified facts",
+    historyLabel: "History", historyEmpty: "No cases yet", turnUnit: "turns", historyOpenFailed: "That case could not be opened", reasoningTrace: "How this was reached", rsSearched: "Lists searched", rsMatched: "Name matches", rsCompared: "Identity comparison", rsFacts: "Verified facts",
     rsScore: "Similarity", rsOpen: "Open source", rsUnsynced: "Not synced, therefore not searched",
     el_country: "Country", el_registration_number: "Registration no.", el_address: "Address",
     st_agree: "agree", st_conflict: "conflict", st_unavailable: "missing",
@@ -148,6 +148,7 @@ const state = {
   rulesMode: true,
   coverage: null,
   cases: [],
+  threadId: null,
   factsOpen: false,
   rail: localStorage.getItem("compliance-rail") === "1",
   activeGem: null,
@@ -204,6 +205,13 @@ function stripMarker(value = "") {
 function accessHeaders() {
   const password = localStorage.getItem("compliance-access-password") || "";
   return password ? { "x-access-password": password } : {};
+}
+
+// One enquiry is one thread. A follow-up must join the question that prompted
+// it, otherwise the history lists unrelated cases that merely share a topic.
+function ensureThreadId() {
+  if (!state.threadId) state.threadId = `TH-${Date.now().toString(36).toUpperCase()}${Math.floor(Math.random() * 1296).toString(36).toUpperCase()}`;
+  return state.threadId;
 }
 
 function getConfig() {
@@ -289,14 +297,14 @@ function renderGemNav() {
 // everything else. Decoration that states something true about the system beats
 // decoration that just fills space.
 function renderCaseNav() {
-  const cases = state.cases || [];
-  $("caseNav").innerHTML = cases.length
-    ? cases.slice(0, 12).map((item) => `
-      <li><button type="button" data-case="${esc(item.id)}" title="${esc(item.question)}">
+  const threads = state.cases || [];
+  $("caseNav").innerHTML = threads.length
+    ? threads.slice(0, 12).map((item) => `
+      <li><button type="button" data-case="${esc(item.threadId)}" class="${state.threadId === item.threadId ? "active" : ""}" title="${esc(item.title)}">
         <span class="case-risk risk-${esc(item.overallRisk)}" aria-hidden="true"></span>
         <span class="case-text">
-          <span class="case-q">${esc(item.question)}</span>
-          <span class="case-when">${esc(String(item.createdAt).slice(5, 16).replace("T", " "))}</span>
+          <span class="case-q">${esc(item.title)}</span>
+          <span class="case-when">${esc(String(item.updatedAt).slice(5, 16).replace("T", " "))}${item.turnCount > 1 ? ` · ${item.turnCount} ${esc(t("turnUnit"))}` : ""}</span>
         </span>
       </button></li>`).join("")
     : `<li class="case-empty">${esc(t("historyEmpty"))}</li>`;
@@ -304,9 +312,9 @@ function renderCaseNav() {
 
 async function loadCases() {
   try {
-    const response = await fetch("/api/cases?limit=20");
+    const response = await fetch("/api/threads?limit=20");
     if (!response.ok) return;
-    state.cases = (await response.json()).cases || [];
+    state.cases = (await response.json()).threads || [];
     renderCaseNav();
   } catch (error) {
     console.error("Case history load failed:", error);
@@ -315,22 +323,35 @@ async function loadCases() {
 
 async function openCase(id) {
   try {
-    const response = await fetch(`/api/cases/${encodeURIComponent(id)}`);
+    const response = await fetch(`/api/threads/${encodeURIComponent(id)}`);
     if (!response.ok) throw new Error("not found");
     const record = await response.json();
+    if (!record.turns?.length) throw new Error("empty");
+
+    // Reopening resumes the enquiry rather than starting a new one, so a
+    // further follow-up joins the same thread.
+    state.threadId = record.threadId;
     state.conversation = [];
     $("threadInner").innerHTML = "";
     $("startPanel").classList.add("hidden");
-    $("threadInner").insertAdjacentHTML("beforeend",
-      `<article class="msg msg-user"><div class="bubble">${esc(record.question || "")}</div></article>`);
-    const node = document.createElement("article");
-    node.className = "msg msg-assistant";
-    node.id = `answer-${record.id}`;
-    node.innerHTML = answerMarkup(record);
-    $("threadInner").appendChild(node);
-    renderEvidence(record.sources || []);
+
+    let last = null;
+    for (const turn of record.turns) {
+      $("threadInner").insertAdjacentHTML("beforeend",
+        `<article class="msg msg-user"><div class="bubble">${esc(turn.question || "")}</div></article>`);
+      const node = document.createElement("article");
+      node.className = "msg msg-assistant";
+      node.id = `answer-${turn.id}`;
+      node.innerHTML = answerMarkup(turn);
+      $("threadInner").appendChild(node);
+      state.conversation.push({ role: "user", content: turn.question || "" });
+      state.conversation.push({ role: "assistant", content: `${turn.synthesis?.headline || ""}\n${turn.synthesis?.executiveSummary || ""}` });
+      last = turn;
+    }
+    renderEvidence(last?.sources || []);
+    renderCaseNav();
     closeDrawer();
-    node.scrollIntoView({ behavior: "smooth", block: "start" });
+    $("threadInner").lastElementChild?.scrollIntoView({ behavior: "smooth", block: "start" });
   } catch { toast(t("historyOpenFailed")); }
 }
 
@@ -998,7 +1019,7 @@ async function analyze(event) {
   try {
     const response = await fetch("/api/assess/stream", {
       method: "POST", headers: { "Content-Type": "application/json", ...accessHeaders() },
-      body: JSON.stringify({ question, locale: state.locale, mock, config, history: priorHistory })
+      body: JSON.stringify({ question, locale: state.locale, mock, config, history: priorHistory, threadId: ensureThreadId() })
     });
     if (response.status === 401) { toast(t("accessRequired")); openSettings(); throw new Error(t("accessRequired")); }
     if (!response.ok || !response.body) {
@@ -1057,6 +1078,7 @@ async function analyze(event) {
 
 function newConversation() {
   state.conversation = [];
+  state.threadId = null;
   $("threadInner").innerHTML = "";
   $("startPanel").classList.remove("hidden");
   $("questionInput").value = "";

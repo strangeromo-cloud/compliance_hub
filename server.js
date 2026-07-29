@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { assessScenario } from "./src/orchestrator.js";
 import { classifyModelError, testModelConnection } from "./src/llm.js";
 import { getDataSourceCoverage, queryDataSource, syncSource } from "./src/data-layer/service.js";
-import { deleteCase, listCases, readCase, saveCase } from "./src/case-store.js";
+import { deleteThread, listThreads, readThread, saveCase } from "./src/case-store.js";
 
 const ROOT = fileURLToPath(new URL(".", import.meta.url));
 const PUBLIC_DIR = join(ROOT, "public");
@@ -167,7 +167,7 @@ const server = createServer(async (request, response) => {
       if (!mock && !config.apiKey) throw Object.assign(new Error("API key is required for live-model mode."), { status: 400 });
       const locale = body.locale === "en" ? "en" : "zh";
       const result = await assessScenario({ question, locale, config, mock, history: cleanHistory(body.history) });
-      await saveCase(result, question, locale).catch(() => null);
+      await saveCase(result, question, locale, body.threadId).catch(() => null);
       return sendJson(response, 200, result);
     }
 
@@ -198,7 +198,7 @@ const server = createServer(async (request, response) => {
         const result = await assessScenario({ question, locale, config, mock, history: cleanHistory(body.history), onEvent: send });
         // Persist before announcing completion, but a storage failure must not
         // discard an answer the user is already looking at.
-        await saveCase(result, question, locale).catch(() => null);
+        await saveCase(result, question, locale, body.threadId).catch(() => null);
         send({ type: "done", result });
       } catch (error) {
         // The status line is already sent, so a failure has to arrive as an
@@ -208,19 +208,19 @@ const server = createServer(async (request, response) => {
       return response.end();
     }
 
-    if (request.method === "GET" && url.pathname === "/api/cases") {
-      return sendJson(response, 200, { cases: await listCases(url.searchParams.get("limit")) });
+    if (request.method === "GET" && url.pathname === "/api/threads") {
+      return sendJson(response, 200, { threads: await listThreads(url.searchParams.get("limit")) });
     }
 
-    if (request.method === "GET" && url.pathname.startsWith("/api/cases/")) {
-      const record = await readCase(decodeURIComponent(url.pathname.slice("/api/cases/".length)));
-      if (!record) throw Object.assign(new Error("Case not found."), { status: 404 });
+    if (request.method === "GET" && url.pathname.startsWith("/api/threads/")) {
+      const record = await readThread(decodeURIComponent(url.pathname.slice("/api/threads/".length)));
+      if (!record) throw Object.assign(new Error("Thread not found."), { status: 404 });
       return sendJson(response, 200, record);
     }
 
-    if (request.method === "DELETE" && url.pathname.startsWith("/api/cases/")) {
+    if (request.method === "DELETE" && url.pathname.startsWith("/api/threads/")) {
       requireAccess(request);
-      await deleteCase(decodeURIComponent(url.pathname.slice("/api/cases/".length)));
+      await deleteThread(decodeURIComponent(url.pathname.slice("/api/threads/".length)));
       return sendJson(response, 200, { ok: true });
     }
 
