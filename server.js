@@ -51,6 +51,20 @@ async function readJson(request) {
   }
 }
 
+// Setting OPENAI_API_KEY server-side is a convenience that also makes the model
+// budget reachable by anyone who finds the URL. ACCESS_PASSWORD gates the
+// endpoints that cost money or egress; leaving it unset keeps the old open
+// behaviour, which is fine for a laptop and not for a public deployment.
+const ACCESS_PASSWORD = String(process.env.ACCESS_PASSWORD || "").trim();
+
+function requireAccess(request) {
+  if (!ACCESS_PASSWORD) return;
+  const supplied = String(request.headers["x-access-password"] || "");
+  if (supplied !== ACCESS_PASSWORD) {
+    throw Object.assign(new Error("A valid access password is required."), { status: 401, code: "access_password_required" });
+  }
+}
+
 function cleanConfig(input = {}) {
   const baseUrl = String(input.baseUrl || process.env.OPENAI_BASE_URL || "https://api.openai.com/v1").trim();
   const model = String(input.model || process.env.OPENAI_MODEL || "gpt-5.4-mini").trim();
@@ -100,6 +114,7 @@ const server = createServer(async (request, response) => {
     if (request.method === "GET" && url.pathname === "/api/runtime-capabilities") {
       return sendJson(response, 200, {
         liveModelConfigured: Boolean(process.env.OPENAI_API_KEY),
+        accessPasswordRequired: Boolean(ACCESS_PASSWORD),
         model: process.env.OPENAI_MODEL || null,
         demoMode: "grounded_rules",
         demoLimitation: "Grounded rules cover the built-in compliance domains; an LLM is required for open-ended synthesis."
@@ -111,6 +126,7 @@ const server = createServer(async (request, response) => {
     }
 
     if (request.method === "POST" && url.pathname === "/api/data-sources/sync") {
+      requireAccess(request);
       const body = await readJson(request);
       const sourceId = String(body.sourceId || "").trim();
       if (!sourceId) throw Object.assign(new Error("sourceId is required."), { status: 400 });
@@ -125,6 +141,7 @@ const server = createServer(async (request, response) => {
     }
 
     if (request.method === "POST" && url.pathname === "/api/assess") {
+      requireAccess(request);
       const body = await readJson(request);
       const question = String(body.question || "").trim();
       if (question.length < 5 || question.length > 5000) {
@@ -138,6 +155,7 @@ const server = createServer(async (request, response) => {
     }
 
     if (request.method === "POST" && url.pathname === "/api/test-connection") {
+      requireAccess(request);
       const body = await readJson(request);
       const config = cleanConfig(body.config);
       if (!config.apiKey) throw Object.assign(new Error("API key is required."), { status: 400 });
@@ -157,7 +175,7 @@ const server = createServer(async (request, response) => {
   } catch (error) {
     const status = Number(error.status) || 500;
     const safeMessage = status >= 500 ? "The request could not be completed. Check the model configuration or public-source connectivity." : error.message;
-    sendJson(response, status, { error: safeMessage });
+    sendJson(response, status, { error: safeMessage, ...(error.code ? { code: error.code } : {}) });
   }
 });
 

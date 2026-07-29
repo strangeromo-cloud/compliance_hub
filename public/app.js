@@ -24,7 +24,7 @@ const i18n = {
     sourceLive: "实时获取", sourceMetadata: "元数据", sourceUnavailable: "获取失败", sourceNotFetched: "未获取",
     mockLabel: "规则 + 公开数据", liveLabel: "实时模型 + 公开数据",
     riskLow: "低", riskMedium: "中", riskHigh: "高", riskUnknown: "待定",
-    needKey: "请先在模型配置中填写 API Key，或使用规则模式。", invalidQuestion: "请先描述一个具体情景。", error: "分析失败",
+    accessPassword: "访问口令", accessRequired: "该部署需要访问口令，请在模型配置中填写。", keyFromServer: "服务器已配置模型，无需在此填写 API Key。", badResponse: "服务端未返回有效结果，通常是网关超时；请重试或缩短问题。", needKey: "请先在模型配置中填写 API Key，或使用规则模式。", invalidQuestion: "请先描述一个具体情景。", error: "分析失败",
     saved: "已保存到当前会话", testing: "正在测试连接……", connected: "连接成功。", connectionFailed: "连接失败，请检查配置。",
     gemInstruction: "指令", gemSources: "绑定数据源", gemFacts: "必填事实", gemOutput: "输出结构",
     gemAdd: "添加到工作区", gemRemove: "从工作区移除", gemUse: "使用此 Gem", gemAdded: "已添加到工作区", gemRemoved: "已从工作区移除",
@@ -56,7 +56,7 @@ const i18n = {
     sourceLive: "Live", sourceMetadata: "Metadata", sourceUnavailable: "Unavailable", sourceNotFetched: "Not fetched",
     mockLabel: "Rules + public data", liveLabel: "Live model + public data",
     riskLow: "Low", riskMedium: "Medium", riskHigh: "High", riskUnknown: "Unknown",
-    needKey: "Add an API key in Model settings, or stay in rules mode.", invalidQuestion: "Describe a specific scenario first.", error: "Analysis failed",
+    accessPassword: "Access password", accessRequired: "This deployment requires an access password. Add it in Model settings.", keyFromServer: "The server already provides a model; no API key is needed here.", badResponse: "The server did not return a valid result, usually a gateway timeout. Retry or shorten the question.", needKey: "Add an API key in Model settings, or stay in rules mode.", invalidQuestion: "Describe a specific scenario first.", error: "Analysis failed",
     saved: "Saved for this session", testing: "Testing…", connected: "Connected.", connectionFailed: "Connection failed. Check the settings.",
     gemInstruction: "Instruction", gemSources: "Bound sources", gemFacts: "Required facts", gemOutput: "Output",
     gemAdd: "Add to workspace", gemRemove: "Remove from workspace", gemUse: "Use this gem", gemAdded: "Added to workspace", gemRemoved: "Removed from workspace",
@@ -106,6 +106,7 @@ const state = {
   scenarioCategory: "all",
   conversation: [],
   serverModelConfigured: false,
+  accessPasswordRequired: false,
   rulesMode: true,
   activeGem: null,
   palette: { open: false, items: [], index: 0 }
@@ -116,6 +117,11 @@ const t = (key) => i18n[state.locale][key] || key;
 const localized = (value) => (value && typeof value === "object" ? value[state.locale] || value.zh : value);
 const agentName = (agent) => ({ trade: "Trade", product: "Product", tpdd: "Ethics & TPDD" })[agent] || agent;
 const esc = (value = "") => String(value).replace(/[&<>'"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[c]);
+
+function accessHeaders() {
+  const password = localStorage.getItem("compliance-access-password") || "";
+  return password ? { "x-access-password": password } : {};
+}
 
 function getConfig() {
   return {
@@ -450,10 +456,17 @@ async function analyze(event) {
 
   try {
     const response = await fetch("/api/assess", {
-      method: "POST", headers: { "Content-Type": "application/json" },
+      method: "POST", headers: { "Content-Type": "application/json", ...accessHeaders() },
       body: JSON.stringify({ question, locale: state.locale, mock, config, history: priorHistory })
     });
-    const data = await response.json();
+    // A gateway timeout returns plain text, not JSON. Parsing it blind produced
+    // an engine-specific parser error ("The string did not match the expected
+    // pattern." in Safari) that told the user nothing about what went wrong.
+    const raw = await response.text();
+    let data;
+    try { data = JSON.parse(raw); }
+    catch { throw new Error(`${t("badResponse")} (HTTP ${response.status}${raw.trim() ? `: ${raw.trim().slice(0, 60)}` : ""})`); }
+    if (response.status === 401) { toast(t("accessRequired")); openSettings(); throw new Error(t("accessRequired")); }
     if (!response.ok) throw new Error(data.error || t("error"));
     state.conversation.push({ role: "assistant", content: `${data.synthesis.headline}\n${data.synthesis.executiveSummary}` });
     $("loadingState").classList.add("hidden");
@@ -498,6 +511,8 @@ function openSettings() {
   $("baseUrlInput").value = config.baseUrl;
   $("modelInput").value = config.model;
   $("apiKeyInput").value = config.apiKey;
+  $("accessPasswordInput").value = localStorage.getItem("compliance-access-password") || "";
+  $("accessField").hidden = !state.accessPasswordRequired;
   $("connectionStatus").textContent = "";
   $("connectionStatus").className = "status-line";
   $("settingsDialog").showModal();
@@ -507,6 +522,9 @@ function saveSettings(event) {
   event.preventDefault();
   localStorage.setItem("compliance-base-url", $("baseUrlInput").value.trim());
   localStorage.setItem("compliance-model", $("modelInput").value.trim());
+  const password = $("accessPasswordInput").value.trim();
+  if (password) localStorage.setItem("compliance-access-password", password);
+  else localStorage.removeItem("compliance-access-password");
   const key = $("apiKeyInput").value.trim();
   if (key) { sessionStorage.setItem("compliance-api-key", key); state.rulesMode = false; }
   else sessionStorage.removeItem("compliance-api-key");
@@ -522,7 +540,7 @@ async function testConnection() {
   $("testConnectionBtn").disabled = true;
   try {
     const config = { baseUrl: $("baseUrlInput").value.trim(), model: $("modelInput").value.trim(), apiKey: $("apiKeyInput").value.trim() };
-    const response = await fetch("/api/test-connection", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ config }) });
+    const response = await fetch("/api/test-connection", { method: "POST", headers: { "Content-Type": "application/json", ...accessHeaders() }, body: JSON.stringify({ config }) });
     const data = await response.json();
     if (!response.ok || !data.ok) throw new Error(i18n[state.locale][data.code] || data.error || t("connectionFailed"));
     status.className = "status-line ok";
@@ -539,6 +557,7 @@ async function loadRuntimeCapabilities() {
     if (!response.ok) return;
     const capabilities = await response.json();
     state.serverModelConfigured = Boolean(capabilities.liveModelConfigured);
+    state.accessPasswordRequired = Boolean(capabilities.accessPasswordRequired);
     if (state.serverModelConfigured) state.rulesMode = false;
     updateModePill();
   } catch { /* Rules mode remains available when capability discovery fails. */ }

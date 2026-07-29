@@ -97,6 +97,8 @@ npm run start:env
 |---|---|---|
 | `SYNC_ON_BOOT` | `china-dual-use,china-control-entities,china-unreliable-entity,china-licence-catalogue,bis-ear-734,bis-ear-740,bis-ear-744` | 容器启动后台同步。**不要**放 `trade-csl` / `ofac-sls`，它们是几十 MB 全量下载 |
 | `COMPLIANCE_HUB_USER_AGENT` | `ComplianceHubPrototype/0.1 <你的邮箱>` | SEC 等政府接口要求可识别的 UA |
+| `OPENAI_API_KEY` / `OPENAI_BASE_URL` / `OPENAI_MODEL` | 你的模型配置 | 配置后页面自动进入实时模型模式，使用者不必再自己填 Key |
+| `ACCESS_PASSWORD` | 自定义口令 | **配置了服务器侧 Key 就应该同时配这个**，见下 |
 
 `HOST` 不需要手工配置：进程检测到自己是容器里的 PID 1（或存在 `ZEABUR_SERVICE_ID`）时会自动绑定 `0.0.0.0`，本机运行仍然只绑回环。
 
@@ -113,8 +115,9 @@ npm run start:env
 ### 部署后必须注意
 
 - **容器文件系统是临时的**：每次重新部署 `data/runtime/` 都会清空，靠 `SYNC_ON_BOOT` 重新拉取。需要持久化就挂一个 Zeabur Volume 到 `data/runtime`。
-- **服务器侧不要配置 `OPENAI_API_KEY`**：公开 URL 上任何人都能调用 `/api/assess`，服务器侧的 Key 等于把模型额度对公网开放。演示时让使用者在页面“模型配置”里填自己的 Key（只存在浏览器会话中）。
-- `/api/data-sources/sync` 在公开部署上同样对所有人开放。它只能同步代码中预定义的官方来源，不接受任意 URL，但仍会消耗出网流量。
+- **服务器侧配置 `OPENAI_API_KEY` 时必须同时配置 `ACCESS_PASSWORD`**。公开 URL 上任何人都能调用 `/api/assess`，没有口令的话服务器侧的 Key 等于把模型额度对公网开放。设置 `ACCESS_PASSWORD` 后，`/api/assess`、`/api/test-connection` 和 `/api/data-sources/sync` 都需要口令；使用者在页面“模型配置”里填一次，存在浏览器 localStorage，之后不必再输入。
+- 不设 `ACCESS_PASSWORD` 时行为不变（完全开放），适合本机运行，不适合公开部署。
+- 口令是明文比对的共享秘密，用于挡住无意访问，不是身份认证；不要用它保护真实敏感数据。
 - 首次启动时同步尚未完成，名单筛查会如实报告“来源未同步”，不会伪装成“无风险”。
 
 ## 数据同步与查询 API

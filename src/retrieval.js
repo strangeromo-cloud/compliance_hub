@@ -1,6 +1,13 @@
 const MAX_SOURCE_CHARS = 7000;
 const MAX_LIVE_SOURCES = 5;
 
+// A whole request has to finish well inside a hosting platform's gateway
+// timeout. An unreachable host fails by silence, not refusal, so without a
+// shared deadline several of them serialize into a 502 and the user sees a
+// parser error instead of an answer.
+const RETRIEVAL_BUDGET_MS = 9000;
+const PER_SOURCE_TIMEOUT_MS = 6000;
+
 function cleanHtml(html) {
   return html
     .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ")
@@ -15,11 +22,14 @@ function cleanHtml(html) {
     .trim();
 }
 
-async function fetchWithTimeout(url, timeoutMs = 12_000, attempts = 2) {
+async function fetchWithTimeout(url, deadlineSignal, timeoutMs = PER_SOURCE_TIMEOUT_MS, attempts = 2) {
   let lastError;
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    if (deadlineSignal?.aborted) throw Object.assign(new Error("Retrieval budget exhausted."), { name: "AbortError" });
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    const onDeadline = () => controller.abort();
+    deadlineSignal?.addEventListener("abort", onDeadline, { once: true });
     try {
       const response = await fetch(url, {
         signal: controller.signal,
@@ -33,9 +43,12 @@ async function fetchWithTimeout(url, timeoutMs = 12_000, attempts = 2) {
       return response;
     } catch (error) {
       lastError = error;
+      // Retrying a host that never answered just burns the budget twice.
+      if (deadlineSignal?.aborted || error.name === "AbortError") break;
       if (attempt < attempts) await new Promise((resolve) => setTimeout(resolve, 300 * attempt));
     } finally {
       clearTimeout(timeout);
+      deadlineSignal?.removeEventListener("abort", onDeadline);
     }
   }
   throw lastError;
@@ -43,13 +56,19 @@ async function fetchWithTimeout(url, timeoutMs = 12_000, attempts = 2) {
 
 export async function retrievePublicSources(sources) {
   const liveSet = new Set(sources.slice(0, MAX_LIVE_SOURCES).map((source) => source.id));
-  return Promise.all(
+  // One deadline for the whole batch. Whatever has not answered by then is
+  // reported as unavailable rather than allowed to run the request past the
+  // gateway timeout — a missing excerpt is recoverable, a 502 is not.
+  const deadline = new AbortController();
+  const deadlineTimer = setTimeout(() => deadline.abort(), RETRIEVAL_BUDGET_MS);
+  try {
+    return await Promise.all(
     sources.map(async (source) => {
       if (!liveSet.has(source.id)) {
         return { ...source, liveStatus: "not_fetched", excerpt: source.summary, retrievedAt: null };
       }
       try {
-        const response = await fetchWithTimeout(source.url);
+        const response = await fetchWithTimeout(source.url, deadline.signal);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const contentType = response.headers.get("content-type") || "";
         if (!contentType.includes("text") && !contentType.includes("html")) {
@@ -72,5 +91,8 @@ export async function retrievePublicSources(sources) {
         };
       }
     })
-  );
+    );
+  } finally {
+    clearTimeout(deadlineTimer);
+  }
 }
