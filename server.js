@@ -16,7 +16,21 @@ const isManagedRuntime = process.pid === 1 || Boolean(process.env.ZEABUR_SERVICE
 // Platforms normally inject PORT. When one does not, probing 4180 would fail
 // because nothing conventional listens there, so a hosted run falls back to
 // 8080 — the port a platform assumes when it has to guess.
-const PORT = Number(process.env.PORT || (isManagedRuntime ? 8080 : 4180));
+const DEFAULT_PORT = isManagedRuntime ? 8080 : 4180;
+
+// A malformed PORT must not take the process down. Number("") of a non-numeric
+// value yields NaN, listen() throws ERR_SOCKET_BAD_PORT, and the container
+// enters a crash loop whose only outward symptom is a 502 — which looks like a
+// routing fault and is nothing of the kind. Warn loudly and keep serving.
+function resolvePort(raw) {
+  if (raw === undefined || raw === "") return DEFAULT_PORT;
+  const parsed = Number(String(raw).trim());
+  if (Number.isInteger(parsed) && parsed >= 0 && parsed < 65536) return parsed;
+  console.error(`PORT is set to ${JSON.stringify(raw)}, which is not a valid port. Falling back to ${DEFAULT_PORT}. Fix or remove the PORT variable.`);
+  return DEFAULT_PORT;
+}
+
+const PORT = resolvePort(process.env.PORT);
 const MAX_BODY_BYTES = 64 * 1024;
 
 const MIME_TYPES = {
