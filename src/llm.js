@@ -135,7 +135,7 @@ async function requestCompletion(config, messages, dropped = new Set()) {
 // Streams the model response and reports the readable text as it materializes,
 // so a thirty-second specialist run is visible while it happens rather than
 // only when it finishes.
-async function streamCompletion(config, messages, dropped, onText) {
+async function streamCompletion(config, messages, dropped, onText, onMeta) {
   const endpoint = `${normalizeBaseUrl(config.baseUrl)}/chat/completions`;
   const controller = new AbortController();
   const IDLE_TIMEOUT_MS = 60_000;
@@ -169,6 +169,12 @@ async function streamCompletion(config, messages, dropped, onText) {
   // text once, rather than failing on the missing event stream.
   if (!/text\/event-stream/i.test(response.headers.get("content-type") || "")) {
     clearTimeout(idle);
+    // The provider accepted stream: true and answered with an ordinary body.
+    // Remember it so later calls skip the attempt, and tell the caller, because
+    // silently degrading looks identical to a broken feature.
+    dropped.add("stream");
+    droppedParams.set(modelKey(config), new Set(dropped));
+    onMeta?.({ streaming: false, reason: "provider_returned_non_stream" });
     const payload = await response.json().catch(() => null);
     const whole = payload?.choices?.[0]?.message?.content;
     if (!whole) {
@@ -226,13 +232,19 @@ async function streamCompletion(config, messages, dropped, onText) {
   return extractJson(content);
 }
 
-export async function callJsonModelStream(config, messages, onText) {
+export async function callJsonModelStream(config, messages, onText, onMeta) {
   const key = modelKey(config);
   const dropped = new Set(droppedParams.get(key) || []);
   for (let attempt = 0; attempt <= 3; attempt += 1) {
     try {
-      if (dropped.has("stream")) return await requestCompletion(config, messages, dropped);
-      return await streamCompletion(config, messages, dropped, onText);
+      if (dropped.has("stream")) {
+        onMeta?.({ streaming: false, reason: "provider_rejected_stream" });
+        const result = await requestCompletion(config, messages, dropped);
+        const readable = readableProjection(JSON.stringify(result));
+        if (readable) onText(readable);
+        return result;
+      }
+      return await streamCompletion(config, messages, dropped, onText, onMeta);
     } catch (error) {
       const param = unsupportedParam(error, dropped);
       if (!param) throw error;

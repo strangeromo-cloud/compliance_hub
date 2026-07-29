@@ -1,7 +1,7 @@
 import { AGENT_META, routeQuestion } from "./router.js";
 import { sourcesForAgents } from "./sources.js";
 import { retrievePublicSources } from "./retrieval.js";
-import { callJsonModel, callJsonModelStream } from "./llm.js";
+import { callJsonModel, callJsonModelStream, readableProjection } from "./llm.js";
 import { createMockAgentResult, createMockSynthesis } from "./mock.js";
 import { collectGrounding, groundingContext } from "./grounding.js";
 
@@ -107,14 +107,14 @@ function applyIntentScope(result, intent, question, locale) {
   };
 }
 
-async function runAgent(agent, question, locale, sources, config, history, grounding, onDelta) {
+async function runAgent(agent, question, locale, sources, config, history, grounding, onDelta, onMeta) {
   const relevantSources = sources.filter((source) => source.agents.includes(agent));
   // Manufacturer classification values and internal master data now arrive
   // through the structured grounding block instead of a literal prompt string.
   const result = await callJsonModelStream(config, [
     { role: "system", content: agentInstructions(agent, locale, grounding.intent) },
     { role: "user", content: `Recent conversation (context only):\n${conversationContext(history)}\n\nCurrent user question:\n${question}\n\nStructured grounding:\n${groundingContext(grounding)}\n\nPublic sources:\n${sourceContext(relevantSources)}` }
-  ], (text) => onDelta?.(text));
+  ], (text) => onDelta?.(text), (meta) => onMeta?.(meta));
   return applyIntentScope(normalizeAgentResult(result, agent), grounding.intent, question, locale);
 }
 
@@ -172,14 +172,25 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
   let results;
   let synthesis;
   if (mock) {
+    // Rules mode does no token generation, so there is nothing to reveal over
+    // time and pacing it would misrepresent what happened. The panels and their
+    // reasoning text still render, just immediately.
     results = agents.map((agent) => createMockAgentResult(agent, locale, question, grounding));
-    for (const result of results) onEvent({ type: "agent", result });
+    for (const result of results) {
+      onEvent({ type: "agent_start", agent: result.agent });
+      const readable = readableProjection(JSON.stringify(result));
+      if (readable) onEvent({ type: "agent_delta", agent: result.agent, text: readable });
+      onEvent({ type: "agent", result });
+    }
     synthesis = createMockSynthesis(results, locale, question, grounding);
+    const synthText = readableProjection(JSON.stringify(synthesis));
+    if (synthText) onEvent({ type: "synthesis_delta", text: synthText });
   } else {
     results = await Promise.all(agents.map(async (agent) => {
       onEvent({ type: "agent_start", agent });
       const result = await runAgent(agent, question, locale, sources, config, history, grounding,
-        (text) => onEvent({ type: "agent_delta", agent, text }));
+        (text) => onEvent({ type: "agent_delta", agent, text }),
+        (meta) => onEvent({ type: "stream_mode", agent, ...meta }));
       onEvent({ type: "agent", result });
       return result;
     }));

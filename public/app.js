@@ -18,7 +18,7 @@ const i18n = {
     fallbackTitle: "本机未同步，使用随仓库提交的时点快照，采集于",
     gemSourcesUnit: "个来源", gemRecordsUnit: "条记录", gemUnsynced: "个未同步", gemNoData: "无绑定来源", gemNoCoverage: "数据状态未知",
     factsShort: "必填", railCollapse: "收起侧边栏", railExpand: "展开侧边栏",
-    step_routed: "选择 Agent", step_sources: "检索官方来源", step_grounding: "名单筛查与结构化事实", step_agents: "专业 Agent 分析", step_synthesizing: "综合结论",
+    noStreamNotice: "当前模型未返回流式响应，分析文本会在每个 Agent 完成后一次性显示。", step_routed: "选择 Agent", step_sources: "检索官方来源", step_grounding: "名单筛查与结构化事实", step_agents: "专业 Agent 分析", step_synthesizing: "综合结论",
     groundingNote: "已筛查 {screened} 个名单来源 · {matches} 条潜在命中 · {internal} 条内部主数据关联",
     filterAll: "全部", filterTrade: "Trade", filterProduct: "Product", filterTpdd: "TPDD", filterCross: "跨域",
     runtimeRules: "规则模式", runtimeReady: "实时模型", runtimeMissing: "未配置模型",
@@ -54,7 +54,7 @@ const i18n = {
     fallbackTitle: "Not synced on this host; using the bundled point-in-time copy captured",
     gemSourcesUnit: "sources", gemRecordsUnit: "records", gemUnsynced: "not synced", gemNoData: "no bound sources", gemNoCoverage: "coverage unknown",
     factsShort: "Facts", railCollapse: "Collapse sidebar", railExpand: "Expand sidebar",
-    step_routed: "Select agents", step_sources: "Retrieve official sources", step_grounding: "Screening and structured facts", step_agents: "Specialist analysis", step_synthesizing: "Synthesis",
+    noStreamNotice: "This model does not return a streamed response; each specialist\u2019s text appears once it finishes.", step_routed: "Select agents", step_sources: "Retrieve official sources", step_grounding: "Screening and structured facts", step_agents: "Specialist analysis", step_synthesizing: "Synthesis",
     groundingNote: "{screened} list sources screened · {matches} potential matches · {internal} internal records touched",
     filterAll: "All", filterTrade: "Trade", filterProduct: "Product", filterTpdd: "TPDD", filterCross: "Cross-domain",
     runtimeRules: "Rules mode", runtimeReady: "Live model", runtimeMissing: "No model configured",
@@ -641,6 +641,12 @@ async function analyze(event) {
           </div>
           <p class="stream-text" data-stream></p>
         </section>`);
+    }
+    // A provider that ignores stream: true degrades to one update at the end,
+    // which is indistinguishable from a broken feature unless it is said.
+    if (event.type === "stream_mode" && event.streaming === false && !live.querySelector("[data-stream-notice]")) {
+      live.querySelector("[data-live-steps]").insertAdjacentHTML("afterend",
+        `<p class="live-note stream-notice" data-stream-notice>${esc(t("noStreamNotice"))}</p>`);
     }
     if (event.type === "agent_delta") {
       const panel = live.querySelector(`[data-agent="${CSS.escape(event.agent)}"] [data-stream]`);
