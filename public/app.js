@@ -582,17 +582,49 @@ async function analyze(event) {
           .replace("{internal}", g.internalImpactCount))}</p>`);
       renderSteps(live, done, "agents");
     }
+    // A specialist gets its panel the moment it starts, so its reasoning can be
+    // shown as it is written rather than appearing complete out of nowhere.
+    if (event.type === "agent_start") {
+      live.querySelector("[data-live-agents]").insertAdjacentHTML("beforeend", `
+        <section class="live-agent thinking" data-agent="${esc(event.agent)}">
+          <div class="trace-agent-head">
+            <strong>${agentName(event.agent)}</strong>
+            <span class="thinking-dot" aria-hidden="true"></span>
+          </div>
+          <p class="stream-text" data-stream></p>
+        </section>`);
+    }
+    if (event.type === "agent_delta") {
+      const panel = live.querySelector(`[data-agent="${CSS.escape(event.agent)}"] [data-stream]`);
+      if (panel) {
+        panel.textContent += event.text;
+        // Only follow the stream while the reader is already at the bottom.
+        const thread = $("thread");
+        if (thread.scrollHeight - thread.scrollTop - thread.clientHeight < 120) thread.scrollTop = thread.scrollHeight;
+      }
+    }
     if (event.type === "agent") {
       collected.agents.push(event.result);
-      live.querySelector("[data-live-agents]").insertAdjacentHTML("beforeend", `
-        <section class="live-agent">
+      const panel = live.querySelector(`[data-agent="${CSS.escape(event.result.agent)}"]`);
+      const markup = `
           <div class="trace-agent-head">
             <strong>${agentName(event.result.agent)}</strong>
             <span class="risk-chip risk-${esc(event.result.riskLevel)}">${esc(riskLabel(event.result.riskLevel))}</span>
           </div>
-          <p>${esc(event.result.summary)}</p>
-        </section>`);
-      live.scrollIntoView({ behavior: "smooth", block: "end" });
+          <p>${esc(event.result.summary)}</p>`;
+      if (panel) { panel.classList.remove("thinking"); panel.innerHTML = markup; }
+      else live.querySelector("[data-live-agents]").insertAdjacentHTML("beforeend", `<section class="live-agent">${markup}</section>`);
+    }
+    if (event.type === "synthesis_delta") {
+      let panel = live.querySelector("[data-synthesis-stream]");
+      if (!panel) {
+        live.querySelector("[data-live-agents]").insertAdjacentHTML("beforeend",
+          `<section class="live-agent thinking"><div class="trace-agent-head"><strong>${t("step_synthesizing")}</strong><span class="thinking-dot" aria-hidden="true"></span></div><p class="stream-text" data-synthesis-stream></p></section>`);
+        panel = live.querySelector("[data-synthesis-stream]");
+      }
+      panel.textContent += event.text;
+      const thread = $("thread");
+      if (thread.scrollHeight - thread.scrollTop - thread.clientHeight < 120) thread.scrollTop = thread.scrollHeight;
     }
     if (event.type === "synthesizing") {
       done.add("agents");
@@ -637,7 +669,7 @@ async function analyze(event) {
       if (streamDone) break;
     }
 
-    if (streamError) throw new Error(streamError.error);
+    if (streamError) throw new Error(i18n[state.locale][streamError.code] || streamError.error);
     if (!finished) throw new Error(t("badResponse"));
 
     state.conversation.push({ role: "assistant", content: `${finished.synthesis.headline}\n${finished.synthesis.executiveSummary}` });

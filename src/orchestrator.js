@@ -1,7 +1,7 @@
 import { AGENT_META, routeQuestion } from "./router.js";
 import { sourcesForAgents } from "./sources.js";
 import { retrievePublicSources } from "./retrieval.js";
-import { callJsonModel } from "./llm.js";
+import { callJsonModel, callJsonModelStream } from "./llm.js";
 import { createMockAgentResult, createMockSynthesis } from "./mock.js";
 import { collectGrounding, groundingContext } from "./grounding.js";
 
@@ -107,26 +107,26 @@ function applyIntentScope(result, intent, question, locale) {
   };
 }
 
-async function runAgent(agent, question, locale, sources, config, history, grounding) {
+async function runAgent(agent, question, locale, sources, config, history, grounding, onDelta) {
   const relevantSources = sources.filter((source) => source.agents.includes(agent));
   // Manufacturer classification values and internal master data now arrive
   // through the structured grounding block instead of a literal prompt string.
-  const result = await callJsonModel(config, [
+  const result = await callJsonModelStream(config, [
     { role: "system", content: agentInstructions(agent, locale, grounding.intent) },
     { role: "user", content: `Recent conversation (context only):\n${conversationContext(history)}\n\nCurrent user question:\n${question}\n\nStructured grounding:\n${groundingContext(grounding)}\n\nPublic sources:\n${sourceContext(relevantSources)}` }
-  ]);
+  ], (text) => onDelta?.(text));
   return applyIntentScope(normalizeAgentResult(result, agent), grounding.intent, question, locale);
 }
 
-async function synthesize(question, locale, results, config, history, grounding) {
+async function synthesize(question, locale, results, config, history, grounding, onDelta) {
   const language = locale === "en" ? "English" : "Simplified Chinese";
-  const result = await callJsonModel(config, [
+  const result = await callJsonModelStream(config, [
     {
       role: "system",
       content: `You are the Compliance Hub Master Agent. Synthesize specialist findings without overruling them or inventing facts. Respond in ${language}. The headline and executiveSummary must answer the current question directly and specifically. Never replace a requested policy explanation or factual value with a generic human-review statement. ${intentScope(grounding.intent)} Distinguish controlled status, license requirement and prohibition only when those issues are actually in scope. Return JSON only: {"overallRisk":"low|medium|high|unknown","headline":"...","executiveSummary":"...","nextStep":"..."}. Missing critical information must not become a low-risk result. This is not legal advice.`
     },
     { role: "user", content: `Recent conversation:\n${conversationContext(history)}\n\nCurrent question:\n${question}\n\nQuestion intent: ${grounding.intent}\n\nSpecialist outputs:\n${JSON.stringify(results)}` }
-  ]);
+  ], (text) => onDelta?.(text));
 
   return {
     overallRisk: grounding.intent === "product_metric" ? "unknown" : (RISK_LEVELS.has(result?.overallRisk) ? result.overallRisk : "unknown"),
@@ -177,12 +177,15 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
     synthesis = createMockSynthesis(results, locale, question, grounding);
   } else {
     results = await Promise.all(agents.map(async (agent) => {
-      const result = await runAgent(agent, question, locale, sources, config, history, grounding);
+      onEvent({ type: "agent_start", agent });
+      const result = await runAgent(agent, question, locale, sources, config, history, grounding,
+        (text) => onEvent({ type: "agent_delta", agent, text }));
       onEvent({ type: "agent", result });
       return result;
     }));
     onEvent({ type: "synthesizing" });
-    synthesis = await synthesize(question, locale, results, config, history, grounding);
+    synthesis = await synthesize(question, locale, results, config, history, grounding,
+      (text) => onEvent({ type: "synthesis_delta", text }));
   }
 
   return {
