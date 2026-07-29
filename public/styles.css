@@ -222,24 +222,23 @@ html[data-theme="light"] .moon-icon { display: block; }
 .section-label { display: flex; align-items: baseline; gap: 8px; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--text-3); margin: 0 0 9px; }
 .section-label span { letter-spacing: 0; text-transform: none; font-weight: 400; font-size: 11px; }
 
-.gem-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 24px; }
-.gem-card {
-  display: grid; grid-template-columns: 30px 1fr; gap: 11px; align-items: start;
-  padding: 12px 13px; text-align: left; cursor: pointer; color: inherit;
-  border: 1px solid var(--border); border-radius: var(--radius-lg);
-  background: var(--surface);
-  transition: border-color .15s, background .15s, box-shadow .15s;
-}
-.gem-card:hover {
-  border-color: color-mix(in srgb, var(--accent) 50%, var(--border-strong));
-  background: var(--surface-2);
-  box-shadow: inset 0 0 0 1px var(--accent-soft), 0 0 14px -6px var(--accent-glow);
-}
-.gem-card:hover .gem-icon { background: color-mix(in srgb, var(--accent) 26%, transparent); color: var(--accent-text); }
-.gem-card-title { display: flex; align-items: baseline; gap: 7px; flex-wrap: wrap; margin-bottom: 3px; }
-.gem-card-title strong { font-size: 12.5px; font-weight: 600; }
-.gem-card-title code { font-family: var(--mono); font-size: 10.5px; color: var(--text-3); }
-.gem-card small { display: block; font-size: 11.5px; color: var(--text-2); line-height: 1.5; }
+/* The empty state teaches what the sidebar and palette cannot: how to reach
+   the catalogue, and something concrete to click first. */
+.start-teach { display: grid; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 24px; }
+.teach-row { background: var(--surface); padding: 12px 14px; display: grid; grid-template-columns: 26px 1fr; gap: 12px; align-items: start; }
+.teach-row kbd { justify-self: center; margin-top: 1px; font-size: 12px; padding: 2px 7px; }
+.teach-pin { justify-self: center; margin-top: 1px; color: var(--accent-text); font-size: 13px; }
+.teach-row strong { display: block; font-size: 12.5px; font-weight: 600; margin-bottom: 2px; }
+.teach-row span { font-size: 11.5px; color: var(--text-2); line-height: 1.55; }
+
+.starter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 7px; margin-bottom: 24px; }
+.starter { text-align: left; cursor: pointer; padding: 11px 12px; color: inherit; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); transition: border-color .15s, background .15s; }
+.starter:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--border-strong)); background: var(--surface-2); }
+.starter strong { display: block; font-size: 12.5px; font-weight: 600; margin-bottom: 3px; line-height: 1.45; }
+.starter small { display: block; font-size: 11px; color: var(--text-3); }
+
+.gem-nav-empty { font-size: 11px; color: var(--text-3); padding: 4px 7px; line-height: 1.5; }
+.app.rail .gem-nav-empty { display: none; }
 
 /* The data line is what makes a gem read as wired into a real system rather
    than as a saved prompt, so it reports coverage honestly including gaps. */
@@ -832,3 +831,75 @@ details.trace.reasoning > summary { color: var(--text); font-weight: 600; }
 .case-empty { font-size: 11px; color: var(--text-3); padding: 4px 7px; }
 .app.rail .case-nav .case-text, .app.rail .rail-label-spaced { display: none; }
 .app.rail .case-nav button { grid-template-columns: 1fr; justify-items: center; }
+.palette-pin { font-size: 12px; color: var(--text-3); padding: 2px 4px; border-radius: 4px; cursor: pointer; line-height: 1; }
+.palette-pin:hover { color: var(--accent-text); background: var(--surface-3); }
+.palette-pin.on { color: var(--accent-text); }
+
+/* ==========================================================================
+   Home figure and source map.
+   Both render something true about the system — the route a question takes and
+   what the data layer is actually doing — so the visual interest comes from
+   the subject rather than from effects laid on top of it.
+   ========================================================================== */
+
+.hero-figure {
+  position: relative; overflow: hidden;
+  display: grid; grid-template-columns: auto 30px 1fr 30px auto;
+  align-items: center; gap: 0 4px;
+  border: 1px solid var(--border); border-radius: var(--radius-lg);
+  background:
+    radial-gradient(120% 140% at 8% 50%, var(--accent-soft), transparent 46%),
+    var(--surface);
+  padding: 16px 18px 26px;
+  margin-bottom: 22px;
+}
+.hf-col { display: grid; gap: 6px; }
+.hf-node {
+  font: 500 11px/1 var(--mono); white-space: nowrap;
+  border: 1px solid var(--border-strong); border-radius: 5px;
+  padding: 6px 9px; background: var(--surface-2); color: var(--text-2);
+}
+.hf-agents { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.hf-agent { display: flex; align-items: center; gap: 7px; justify-content: center; }
+.hf-agent em { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); flex: 0 0 auto; }
+.lane-product em { background: #6aa9e0; }
+.lane-tpdd em { background: #b48ce0; }
+.hf-answer { color: var(--text); border-color: color-mix(in srgb, var(--accent) 48%, var(--border-strong)); background: var(--accent-soft); }
+
+/* Hairline fan-out and fan-in, so the three lanes read as one route. */
+.hf-fan { position: relative; height: 42px; }
+.hf-fan i { position: absolute; left: 0; right: 0; height: 1px; background: var(--border-strong); }
+.hf-fan i:nth-child(1) { top: 6px; }
+.hf-fan i:nth-child(2) { top: 50%; }
+.hf-fan i:nth-child(3) { bottom: 6px; }
+.hf-fan::before { content: ""; position: absolute; left: 0; top: 6px; bottom: 6px; width: 1px; background: var(--border-strong); }
+.hf-fan-in::before { left: auto; right: 0; }
+
+/* Real control codes, not lorem — the vernacular of the subject, set faint. */
+.hf-codes {
+  position: absolute; left: 18px; right: 18px; bottom: 7px;
+  font: 400 9.5px/1 var(--mono); letter-spacing: .04em;
+  color: var(--text-3); opacity: .5;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.source-mosaic { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin-bottom: 24px; }
+.mosaic-group { border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); padding: 11px 12px; }
+.mosaic-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 8px; font-size: 11px; color: var(--text-3); }
+.mosaic-head b { font: 600 11px/1 var(--mono); color: var(--text-2); font-variant-numeric: tabular-nums; }
+.mosaic-tiles { display: flex; flex-wrap: wrap; gap: 3px; }
+.tile { width: 13px; height: 13px; border-radius: 2px; border: 1px solid var(--border); background: var(--surface-2); display: block; }
+.tile.tone-live { background: var(--accent); border-color: var(--accent); }
+.tile.tone-fallback { background: var(--risk-medium); border-color: var(--risk-medium); }
+.tile.tone-failed { background: var(--risk-high); border-color: var(--risk-high); }
+.tile.tone-syncing { background: var(--risk-medium); border-color: var(--risk-medium); opacity: .55; }
+.tile:hover { outline: 1px solid var(--text-3); outline-offset: 1px; }
+@media (prefers-reduced-motion: no-preference) {
+  .tile.tone-syncing { animation: pulse 1.4s ease-in-out infinite; }
+}
+
+@media (max-width: 620px) {
+  .hero-figure { grid-template-columns: 1fr; gap: 10px; padding-bottom: 24px; }
+  .hf-fan { display: none; }
+  .hf-agents { grid-template-columns: 1fr; }
+}

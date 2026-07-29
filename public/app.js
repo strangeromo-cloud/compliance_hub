@@ -18,6 +18,10 @@ const i18n = {
     fallbackTitle: "本机未同步，使用随仓库提交的时点快照，采集于",
     gemSourcesUnit: "个来源", gemRecordsUnit: "条记录", gemUnsynced: "个未同步", gemNoData: "无绑定来源", gemNoCoverage: "数据状态未知",
     factsShort: "必填", railCollapse: "收起侧边栏", railExpand: "展开侧边栏",
+    mosaicLabel: "来源版图", mosaicUs: "美国", mosaicCn: "中国", mosaicOther: "全球 / 其他",
+    hfQuestion: "一个问题", hfAnswer: "统一答案", startersLabel: "快速开始", workspaceEmpty: "工作区还没有 Gem", gemBacking: "数据支撑",
+    teachSlashTitle: "在输入框键入 /", teachSlashBody: "呼出 {n} 个 Gem 的完整目录，上下键选择，回车使用。",
+    teachPinTitle: "把常用 Gem 加入工作区", teachPinBody: "在目录里点 ★，或在 Gem 详情里点「添加到工作区」，它会常驻左侧栏。",
     historyLabel: "历史记录", historyEmpty: "暂无记录", historyOpenFailed: "无法打开该记录", reasoningTrace: "论证过程", rsSearched: "已检索的名单来源", rsMatched: "名称命中", rsCompared: "身份要素比对", rsFacts: "已核验事实",
     rsScore: "相似度", rsOpen: "查看原文", rsUnsynced: "未同步、本次未检索",
     el_country: "国别", el_registration_number: "注册号", el_address: "地址",
@@ -65,6 +69,10 @@ const i18n = {
     fallbackTitle: "Not synced on this host; using the bundled point-in-time copy captured",
     gemSourcesUnit: "sources", gemRecordsUnit: "records", gemUnsynced: "not synced", gemNoData: "no bound sources", gemNoCoverage: "coverage unknown",
     factsShort: "Facts", railCollapse: "Collapse sidebar", railExpand: "Expand sidebar",
+    mosaicLabel: "Source map", mosaicUs: "United States", mosaicCn: "China", mosaicOther: "Global / other",
+    hfQuestion: "One question", hfAnswer: "One answer", startersLabel: "Start here", workspaceEmpty: "No gems in your workspace yet", gemBacking: "Data behind it",
+    teachSlashTitle: "Press / in the composer", teachSlashBody: "Opens the full catalogue of {n} gems. Arrow keys select, Enter uses.",
+    teachPinTitle: "Pin the ones you use", teachPinBody: "Add to workspace from a gem's details and it stays in the sidebar.",
     historyLabel: "History", historyEmpty: "No cases yet", historyOpenFailed: "That case could not be opened", reasoningTrace: "How this was reached", rsSearched: "Lists searched", rsMatched: "Name matches", rsCompared: "Identity comparison", rsFacts: "Verified facts",
     rsScore: "Similarity", rsOpen: "Open source", rsUnsynced: "Not synced, therefore not searched",
     el_country: "Country", el_registration_number: "Registration no.", el_address: "Address",
@@ -262,15 +270,24 @@ function orderedGems() {
 
 function renderGemNav() {
   const pinned = workspaceGemIds();
-  $("gemNav").innerHTML = orderedGems().map((gem) => `
-    <li>
-      <button type="button" data-gem="${gem.id}" class="${state.activeGem?.id === gem.id ? "active" : ""}" title="${esc(localized(gem.name))} ${esc(gem.command)}">
-        ${gemIconMarkup(gem)}
-        <span class="gem-name">${esc(localized(gem.name))}${pinned.includes(gem.id) ? ' <span class="pin">●</span>' : ""}</span>
-      </button>
-    </li>`).join("");
+  // The sidebar is the workspace, not the catalogue — the palette is the
+  // catalogue. Showing all eight here made pinning meaningless, because it only
+  // reordered a list that already held everything.
+  const shown = GEMS.filter((gem) => pinned.includes(gem.id) || state.activeGem?.id === gem.id);
+  $("gemNav").innerHTML = shown.length
+    ? shown.map((gem) => `
+      <li>
+        <button type="button" data-gem="${gem.id}" class="${state.activeGem?.id === gem.id ? "active" : ""}" title="${esc(localized(gem.name))} ${esc(gem.command)}">
+          ${gemIconMarkup(gem)}
+          <span class="gem-name">${esc(localized(gem.name))}</span>
+        </button>
+      </li>`).join("")
+    : `<li class="gem-nav-empty">${esc(t("workspaceEmpty"))}</li>`;
 }
 
+// The pipeline the question actually travels, drawn from the same tokens as
+// everything else. Decoration that states something true about the system beats
+// decoration that just fills space.
 function renderCaseNav() {
   const cases = state.cases || [];
   $("caseNav").innerHTML = cases.length
@@ -291,7 +308,9 @@ async function loadCases() {
     if (!response.ok) return;
     state.cases = (await response.json()).cases || [];
     renderCaseNav();
-  } catch { /* history is a convenience; the workbench does not depend on it */ }
+  } catch (error) {
+    console.error("Case history load failed:", error);
+  }
 }
 
 async function openCase(id) {
@@ -315,15 +334,70 @@ async function openCase(id) {
   } catch { toast(t("historyOpenFailed")); }
 }
 
-function renderGemGrid() {
-  $("gemGrid").innerHTML = orderedGems().slice(0, 6).map((gem) => `
-    <button type="button" class="gem-card" data-gem="${gem.id}">
-      ${gemIconMarkup(gem, "lg")}
-      <span>
-        <span class="gem-card-title"><strong>${esc(localized(gem.name))}</strong><code>${esc(gem.command)}</code></span>
-        <small>${esc(localized(gem.summary))}</small>
-        ${gemBackingMarkup(gem)}
-      </span>
+function renderHeroFigure() {
+  const lanes = [
+    { key: "trade", label: "Trade" },
+    { key: "product", label: "Product" },
+    { key: "tpdd", label: "Ethics & TPDD" }
+  ];
+  $("heroFigure").innerHTML = `
+    <div class="hf-col hf-in"><span class="hf-node">${esc(t("hfQuestion"))}</span></div>
+    <div class="hf-fan" aria-hidden="true"><i></i><i></i><i></i></div>
+    <div class="hf-col hf-agents">${lanes.map((lane) => `
+      <span class="hf-node hf-agent lane-${lane.key}"><em></em>${esc(lane.label)}</span>`).join("")}</div>
+    <div class="hf-fan hf-fan-in" aria-hidden="true"><i></i><i></i><i></i></div>
+    <div class="hf-col hf-out"><span class="hf-node hf-answer">${esc(t("hfAnswer"))}</span></div>
+    <div class="hf-codes" aria-hidden="true">4A090.a · 1C117.d · 5A002.a.1 · 3A090.b · 3C004.a · EAR 734 · EAR 744</div>`;
+}
+
+// One tile per registered source, tinted by what it is actually doing. The data
+// layer is the substance of this product, so it is worth seeing at a glance.
+function renderSourceMosaic() {
+  const data = state.coverage;
+  if (!data) { $("sourceMosaic").innerHTML = ""; return; }
+  const groups = [
+    { key: "US", label: t("mosaicUs") },
+    { key: "CN", label: t("mosaicCn") },
+    { key: "other", label: t("mosaicOther") }
+  ];
+  const bucket = (source) => (source.country === "US" || source.country === "CN" ? source.country : "other");
+  const tone = (status) => ({ success: "live", fallback_snapshot: "fallback", failed: "failed", syncing: "syncing" }[status] || "idle");
+
+  $("sourceMosaic").innerHTML = groups.map((group) => {
+    const sources = data.sources.filter((source) => bucket(source) === group.key);
+    if (!sources.length) return "";
+    const live = sources.filter((source) => ["success", "fallback_snapshot"].includes(source.sync?.status)).length;
+    return `
+      <div class="mosaic-group">
+        <div class="mosaic-head"><span>${esc(group.label)}</span><b>${live}/${sources.length}</b></div>
+        <div class="mosaic-tiles">${sources.map((source) => `
+          <a class="tile tone-${tone(source.sync?.status)}" href="/data-sources.html"
+             title="${esc(source.sourceId)} · ${esc(source.sync?.status || "not_synced")}${source.sync?.recordCount ? ` · ${source.sync.recordCount}` : ""}"></a>`).join("")}</div>
+      </div>`;
+  }).join("");
+}
+
+function renderStartPanel() {
+  renderHeroFigure();
+  renderSourceMosaic();
+  $("startTeach").innerHTML = `
+    <div class="teach-row">
+      <kbd>/</kbd>
+      <div><strong>${esc(t("teachSlashTitle"))}</strong><span>${esc(t("teachSlashBody").replace("{n}", GEMS.length))}</span></div>
+    </div>
+    <div class="teach-row">
+      <span class="teach-pin" aria-hidden="true">★</span>
+      <div><strong>${esc(t("teachPinTitle"))}</strong><span>${esc(t("teachPinBody"))}</span></div>
+    </div>`;
+
+  // Example questions rather than gem names: something to click that the
+  // sidebar and the palette do not already offer.
+  const picks = ["T03", "DM1", "P03", "X01"]
+    .map((id) => scenarios[state.locale].find((item) => item.id === id)).filter(Boolean);
+  $("starterGrid").innerHTML = picks.map((item) => `
+    <button type="button" class="starter" data-starter="${esc(item.id)}">
+      <strong>${esc(item.title)}</strong>
+      <small>${esc(item.meta)}</small>
     </button>`).join("");
 }
 
@@ -342,6 +416,9 @@ function renderActiveGem() {
     <code>${esc(gem.command)}</code>
     <button type="button" class="facts-toggle ${met === facts.length ? "complete" : ""}" data-facts-toggle aria-expanded="${state.factsOpen}">
       ${t("factsShort")} ${met}/${facts.length} ${state.factsOpen ? "⌃" : "⌄"}
+    </button>
+    <button type="button" class="gem-drop" data-gem-detail="${gem.id}" title="${esc(t("gemDetail"))}" aria-label="${esc(t("gemDetail"))}">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
     </button>
     <button type="button" class="gem-drop" data-gem-drop aria-label="remove gem">
       <svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg>
@@ -409,7 +486,8 @@ function renderPalette() {
         <button type="button" class="palette-item ${items.indexOf(gem) === index ? "active" : ""}" data-gem="${gem.id}" role="option">
           ${gemIconMarkup(gem)}
           <span><strong>${esc(localized(gem.name))}</strong><small>${esc(localized(gem.summary))}</small></span>
-          <code>${esc(gem.command)}</code>
+          <span class="palette-pin ${workspaceGemIds().includes(gem.id) ? "on" : ""}" data-pin="${gem.id}" role="button" tabindex="-1"
+                title="${esc(t(workspaceGemIds().includes(gem.id) ? "gemRemove" : "gemAdd"))}">★</span>
         </button>`).join("")}
     </div>`).join("")
     + `<div class="palette-foot"><span>${t("paletteNav")}</span><span>${t("paletteEnter")}</span><span>${t("paletteEsc")}</span></div>`;
@@ -456,6 +534,7 @@ function openGemDetail(gemId) {
         : esc(t("gemNoSources"))}</dd></div>
       <div class="gem-spec-row"><dt>${t("gemFacts")}</dt><dd><div class="chip-row">${gem.requiredFacts.map((fact) => `<span class="chip">${esc(localized({ zh: fact.zh, en: fact.en }))}</span>`).join("")}</div></dd></div>
       <div class="gem-spec-row"><dt>${t("gemOutput")}</dt><dd>${esc(localized(gem.outputTemplate))}</dd></div>
+      <div class="gem-spec-row"><dt>${t("gemBacking")}</dt><dd>${gemBackingMarkup(gem)}</dd></div>
     </dl>
     <div class="card-actions">
       <button class="btn" data-toggle-workspace="${gem.id}" type="button">${pinned ? t("gemRemove") : t("gemAdd")}</button>
@@ -788,9 +867,13 @@ async function loadCoverage() {
       { value: String(failed.length), label: t("failedSources"), bad: failed.length > 0 }
     ].map((cell) => `<div class="coverage-cell ${cell.bad ? "is-bad" : ""} ${cell.warn ? "is-warn" : ""}"><b>${esc(cell.value)}</b><span>${esc(cell.label)}</span></div>`).join("");
 
-    renderGemGrid();
     renderGemNav();
-  } catch { /* Coverage is informational; the workbench stays usable without it. */ }
+    renderSourceMosaic();
+  } catch (error) {
+    // Coverage is informational and the workbench stays usable without it, but
+    // swallowing the reason entirely makes a failure here impossible to find.
+    console.error("Coverage load failed:", error);
+  }
 }
 
 /* ------------------------------------------------------------- analysis */
@@ -1075,7 +1158,7 @@ function applyLocale(locale) {
   $("enBtn").setAttribute("aria-pressed", String(locale === "en"));
   if (state.activeGem) $("questionInput").placeholder = localized(state.activeGem.placeholder);
   renderScenarios();
-  renderGemGrid();
+  renderStartPanel();
   renderGemNav();
   renderCaseNav();
   renderActiveGem();
@@ -1108,15 +1191,30 @@ $("questionInput").addEventListener("keydown", (event) => {
 });
 
 $("palette").addEventListener("click", (event) => {
+  // The star curates without selecting, so the catalogue is also where a
+  // workspace gets built.
+  const pin = event.target.closest("[data-pin]");
+  if (pin) {
+    event.stopPropagation();
+    const added = toggleWorkspaceGem(pin.dataset.pin);
+    renderGemNav();
+    renderPalette();
+    return toast(added ? t("gemAdded") : t("gemRemoved"));
+  }
   const button = event.target.closest("[data-gem]");
   if (!button) return;
   $("questionInput").value = "";
   activateGem(button.dataset.gem);
 });
 
-$("gemGrid").addEventListener("click", (event) => {
-  const button = event.target.closest("[data-gem]");
-  if (button) activateGem(button.dataset.gem);
+$("starterGrid").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-starter]");
+  if (!button) return;
+  const scenario = scenarios[state.locale].find((item) => item.id === button.dataset.starter);
+  if (!scenario) return;
+  $("questionInput").value = scenario.question;
+  updateRouteHint();
+  $("questionInput").focus();
 });
 
 $("caseNav").addEventListener("click", (event) => {
@@ -1136,6 +1234,8 @@ $("gemNav").addEventListener("click", (event) => {
 $("gemRow").addEventListener("click", (event) => {
   if (event.target.closest("[data-gem-drop]")) return clearGem();
   if (event.target.closest("[data-facts-toggle]")) { state.factsOpen = !state.factsOpen; return renderActiveGem(); }
+  const detail = event.target.closest("[data-gem-detail]");
+  if (detail) return openGemDetail(detail.dataset.gemDetail);
 });
 
 function setRail(collapsed) {
@@ -1169,7 +1269,7 @@ $("gemDialog").addEventListener("click", (event) => {
   if (toggle) {
     const added = toggleWorkspaceGem(toggle.dataset.toggleWorkspace);
     toggle.textContent = added ? t("gemRemove") : t("gemAdd");
-    renderGemGrid();
+    renderGemNav();
     toast(added ? t("gemAdded") : t("gemRemoved"));
   }
 });
