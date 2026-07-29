@@ -4,6 +4,34 @@ import { readFallbackMeta, readNormalized, readSyncStatus, saveSourceData, updat
 
 const activeSyncs = new Map();
 
+// Citation pages on hosts a deployment cannot reach still have their text in
+// the ingested corpus. Indexing by URL lets a failed live fetch fall back to
+// what was already captured, rather than showing an empty citation.
+const ARCHIVE_SOURCES = ["china-dual-use", "china-licence-catalogue", "china-control-entities", "china-unreliable-entity"];
+let archiveIndex = null;
+
+async function buildArchiveIndex() {
+  const index = new Map();
+  for (const sourceId of ARCHIVE_SOURCES) {
+    const snapshot = await readNormalized(sourceId);
+    for (const record of snapshot?.records || []) {
+      if (!record.sourceUrl || !record.contentText || index.has(record.sourceUrl)) continue;
+      index.set(record.sourceUrl, {
+        text: record.contentText,
+        capturedAt: snapshot.capturedAt,
+        provenance: snapshot.provenance || "live_sync",
+        noticeNumber: record.noticeNumber || null
+      });
+    }
+  }
+  return index;
+}
+
+export async function findArchivedDocument(url) {
+  if (!archiveIndex) archiveIndex = buildArchiveIndex();
+  return (await archiveIndex).get(String(url)) || null;
+}
+
 // Node wraps every transport failure as a bare "fetch failed"; the actionable
 // detail (ETIMEDOUT vs ENOTFOUND vs a TLS error) only lives on error.cause.
 // Without walking the chain a network-level failure is undiagnosable in a
@@ -69,6 +97,7 @@ async function executeSync(sourceId) {
   try {
     const result = await adapter.sync();
     const saved = await saveSourceData({ sourceId, extension: result.extension, bytes: result.file.bytes, records: result.records, metadata: { sourceUpdatedAt: result.sourceUpdatedAt, finalUrl: result.file.finalUrl, etag: result.file.etag, syncScope: result.syncScope } });
+    archiveIndex = null;
     return await updateSyncStatus(sourceId, { status: "success", startedAt, completedAt: new Date().toISOString(), recordCount: result.records.length, sourceUpdatedAt: result.sourceUpdatedAt, syncScope: result.syncScope, ...saved, error: null });
   } catch (error) {
     await updateSyncStatus(sourceId, { status: "failed", startedAt, completedAt: new Date().toISOString(), error: safeError(error) });

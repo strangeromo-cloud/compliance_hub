@@ -460,3 +460,124 @@ dialog::backdrop { background: rgba(0,0,0,.55); }
 .live-agent p { font-size: 12.5px; color: var(--text-2); margin-top: 4px; }
 @keyframes rise { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .live-agent { animation: none; } }
+
+/* ==========================================================================
+   Data coverage page. Its own layout, but built from the same tokens so the
+   two pages read as one product. These rules were lost when the workbench was
+   restyled, which left this page unstyled.
+   ========================================================================== */
+
+.coverage-page { overflow: auto; }
+.coverage-page .topbar {
+  height: var(--bar-h); display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 0 18px; border-bottom: 1px solid var(--border);
+  background: var(--surface); position: sticky; top: 0; z-index: 20;
+}
+.coverage-page .brand { display: flex; align-items: center; gap: 9px; text-decoration: none; color: inherit; }
+.coverage-page .brand strong { display: block; font-size: 12.5px; font-weight: 600; }
+.coverage-page .brand small { display: block; font-size: 10px; color: var(--text-3); }
+.coverage-page .top-actions { display: flex; align-items: center; gap: 7px; }
+.settings-button, .coverage-back {
+  height: 28px; display: inline-flex; align-items: center; gap: 6px; padding: 0 11px;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: transparent; color: var(--text-2); cursor: pointer; font-size: 12px; text-decoration: none;
+}
+.settings-button:hover, .coverage-back:hover { border-color: var(--border-strong); color: var(--text); background: var(--surface-2); }
+.settings-button svg, .coverage-back svg { width: 14px; height: 14px; }
+.segmented { display: flex; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.segmented-btn { width: 28px; height: 26px; border: 0; background: transparent; color: var(--text-3); cursor: pointer; font-size: 11px; }
+.segmented-btn.active { background: var(--surface-3); color: var(--text); }
+.icon-button { width: 28px; height: 28px; display: grid; place-items: center; border: 1px solid var(--border); border-radius: var(--radius); background: transparent; color: var(--text-2); cursor: pointer; }
+.icon-button:hover { border-color: var(--border-strong); color: var(--text); background: var(--surface-2); }
+.icon-button svg { width: 14px; height: 14px; }
+
+.coverage-shell { max-width: 1080px; margin: 0 auto; padding: 28px 22px 72px; }
+.eyebrow { font: 600 10px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--text-3); margin-bottom: 8px; }
+.coverage-hero { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; flex-wrap: wrap; margin-bottom: 22px; }
+.coverage-hero h1 { font-size: 21px; font-weight: 600; letter-spacing: -.015em; margin-bottom: 6px; }
+.coverage-hero p { font-size: 12.5px; color: var(--text-2); max-width: 62ch; }
+.coverage-date { text-align: right; font-size: 11px; color: var(--text-3); }
+.coverage-date strong { display: block; font-family: var(--mono); font-size: 13px; color: var(--text); margin-top: 3px; }
+
+.coverage-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 16px; }
+.coverage-summary article { background: var(--surface); padding: 12px 14px; display: flex; align-items: center; gap: 10px; }
+.summary-icon { width: 24px; height: 24px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 5px; font: 700 11px/1 var(--mono); }
+.summary-icon.live { color: var(--accent-text); background: var(--accent-soft); }
+.summary-icon.ready { color: var(--accent-text); background: var(--accent-soft); }
+.summary-icon.limited { color: var(--risk-medium); background: rgba(217,154,61,.13); }
+.summary-icon.manual { color: var(--text-3); background: var(--surface-3); }
+.coverage-summary strong { display: block; font: 600 18px/1.1 var(--mono); font-variant-numeric: tabular-nums; }
+.coverage-summary span { display: block; font-size: 10.5px; color: var(--text-3); margin-top: 2px; }
+
+.coverage-disclosure { display: flex; gap: 10px; padding: 11px 13px; border: 1px solid var(--border); border-left: 2px solid var(--risk-medium); border-radius: 0 var(--radius) var(--radius) 0; background: var(--surface); margin-bottom: 20px; }
+.coverage-disclosure svg { width: 15px; height: 15px; flex: 0 0 auto; margin-top: 2px; color: var(--risk-medium); }
+.coverage-disclosure strong { display: block; font-size: 12px; margin-bottom: 3px; }
+.coverage-disclosure p { font-size: 11.5px; color: var(--text-2); }
+
+.coverage-controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+.coverage-search { position: relative; flex: 1 1 240px; display: flex; align-items: center; }
+.coverage-search svg { position: absolute; left: 10px; width: 14px; height: 14px; color: var(--text-3); pointer-events: none; }
+.coverage-search input { width: 100%; height: 30px; padding: 0 10px 0 30px; border: 1px solid var(--border-strong); border-radius: var(--radius); background: var(--surface-2); outline: none; font-size: 12.5px; }
+.coverage-search input:focus { border-color: var(--accent); }
+.coverage-filters { display: flex; gap: 4px; flex-wrap: wrap; }
+.filter-button { height: 30px; padding: 0 11px; font-size: 11.5px; border: 1px solid var(--border); border-radius: var(--radius); background: transparent; color: var(--text-2); cursor: pointer; }
+.filter-button:hover { border-color: var(--border-strong); color: var(--text); }
+.filter-button.active { color: var(--accent-text); border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); background: var(--accent-soft); }
+.coverage-select { display: flex; align-items: center; gap: 7px; font-size: 11.5px; color: var(--text-3); }
+.coverage-select select { height: 30px; padding: 0 8px; border: 1px solid var(--border-strong); border-radius: var(--radius); background: var(--surface-2); color: var(--text); font-size: 12px; }
+
+.coverage-list-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+.coverage-list-head h2 { font-size: 14px; font-weight: 600; }
+.coverage-list-head p { font-size: 11.5px; color: var(--text-3); margin-top: 3px; max-width: 70ch; }
+.coverage-list-head .count-badge { margin-left: auto; }
+
+.registry-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 10px; }
+.registry-card { border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.registry-card-head h3 { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+.registry-card-head p { font-size: 11px; color: var(--text-3); }
+.registry-badges { display: flex; flex-wrap: wrap; gap: 4px; }
+.module-tag, .adapter-badge, .warning-badge {
+  font: 500 10px/1.7 var(--mono); border-radius: 3px; padding: 0 6px;
+  border: 1px solid var(--border); color: var(--text-2); white-space: nowrap;
+}
+.module-tag.module-trade { color: #6aa9e0; border-color: rgba(106,169,224,.4); }
+.module-tag.module-product { color: var(--accent-text); border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
+.module-tag.module-tpdd { color: #b48ce0; border-color: rgba(180,140,224,.4); }
+.adapter-badge.ready { color: var(--accent-text); border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
+.adapter-badge.limited { color: var(--risk-medium); border-color: rgba(217,154,61,.45); }
+.adapter-badge.manual { color: var(--text-3); }
+.warning-badge { color: var(--risk-medium); border-color: rgba(217,154,61,.45); }
+
+.registry-fields { display: grid; gap: 6px; font-size: 11.5px; }
+.registry-fields > div { display: grid; grid-template-columns: 76px 1fr; gap: 9px; }
+.registry-fields dt, .registry-fields .k { color: var(--text-3); font-size: 10.5px; }
+.registry-fields .v { color: var(--text-2); min-width: 0; word-break: break-word; }
+
+.sync-panel { border-top: 1px solid var(--border); padding-top: 10px; display: grid; gap: 8px; }
+.sync-details { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; font-size: 11px; color: var(--text-3); }
+.sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-3); flex: 0 0 auto; }
+.sync-success .sync-dot, .sync-dot.sync-success { background: var(--accent-text); }
+.sync-failed .sync-dot, .sync-dot.sync-failed { background: var(--risk-high); }
+.sync-syncing .sync-dot, .sync-dot.sync-syncing { background: var(--risk-medium); }
+.sync-fallback_snapshot .sync-dot, .sync-dot.sync-fallback_snapshot { background: var(--risk-medium); }
+.sync-error { font-family: var(--mono); font-size: 10px; color: var(--risk-high); word-break: break-word; }
+.source-sync-button { height: 26px; padding: 0 11px; border: 1px solid var(--border-strong); border-radius: var(--radius); background: transparent; color: var(--text-2); cursor: pointer; font-size: 11.5px; justify-self: start; }
+.source-sync-button:hover:not(:disabled) { background: var(--surface-2); color: var(--text); }
+.source-sync-button:disabled { opacity: .45; cursor: default; }
+.official-source-link { font-size: 11.5px; color: var(--accent-text); text-decoration: none; }
+.official-source-link:hover { text-decoration: underline; }
+.registry-empty { padding: 40px 16px; text-align: center; font-size: 12.5px; color: var(--text-3); }
+
+@media (max-width: 640px) {
+  .coverage-hero { flex-direction: column; }
+  .coverage-date { text-align: left; }
+  .registry-grid { grid-template-columns: 1fr; }
+}
+.coverage-state { font: 500 10px/1.7 var(--mono); border: 1px solid var(--border); border-radius: 3px; padding: 0 6px; color: var(--text-2); white-space: nowrap; }
+.coverage-state.state-structured_snapshot, .coverage-state.state-verified_lookup { color: var(--accent-text); border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
+.coverage-state.state-sample_snapshot, .coverage-state.state-query_context { color: var(--risk-medium); border-color: rgba(217,154,61,.45); }
+.coverage-state.state-planned, .coverage-state.state-manual { color: var(--text-3); }
+.registry-details { margin: 0; padding: 0; display: grid; gap: 6px; font-size: 11.5px; }
+.registry-details > div { display: grid; grid-template-columns: 76px 1fr; gap: 9px; }
+.registry-details dt { color: var(--text-3); font-size: 10.5px; }
+.registry-details dd { margin: 0; color: var(--text-2); min-width: 0; word-break: break-word; }

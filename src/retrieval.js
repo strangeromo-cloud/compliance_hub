@@ -1,3 +1,5 @@
+import { findArchivedDocument } from "./data-layer/service.js";
+
 const MAX_SOURCE_CHARS = 7000;
 const MAX_LIVE_SOURCES = 5;
 
@@ -82,6 +84,21 @@ export async function retrievePublicSources(sources) {
           retrievedAt: new Date().toISOString()
         };
       } catch (error) {
+        // The page could not be reached now, but it may already be in the
+        // ingested corpus. Using that is better than an empty citation, and it
+        // is reported as an archived copy rather than as a live retrieval.
+        const archived = await findArchivedDocument(source.url).catch(() => null);
+        if (archived) {
+          return {
+            ...source,
+            liveStatus: "archived",
+            excerpt: archived.text.slice(0, MAX_SOURCE_CHARS),
+            retrievedAt: archived.capturedAt || null,
+            archivedFrom: archived.provenance,
+            noticeNumber: archived.noticeNumber,
+            retrievalError: error.name === "AbortError" ? "timeout" : "unavailable"
+          };
+        }
         return {
           ...source,
           liveStatus: "unavailable",

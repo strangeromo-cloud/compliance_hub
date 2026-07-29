@@ -172,11 +172,42 @@ function normalizeExportControlNotice(row, index) {
   };
 }
 
+// Guidance articles are cited alongside the notices, and a deployment that
+// cannot reach MOFCOM cannot fetch them at request time either. Capturing them
+// here means the citation still resolves to the official text.
+function normalizeGuidance(row, index) {
+  const notice = normalizeExportControlNotice(row, index);
+  return { ...notice, recordType: "guidance", measureType: "official_guidance", noticeAction: "guidance" };
+}
+
 async function syncChinaDualUseNotices() {
   const { file, payload } = await fetchExportControlColumn(EXPORT_CONTROL_COLUMNS.controlList);
   const rows = payload?.pageInfo?.rows || [];
   if (!rows.length) throw new Error("MOFCOM control-list column returned no rows.");
   const records = rows.map(normalizeExportControlNotice);
+
+  // Best effort: guidance enriches the corpus but its absence must not fail the
+  // control-list sync, which is the part that matters.
+  // The column API returns an empty body for a few articles. Those are fetched
+  // from the article page instead, so a cited document still has its text.
+  async function backfillContent(record) {
+    if (record.contentText) return record;
+    try {
+      const page = await fetchPublicFile(record.sourceUrl, { accept: "text/html", maxBytes: 4 * 1024 * 1024, attempts: 1 });
+      return { ...record, contentText: stripHtml(page.bytes.toString("utf8")).slice(0, 20000), contentFrom: "article_page" };
+    } catch { return record; }
+  }
+
+  try {
+    // The column pages at 20; cited guidance sits beyond the first page.
+    for (let page = 1; page <= 2; page += 1) {
+      const guidance = await fetchExportControlColumn(EXPORT_CONTROL_COLUMNS.faq, page);
+      const rows = guidance.payload?.pageInfo?.rows || [];
+      const normalized = rows.map((row, index) => normalizeGuidance(row, records.length + index));
+      records.push(...await Promise.all(normalized.map(backfillContent)));
+      if (page >= (guidance.payload?.pageInfo?.maxPageNum || 1)) break;
+    }
+  } catch { /* control-list notices are still valid on their own */ }
   // Attachments carry the actual list PDFs, so fetch them for the newest notices.
   for (const record of records.slice(0, 12)) {
     record.attachments = await noticeAttachments(record.sourceUrl);
