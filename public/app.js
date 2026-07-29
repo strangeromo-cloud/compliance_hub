@@ -24,7 +24,7 @@ const i18n = {
     runtimeRules: "规则模式", runtimeReady: "实时模型", runtimeMissing: "未配置模型",
     modeHint: "点击切换规则模式与实时模型",
     routeLabel: "路由", routedTo: "已路由至", specialistTrace: "专业 Agent 分析轨迹",
-    overallAssessment: "总体判断", nextStep: "建议下一步", missingInfo: "仍需信息", actions: "建议行动", noItems: "暂无",
+    overallAssessment: "总体判断", nextStep: "下一步", missingInfo: "仍需信息", actions: "建议行动", noItems: "暂无", limitations: "结论边界与限制",
     sourceLive: "实时获取", sourceMetadata: "元数据", sourceUnavailable: "获取失败", sourceNotFetched: "未获取", sourceArchived: "已采集副本", sourceCitationOnly: "仅引用",
     mockLabel: "规则 + 公开数据", liveLabel: "实时模型 + 公开数据",
     riskLow: "低", riskMedium: "中", riskHigh: "高", riskUnknown: "待定",
@@ -60,7 +60,7 @@ const i18n = {
     runtimeRules: "Rules mode", runtimeReady: "Live model", runtimeMissing: "No model configured",
     modeHint: "Toggle between rules mode and the live model",
     routeLabel: "Route", routedTo: "Routed to", specialistTrace: "Specialist agent trace",
-    overallAssessment: "Overall assessment", nextStep: "Next step", missingInfo: "Missing information", actions: "Recommended actions", noItems: "None",
+    overallAssessment: "Overall assessment", nextStep: "Next step", missingInfo: "Missing information", actions: "Recommended actions", noItems: "None", limitations: "Limits on this conclusion",
     sourceLive: "Live", sourceMetadata: "Metadata", sourceUnavailable: "Unavailable", sourceNotFetched: "Not fetched", sourceArchived: "Archived copy", sourceCitationOnly: "Cited only",
     mockLabel: "Rules + public data", liveLabel: "Live model + public data",
     riskLow: "Low", riskMedium: "Medium", riskHigh: "High", riskUnknown: "Unknown",
@@ -401,8 +401,41 @@ function renderEvidence(sources) {
     </article>`).join("");
 }
 
+// What a reviewer needs, in the order they need it: the call, then the gaps
+// that block it, then what to do, then the trace. Missing information and
+// recommended actions used to be buried inside the collapsed trace, which is
+// where the eye goes last — they are the actionable part, so they come up.
+function collectAcross(results, key, limit = 6) {
+  const seen = new Map();
+  for (const result of results || []) {
+    for (const item of result[key] || []) {
+      const text = String(item).trim();
+      if (!text) continue;
+      const dedupe = text.replace(/[\s。．.,，、；;：:]+$/, "");
+      if (!seen.has(dedupe)) seen.set(dedupe, { text, agents: [] });
+      const entry = seen.get(dedupe);
+      if (!entry.agents.includes(result.agent)) entry.agents.push(result.agent);
+    }
+  }
+  return [...seen.values()].slice(0, limit);
+}
+
+function actionBlock(kind, label, items) {
+  if (!items.length) return "";
+  return `
+    <section class="action-block ${kind}">
+      <div class="action-head"><span class="action-label">${esc(label)}</span><span class="action-count">${items.length}</span></div>
+      <ul>${items.map((item) => `
+        <li>${esc(item.text)}${item.agents.length > 1 ? `<span class="from">${item.agents.map(agentName).join(" · ")}</span>` : ""}</li>`).join("")}</ul>
+    </section>`;
+}
+
 function answerMarkup(data) {
   const synthesis = data.synthesis;
+  const gaps = collectAcross(data.results, "missingInfo");
+  const actions = collectAcross(data.results, "recommendedActions");
+  const limitations = data.grounding?.limitations || [];
+
   return `
       <span class="avatar" aria-hidden="true">CH</span>
       <div>
@@ -411,6 +444,7 @@ function answerMarkup(data) {
           <span>${data.mode === "live-model" ? t("liveLabel") : t("mockLabel")}</span><span class="sep">·</span>
           <span>${t("routedTo")} ${data.agents.map(agentName).join(", ")}</span>
         </div>
+
         <section class="answer">
           <div class="answer-head">
             <span class="risk-mark risk-${esc(synthesis.overallRisk)}">${esc(riskLabel(synthesis.overallRisk))}</span>
@@ -419,10 +453,23 @@ function answerMarkup(data) {
               <p>${esc(synthesis.executiveSummary)}</p>
             </div>
           </div>
+
+          ${gaps.length || actions.length ? `<div class="action-grid">
+            ${actionBlock("gaps", t("missingInfo"), gaps)}
+            ${actionBlock("actions", t("actions"), actions)}
+          </div>` : ""}
+
           <div class="next-step"><b>${t("nextStep")}</b>${esc(synthesis.nextStep)}</div>
         </section>
+
+        ${limitations.length ? `
+        <details class="trace limits">
+          <summary>${t("limitations")}<span class="trace-count">${limitations.length}</span></summary>
+          <div class="trace-body"><ul class="limit-list">${limitations.map((item) => `<li>${esc(item)}</li>`).join("")}</ul></div>
+        </details>` : ""}
+
         <details class="trace">
-          <summary>${t("specialistTrace")}</summary>
+          <summary>${t("specialistTrace")}<span class="trace-count">${data.results.length}</span></summary>
           <div class="trace-body">${data.results.map((result) => `
             <section class="trace-agent">
               <div class="trace-agent-head">
@@ -433,11 +480,12 @@ function answerMarkup(data) {
               <ul class="trace-findings">${(result.findings || []).map((finding) => `
                 <li><b>${esc(finding.title)}</b> ${esc(finding.detail)}<span class="cite">${(finding.evidenceSourceIds || []).map((id) => `<span>${esc(id)}</span>`).join("")}</span></li>`).join("")}</ul>
               <div class="trace-cols">
-                <div><h4>${t("missingInfo")}</h4>${renderList(result.missingInfo)}</div>
-                <div><h4>${t("actions")}</h4>${renderList(result.recommendedActions)}</div>
+                <div><h4>${t("missingInfo")}</h4>${renderList((result.missingInfo || []))}</div>
+                <div><h4>${t("actions")}</h4>${renderList((result.recommendedActions || []))}</div>
               </div>
             </section>`).join("")}</div>
         </details>
+
         <p class="msg-note">${esc(data.disclaimer)}</p>
       </div>`;
 }

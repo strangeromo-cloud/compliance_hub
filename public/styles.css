@@ -245,14 +245,38 @@ html[data-theme="light"] .moon-icon { display: block; }
 .msg-meta .sep { color: var(--border-strong); }
 
 .answer { border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); overflow: hidden; }
-.answer-head { display: grid; grid-template-columns: auto 1fr; gap: 11px; padding: 13px 14px; }
-.risk-mark { align-self: start; font-size: 10px; font-weight: 700; letter-spacing: .04em; padding: 3px 7px; border-radius: 3px; white-space: nowrap; border: 1px solid currentColor; }
+.answer-head { display: grid; grid-template-columns: auto 1fr; gap: 13px; padding: 15px 16px; }
+.risk-mark {
+  align-self: start; display: grid; place-items: center;
+  min-width: 34px; height: 34px; padding: 0 8px;
+  font-size: 12px; font-weight: 700; letter-spacing: .02em;
+  border-radius: 7px; white-space: nowrap;
+  border: 1px solid currentColor; background: color-mix(in srgb, currentColor 11%, transparent);
+}
 .risk-high { color: var(--risk-high); } .risk-medium { color: var(--risk-medium); }
 .risk-low { color: var(--risk-low); } .risk-unknown { color: var(--risk-unknown); }
-.answer-head h3 { font-size: 14px; font-weight: 600; line-height: 1.45; margin-bottom: 5px; }
-.answer-head p { font-size: 12.5px; color: var(--text-2); }
-.next-step { border-top: 1px solid var(--border); background: var(--surface-2); padding: 10px 14px; font-size: 12.5px; }
-.next-step b { color: var(--text-2); font-weight: 600; margin-right: 6px; }
+.answer-head h3 { font-size: 15.5px; font-weight: 600; line-height: 1.4; margin-bottom: 6px; letter-spacing: -.01em; }
+.answer-head p { font-size: 13px; color: var(--text-2); }
+
+/* The gaps that block a conclusion and the actions that close them. These are
+   the operative part of the answer, so they sit above the fold of the card
+   rather than inside the collapsed trace. */
+.action-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1px; background: var(--border); border-top: 1px solid var(--border); }
+.action-block { background: var(--surface); padding: 11px 14px; }
+.action-head { display: flex; align-items: center; gap: 7px; margin-bottom: 7px; }
+.action-label { font: 600 9.5px/1 var(--mono); letter-spacing: .11em; text-transform: uppercase; color: var(--text-3); }
+.action-count { font: 600 9.5px/1.6 var(--mono); min-width: 16px; text-align: center; border-radius: 8px; padding: 0 5px; }
+.action-block.gaps .action-count { color: var(--risk-medium); background: rgba(217,154,61,.15); }
+.action-block.actions .action-count { color: var(--accent-text); background: var(--accent-soft); }
+.action-block ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 5px; }
+.action-block li { font-size: 12.5px; color: var(--text-2); padding-left: 13px; position: relative; line-height: 1.55; }
+.action-block li::before { content: ""; position: absolute; left: 0; top: 8px; width: 5px; height: 5px; border-radius: 1px; }
+.action-block.gaps li::before { background: var(--risk-medium); }
+.action-block.actions li::before { background: var(--accent); }
+.action-block .from { display: block; font: 400 10px/1.6 var(--mono); color: var(--text-3); margin-top: 1px; }
+
+.next-step { border-top: 1px solid var(--border); background: var(--surface-2); padding: 11px 16px; font-size: 13px; color: var(--text); }
+.next-step b { display: block; font: 600 9.5px/1.6 var(--mono); letter-spacing: .11em; text-transform: uppercase; color: var(--text-3); margin-bottom: 3px; }
 
 details.trace { margin-top: 8px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
 details.trace > summary { cursor: pointer; list-style: none; padding: 8px 12px; font-size: 11.5px; color: var(--text-2); display: flex; align-items: center; gap: 6px; }
@@ -260,6 +284,11 @@ details.trace > summary::-webkit-details-marker { display: none; }
 details.trace > summary::before { content: "▸"; color: var(--text-3); font-size: 9px; }
 details.trace[open] > summary::before { content: "▾"; }
 details.trace > summary:hover { color: var(--text); }
+.trace-count { margin-left: auto; font: 600 9.5px/1.6 var(--mono); color: var(--text-3); border: 1px solid var(--border); border-radius: 8px; padding: 0 6px; }
+details.trace.limits > summary { color: var(--risk-medium); }
+.limit-list { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 6px; font-size: 12px; color: var(--text-2); }
+.limit-list li { padding-left: 13px; position: relative; line-height: 1.6; }
+.limit-list li::before { content: ""; position: absolute; left: 0; top: 8px; width: 5px; height: 5px; border-radius: 1px; background: var(--risk-medium); }
 .trace-body { border-top: 1px solid var(--border); padding: 4px 12px 12px; }
 .trace-agent { padding: 11px 0; border-bottom: 1px solid var(--border); }
 .trace-agent:last-child { border-bottom: 0; padding-bottom: 0; }
