@@ -1134,7 +1134,6 @@ html[lang="en"] .step-needs li::before { content: "NEEDS"; font-size: 8px; }
 .path-step.shut > .step-body > .step-detail-wrap { display: none; }
 .path-step.shut { opacity: 0.72; }
 .path-step.asking { opacity: 1; }
-.path-step.asking > .step-body { border-left: 2px solid var(--accent); padding-left: 9px; margin-left: -11px; }
 .step-asking { font: 500 10px/1.6 var(--mono); padding: 0 6px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent-text); }
 .plan-items li.now .item-body { color: var(--text); }
 .plan-items li.now .marker { background: var(--accent); border-color: var(--accent); color: #fff; }
@@ -1270,7 +1269,6 @@ html[lang="en"] .step-needs li::before { content: "NEEDS"; font-size: 8px; }
 .live-elapsed { margin-left: auto; font: 400 10.5px/1 var(--mono); color: var(--text-3); }
 /* The waiting step is the focal point of an open analysis. */
 .step-ask { margin: 8px 0 6px; font-size: 12px; font-weight: 500; color: var(--accent-text); }
-.path-step.asking > .step-body { border-left-width: 3px; }
 .interim { margin-top: 4px; }
 .interim > summary { padding: 6px 0; }
 
