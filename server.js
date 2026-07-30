@@ -166,7 +166,7 @@ const server = createServer(async (request, response) => {
       const mock = Boolean(body.mock);
       if (!mock && !config.apiKey) throw Object.assign(new Error("API key is required for live-model mode."), { status: 400 });
       const locale = body.locale === "en" ? "en" : "zh";
-      const result = await assessScenario({ question, locale, config, mock, history: cleanHistory(body.history) });
+      const result = await assessScenario({ question, locale, config, mock, gemId: body.gemId, history: cleanHistory(body.history) });
       await saveCase(result, question, locale, body.threadId).catch(() => null);
       return sendJson(response, 200, result);
     }
@@ -195,7 +195,7 @@ const server = createServer(async (request, response) => {
       const send = (event) => { if (!response.writableEnded) response.write(`${JSON.stringify(event)}\n`); };
       try {
         const locale = body.locale === "en" ? "en" : "zh";
-        const result = await assessScenario({ question, locale, config, mock, history: cleanHistory(body.history), onEvent: send });
+        const result = await assessScenario({ question, locale, config, mock, gemId: body.gemId, history: cleanHistory(body.history), onEvent: send });
         // Persist before announcing completion, but a storage failure must not
         // discard an answer the user is already looking at.
         await saveCase(result, question, locale, body.threadId).catch(() => null);

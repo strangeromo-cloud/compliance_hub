@@ -4,7 +4,7 @@ import { retrievePublicSources } from "./retrieval.js";
 import { callJsonModel, callJsonModelStream, readableProjection } from "./llm.js";
 import { createMockAgentResult, createMockSynthesis } from "./mock.js";
 import { collectGrounding, groundingContext } from "./grounding.js";
-import { buildAnalysisPath } from "./analysis-path.js";
+import { buildActionPlan, planAnalysisPath, resolveAnalysisPath } from "./analysis-path.js";
 
 const RISK_LEVELS = new Set(["low", "medium", "high", "unknown"]);
 
@@ -140,7 +140,7 @@ async function synthesize(question, locale, results, config, history, grounding,
 // Stages report as they land instead of the caller waiting on the whole run.
 // The specialists take the longest, so each one is emitted the moment it
 // resolves rather than after Promise.all settles.
-export async function assessScenario({ question, locale = "zh", config = {}, mock = false, history = [], onEvent = () => {} }) {
+export async function assessScenario({ question, locale = "zh", config = {}, mock = false, history = [], gemId = null, onEvent = () => {} }) {
   const directAgents = routeQuestion(question, false);
   const contextualQuestion = `${history.filter((item) => item.role === "user").map((item) => item.content).join("\n")}\n${question}`;
   const contextualAgents = routeQuestion(contextualQuestion, false);
@@ -150,6 +150,11 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
   const id = `CASE-${Date.now().toString(36).toUpperCase()}`;
 
   onEvent({ type: "routed", id, agents, mode: mock ? "grounded-demo" : "live-model" });
+
+  // The plan goes out before any work: the user sees which steps this question
+  // has to pass, and then watches them close.
+  let analysisPath = planAnalysisPath({ agents, gemId });
+  onEvent({ type: "path", path: analysisPath });
 
   const selectedSources = sourcesForAgents(agents, question);
   const sources = await retrievePublicSources(selectedSources);
@@ -176,6 +181,11 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
     limitations: grounding.limitations
   };
   onEvent({ type: "grounding", intent: grounding.intent, grounding: groundingSummary });
+
+  // Screening steps can close once grounding is in; the rest wait for the
+  // specialists rather than being guessed at.
+  analysisPath = resolveAnalysisPath(analysisPath, { question, grounding: groundingSummary, results: [] });
+  onEvent({ type: "path", path: analysisPath });
 
   let results;
   let synthesis;
@@ -207,14 +217,14 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
       (text) => onEvent({ type: "synthesis_delta", text }));
   }
 
-  // Built after the specialists run, because their own statements of what they
-  // lack are what populate the blocked steps.
-  const analysisPath = buildAnalysisPath({ question, agents, grounding: groundingSummary, results });
+  analysisPath = resolveAnalysisPath(analysisPath, { question, grounding: groundingSummary, results, final: true });
+  onEvent({ type: "path", path: analysisPath });
 
   return {
     id,
     createdAt: new Date().toISOString(),
     analysisPath,
+    actionPlan: buildActionPlan(analysisPath, results),
     mode: mock ? "grounded-demo" : "live-model",
     intent: grounding.intent,
     grounding: groundingSummary,

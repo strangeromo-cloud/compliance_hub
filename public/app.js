@@ -22,7 +22,7 @@ const i18n = {
     hfQuestion: "一个问题", hfAnswer: "统一答案", startersLabel: "快速开始", workspaceEmpty: "工作区还没有 Gem", gemBacking: "数据支撑",
     teachSlashTitle: "在输入框键入 /", teachSlashBody: "呼出 {n} 个 Gem 的完整目录，上下键选择，回车使用。",
     teachPinTitle: "把常用 Gem 加入工作区", teachPinBody: "在目录里点 ★，或在 Gem 详情里点「添加到工作区」，它会常驻左侧栏。",
-    historyLabel: "历史记录", historyEmpty: "暂无记录", turnUnit: "轮", historyOpenFailed: "无法打开该记录", pathTitle: "分析路径", stConfirmed: "已确认", stEvidence: "需更多证据", stNotReached: "未进行", status_confirmed: "已确认", status_evidence_needed: "需更多证据", status_not_reached: "待前序步骤", status_review_required: "需人工复核", reasoningTrace: "比对明细", rsSearched: "已检索的名单来源", rsMatched: "名称命中", rsCompared: "身份要素比对", rsFacts: "已核验事实",
+    historyLabel: "历史记录", historyEmpty: "暂无记录", turnUnit: "轮", historyOpenFailed: "无法打开该记录", pathTitle: "分析路径", stConfirmed: "已确认", stEvidence: "需更多证据", stNotReached: "未进行", status_confirmed: "已确认", status_evidence_needed: "需更多证据", status_not_reached: "待前序步骤", status_review_required: "需人工复核", status_pending: "待执行", stPending: "待执行", reasoningTrace: "比对明细", rsSearched: "已检索的名单来源", rsMatched: "名称命中", rsCompared: "身份要素比对", rsFacts: "已核验事实",
     rsScore: "相似度", rsOpen: "查看原文", rsUnsynced: "未同步、本次未检索",
     el_country: "国别", el_registration_number: "注册号", el_address: "地址",
     st_agree: "一致", st_conflict: "冲突", st_unavailable: "缺失",
@@ -39,7 +39,7 @@ const i18n = {
     runtimeRules: "规则模式", runtimeReady: "实时模型", runtimeMissing: "未配置模型",
     modeHint: "点击切换规则模式与实时模型",
     routeLabel: "路由", routedTo: "已路由至", specialistTrace: "专业 Agent 分析轨迹",
-    overallAssessment: "总体判断", nextStep: "下一步", missingInfo: "仍需信息", actions: "建议行动", noItems: "暂无", limitations: "结论边界与限制",
+    overallAssessment: "总体判断", nextStep: "下一步", missingInfo: "仍需信息", actions: "建议行动", actionPlan: "行动清单", actionPlanHint: "按依赖顺序", unblocks: "→ 解锁", planBlocked: "待前序步骤完成：", planSuggested: "其他建议", planClosing: "结案：", noItems: "暂无", limitations: "结论边界与限制",
     sourceLive: "实时获取", sourceMetadata: "元数据", sourceUnavailable: "获取失败", sourceNotFetched: "未获取", sourceArchived: "已采集副本", sourceCitationOnly: "仅引用", sourceCached: "缓存", sourceStale: "缓存（已过期）", evidenceCollapse: "收起证据栏", evidenceExpand: "展开证据栏",
     mockLabel: "规则 + 公开数据", liveLabel: "实时模型 + 公开数据",
     riskLow: "低", riskMedium: "中", riskHigh: "高", riskUnknown: "待定",
@@ -73,7 +73,7 @@ const i18n = {
     hfQuestion: "One question", hfAnswer: "One answer", startersLabel: "Start here", workspaceEmpty: "No gems in your workspace yet", gemBacking: "Data behind it",
     teachSlashTitle: "Press / in the composer", teachSlashBody: "Opens the full catalogue of {n} gems. Arrow keys select, Enter uses.",
     teachPinTitle: "Pin the ones you use", teachPinBody: "Add to workspace from a gem's details and it stays in the sidebar.",
-    historyLabel: "History", historyEmpty: "No cases yet", turnUnit: "turns", historyOpenFailed: "That case could not be opened", pathTitle: "Analysis path", stConfirmed: "settled", stEvidence: "need evidence", stNotReached: "not reached", status_confirmed: "Settled", status_evidence_needed: "Evidence needed", status_not_reached: "Awaiting earlier step", status_review_required: "Human review", reasoningTrace: "Comparison detail", rsSearched: "Lists searched", rsMatched: "Name matches", rsCompared: "Identity comparison", rsFacts: "Verified facts",
+    historyLabel: "History", historyEmpty: "No cases yet", turnUnit: "turns", historyOpenFailed: "That case could not be opened", pathTitle: "Analysis path", stConfirmed: "settled", stEvidence: "need evidence", stNotReached: "not reached", status_confirmed: "Settled", status_evidence_needed: "Evidence needed", status_not_reached: "Awaiting earlier step", status_review_required: "Human review", status_pending: "Planned", stPending: "planned", reasoningTrace: "Comparison detail", rsSearched: "Lists searched", rsMatched: "Name matches", rsCompared: "Identity comparison", rsFacts: "Verified facts",
     rsScore: "Similarity", rsOpen: "Open source", rsUnsynced: "Not synced, therefore not searched",
     el_country: "Country", el_registration_number: "Registration no.", el_address: "Address",
     st_agree: "agree", st_conflict: "conflict", st_unavailable: "missing",
@@ -90,7 +90,7 @@ const i18n = {
     runtimeRules: "Rules mode", runtimeReady: "Live model", runtimeMissing: "No model configured",
     modeHint: "Toggle between rules mode and the live model",
     routeLabel: "Route", routedTo: "Routed to", specialistTrace: "Specialist agent trace",
-    overallAssessment: "Overall assessment", nextStep: "Next step", missingInfo: "Missing information", actions: "Recommended actions", noItems: "None", limitations: "Limits on this conclusion",
+    overallAssessment: "Overall assessment", nextStep: "Next step", missingInfo: "Missing information", actions: "Recommended actions", actionPlan: "Action list", actionPlanHint: "in dependency order", unblocks: "→ unblocks", planBlocked: "Awaiting the steps above: ", planSuggested: "Other suggestions", planClosing: "To close: ", noItems: "None", limitations: "Limits on this conclusion",
     sourceLive: "Live", sourceMetadata: "Metadata", sourceUnavailable: "Unavailable", sourceNotFetched: "Not fetched", sourceArchived: "Archived copy", sourceCitationOnly: "Cited only", sourceCached: "Cached", sourceStale: "Cached (stale)", evidenceCollapse: "Collapse evidence", evidenceExpand: "Expand evidence",
     mockLabel: "Rules + public data", liveLabel: "Live model + public data",
     riskLow: "Low", riskMedium: "Medium", riskHigh: "High", riskUnknown: "Unknown",
@@ -758,6 +758,7 @@ function nextStepMarkup(value = "") {
 }
 
 const STEP_STATUS = {
+  pending: { tone: "pending", mark: "○" },
   confirmed: { tone: "ok", mark: "✓" },
   evidence_needed: { tone: "warn", mark: "!" },
   not_reached: { tone: "muted", mark: "·" },
@@ -775,8 +776,9 @@ function pathMarkup(path) {
     <details class="trace analysis-path" open>
       <summary>${esc(t("pathTitle"))}
         <span class="path-summary">
-          <span class="ps ok">✓ ${s.confirmed} ${esc(t("stConfirmed"))}</span>
-          <span class="ps warn">! ${s.evidenceNeeded} ${esc(t("stEvidence"))}</span>
+          ${s.pending ? `<span class="ps pending">○ ${s.pending} ${esc(t("stPending"))}</span>` : ""}
+          ${s.confirmed ? `<span class="ps ok">✓ ${s.confirmed} ${esc(t("stConfirmed"))}</span>` : ""}
+          ${s.evidenceNeeded ? `<span class="ps warn">! ${s.evidenceNeeded} ${esc(t("stEvidence"))}</span>` : ""}
           ${s.notReached ? `<span class="ps muted">· ${s.notReached} ${esc(t("stNotReached"))}</span>` : ""}
         </span>
       </summary>
@@ -802,9 +804,40 @@ function pathMarkup(path) {
     </details>`;
 }
 
+// One list, in dependency order, each item naming the step it unblocks. This
+// replaces a recommended-actions block and a separate next step that restated
+// its first line — two lists saying the same thing left the reader deciding
+// which one to act on.
+function actionPlanMarkup(plan) {
+  if (!plan) return "";
+  const total = plan.actions.length;
+  if (!total && !plan.suggested.length) return "";
+  return `
+    <div class="plan-block">
+      <div class="action-head">
+        <span class="action-label">${esc(t("actionPlan"))}</span>
+        ${total ? `<span class="action-count">${total}</span>` : ""}
+        <span class="plan-hint">${esc(t("actionPlanHint"))}</span>
+      </div>
+      ${total ? `<ol class="plan-items">${plan.actions.map((item, index) => `
+        <li>
+          <span class="marker" aria-hidden="true">${index + 1}</span>
+          <span class="item-body">${formatInline(item.action)}
+            <span class="unblocks">${esc(t("unblocks"))} ${esc(item.unblocks)}</span>
+          </span>
+        </li>`).join("")}</ol>` : ""}
+      ${plan.blocked.length ? `<p class="plan-blocked">${esc(t("planBlocked"))}${plan.blocked.map(esc).join("、")}</p>` : ""}
+      ${plan.suggested.length ? `
+        <details class="plan-extra">
+          <summary>${esc(t("planSuggested"))}<span class="trace-count">${plan.suggested.length}</span></summary>
+          <ul>${plan.suggested.map((item) => `<li>${formatInline(item)}</li>`).join("")}</ul>
+        </details>` : ""}
+      ${plan.closing ? `<p class="plan-closing">${esc(t("planClosing"))} ${esc(plan.closing)}</p>` : ""}
+    </div>`;
+}
+
 function answerMarkup(data) {
   const synthesis = data.synthesis;
-  const actions = collectAcross(data.results, "recommendedActions");
   const limitations = data.grounding?.limitations || [];
 
   return `
@@ -825,9 +858,7 @@ function answerMarkup(data) {
             </div>
           </div>
 
-          ${actions.length ? `<div class="action-grid single">${actionBlock("actions", t("actions"), actions)}</div>` : ""}
-
-          <div class="next-step"><b>${t("nextStep")}</b>${nextStepMarkup(synthesis.nextStep)}</div>
+          ${actionPlanMarkup(data.actionPlan)}
         </section>
 
         ${pathMarkup(data.analysisPath)}
@@ -1008,6 +1039,12 @@ async function analyze(event) {
     }
     // A specialist gets its panel the moment it starts, so its reasoning can be
     // shown as it is written rather than appearing complete out of nowhere.
+    if (event.type === "path") {
+      const existing = live.querySelector("[data-live-path]");
+      const markup = pathMarkup(event.path);
+      if (existing) existing.outerHTML = markup.replace("<details", '<details data-live-path');
+      else live.querySelector("[data-live-steps]").insertAdjacentHTML("afterend", markup.replace("<details", '<details data-live-path'));
+    }
     if (event.type === "agent_start") {
       live.querySelector("[data-live-agents]").insertAdjacentHTML("beforeend", `
         <section class="live-agent thinking" data-agent="${esc(event.agent)}">
@@ -1065,7 +1102,7 @@ async function analyze(event) {
   try {
     const response = await fetch("/api/assess/stream", {
       method: "POST", headers: { "Content-Type": "application/json", ...accessHeaders() },
-      body: JSON.stringify({ question, locale: state.locale, mock, config, history: priorHistory, threadId: ensureThreadId() })
+      body: JSON.stringify({ question, locale: state.locale, mock, config, history: priorHistory, threadId: ensureThreadId(), gemId: gem?.id || null })
     });
     if (response.status === 401) { toast(t("accessRequired")); openSettings(); throw new Error(t("accessRequired")); }
     if (!response.ok || !response.body) {

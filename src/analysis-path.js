@@ -1,16 +1,96 @@
-// The analysis path: the ordered steps a compliance question actually has to
-// pass through, each marked with whether it is settled and what it rests on.
+// The analysis path.
 //
-// Statuses are derived from data the system genuinely holds — a synchronized
-// source, a parsed notice, an identity element that was actually comparable.
-// They are never taken from the model's own account of its work: a model asked
-// whether a step is confirmed will happily say yes, and "confirmed" here has to
-// mean something a reviewer can check.
+// The path is planned before any work happens, then resolved as evidence
+// arrives. That order matters: a path computed afterwards is a narrative fitted
+// to whatever was found, whereas a path declared up front commits to the steps
+// the question has to pass and then reports honestly which of them closed. It
+// also means the structure the user watches fill in is the same structure the
+// conclusion is presented in.
 //
-//   confirmed        the step is settled, and `basis` says on what
-//   evidence_needed  the step is reached but blocked, and `needs` says by what
+//   pending          planned, not yet attempted
+//   confirmed        settled, and `basis` says on what
+//   evidence_needed  reached but blocked, and `needs` says by what
 //   not_reached      an earlier step must settle first
 //   review_required  only a person can close this
+//
+// Statuses are never taken from the model's own account of its work. A model
+// asked whether a step is confirmed will say yes; "confirmed" here has to mean
+// something a reviewer can check.
+
+// The declared sequence per lane. This is the plan, and it does not depend on
+// what any particular run happens to find.
+const LANE_PLANS = {
+  trade: {
+    label: "Trade — 受限方与主体",
+    steps: [
+      ["identify_party", "确定交易主体的法律实体"],
+      ["search_lists", "检索受限方名单"],
+      ["name_match", "名称匹配"],
+      ["identity_resolution", "身份要素消歧"],
+      ["ownership", "所有权穿透（OFAC 50% 聚合）"]
+    ]
+  },
+  product: {
+    label: "Product — 物项与许可",
+    steps: [
+      ["identify_item", "确定物项（准确型号或 part number）"],
+      ["classify", "归类（ECCN / 中国管制编码）"],
+      ["jurisdiction", "管辖判定（EAR 734 de minimis / FDP）"],
+      ["licence_path", "许可判定（管制理由 → 国别矩阵 → 例外）"]
+    ]
+  },
+  tpdd: {
+    label: "Ethics & TPDD — 第三方",
+    steps: [
+      ["legal_existence", "核实主体存续与注册信息"],
+      ["beneficial_ownership", "确认受益所有权"],
+      ["rationale_fees", "评估商业合理性与费用水平"],
+      ["payment_path", "核查收款主体与付款路径"]
+    ]
+  },
+  review: {
+    label: "结案",
+    steps: [["human_review", "Compliance / Legal 人工复核"]]
+  }
+};
+
+// A gem states which lane its question is really about, so the plan leads with
+// it instead of always presenting the lanes in a fixed order.
+const GEM_LEAD_LANE = {
+  "screen-party": "trade",
+  eccn: "product",
+  "cn-dual-use": "product",
+  "de-minimis": "product",
+  licence: "product",
+  tpdd: "tpdd",
+  "reg-brief": "trade",
+  "case-memo": "review"
+};
+
+export function planAnalysisPath({ agents = [], gemId = null } = {}) {
+  const order = ["trade", "product", "tpdd"].filter((lane) => agents.includes(lane));
+  const lead = GEM_LEAD_LANE[gemId];
+  if (lead && order.includes(lead)) order.splice(order.indexOf(lead), 1), order.unshift(lead);
+
+  const lanes = [...order, "review"].map((lane) => ({
+    lane,
+    label: LANE_PLANS[lane].label,
+    leading: lane === lead,
+    steps: LANE_PLANS[lane].steps.map(([id, title]) => ({ id, title, status: "pending", basis: [], needs: [] }))
+  }));
+  return { lanes, summary: summarize(lanes), planned: true };
+}
+
+function summarize(lanes) {
+  const all = lanes.flatMap((group) => group.steps);
+  return {
+    total: all.length,
+    pending: all.filter((item) => item.status === "pending").length,
+    confirmed: all.filter((item) => item.status === "confirmed").length,
+    evidenceNeeded: all.filter((item) => item.status === "evidence_needed").length,
+    notReached: all.filter((item) => item.status === "not_reached").length
+  };
+}
 
 const CONTROL_CODE = /\b\d[A-E]\d{3}(?:\.[a-z0-9]+)*/i;
 const PART_NUMBER = /\b[A-Z]{2}-\d{4}-[A-Z0-9]{2}\b/;
@@ -146,27 +226,78 @@ function tpddSteps(question, grounding, results) {
   });
 }
 
-export function buildAnalysisPath({ question, agents, grounding, results }) {
-  const lanes = [];
-  if (agents.includes("trade")) lanes.push({ lane: "trade", label: "Trade — 受限方与主体", steps: tradeSteps(question, grounding, results) });
-  if (agents.includes("product")) lanes.push({ lane: "product", label: "Product — 物项与许可", steps: productSteps(question, grounding, results) });
-  if (agents.includes("tpdd")) lanes.push({ lane: "tpdd", label: "Ethics & TPDD — 第三方", steps: tpddSteps(question, grounding, results) });
-
-  lanes.push({
-    lane: "review",
-    label: "结案",
-    steps: [step("human_review", "Compliance / Legal 人工复核", "review_required",
+// Resolves a plan against whatever evidence exists so far. Called more than
+// once during a run: after grounding, the screening steps can close; after the
+// specialists report, their statements of what they lack fill the rest. A step
+// with nothing yet to decide it stays pending rather than being guessed at.
+export function resolveAnalysisPath(plan, { question, grounding, results = [], final = false }) {
+  const resolvers = {
+    trade: () => tradeSteps(question, grounding, results),
+    product: () => productSteps(question, grounding, results),
+    tpdd: () => tpddSteps(question, grounding, results),
+    review: () => [step("human_review", "Compliance / Legal 人工复核", "review_required",
       { needs: ["以上步骤的结论与证据需经人工确认；系统不做交易放行"] })]
+  };
+
+  const lanes = plan.lanes.map((group) => {
+    // TPDD and the closing step depend on the specialists, so before they
+    // report there is nothing honest to say about them.
+    if (!final && (group.lane === "tpdd" || group.lane === "review")) return group;
+    const resolved = new Map(resolvers[group.lane]().map((item) => [item.id, item]));
+    return { ...group, steps: group.steps.map((item) => resolved.get(item.id) || item) };
   });
 
-  const all = lanes.flatMap((group) => group.steps);
-  return {
-    lanes,
-    summary: {
-      total: all.length,
-      confirmed: all.filter((item) => item.status === "confirmed").length,
-      evidenceNeeded: all.filter((item) => item.status === "evidence_needed").length,
-      notReached: all.filter((item) => item.status === "not_reached").length
+  return { lanes, summary: summarize(lanes), planned: false, final };
+}
+
+// One action list, ordered by the path's own dependencies.
+//
+// Recommended actions and a separate "next step" said the same thing twice and
+// left the reader deciding which to trust. The path already knows what blocks
+// what, so the actions are derived from it: each one names the step it unblocks,
+// and they come in the order the steps have to close. Whatever the specialists
+// suggested that does not map onto a step is kept at the end rather than
+// dropped.
+export function buildActionPlan(path, results = []) {
+  const actions = [];
+  const claimed = new Set();
+
+  for (const lane of path?.lanes || []) {
+    for (const item of lane.steps) {
+      if (item.status !== "evidence_needed") continue;
+      for (const need of item.needs) {
+        const text = String(need).trim();
+        if (!text || claimed.has(text)) continue;
+        claimed.add(text);
+        actions.push({ action: text, unblocks: item.title, lane: lane.lane, kind: "unblock" });
+      }
     }
+  }
+
+  // Steps waiting only on an earlier step are not actions; they are the
+  // consequence of the actions above, and saying so prevents them reading as
+  // forgotten work.
+  const blocked = (path?.lanes || []).flatMap((lane) => lane.steps)
+    .filter((item) => item.status === "not_reached")
+    .map((item) => item.title);
+
+  const suggested = [];
+  for (const result of results) {
+    for (const item of result.recommendedActions || []) {
+      const text = String(item).trim().replace(/^\s*(?:[-*•·]|\d+[.)])\s*/, "");
+      // Only keep a suggestion that is not already covered by an unblocking
+      // action, so the list does not repeat itself.
+      if (!text || claimed.has(text) || suggested.includes(text)) continue;
+      if ([...claimed].some((need) => need.includes(text) || text.includes(need))) continue;
+      suggested.push(text);
+    }
+  }
+
+  const review = (path?.lanes || []).flatMap((lane) => lane.steps).find((item) => item.status === "review_required");
+  return {
+    actions: actions.slice(0, 8),
+    suggested: suggested.slice(0, 5),
+    blocked: blocked.slice(0, 6),
+    closing: review ? review.title : null
   };
 }

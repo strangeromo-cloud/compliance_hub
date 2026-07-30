@@ -983,3 +983,31 @@ html[lang="en"] .step-needs li::before { content: "NEEDS"; font-size: 8px; }
 .source-age { font: 500 9.5px/1.6 var(--mono); color: var(--text-3); border: 1px solid var(--border); border-radius: 3px; padding: 0 4px; }
 .source-status.cached { color: var(--accent-text); }
 .source-status.cached.stale { color: var(--risk-medium); }
+/* A planned step reads as outlined and quiet until it resolves. */
+.ps.pending { color: var(--text-3); background: var(--surface-3); }
+.path-step.tone-pending .step-mark { color: var(--text-3); background: transparent; border-style: dashed; }
+.path-step.tone-pending .step-head strong { color: var(--text-2); font-weight: 500; }
+.tone-pending .step-status { color: var(--text-3); }
+
+/* ---------------------------------------------------------- action list */
+
+.plan-block { border-top: 1px solid var(--border); background: var(--surface-2); padding: 12px 16px; }
+.plan-hint { font: 400 10px/1.6 var(--mono); color: var(--text-3); margin-left: auto; }
+.plan-items { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.plan-items li { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 10px; align-items: start; font-size: 13px; line-height: 1.55; }
+.plan-items .marker {
+  width: 18px; height: 18px; margin-top: 1px; display: grid; place-items: center;
+  border-radius: 5px; font: 600 10px/1 var(--mono); font-variant-numeric: tabular-nums;
+  color: #fff; background: var(--accent);
+}
+.plan-items .item-body { min-width: 0; }
+/* Naming the step each action unblocks is what turns a list into a plan. */
+.unblocks { display: block; font: 400 10.5px/1.6 var(--mono); color: var(--text-3); margin-top: 2px; }
+.plan-blocked { font-size: 11.5px; color: var(--text-3); margin-top: 10px; padding-top: 9px; border-top: 1px dashed var(--border); }
+.plan-closing { font-size: 12px; color: var(--text-2); margin-top: 8px; }
+.plan-extra { margin-top: 9px; }
+.plan-extra > summary { cursor: pointer; list-style: none; font-size: 11.5px; color: var(--text-3); display: flex; align-items: center; gap: 6px; }
+.plan-extra > summary::-webkit-details-marker { display: none; }
+.plan-extra > summary::before { content: "▸"; font-size: 9px; }
+.plan-extra[open] > summary::before { content: "▾"; }
+.plan-extra ul { margin: 7px 0 0; padding-left: 18px; display: grid; gap: 4px; font-size: 12px; color: var(--text-2); }
