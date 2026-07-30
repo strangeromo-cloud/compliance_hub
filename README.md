@@ -122,6 +122,12 @@ bis-ear-732,bis-ear-734,bis-ear,bis-ear-740,bis-ear-744,bis-ccl,bis-country-char
 
 **不要设置 `PORT` 或 `HOST`**：进程自己判断（容器内 PID 1 → 绑 `0.0.0.0`，端口以平台注入值优先、缺省 8080）。手工设错 `PORT` 会导致启动崩溃循环。
 
+### 健康检查
+
+镜像里声明了 `HEALTHCHECK`，探针打 `/health`。它在监听建立后立刻返回成功——**不等 boot sync 完成**，这是有意的：服务在同步期间就可用，每个数据源的状态会如实报告为「未同步 / 兜底快照」，而不是让整个服务显得没就绪。编排器据此判断何时可以把流量切过来，切换窗口因此尽可能短。
+
+如果 Zeabur 控制台里有健康检查路径的设置项，填 `/health` 即可。
+
 ### 为什么必须显式处理 SIGTERM
 
 容器里应用是 PID 1，而 Linux 内核**不对 PID 1 应用默认信号处理**：没有注册 handler 的 `SIGTERM` 会被直接忽略。结果是平台发停止信号后进程毫无反应，服务永久卡在 `Stopping`，新部署也排不上队。
@@ -132,7 +138,8 @@ bis-ear-732,bis-ear-734,bis-ear,bis-ear-740,bis-ear-744,bis-ccl,bis-country-char
 
 ### 部署后必须注意
 
-- **容器文件系统是临时的**：每次重新部署 `data/runtime/` 都会清空，靠 `SYNC_ON_BOOT` 重新拉取。需要持久化就挂一个 Zeabur Volume 到 `data/runtime`。
+- **容器文件系统是临时的**：每次重新部署 `data/runtime/` 都会清空，靠 `SYNC_ON_BOOT` 重新拉取。手动同步过的大名单（`trade-csl` 约 33 MB、`ofac-sls`、`un-consolidated`、`uk-sanctions`）不在 `SYNC_ON_BOOT` 里，重新部署后会回到「未同步」，需要重新点一次。要让它们活过重新部署，在 Zeabur 给服务挂一个 Volume，挂载路径填 `data/runtime`。
+- **每次部署后会有一段 502，通常十几到几十秒**。这不是配置错误：网关在旧容器停止、新容器就绪之间无处可路由，返回的就是 502。判断方法是隔一会儿再打一次 `/health`——恢复 200 就是切换窗口；持续 502 才需要看日志。进程在 boot sync 完成之前就已经开始服务（同步在后台跑），所以就绪时间取决于镜像拉取和容器启动，不取决于同步。
 - **服务器侧配置 `OPENAI_API_KEY` 时，Base URL 和 Model 也一律取环境变量，客户端传入的配置被完全忽略。** 否则浏览器可以把 `baseUrl` 指向任意主机，服务器会把自己的 Key 放在 Authorization 头里发过去——这是把密钥交出去，不只是配置被覆盖。此模式下页面不再显示 Base URL / Model / API Key 字段，只显示访问口令。
 - **服务器侧配置 `OPENAI_API_KEY` 时必须同时配置 `ACCESS_PASSWORD`，否则实时模型直接停用。** 公开 URL 上任何人都能调用 `/api/assess`，没有口令的话服务器侧的 Key 等于把模型额度对公网开放。因此这种组合下 `/api/assess`、`/api/assess/stream`、`/api/test-connection` 一律返回 `503 access_code_unset`，页面自动留在规则模式并在“访问设置”里说明原因——把额度敞开比停用更糟。
 - 设置 `ACCESS_PASSWORD` 后，上述模型接口以及 `/api/data-sources/sync`、`DELETE /api/threads/{id}` 需要口令。使用者在页面“访问设置”里填一次（默认为空，必须自己填），存在浏览器 localStorage，之后不必再输入；填对之后页面才会切到实时模型。
