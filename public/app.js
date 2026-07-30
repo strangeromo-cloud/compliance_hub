@@ -23,7 +23,13 @@ const i18n = {
     hfQuestion: "一个问题", hfAnswer: "统一答案", startersLabel: "快速开始", workspaceEmpty: "工作区还没有 Gem", gemBacking: "数据支撑",
     teachSlashTitle: "在输入框键入 /", teachSlashBody: "呼出 {n} 个 Gem 的完整目录，上下键选择，回车使用。",
     teachPinTitle: "把常用 Gem 加入工作区", teachPinBody: "在目录里点 ★，或在 Gem 详情里点「添加到工作区」，它会常驻左侧栏。",
-    historyLabel: "历史记录", historyEmpty: "暂无记录", turnUnit: "轮", historyOpenFailed: "无法打开该记录", pathTitle: "分析路径", pathPlanning: "分析路径（进行中）", laneRunning: "正在分析", laneQueued: "排队中", stAsking: "等待你补充", stAfterInput: "待补充信息后继续", pathBasis: "路径依据", pathTemplated: "规则模式：待补项来自内置模板，不是对本问题的分析结果。切换到实时模型可得到针对性判断。", pathDerivedNote: "本步骤无对应官方条文，由系统按问题结构补充", stConfirmed: "已确认", stEvidence: "需更多证据", stNotReached: "未进行", status_confirmed: "已确认", status_evidence_needed: "需更多证据", status_not_reached: "待前序步骤", status_review_required: "需人工复核", status_pending: "待执行", stPending: "待执行", status_declared: "已声明，待核验", stDeclared: "已声明", declareSubmit: "提交并继续", declareSkip: "暂无此信息", declareSkipped: "已跳过 — 该步骤仍需证据，已保留在下方行动清单中", declareReopen: "重新填写", declarePlaceholder: "填写后提交", declareNote: "填写的内容记为声明信息，不等于已核验证据", declareEmpty: "请先填写至少一项", declarePrefix: "补充信息 — ", declaredAdded: "已提交", declareContinuing: "正在继续分析…", reasoningTrace: "比对明细", rsSearched: "已检索的名单来源", rsMatched: "名称命中", rsCompared: "身份要素比对", rsFacts: "已核验事实",
+    historyLabel: "历史记录", historyEmpty: "暂无记录", turnUnit: "轮", historyOpenFailed: "无法打开该记录", flowTitle: "执行流程", flowNotRun: "该步骤尚未执行", laneAhead: "还有 {n} 步未执行：", derivTitle: "分析路径的来源", derivLead: "主检查", derivSteps: "步",
+    derivMatched: "匹配依据", derivStandard: "遵循规范", derivBreakdown: "步骤构成",
+    derivMatch_gem: "由所选 Gem 指定为主检查", derivMatch_always: "每次分析都执行", derivMatch_question_terms: "问题中的关键词",
+    derivMatch_no_term_matched_all_lanes_run: "问题未命中任何关键词，三条检查全部执行",
+    derivKind_official: "官方发布的检查程序", derivKind_derived: "系统规划（无对应官方程序）",
+    derivFromStandard: "{n} 步来自规范", derivFromSystem: "{n} 步由系统规划",
+    pathTitle: "分析路径", pathPlanning: "分析路径（进行中）", laneRunning: "正在分析", laneQueued: "排队中", stAsking: "等待你补充", stAfterInput: "待补充信息后继续", pathBasis: "路径依据", pathTemplated: "规则模式：待补项来自内置模板，不是对本问题的分析结果。切换到实时模型可得到针对性判断。", pathDerivedNote: "本步骤无对应官方条文，由系统按问题结构补充", stConfirmed: "已确认", stEvidence: "需更多证据", stNotReached: "未进行", status_confirmed: "已确认", status_evidence_needed: "需更多证据", status_not_reached: "待前序步骤", status_review_required: "需人工复核", status_pending: "待执行", stPending: "待执行", status_declared: "已声明，待核验", stDeclared: "已声明", declareSubmit: "提交并继续", declareSkip: "暂无此信息", declareSkipped: "已跳过 — 该步骤仍需证据，已保留在下方行动清单中", declareReopen: "重新填写", declarePlaceholder: "填写后提交", declareNote: "填写的内容记为声明信息，不等于已核验证据", declareEmpty: "请先填写至少一项", declarePrefix: "补充信息 — ", declaredAdded: "已提交", declareContinuing: "正在继续分析…", reasoningTrace: "比对明细", rsSearched: "已检索的名单来源", rsMatched: "名称命中", rsCompared: "身份要素比对", rsFacts: "已核验事实",
     rsScore: "相似度", rsOpen: "查看原文", rsUnsynced: "未同步、本次未检索",
     el_country: "国别", el_registration_number: "注册号", el_address: "地址",
     st_agree: "一致", st_conflict: "冲突", st_unavailable: "缺失",
@@ -77,7 +83,13 @@ const i18n = {
     hfQuestion: "One question", hfAnswer: "One answer", startersLabel: "Start here", workspaceEmpty: "No gems in your workspace yet", gemBacking: "Data behind it",
     teachSlashTitle: "Press / in the composer", teachSlashBody: "Opens the full catalogue of {n} gems. Arrow keys select, Enter uses.",
     teachPinTitle: "Pin the ones you use", teachPinBody: "Add to workspace from a gem's details and it stays in the sidebar.",
-    historyLabel: "History", historyEmpty: "No cases yet", turnUnit: "turns", historyOpenFailed: "That case could not be opened", pathTitle: "Analysis path", pathPlanning: "Analysis path (running)", laneRunning: "analysing", laneQueued: "queued", stAsking: "waiting for you", stAfterInput: "continues once supplied", pathBasis: "Path follows", pathTemplated: "Rules mode: the outstanding items come from built-in templates, not from analysing this question. Switch to the live model for a specific assessment.", pathDerivedNote: "No official provision for this step; added by the system", stConfirmed: "settled", stEvidence: "need evidence", stNotReached: "not reached", status_confirmed: "Settled", status_evidence_needed: "Evidence needed", status_not_reached: "Awaiting earlier step", status_review_required: "Human review", status_pending: "Planned", stPending: "planned", status_declared: "Declared, unverified", stDeclared: "declared", declareSubmit: "Submit and continue", declareSkip: "Not available", declareSkipped: "Skipped — this step still needs evidence and stays in the action list below", declareReopen: "Fill in", declarePlaceholder: "Fill in, then submit", declareNote: "What you enter is recorded as a declaration, not as verified evidence", declareEmpty: "Fill in at least one field first", declarePrefix: "Additional information — ", declaredAdded: "Submitted", declareContinuing: "continuing the analysis…", reasoningTrace: "Comparison detail", rsSearched: "Lists searched", rsMatched: "Name matches", rsCompared: "Identity comparison", rsFacts: "Verified facts",
+    historyLabel: "History", historyEmpty: "No cases yet", turnUnit: "turns", historyOpenFailed: "That case could not be opened", flowTitle: "Execution flow", flowNotRun: "That step has not run yet", laneAhead: "{n} steps not yet run: ", derivTitle: "Where this path comes from", derivLead: "lead check", derivSteps: "steps",
+    derivMatched: "Matched on", derivStandard: "Procedure followed", derivBreakdown: "Step origin",
+    derivMatch_gem: "set as the lead check by the selected gem", derivMatch_always: "runs on every analysis", derivMatch_question_terms: "terms in the question",
+    derivMatch_no_term_matched_all_lanes_run: "no term matched, so all three checks run",
+    derivKind_official: "published decision procedure", derivKind_derived: "planned by the system (no official procedure)",
+    derivFromStandard: "{n} from the procedure", derivFromSystem: "{n} planned here",
+    pathTitle: "Analysis path", pathPlanning: "Analysis path (running)", laneRunning: "analysing", laneQueued: "queued", stAsking: "waiting for you", stAfterInput: "continues once supplied", pathBasis: "Path follows", pathTemplated: "Rules mode: the outstanding items come from built-in templates, not from analysing this question. Switch to the live model for a specific assessment.", pathDerivedNote: "No official provision for this step; added by the system", stConfirmed: "settled", stEvidence: "need evidence", stNotReached: "not reached", status_confirmed: "Settled", status_evidence_needed: "Evidence needed", status_not_reached: "Awaiting earlier step", status_review_required: "Human review", status_pending: "Planned", stPending: "planned", status_declared: "Declared, unverified", stDeclared: "declared", declareSubmit: "Submit and continue", declareSkip: "Not available", declareSkipped: "Skipped — this step still needs evidence and stays in the action list below", declareReopen: "Fill in", declarePlaceholder: "Fill in, then submit", declareNote: "What you enter is recorded as a declaration, not as verified evidence", declareEmpty: "Fill in at least one field first", declarePrefix: "Additional information — ", declaredAdded: "Submitted", declareContinuing: "continuing the analysis…", reasoningTrace: "Comparison detail", rsSearched: "Lists searched", rsMatched: "Name matches", rsCompared: "Identity comparison", rsFacts: "Verified facts",
     rsScore: "Similarity", rsOpen: "Open source", rsUnsynced: "Not synced, therefore not searched",
     el_country: "Country", el_registration_number: "Registration no.", el_address: "Address",
     st_agree: "agree", st_conflict: "conflict", st_unavailable: "missing",
@@ -354,11 +366,14 @@ async function openCase(id) {
       node.id = `answer-${turn.id}`;
       node.innerHTML = answerMarkup(turn);
       $("threadInner").appendChild(node);
+      hydrateBars(node);
       state.conversation.push({ role: "user", content: turn.question || "" });
       state.conversation.push({ role: "assistant", content: `${turn.synthesis?.headline || ""}\n${turn.synthesis?.executiveSummary || ""}` });
       last = turn;
     }
     renderEvidence(last?.sources || []);
+    // A reopened case shows the flow it reached, not an empty rail.
+    renderFlowPanel(last?.analysisPath);
     renderCaseNav();
     closeDrawer();
     $("threadInner").lastElementChild?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -676,8 +691,90 @@ function updateRouteHint() {
   host.innerHTML = `<span>${t("routeLabel")}</span>${agents.map((a) => `<span class="route-tag">${agentName(a)}</span>`).join("")}`;
 }
 
+// The Content-Security-Policy is `style-src 'self'`, which bars style attributes
+// outright — a width written into markup is silently dropped, so every bar sat at
+// full width. Setting it through the CSSOM is not inline style and is allowed, so
+// bars are hydrated after their markup lands. Cheap, and it keeps the policy
+// strict rather than opening it up with 'unsafe-inline'.
+function hydrateBars(root = document) {
+  root.querySelectorAll("[data-bar]").forEach((node) => {
+    node.style.setProperty("--pct", `${Math.max(0, Math.min(100, Number(node.dataset.bar) || 0))}%`);
+  });
+}
+
 function showEvidencePanel(show) {
-  $("app").classList.toggle("no-evidence", !show);
+  // The panel stays open while it has anything at all: the flow rail is useful
+  // before a single source has been retrieved.
+  $("app").classList.toggle("no-evidence", !show && $("flowPanel").hidden);
+}
+
+// The flow rail: every step of the path as a node, so what has run, what is
+// running and what has not been reached is answerable at a glance. The body of
+// the answer only carries steps that have executed, and this is where the rest
+// of the plan stays visible.
+const FLOW_STATE = {
+  confirmed: { cls: "done", mark: "✓" },
+  declared: { cls: "declared", mark: "◐" },
+  evidence_needed: { cls: "blocked", mark: "!" },
+  review_required: { cls: "review", mark: "▲" },
+  not_reached: { cls: "todo", mark: "" },
+  pending: { cls: "todo", mark: "" }
+};
+
+function renderFlowPanel(path, options = {}) {
+  const panel = $("flowPanel");
+  const markup = flowMarkup(path, options);
+  panel.hidden = !markup;
+  panel.innerHTML = markup;
+  hydrateBars(panel);
+  // Below the breakpoint that hides the right column the rail has to live
+  // somewhere, so the same markup is mirrored into the answer and CSS picks one.
+  document.querySelectorAll(".flow-inline").forEach((host) => { host.innerHTML = markup; hydrateBars(host); });
+}
+
+function flowMarkup(path, options = {}) {
+  if (!path?.lanes?.length) return "";
+  const steps = path.lanes.flatMap((lane) => lane.steps);
+  const executed = steps.filter((item) => item.status !== "pending" && item.status !== "not_reached").length;
+  const asking = firstBlockedStep(path);
+  const percent = Math.round((executed / steps.length) * 100);
+
+  return `
+    <div class="flow-head">
+      <h3>${esc(t("flowTitle"))}</h3>
+      <span class="flow-count">${executed}/${steps.length}</span>
+    </div>
+    <div class="flow-bar" role="img" aria-label="${executed}/${steps.length}">
+      <span class="fb-fill" data-bar="${percent}"></span>
+    </div>
+    ${path.lanes.map((lane) => {
+      const laneSteps = lane.steps;
+      const laneDone = laneSteps.filter((item) => item.status !== "pending" && item.status !== "not_reached").length;
+      const running = options.activeLane === lane.lane;
+      return `
+      <section class="flow-lane ${running ? "running" : ""}">
+        <div class="fl-head">
+          <span class="fl-label">${esc(lane.label)}</span>
+          <span class="fl-progress">${laneDone}/${laneSteps.length}</span>
+        </div>
+        <ol class="fl-steps">${laneSteps.map((item) => {
+          const shape = FLOW_STATE[item.status] || FLOW_STATE.pending;
+          const current = item.id === asking;
+          return `
+          <li class="fl-step ${shape.cls} ${current ? "current" : ""}">
+            <button type="button" data-flow-step="${esc(item.id)}" title="${esc(label(STEP_STATUS_VOCAB, item.status, state.locale))}">
+              <span class="fl-node" aria-hidden="true">${shape.mark}</span>
+              <span class="fl-text">${esc(item.title)}</span>
+            </button>
+          </li>`;
+        }).join("")}</ol>
+      </section>`;
+    }).join("")}
+    <div class="flow-legend">
+      <span class="fl-key done">✓ ${esc(t("stConfirmed"))}</span>
+      <span class="fl-key blocked">! ${esc(t("stEvidence"))}</span>
+      <span class="fl-key todo">○ ${esc(t("stNotReached"))}</span>
+    </div>`;
 }
 
 function renderEvidence(sources) {
@@ -772,6 +869,44 @@ function askingStepTitle(path) {
   return null;
 }
 
+// "Why these steps" answered from data the plan already carries: which words in
+// the question selected the check, which published procedure supplies its steps,
+// and which steps had no provision and were planned by the system.
+function derivationMarkup(path) {
+  const rows = path?.derivation || [];
+  if (!rows.length) return "";
+  return `
+    <details class="path-derivation" open>
+      <summary>${esc(t("derivTitle"))}<span class="trace-count">${rows.length}</span></summary>
+      <div class="deriv-body">
+        ${rows.map((row) => `
+        <section class="deriv-flow">
+          <div class="df-head">
+            <strong>${esc(row.label)}</strong>
+            ${row.leading ? `<span class="df-lead">${esc(t("derivLead"))}</span>` : ""}
+            <span class="df-steps">${row.stepCount} ${esc(t("derivSteps"))}</span>
+          </div>
+          <dl class="df-rows">
+            <div><dt>${esc(t("derivMatched"))}</dt><dd>${row.matchedTerms.length
+              ? row.matchedTerms.map((term) => `<code>${esc(term)}</code>`).join(" ")
+              : esc(t(`derivMatch_${row.matchedBy}`))}</dd></div>
+            <div><dt>${esc(t("derivStandard"))}</dt><dd>${row.methodology
+              ? `${row.methodology.url
+                  ? `<a href="${esc(row.methodology.url)}" target="_blank" rel="noopener noreferrer">${esc(row.methodology.label)}</a>`
+                  : esc(row.methodology.label)}
+                 ${row.methodology.authority ? `<span class="df-auth">${esc(row.methodology.authority)}</span>` : ""}
+                 <span class="df-kind ${esc(row.methodology.kind)}">${esc(t(`derivKind_${row.methodology.kind}`))}</span>`
+              : esc(t("derivKind_derived"))}</dd></div>
+            <div><dt>${esc(t("derivBreakdown"))}</dt><dd>
+              ${row.officialStepCount ? `<span class="df-official">${esc(t("derivFromStandard").replace("{n}", row.officialStepCount))}</span>` : ""}
+              ${row.plannedStepCount ? `<span class="df-planned">${esc(t("derivFromSystem").replace("{n}", row.plannedStepCount))}${row.plannedSteps.length ? `：${row.plannedSteps.map(esc).join("、")}` : ""}</span>` : ""}
+            </dd></div>
+          </dl>
+        </section>`).join("")}
+      </div>
+    </details>`;
+}
+
 function pathMarkup(path, grounding, options = {}) {
   if (!path?.lanes?.length) return "";
   const s = path.summary;
@@ -791,12 +926,8 @@ function pathMarkup(path, grounding, options = {}) {
       </summary>
       <div class="trace-body">
         ${path.templated ? `<p class="path-templated">${esc(t("pathTemplated"))}</p>` : ""}
-        ${path.basis?.length ? `<div class="path-basis">
-          <span class="pb-label">${esc(t("pathBasis"))}</span>
-          ${path.basis.map((item) => `<span class="pb-item ${item.kind}">${item.url
-            ? `<a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">${esc(item.label)}</a>`
-            : esc(item.label)}${item.authority ? `<i>${esc(item.authority)}</i>` : ""}</span>`).join("")}
-        </div>` : ""}
+        <div class="flow-inline">${flowMarkup(path, options)}</div>
+        ${derivationMarkup(path)}
         ${path.lanes.map((lane) => {
           const running = lane.lane === activeLane;
           const laneState = running ? "running" : doneLanes.has(lane.lane) ? "done" : options.allowInput === false ? "queued" : "";
@@ -810,7 +941,13 @@ function pathMarkup(path, grounding, options = {}) {
           ${/* The specialist's reasoning belongs to the lane it is reasoning about,
                 so the live text and the steps it produces are one thing. */ ""}
           <div class="lane-stream" data-lane-stream="${esc(lane.lane)}"></div>
-          <ol class="path-steps">${lane.steps.map((item) => {
+          <ol class="path-steps">${lane.steps.filter((item) => {
+            // Only what has actually run. A plan of twelve steps rendered in full
+            // before any of them executed is what made the state unreadable; the
+            // ones still ahead are in the flow rail, where they belong.
+            const reached = item.status !== "not_reached" && item.status !== "pending";
+            return reached || item.id === blocked;
+          }).map((item) => {
             const stepTone = tone(STEP_STATUS_VOCAB, item.status);
             const mark = STEP_STATUS_VOCAB[item.status]?.mark || "·";
             const asking = item.id === blocked;
@@ -818,7 +955,7 @@ function pathMarkup(path, grounding, options = {}) {
             const open = asking || reached;
             const waiting = Boolean(blocked) && !reached;
             return `
-            <li class="path-step tone-${stepTone} ${open ? "open" : "shut"} ${asking ? "asking" : ""}">
+            <li class="path-step tone-${stepTone} ${open ? "open" : "shut"} ${asking ? "asking" : ""}" data-step-id="${esc(item.id)}">
               <span class="step-mark" aria-hidden="true">${mark}</span>
               <div class="step-body">
                 <button type="button" class="step-head" data-step-toggle aria-expanded="${open}">
@@ -840,6 +977,10 @@ function pathMarkup(path, grounding, options = {}) {
               </div>
             </li>`;
           }).join("")}</ol>
+          ${(() => {
+            const ahead = lane.steps.filter((item) => (item.status === "not_reached" || item.status === "pending") && item.id !== blocked);
+            return ahead.length ? `<p class="lane-ahead">${esc(t("laneAhead").replace("{n}", ahead.length))} ${ahead.map((item) => esc(item.title)).join(" · ")}</p>` : "";
+          })()}
         </section>`;
         }).join("")}
         ${grounding?.limitations?.length ? `<div class="path-limits">
@@ -1091,7 +1232,7 @@ function recordMarkup(record) {
       ${rows.length ? `<dl class="rec-fields">${rows.map(([label, value]) => `
         <div><dt>${esc(label)}</dt><dd>${esc(value.slice(0, 220))}</dd></div>`).join("")}</dl>` : ""}
       ${record.relevance ? `<div class="rec-rel">
-        <span class="rr-bar" style="--fill:${Math.round(Math.min(1, record.relevance.score / 40) * 100)}%"></span>
+        <span class="rr-bar" data-bar="${Math.round(Math.min(1, record.relevance.score / 40) * 100)}"></span>
         <span class="rr-terms">${esc(t("relMatched"))} ${record.relevance.matchedTerms.map((term) => `<b>${esc(term)}</b>`).join("")}${record.relevance.missedTerms.length ? `<span class="rr-miss">${esc(t("relMissed"))} ${record.relevance.missedTerms.map(esc).join(" ")}</span>` : ""}</span>
       </div>` : ""}
       ${(record.matchSnippets || []).map((snippet) => `<p class="rec-snippet">${esc(snippet.text)}</p>`).join("")}
@@ -1160,6 +1301,7 @@ async function runSourceQuery(event, options = {}) {
     // same lookup, so the thread stays a record of questions, not of clicks.
     if (options.replace) options.replace.outerHTML = markup;
     else $("threadInner").insertAdjacentHTML("beforeend", markup);
+    hydrateBars($("threadInner"));
     (options.replace ? $("threadInner").querySelector(`[data-lookup-offset="${offset}"]`) : $("threadInner").lastElementChild)
       ?.scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (error) {
@@ -1308,12 +1450,14 @@ async function analyze(event, options = {}) {
     if (event.type === "path") {
       collected.path = event.path;
       drawPath();
+      renderFlowPanel(event.path, { activeLane: progress.activeLane });
     }
     if (event.type === "agent_start") {
       // The lane becomes the active one, so the reasoning about to stream lands
       // inside the steps it is reasoning about.
       progress.activeLane = event.agent;
       drawPath();
+      renderFlowPanel(collected.path, { activeLane: progress.activeLane });
     }
     // A provider that ignores stream: true degrades to one update at the end,
     // which is indistinguishable from a broken feature unless it is said.
@@ -1337,6 +1481,7 @@ async function analyze(event, options = {}) {
       progress.summary[event.result.agent] = event.result;
       if (progress.activeLane === event.result.agent) progress.activeLane = null;
       drawPath();
+      renderFlowPanel(collected.path, { activeLane: progress.activeLane });
     }
     if (event.type === "synthesis_delta") {
       progress.text.review = event.text;
@@ -1408,6 +1553,8 @@ async function analyze(event, options = {}) {
     live.id = `answer-${finished.id}`;
     if (resuming) patchAnswer(live, finished);
     else live.innerHTML = answerMarkup(finished);
+    hydrateBars(live);
+    renderFlowPanel(finished.analysisPath);
     live.classList.remove("resuming");
     renderEvidence(finished.sources || []);
     // Resuming scrolls to the step now being asked, not to the top of an answer
@@ -1437,6 +1584,7 @@ async function analyze(event, options = {}) {
 }
 
 function newConversation() {
+  renderFlowPanel(null);
   state.conversation = [];
   state.threadId = null;
   state.declaredFacts = {};
@@ -1781,6 +1929,20 @@ function closeDrawer() {
   $("app").classList.remove("drawer-open");
   $("scrim").hidden = true;
 }
+// A node in the rail points at the step in the body. Steps that have not run are
+// not in the body, so the click says so instead of scrolling nowhere.
+document.addEventListener("click", (event) => {
+  const node = event.target.closest("[data-flow-step]");
+  if (!node) return;
+  const step = [...document.querySelectorAll(".path-step")]
+    .find((item) => item.querySelector("[data-step-toggle]") && item.closest(".msg-assistant") && item.dataset.stepId === node.dataset.flowStep);
+  if (!step) return toast(t("flowNotRun"));
+  step.classList.add("open"); step.classList.remove("shut");
+  step.scrollIntoView({ behavior: "smooth", block: "center" });
+  step.classList.add("flash");
+  setTimeout(() => step.classList.remove("flash"), 1200);
+});
+
 $("evidenceToggle").addEventListener("click", () => setEvidenceCollapsed(!state.evidenceCollapsed));
 $("railToggle").addEventListener("click", () => setRail(true));
 // The toggle is hidden once collapsed, so the brand mark restores the sidebar.

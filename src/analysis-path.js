@@ -152,7 +152,7 @@ const GEM_LEAD_LANE = {
   "case-memo": "review"
 };
 
-export function planAnalysisPath({ agents = [], gemId = null } = {}) {
+export function planAnalysisPath({ agents = [], gemId = null, routeReasons = {}, routeMatched = true } = {}) {
   const order = ["trade", "product", "tpdd"].filter((lane) => agents.includes(lane));
   const lead = GEM_LEAD_LANE[gemId];
   if (lead && order.includes(lead)) order.splice(order.indexOf(lead), 1), order.unshift(lead);
@@ -180,7 +180,29 @@ export function planAnalysisPath({ agents = [], gemId = null } = {}) {
     planned: true,
     basis: used.map((id) => METHODOLOGIES[id]).filter(Boolean)
       .sort((left, right) => (left.kind === "official" ? 0 : 1) - (right.kind === "official" ? 0 : 1)),
-    followsOfficial: used.some((id) => METHODOLOGIES[id]?.kind === "official")
+    followsOfficial: used.some((id) => METHODOLOGIES[id]?.kind === "official"),
+    // How this path came to exist. "Why these steps, in this order" is a fair
+    // question of any compliance conclusion, and the answer is checkable: which
+    // words in the question selected the check, which published procedure supplies
+    // its steps, and which steps had no provision and were planned here instead.
+    derivation: lanes.map((group) => {
+      const official = group.steps.filter((item) => METHODOLOGIES[item.methodology]?.kind === "official");
+      return {
+        lane: group.lane,
+        label: group.label,
+        leading: group.leading,
+        matchedBy: group.lane === "review" ? "always" : group.leading ? "gem" : routeMatched && routeReasons[group.lane]?.length ? "question_terms" : "no_term_matched_all_lanes_run",
+        matchedTerms: routeReasons[group.lane] || [],
+        methodology: METHODOLOGIES[group.methodology] || null,
+        stepCount: group.steps.length,
+        officialStepCount: official.length,
+        // Steps the system added because the procedure has no equivalent. Named
+        // so they are never mistaken for a cited requirement.
+        plannedStepCount: group.steps.length - official.length,
+        plannedSteps: group.steps.filter((item) => METHODOLOGIES[item.methodology]?.kind !== "official").map((item) => item.title)
+      };
+    }),
+    gemId
   };
 }
 

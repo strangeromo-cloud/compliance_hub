@@ -1,4 +1,4 @@
-import { AGENT_META, routeQuestion } from "./router.js";
+import { AGENT_META, routeQuestion, routeReasons } from "./router.js";
 import { sourcesForAgents } from "./sources.js";
 import { retrievePublicSources } from "./retrieval.js";
 import { callJsonModel, callJsonModelStream, readableProjection } from "./llm.js";
@@ -153,7 +153,8 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
 
   // The plan goes out before any work: the user sees which steps this question
   // has to pass, and then watches them close.
-  let analysisPath = planAnalysisPath({ agents, gemId });
+  const routing = routeReasons(contextualQuestion);
+  let analysisPath = planAnalysisPath({ agents, gemId, routeReasons: routing.reasons, routeMatched: routing.matched });
   onEvent({ type: "path", path: analysisPath });
 
   const selectedSources = sourcesForAgents(agents, question);
