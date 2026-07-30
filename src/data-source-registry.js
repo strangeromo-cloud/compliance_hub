@@ -63,6 +63,32 @@ export const DATA_SOURCE_REGISTRY = [
     attribution: "Contains data from OpenSanctions (opensanctions.org), licensed CC-BY-NC 4.0. Non-commercial use only."
   },
   {
+    sourceId: "china-control-list", sourceName: "中华人民共和国两用物项出口管制清单", module: "product", country: "CN", authority: "MOFCOM / 海关总署 / 中央军委装备发展部",
+    sourceType: "control_list", officialSource: true, accessMethod: "Official PDF", fileFormat: "PDF",
+    automationStatus: "api_available", feasibility: "can_build_now", currentCoverage: "not_ingested", priority: 1, authenticationRequired: false, captchaPresent: false,
+    updateFrequency: "As amended", websiteUrl: "https://exportcontrol.mofcom.gov.cn/article/hgfw/lywxcx/gzqd/202411/1067.html", apiUrl: "https://exportcontrol.mofcom.gov.cn/upload/uploadfile/attach/202606/12/20260612151240357.pdf",
+    dataCaptured: ["control code", "industry", "item type", "control reason", "description"], targetData: ["Chinese dual-use control entries"],
+    webSearchUse: "supplement_only", notes: "The Chinese analogue of the CCL: codes share the ECCN structure. The item-level lookup on MOFCOM's own site is CAPTCHA-gated, so the published PDF is the route."
+  },
+  {
+    sourceId: "china-export-licence-goods", sourceName: "出口许可证管理货物目录", module: "product", country: "CN", authority: "MOFCOM / 海关总署",
+    sourceType: "licence_catalogue", officialSource: true, accessMethod: "Official PDF", fileFormat: "PDF",
+    automationStatus: "api_available", feasibility: "can_build_now", currentCoverage: "not_ingested", priority: 1, authenticationRequired: false, captchaPresent: false,
+    updateFrequency: "Annual, effective 1 January", websiteUrl: "https://xkzj.mofcom.gov.cn/tzgg/art/2026/art_c21114e6c05b42fb8aeb86fe8734aa61.html", apiUrl: "",
+    dataCaptured: ["customs commodity code", "goods name", "goods category"], targetData: ["HS codes requiring an export licence"],
+    webSearchUse: "supplement_only", notes: "The only free official HS-level control mapping found on either side. The attachment link carries a per-file token, so it is read from the announcement each time."
+  },
+  {
+    sourceId: "jp-export-control", sourceName: "輸出貿易管理令 · 貨物等省令", module: "product", country: "JP", authority: "Japan e-Gov 法令API",
+    sourceType: "control_list", officialSource: true, accessMethod: "REST API", fileFormat: "XML",
+    automationStatus: "api_available", feasibility: "can_build_now", currentCoverage: "not_ingested", priority: 2, authenticationRequired: false, captchaPresent: false,
+    updateFrequency: "As amended", websiteUrl: "https://laws.e-gov.go.jp/law/324CO0000000378", apiUrl: "https://laws.e-gov.go.jp/api/2/law_file/xml/324CO0000000378",
+    dataCaptured: ["appendix", "item number", "provision text"], targetData: ["Japanese controlled goods and technology"],
+    webSearchUse: "supplement_only", notes: "Appended tables arrive as real table markup rather than prose in a PDF.",
+    licence: "政府標準利用規約 2.0 (CC BY compatible)", commercialUseBlocked: false,
+    attribution: "Contains data from the e-Gov 法令API, Digital Agency, Japan."
+  },
+  {
     sourceId: "ofac-sls", sourceName: "OFAC Sanctions List Service", module: "trade", country: "US", authority: "U.S. Treasury OFAC",
     sourceType: "sanctions_list", officialSource: true, accessMethod: "Download service", fileFormat: "Advanced XML / XML / CSV",
     automationStatus: "download_available", feasibility: "can_build_now", currentCoverage: "planned", priority: 1, authenticationRequired: false, captchaPresent: false,

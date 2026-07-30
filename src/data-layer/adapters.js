@@ -2,6 +2,8 @@ import { fetchPublicFile } from "./http.js";
 import { joinName, parseCsv, rowsToObjects, xmlAttr, xmlBlocks, xmlCells, xmlTag, xmlTags, xmlText } from "./parsers.js";
 import { CN_ADAPTERS } from "./adapters-cn.js";
 import { OS_ADAPTERS } from "./adapters-os.js";
+import { CN_LIST_ADAPTERS } from "./adapters-cn-lists.js";
+import { JP_ADAPTERS } from "./adapters-jp.js";
 
 const CSL_URL = "https://data.trade.gov/downloadable_consolidated_screening_list/v1/consolidated.json";
 const UK_URL = "https://sanctionslist.fcdo.gov.uk/docs/UK-Sanctions-List.csv";
@@ -331,7 +333,9 @@ export const ADAPTERS = {
   "sam-exclusions": { mode: "live_query", credential: "SAM_GOV_API_KEY" },
   "companies-house": { mode: "live_query", credential: "COMPANIES_HOUSE_API_KEY" },
   ...CN_ADAPTERS,
-  ...OS_ADAPTERS
+  ...OS_ADAPTERS,
+  ...CN_LIST_ADAPTERS,
+  ...JP_ADAPTERS
 };
 
 export async function queryRemoteSource(sourceId, query) {
