@@ -1,8 +1,8 @@
 const copy = {
   zh: {
-    brandSub: "合规情报原型", back: "返回对话", title: "公开数据覆盖与接入状态", lead: "查看当前 Prototype 已经读取了什么、下一步可以自动化什么，以及哪些来源必须保留人工查询。",
+    brandSub: "合规情报原型", back: "返回对话", title: "公开数据覆盖与接入状态", lead: "每个来源当前读到了什么、授权允许怎么用、以及哪些来源因为验证码或反爬必须保留人工查询。",
     checked: "调研核验日期", connected: "真实同步成功", ready: "现在可以开发", limited: "有限制可开发", manual: "仅人工查询", boundary: "数据边界",
-    disclosure: "页面会区分 Adapter 已实现与数据真实同步成功。只有成功状态才表示已保存官方原始快照和标准化记录；这不等于完成法律判断或交易放行。",
+    disclosure: "「已同步」指真实保存了官方原始快照与标准化记录，不等于完成法律判断或交易放行。「刷新失败」指快照仍可用、只是最近一次刷新没成功，与从未采集到的「同步失败」是两回事。标注了授权限制的来源（如 CC-BY-NC 仅限非商用）必须按其条款使用；容器文件系统是临时的，未挂载 Volume 时重新部署会清空已同步的数据与历史记录。",
     search: "搜索来源、机构或覆盖字段", feasibility: "可行性", all: "全部", registry: "数据源注册表", help: "“已读取”表示当前 Prototype 的真实能力，不等于已经建立完整历史数据库。",
     noResults: "没有符合当前筛选条件的数据源。", current: "当前覆盖", target: "目标数据", access: "接入方式", frequency: "更新", webSearch: "Web Search", auth: "需要凭证", captcha: "存在验证码", noData: "尚未保存结构化字段",
     currentLabels: { query_context: "查询时网页上下文", verified_lookup: "已核验结构化查询", structured_snapshot: "完整结构化快照", sample_snapshot: "样本快照 + 实时查询", planned: "尚未接入", manual: "人工查询入口" },
@@ -13,9 +13,9 @@ const copy = {
     adapterReady: "Adapter 已实现", queryReady: "支持实时查询", sync: "立即同步", retry: "重新同步", records: "条记录", lastSync: "最后同步", sourceVersion: "来源版本", syncScope: "同步范围", configKey: "需配置", syncFailed: "同步失败，请查看状态详情。", syncNeedsCode: "需要访问口令：请回到首页「访问设置」填写口令后重试。"
   },
   en: {
-    brandSub: "Compliance intelligence", back: "Back to chat", title: "Public data coverage & integration status", lead: "See what the prototype actually reads today, what can be automated next, and which sources must remain manual.",
+    brandSub: "Compliance intelligence", back: "Back to chat", title: "Public data coverage & integration status", lead: "What each source currently reads, what its licence permits, and which sources stay manual because of a CAPTCHA or an anti-bot wall.",
     checked: "Research checked", connected: "Successful syncs", ready: "Build now", limited: "Build with limits", manual: "Manual only", boundary: "Data boundary",
-    disclosure: "This page distinguishes an implemented adapter from a successful data sync. Success means an official raw snapshot and normalized records were saved; it is not a legal determination or transaction clearance.",
+    disclosure: "Synced means an official raw snapshot and normalized records were saved; it is not a legal determination or transaction clearance. Refresh failed means the snapshot is still usable and only the latest refresh did not land — different from Sync failed, which means the source was never captured. Sources marked with a licence limit (CC-BY-NC is non-commercial only) must be used on those terms. The container filesystem is ephemeral: without a mounted volume, a redeploy clears synced data and case history.",
     search: "Search source, authority, or covered field", feasibility: "Feasibility", all: "All", registry: "Data source registry", help: "Readable today describes actual prototype capability; it does not mean a complete historical database exists.",
     noResults: "No data sources match the current filters.", current: "Current coverage", target: "Target data", access: "Access", frequency: "Update", webSearch: "Web Search", auth: "Credentials required", captcha: "CAPTCHA present", noData: "No structured fields saved yet",
     currentLabels: { query_context: "Query-time page context", verified_lookup: "Verified structured lookup", structured_snapshot: "Full structured snapshot", sample_snapshot: "Sample + live query", planned: "Not connected", manual: "Manual query entry" },

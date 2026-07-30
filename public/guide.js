@@ -15,8 +15,8 @@ const copy = {
 
     lanesLabel: "覆盖范围", lanesTitle: "三条合规线",
     lanes: [
-      ["Trade", "受限方筛查与身份消歧", "美国 CSL / OFAC / EAR 744；中国管控名单、关注名单、不可靠实体清单"],
-      ["Product", "物项归类与许可判定", "美国 ECCN → 管制理由 → 国别矩阵 → 许可例外；中国两用物项编码 + 许可证目录"],
+      ["Trade", "受限方筛查与身份消歧", "美国 CSL / OFAC / EAR 744；中国管控名单与不可靠实体清单；欧盟、台湾、日本、UFLPA、美国防部 1260H"],
+      ["Product", "物项归类与许可判定", "美国 ECCN → 管制理由 → 国别矩阵 → 许可例外；中国两用物项管制编码与许可证目录；日本輸出貿易管理令别表"],
       ["Ethics-TPDD", "与出口管制相关的第三方尽调", "最终用户、UBO、费用与付款路径、规避模式"]
     ],
     lanesNote: "不在范围内：产品准入类合规（FCC、CCC、RoHS、能效）。",
@@ -45,8 +45,16 @@ const copy = {
     useLabel: "使用方法", useTitle: "在输入框键入 /",
     useLead: "上下键选择 Gem，回车确认。每个 Gem 绑定四样东西：指令、数据源白名单、必填事实清单、输出模板。第三项是关键——它让系统在提交前就知道自己缺什么，而不是让模型悄悄猜。",
     gemsLabel: "可用 Gem", gemBound: "个来源", gemRecords: "条记录", gemUnsynced: "个未同步", gemNone: "不绑定外部来源",
-    streamTitle: "分析过程是流式的",
-    streamBody: "提交后不是干等。路由结果、检索到的来源、每个专业 Agent 的推理文本会边生成边显示，最后才替换成结论卡片。慢模型只要还在输出就不会被判超时。",
+    streamTitle: "一步一步，问完再分析",
+    streamBody: "回答按顺序自上而下产生，遇到缺资料就停在那一步问你，不绕过缺口继续。",
+    streamPoints: [
+      "开场先说明本次落在哪些审查范围、每个范围遵循哪份已公布的程序、步骤有哪些——右侧执行流程就是同一份清单。",
+      "缺资料时分析停在那一步、就地提示、就地填写。有未决问题时不出结论——在刚承认的缺口上写判断，正是本工具要避免的。",
+      "补齐后从停下的地方继续，正文只画已执行的步骤，整体计划始终在右侧。",
+      "三个专业 Agent 依次执行而非并发。代价是实时模型下总耗时约为三次调用之和，换来的是可跟读的顺序。"
+    ],
+    triageTitle: "该短的短",
+    triageBody: "EAR Part 732 自己列了 29 步，但人工审查不会每次全跑。系统按已陈述的事实分流：无第三方则不启第三方尽调通道；低于 de minimis 则分类及下游不适用；EAR99 则无国别矩阵单元可查。每一次跳过都在开场说明里写明触发它的事实和条文，「不确定」永远不缩短路径。",
     otherTitle: "其他入口",
     otherPoints: [
       "左侧栏点击 Gem 直接使用，再点一次查看它的完整规格。",
@@ -79,9 +87,10 @@ const copy = {
     ],
     todoTitle: "尚未完成的部分",
     todos: [
-      "两用物项统一清单本身是公告附件 PDF，目前只保存快照与校验和，尚未解析成条目。",
-      "许可证管理目录的 HS ↔ 许可证映射同样在 PDF 中，未解析成行。",
-      "Entity List（EAR 744 Supp.4）已整体入库，未拆分成实体条目。",
+      "韩国战略物资清单没有可自动获取的途径，只能人工查阅。",
+      "官方的 ECCN ↔ 欧盟／瓦森纳对照表并不存在，跨制度比对只能按管制编号结构推导，属于参考而非查表。",
+      "中国海关总署（HS 编码、税则）全线返回 412 反爬，单一窗口有验证码，均不在自动化范围内。",
+      "中国官方来源没有开放数据授权。内部原型可用，对外发布前需法务确认。",
       "请勿输入商业秘密、个人敏感信息或未公开交易数据。"
     ],
     footer: "数据状态与来源明细见"
@@ -95,8 +104,8 @@ const copy = {
 
     lanesLabel: "Scope", lanesTitle: "Three compliance lanes",
     lanes: [
-      ["Trade", "Restricted-party screening and identity resolution", "US CSL / OFAC / EAR 744; PRC control list, watch list, Unreliable Entity List"],
-      ["Product", "Item classification and licence determination", "US ECCN → reasons for control → country chart → exceptions; PRC control codes + licence catalogue"],
+      ["Trade", "Restricted-party screening and identity resolution", "US CSL / OFAC / EAR 744; PRC control and unreliable-entity lists; EU, Taiwan, Japan, UFLPA, DoD 1260H"],
+      ["Product", "Item classification and licence determination", "US ECCN → reasons for control → country chart → exceptions; PRC control codes and licence catalogue; Japan's export control tables"],
       ["Ethics-TPDD", "Third-party diligence tied to export control", "End user, UBO, fees and payment path, circumvention patterns"]
     ],
     lanesNote: "Out of scope: market-access compliance (FCC, CCC, RoHS, energy efficiency).",
@@ -125,8 +134,16 @@ const copy = {
     useLabel: "How to use", useTitle: "Press / in the composer",
     useLead: "Arrow keys select a gem, Enter confirms. A gem binds four things: instruction, bound-source whitelist, required facts and output template. The third is the point — it lets the system know what is missing before submitting, instead of letting the model quietly guess.",
     gemsLabel: "Available gems", gemBound: "sources", gemRecords: "records", gemUnsynced: "not synced", gemNone: "no bound sources",
-    streamTitle: "The analysis streams",
-    streamBody: "Submitting is not a blind wait. Routing, retrieved sources and each specialist's reasoning appear as they are produced, and are replaced by the finished cards at the end. A slow model is not timed out while it is still producing output.",
+    streamTitle: "One step at a time",
+    streamBody: "The answer is produced in one direction, top to bottom, and stops at the step that needs something from you rather than analysing around the gap.",
+    streamPoints: [
+      "It opens by stating which review scopes the question falls into, which published procedure governs each, and the steps that procedure lays down — the flow rail on the right is the same list.",
+      "Where a fact is missing the analysis stops at that step and asks there. No conclusion is drawn while a question is open: an assessment written over a gap the run has just stopped at is the thing this is trying not to produce.",
+      "Supplying it continues from where it stopped. The body draws only what has run; the whole plan stays on the right.",
+      "The three specialists run consecutively rather than at once. The cost is that a live run takes about as long as its three calls added together; the gain is a sequence a reader can follow."
+    ],
+    triageTitle: "Short where it should be short",
+    triageBody: "EAR Part 732 numbers its own steps 1 through 29, and no reviewer runs all of them every time. Steps are closed on stated facts: no third party means the third-party lane does not arise; below de minimis means classification and everything downstream do not; EAR99 means there is no Country Chart cell to read. Every omission is shown with the fact and the provision that allowed it, and an undecided answer never shortens anything.",
     otherTitle: "Other entry points",
     otherPoints: [
       "Click a gem in the sidebar to use it; click again to see its full specification.",
@@ -159,9 +176,10 @@ const copy = {
     ],
     todoTitle: "Not finished yet",
     todos: [
-      "The unified dual-use list is a PDF attachment; only its snapshot and checksum are stored, not parsed entries.",
-      "The licence catalogue's HS-to-licence mapping is likewise in a PDF and is not parsed into rows.",
-      "The Entity List (EAR 744 Supp. 4) is ingested whole, not split into entity records.",
+      "Korea's strategic goods list has no automatable route; it stays a manual lookup.",
+      "No official ECCN-to-EU or ECCN-to-Wassenaar crosswalk exists. Cross-regime comparison is derived from the control-number structure and is advisory, not a lookup.",
+      "China Customs (HS codes, tariff) answers non-browser clients with 412, and Single Window is CAPTCHA-gated. Both are out of scope rather than pending.",
+      "Chinese official sources carry no open-data licence. Fine for an internal prototype; get counsel before anything customer-facing.",
       "Do not enter trade secrets, sensitive personal data or confidential transaction details."
     ],
     footer: "Per-source status and detail live in"
@@ -272,6 +290,10 @@ function render() {
 
         <h3>${esc(t.streamTitle)}</h3>
         <p>${esc(t.streamBody)}</p>
+        <ul class="guide-list">${t.streamPoints.map((point) => `<li>${esc(point)}</li>`).join("")}</ul>
+
+        <h3>${esc(t.triageTitle)}</h3>
+        <p>${esc(t.triageBody)}</p>
 
         <h3>${esc(t.otherTitle)}</h3>
         <ul class="guide-list">${t.otherPoints.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>
