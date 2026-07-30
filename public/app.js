@@ -717,6 +717,10 @@ function setPanelTab(tab) {
 // running and what has not been reached is answerable at a glance. The body of
 // the answer only carries steps that have executed, and this is where the rest
 // of the plan stays visible.
+// Settled means the step is closed: established, declared by the user, or handed
+// to a human. Reached-but-blocked is not progress.
+const SETTLED_STATUS = new Set(["confirmed", "declared", "review_required"]);
+
 const FLOW_STATE = {
   confirmed: { cls: "done", mark: "✓" },
   declared: { cls: "declared", mark: "◐" },
@@ -730,7 +734,7 @@ function renderFlowPanel(path, options = {}) {
   const panel = $("flowPanel");
   const markup = flowMarkup(path, options);
   const steps = (path?.lanes || []).flatMap((lane) => lane.steps);
-  const executed = steps.filter((item) => item.status !== "pending" && item.status !== "not_reached").length;
+  const executed = steps.filter((item) => SETTLED_STATUS.has(item.status)).length;
   $("flowCount").textContent = steps.length ? `${executed}/${steps.length}` : "";
   panel.innerHTML = markup || `<p class="evidence-empty">${esc(t("flowEmpty"))}</p>`;
   hydrateBars(panel);
@@ -742,7 +746,11 @@ function renderFlowPanel(path, options = {}) {
 function flowMarkup(path, options = {}) {
   if (!path?.lanes?.length) return "";
   const steps = path.lanes.flatMap((lane) => lane.steps);
-  const executed = steps.filter((item) => item.status !== "pending" && item.status !== "not_reached").length;
+  // Progress counts what is settled, not what has merely been reached. A step
+  // waiting on evidence had been counted as done, so answering six questions in a
+  // row moved the number not at all — the one place a reader looks to see that
+  // their answers are getting somewhere.
+  const executed = steps.filter((item) => SETTLED_STATUS.has(item.status)).length;
   // Two different meanings of "current", and showing the wrong one made the rail
   // contradict the body: while a specialist is running, "current" is where the
   // work is; only once the run has stopped to ask does it become the question
@@ -764,7 +772,7 @@ function flowMarkup(path, options = {}) {
     </div>
     ${path.lanes.map((lane) => {
       const laneSteps = lane.steps;
-      const laneDone = laneSteps.filter((item) => item.status !== "pending" && item.status !== "not_reached").length;
+      const laneDone = laneSteps.filter((item) => SETTLED_STATUS.has(item.status)).length;
       const running = options.activeLane === lane.lane;
       return `
       <section class="flow-lane ${running ? "running" : ""}">
@@ -972,7 +980,12 @@ function pathMarkup(path, grounding, options = {}) {
     .filter((lane) => {
       // The closing step is only drawn once there is something to close.
       if (lane.lane === "review") return !blocked && options.allowInput !== false;
-      return analysed.has(lane.lane) || lane.lane === activeLane || lane.steps.some(settled);
+      // The lane holding the question must be drawn even if nothing in it has run
+      // yet. Questions are now asked before their lane is analysed, so gating on
+      // "has this lane produced something" hid the question outright: the run
+      // stopped to ask, and the page showed no question and no conclusion.
+      return analysed.has(lane.lane) || lane.lane === activeLane
+        || lane.steps.some(settled) || lane.steps.some((item) => item.id === blocked);
     })
     .map((lane) => {
       const question = laneQuestion(lane);
