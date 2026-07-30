@@ -380,10 +380,15 @@ export function resolveAnalysisPath(plan, { question, grounding, results = [], d
       { needs: ["以上步骤的结论与证据需经人工确认；系统不做交易放行"] })]
   };
 
+  // The specialists run one at a time, so a lane can close as soon as its own
+  // specialist has reported rather than waiting for the whole run. The closing
+  // step is different: it summarizes every lane, so it stays until the end.
+  const reported = new Set(results.map((result) => result.agent));
   const lanes = plan.lanes.map((group) => {
-    // TPDD and the closing step depend on the specialists, so before they
-    // report there is nothing honest to say about them.
-    if (!final && (group.lane === "tpdd" || group.lane === "review")) return group;
+    if (!final && group.lane === "review") return group;
+    // TPDD reads the specialist's own findings, so before it reports there is
+    // nothing honest to say about that lane.
+    if (!final && group.lane === "tpdd" && !reported.has("tpdd")) return group;
     const resolved = new Map(resolvers[group.lane]().map((item) => [item.id, item]));
     return {
       ...group,

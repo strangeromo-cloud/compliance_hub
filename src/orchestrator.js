@@ -188,32 +188,47 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
   analysisPath = resolveAnalysisPath(analysisPath, { question: contextualQuestion, grounding: groundingSummary, results: [], declaredFacts, templated: mock });
   onEvent({ type: "path", path: analysisPath });
 
-  let results;
+  // The specialists run one after another, in the order the path lists them.
+  //
+  // Running them concurrently is faster in wall-clock terms and was wrong for
+  // this: three lanes streaming at once, finishing in whatever order they
+  // happened to resolve, is not something a reader can follow, and a compliance
+  // review is read as a sequence — this was checked, therefore that was checked.
+  // The cost is real: a live run now takes about as long as its three calls
+  // added together instead of the slowest one.
+  const laneOrder = analysisPath.lanes.map((group) => group.lane).filter((lane) => agents.includes(lane));
+  const results = [];
   let synthesis;
-  if (mock) {
-    // Rules mode does no token generation, so there is nothing to reveal over
-    // time and pacing it would misrepresent what happened. The panels and their
-    // reasoning text still render, just immediately.
-    results = agents.map((agent) => createMockAgentResult(agent, locale, question, grounding));
-    for (const result of results) {
-      onEvent({ type: "agent_start", agent: result.agent });
+
+  for (const agent of laneOrder) {
+    onEvent({ type: "agent_start", agent });
+    if (mock) {
+      // Rules mode does no token generation, so there is nothing to reveal over
+      // time and pacing it would misrepresent what happened.
+      const result = createMockAgentResult(agent, locale, question, grounding);
       const readable = readableProjection(JSON.stringify(result));
-      if (readable) onEvent({ type: "agent_delta", agent: result.agent, text: readable });
+      if (readable) onEvent({ type: "agent_delta", agent, text: readable });
+      results.push(result);
+      onEvent({ type: "agent", result });
+    } else {
+      const result = await runAgent(agent, question, locale, sources, config, history, grounding,
+        (text) => onEvent({ type: "agent_delta", agent, text }),
+        (meta) => onEvent({ type: "stream_mode", agent, ...meta }));
+      results.push(result);
       onEvent({ type: "agent", result });
     }
+    // This lane's steps close before the next lane starts, so the path fills in
+    // the order it is read rather than all at once at the end.
+    analysisPath = resolveAnalysisPath(analysisPath, { question: contextualQuestion, grounding: groundingSummary, results, declaredFacts, templated: mock });
+    onEvent({ type: "path", path: analysisPath });
+  }
+
+  onEvent({ type: "synthesizing" });
+  if (mock) {
     synthesis = createMockSynthesis(results, locale, question, grounding);
     const synthText = readableProjection(JSON.stringify(synthesis));
     if (synthText) onEvent({ type: "synthesis_delta", text: synthText });
   } else {
-    results = await Promise.all(agents.map(async (agent) => {
-      onEvent({ type: "agent_start", agent });
-      const result = await runAgent(agent, question, locale, sources, config, history, grounding,
-        (text) => onEvent({ type: "agent_delta", agent, text }),
-        (meta) => onEvent({ type: "stream_mode", agent, ...meta }));
-      onEvent({ type: "agent", result });
-      return result;
-    }));
-    onEvent({ type: "synthesizing" });
     synthesis = await synthesize(question, locale, results, config, history, grounding,
       (text) => onEvent({ type: "synthesis_delta", text }));
   }

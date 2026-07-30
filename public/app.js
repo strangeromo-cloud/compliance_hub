@@ -1142,7 +1142,7 @@ function createLiveMessage() {
     <span class="avatar" aria-hidden="true">CH</span>
     <div>
       <div class="msg-meta" data-live-meta></div>
-      <ol class="live-steps" data-live-steps></ol>
+      <p class="live-steps" data-live-steps></p>
       <div data-live-path></div>
       <div class="live-agents" data-live-agents></div>
     </div>`;
@@ -1151,15 +1151,18 @@ function createLiveMessage() {
   return node;
 }
 
+// The stage checklist was a second progress display sitting directly above the
+// flow rail, listing the same run in different words. What it had that the rail
+// does not is the pre-analysis phases — retrieval and grounding happen before any
+// lane starts — so it collapses to one line naming the current phase.
 function renderSteps(node, done, current) {
   // A resumed run writes into an answer that has already been rendered, so the
   // live scaffold is gone. Progress then shows on the path itself.
   const host = node.querySelector("[data-live-steps]");
   if (!host) return;
-  host.innerHTML = STEP_ORDER.map((step) => {
-    const state = done.has(step) ? "done" : step === current ? "active" : "idle";
-    return `<li class="${state}"><span class="tick" aria-hidden="true"></span>${esc(t(`step_${step}`))}</li>`;
-  }).join("");
+  host.innerHTML = current
+    ? `<span class="tick" aria-hidden="true"></span>${esc(t(`step_${current}`))}`
+    : "";
 }
 
 
@@ -1508,6 +1511,7 @@ async function analyze(event, options = {}) {
       progress.activeLane = "review";
       renderSteps(live, done, "synthesizing");
       drawPath();
+      renderFlowPanel(collected.path, { activeLane: progress.activeLane });
     }
   };
 
