@@ -1103,3 +1103,4 @@ html[lang="en"] .step-needs li::before { content: "NEEDS"; font-size: 8px; }
 .source-status.tone-warn { color: var(--risk-medium); }
 .source-status.tone-crit { color: var(--risk-high); }
 .source-status.tone-muted { color: var(--text-3); }
+.server-note code { font-family: var(--mono); font-size: 11px; color: var(--accent-text); background: var(--surface-3); border-radius: 3px; padding: 0 5px; }

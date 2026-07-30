@@ -81,12 +81,24 @@ function requireAccess(request) {
 }
 
 function cleanConfig(input = {}) {
-  const baseUrl = String(input.baseUrl || process.env.OPENAI_BASE_URL || "https://api.openai.com/v1").trim();
-  const model = String(input.model || process.env.OPENAI_MODEL || "gpt-5.4-mini").trim();
-  const apiKey = String(input.apiKey || process.env.OPENAI_API_KEY || "").trim();
+  // When the key comes from the environment, so must the endpoint and the model.
+  // Letting a caller supply baseUrl while the server supplies the key would mean
+  // a browser could point the endpoint at any host and have the server send its
+  // own OPENAI_API_KEY there in an Authorization header. Client configuration is
+  // therefore ignored outright in that mode, not merged with it.
+  if (process.env.OPENAI_API_KEY) {
+    const baseUrl = String(process.env.OPENAI_BASE_URL || "https://api.openai.com/v1").trim();
+    const model = String(process.env.OPENAI_MODEL || "gpt-5.4-mini").trim();
+    if (!/^https?:\/\//i.test(baseUrl)) throw Object.assign(new Error("Server OPENAI_BASE_URL must begin with http:// or https://"), { status: 500 });
+    return { baseUrl, model, apiKey: process.env.OPENAI_API_KEY.trim(), fromServer: true };
+  }
+
+  const baseUrl = String(input.baseUrl || "https://api.openai.com/v1").trim();
+  const model = String(input.model || "gpt-5.4-mini").trim();
+  const apiKey = String(input.apiKey || "").trim();
   if (!/^https?:\/\//i.test(baseUrl)) throw Object.assign(new Error("Base URL must begin with http:// or https://"), { status: 400 });
   if (!model || model.length > 120) throw Object.assign(new Error("A valid model name is required."), { status: 400 });
-  return { baseUrl, model, apiKey };
+  return { baseUrl, model, apiKey, fromServer: false };
 }
 
 // Declarations come from a form, so they are bounded in count, key shape and

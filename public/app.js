@@ -11,7 +11,7 @@ const i18n = {
     questionLabel: "输入合规情景", placeholder: "描述交易方、产品、路线、最终用户或付款安排……",
     slashHint: "Gem", composerNote: "原型输出仅用于研究与风险分流，不构成法律意见。请勿输入商业秘密或未公开交易数据。",
     evidence: "证据与来源", evidenceEmpty: "完成一次分析后，这里显示引用来源、获取状态与访问时间。",
-    modelSettings: "模型配置", settingsIntro: "支持 OpenAI-compatible Chat Completions API。", show: "显示", hide: "隐藏",
+    modelSettings: "模型配置", settingsIntro: "支持 OpenAI-compatible Chat Completions API。", settingsIntroServer: "本部署的模型由服务器提供。你只需填写访问口令。", accessSettings: "访问设置", codeNote: "访问口令保存在本浏览器，用于调用受保护的接口。它是共享口令，不是身份认证。", serverModelNote: "模型由服务器提供，无需在此填写 API Key。", show: "显示", hide: "隐藏",
     keyNote: "API Key 仅保存在当前浏览器会话中，用于转发本次调用；不会写入服务器文件或日志。",
     testConnection: "测试连接", saveSession: "保存", analyzing: "正在检索官方来源并组织答案……",
     dataLoading: "数据状态载入中", dataSynced: "个来源已同步", dataFallback: "个用兜底快照", dataFailed: "个失败", dataNone: "暂无可用来源",
@@ -65,7 +65,7 @@ const i18n = {
     questionLabel: "Enter a compliance scenario", placeholder: "Describe the party, product, route, end user or payment arrangement…",
     slashHint: "Gem", composerNote: "Prototype output is for research and triage only and is not legal advice. Do not enter trade secrets or confidential transaction data.",
     evidence: "Evidence & sources", evidenceEmpty: "After an analysis, cited sources, retrieval status and access time appear here.",
-    modelSettings: "Model settings", settingsIntro: "Supports OpenAI-compatible Chat Completions APIs.", show: "Show", hide: "Hide",
+    modelSettings: "Model settings", settingsIntro: "Supports OpenAI-compatible Chat Completions APIs.", settingsIntroServer: "This deployment provides the model. You only need the access code.", accessSettings: "Access", codeNote: "The access code is kept in this browser and used to call the protected endpoints. It is a shared code, not authentication.", serverModelNote: "The model is provided by the server; no API key is needed here.", show: "Show", hide: "Hide",
     keyNote: "The API key stays in this browser session and is used only to forward this call. It is never written to server files or logs.",
     testConnection: "Test connection", saveSession: "Save", analyzing: "Retrieving official sources and composing the answer…",
     dataLoading: "Loading data status", dataSynced: "synced", dataFallback: "on bundled copy", dataFailed: "failed", dataNone: "No sources available",
@@ -151,6 +151,7 @@ const state = {
   scenarioCategory: "all",
   conversation: [],
   serverModelConfigured: false,
+  serverModel: null,
   accessPasswordRequired: false,
   rulesMode: true,
   coverage: null,
@@ -225,6 +226,7 @@ function ensureThreadId() {
 }
 
 function getConfig() {
+  if (state.serverModelConfigured) return {};
   return {
     baseUrl: localStorage.getItem("compliance-base-url") || "https://api.openai.com/v1",
     model: localStorage.getItem("compliance-model") || "gpt-5.4-mini",
@@ -1282,6 +1284,17 @@ function updateModePill() {
 
 function openSettings() {
   const config = getConfig();
+  const serverProvides = state.serverModelConfigured;
+  // The endpoint fields are hidden rather than merely ignored: the server now
+  // refuses client configuration in this mode, so offering the inputs would
+  // invite someone to fill in values that quietly do nothing.
+  $("clientModelFields").hidden = serverProvides;
+  $("serverModelNote").hidden = !serverProvides;
+  $("settingsIntro").textContent = t(serverProvides ? "settingsIntroServer" : "settingsIntro");
+  $("settingsTitle").textContent = t(serverProvides ? "accessSettings" : "modelSettings");
+  $("keyNoteText").textContent = t(serverProvides ? "codeNote" : "keyNote");
+  $("serverModelName").textContent = state.serverModel || "";
+  $("testConnectionBtn").hidden = serverProvides;
   $("baseUrlInput").value = config.baseUrl;
   $("modelInput").value = config.model;
   $("apiKeyInput").value = config.apiKey;
@@ -1294,8 +1307,10 @@ function openSettings() {
 
 function saveSettings(event) {
   event.preventDefault();
-  localStorage.setItem("compliance-base-url", $("baseUrlInput").value.trim());
-  localStorage.setItem("compliance-model", $("modelInput").value.trim());
+  if (!state.serverModelConfigured) {
+    localStorage.setItem("compliance-base-url", $("baseUrlInput").value.trim());
+    localStorage.setItem("compliance-model", $("modelInput").value.trim());
+  }
   const password = $("accessPasswordInput").value.trim();
   if (password) localStorage.setItem("compliance-access-password", password);
   else localStorage.removeItem("compliance-access-password");
@@ -1331,8 +1346,10 @@ async function loadRuntimeCapabilities() {
     if (!response.ok) return;
     const capabilities = await response.json();
     state.serverModelConfigured = Boolean(capabilities.liveModelConfigured);
+    state.serverModel = capabilities.model || null;
     state.accessPasswordRequired = Boolean(capabilities.accessPasswordRequired);
     if (state.serverModelConfigured) state.rulesMode = false;
+    document.querySelector('#settingsBtn .side-label').textContent = t(state.serverModelConfigured ? "accessSettings" : "modelSettings");
     updateModePill();
   } catch { /* Rules mode remains available when capability discovery fails. */ }
 }
@@ -1367,6 +1384,7 @@ function applyLocale(locale) {
   renderCaseNav();
   renderActiveGem();
   updateModePill();
+  document.querySelector('#settingsBtn .side-label').textContent = t(state.serverModelConfigured ? "accessSettings" : "modelSettings");
   loadCoverage();
   if (!$("evidenceList").children.length || $("evidenceList").querySelector(".evidence-empty")) renderEvidence([]);
 }
