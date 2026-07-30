@@ -113,6 +113,33 @@ export function syncSource(sourceId) {
   return promise;
 }
 
+// Long regulation and notice text is useless as a whole field in a result list,
+// so the matching passage is extracted with enough context to read. The offsets
+// are relative to the field, not the record, because a caller renders per field.
+function matchSnippets(record, needle, max = 2) {
+  const snippets = [];
+  for (const field of ["contentText", "content", "excerpt", "notes"]) {
+    const text = record[field];
+    if (typeof text !== "string" || text.length < 80) continue;
+    const lower = text.toLocaleLowerCase();
+    let from = 0;
+    while (snippets.length < max) {
+      const at = lower.indexOf(needle, from);
+      if (at < 0) break;
+      const start = Math.max(0, at - 90);
+      const end = Math.min(text.length, at + needle.length + 130);
+      snippets.push({
+        field,
+        text: `${start > 0 ? "…" : ""}${text.slice(start, end).trim()}${end < text.length ? "…" : ""}`,
+        matchAt: at - start + (start > 0 ? 1 : 0),
+        matchLength: needle.length
+      });
+      from = at + needle.length;
+    }
+  }
+  return snippets;
+}
+
 export async function queryDataSource(sourceId, query, limit = 20) {
   const cleanQuery = String(query || "").trim();
   if (!cleanQuery || cleanQuery.length > 200) throw Object.assign(new Error("A query of 1-200 characters is required."), { status: 400 });
@@ -121,9 +148,12 @@ export async function queryDataSource(sourceId, query, limit = 20) {
   const normalized = await readNormalized(sourceId);
   if (!normalized) throw Object.assign(new Error("This source has not been synchronized yet."), { status: 409 });
   const needle = cleanQuery.toLocaleLowerCase();
-  const records = normalized.records.filter((record) => JSON.stringify(record).toLocaleLowerCase().includes(needle)).slice(0, Math.min(100, Math.max(1, Number(limit) || 20)));
+  const hits = normalized.records.filter((record) => JSON.stringify(record).toLocaleLowerCase().includes(needle));
+  const records = hits.slice(0, Math.min(100, Math.max(1, Number(limit) || 20)))
+    .map((record) => ({ ...record, matchSnippets: matchSnippets(record, needle) }));
   return {
     sourceId,
+    totalMatches: hits.length,
     mode: normalized.isFallback ? "bundled_fallback_snapshot" : "local_snapshot",
     provenance: normalized.provenance,
     capturedAt: normalized.capturedAt,

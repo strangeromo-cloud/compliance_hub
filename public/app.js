@@ -40,7 +40,10 @@ const i18n = {
     modeHint: "点击切换规则模式与实时模型",
     routeLabel: "路由", routedTo: "已路由至", specialistTrace: "专业 Agent 分析轨迹",
     overallAssessment: "总体判断", nextStep: "下一步", missingInfo: "仍需信息", actions: "建议行动", actionPlan: "行动清单", actionPlanHint: "按依赖顺序", unblocks: "→ 解锁", planBlocked: "待前序步骤完成：", planSuggested: "其他建议", planClosing: "结案：", noItems: "暂无", limitations: "结论边界与限制",
-    sourceLive: "实时获取", sourceMetadata: "元数据", sourceUnavailable: "获取失败", sourceNotFetched: "未获取", sourceArchived: "已采集副本", sourceCitationOnly: "仅引用", sourceCached: "缓存", sourceStale: "缓存（已过期）", evidenceCollapse: "收起证据栏", evidenceExpand: "展开证据栏",
+    sourceLive: "实时获取", sourceMetadata: "元数据", sourceUnavailable: "获取失败", sourceNotFetched: "未获取", sourceArchived: "已采集副本", sourceCitationOnly: "仅引用", sourceCached: "缓存", noQueryableSource: "暂无可直查的来源（需先同步）", sourceQueryHint: "@ 直查数据源", sourceQueryPlaceholder: "输入实体名、公告号或条文关键词…",
+    queryEmpty: "请输入查询内容", queryHits: "条命中", queryNoHit: "该来源中未找到匹配记录", queryTruncated: "显示前 {shown} 条，共 {total} 条",
+    queryEscalate: "以此发起完整筛查 →", escalatePrefix: "请对 {q} 做完整合规筛查",
+    queryDisclaimer: "直查返回的是来源原始记录，不是判定结论。", jumpSource: "在该来源中直查", lookupMode: "直查模式 · 不经 Agent 分析", sourceStale: "缓存（已过期）", evidenceCollapse: "收起证据栏", evidenceExpand: "展开证据栏",
     mockLabel: "规则 + 公开数据", liveLabel: "实时模型 + 公开数据",
     riskLow: "低", riskMedium: "中", riskHigh: "高", riskUnknown: "待定",
     accessPassword: "访问口令", accessRequired: "该部署需要访问口令，请在模型配置中填写。", keyFromServer: "服务器已配置模型，无需在此填写 API Key。", badResponse: "服务端未返回有效结果，通常是网关超时；请重试或缩短问题。", needKey: "请先在模型配置中填写 API Key，或使用规则模式。", invalidQuestion: "请先描述一个具体情景。", error: "分析失败",
@@ -91,7 +94,10 @@ const i18n = {
     modeHint: "Toggle between rules mode and the live model",
     routeLabel: "Route", routedTo: "Routed to", specialistTrace: "Specialist agent trace",
     overallAssessment: "Overall assessment", nextStep: "Next step", missingInfo: "Missing information", actions: "Recommended actions", actionPlan: "Action list", actionPlanHint: "in dependency order", unblocks: "→ unblocks", planBlocked: "Awaiting the steps above: ", planSuggested: "Other suggestions", planClosing: "To close: ", noItems: "None", limitations: "Limits on this conclusion",
-    sourceLive: "Live", sourceMetadata: "Metadata", sourceUnavailable: "Unavailable", sourceNotFetched: "Not fetched", sourceArchived: "Archived copy", sourceCitationOnly: "Cited only", sourceCached: "Cached", sourceStale: "Cached (stale)", evidenceCollapse: "Collapse evidence", evidenceExpand: "Expand evidence",
+    sourceLive: "Live", sourceMetadata: "Metadata", sourceUnavailable: "Unavailable", sourceNotFetched: "Not fetched", sourceArchived: "Archived copy", sourceCitationOnly: "Cited only", sourceCached: "Cached", noQueryableSource: "No queryable source yet (sync one first)", sourceQueryHint: "@ query a source", sourceQueryPlaceholder: "Entity name, notice number or provision keyword…",
+    queryEmpty: "Enter something to look up", queryHits: "matches", queryNoHit: "No matching record in this source", queryTruncated: "Showing {shown} of {total}",
+    queryEscalate: "Run a full screening on this →", escalatePrefix: "Run a full compliance screening on {q}",
+    queryDisclaimer: "A lookup returns the source's own records, not a determination.", jumpSource: "Look this up in the source", lookupMode: "Lookup mode · does not run the agents", sourceStale: "Cached (stale)", evidenceCollapse: "Collapse evidence", evidenceExpand: "Expand evidence",
     mockLabel: "Rules + public data", liveLabel: "Live model + public data",
     riskLow: "Low", riskMedium: "Medium", riskHigh: "High", riskUnknown: "Unknown",
     accessPassword: "Access password", accessRequired: "This deployment requires an access password. Add it in Model settings.", keyFromServer: "The server already provides a model; no API key is needed here.", badResponse: "The server did not return a valid result, usually a gateway timeout. Retry or shorten the question.", needKey: "Add an API key in Model settings, or stay in rules mode.", invalidQuestion: "Describe a specific scenario first.", error: "Analysis failed",
@@ -150,6 +156,7 @@ const state = {
   cases: [],
   threadId: null,
   declaredFacts: {},
+  sourceQuery: null,
   factsOpen: false,
   rail: localStorage.getItem("compliance-rail") === "1",
   evidenceCollapsed: localStorage.getItem("compliance-evidence-collapsed") === "1",
@@ -429,6 +436,20 @@ function renderStartPanel() {
 // a counter by default and the input never changes height when a gem changes.
 function renderActiveGem() {
   const host = $("gemRow");
+  if (state.sourceQuery) {
+    const source = state.sourceQuery;
+    host.classList.remove("hidden");
+    host.innerHTML = `
+      <span class="src-icon" aria-hidden="true">⛁</span>
+      <span class="gem-row-name">${esc(source.sourceName)}</span>
+      <code>@${esc(source.sourceId)}</code>
+      <span class="src-meta">${Number(source.sync.recordCount || 0).toLocaleString()} ${esc(t("gemRecordsUnit"))} · ${esc(String(source.sync.completedAt || source.sync.bundledAt || "").slice(0, 10))}</span>
+      <button type="button" class="gem-drop" data-source-drop aria-label="close">
+        <svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg>
+      </button>`;
+    renderGemNav();
+    return;
+  }
   if (!state.activeGem) { host.classList.add("hidden"); host.innerHTML = ""; renderGemNav(); return; }
   const gem = state.activeGem;
   const facts = factCoverage(gem, $("questionInput").value);
@@ -477,6 +498,71 @@ function clearGem() {
 
 /* ------------------------------------------------------- slash palette */
 
+// Two palettes share one surface: / picks a gem, @ picks a data source to query
+// directly. A point lookup — which entities does this notice name, what does
+// this provision say — should not have to travel through the whole analysis.
+function sourceQueryTrigger() {
+  const match = $("questionInput").value.match(/^@([\w-]*)$/);
+  return match ? match[1] : null;
+}
+
+function queryableSources() {
+  return (state.coverage?.sources || [])
+    .filter((source) => ["success", "fallback_snapshot"].includes(source.sync?.status))
+    .sort((left, right) => (right.sync.recordCount || 0) - (left.sync.recordCount || 0));
+}
+
+function openSourcePalette(query) {
+  const needle = String(query || "").toLowerCase();
+  const items = queryableSources().filter((source) =>
+    !needle || source.sourceId.includes(needle) || (source.sourceName || "").toLowerCase().includes(needle));
+  state.palette = { open: true, mode: "source", items, index: 0 };
+  renderSourcePalette();
+}
+
+function renderSourcePalette() {
+  const host = $("palette");
+  const { items, index } = state.palette;
+  host.classList.remove("hidden");
+  if (!items.length) { host.innerHTML = `<div class="palette-empty">${esc(t("noQueryableSource"))}</div>`; return; }
+  const groups = [["CN", t("mosaicCn")], ["US", t("mosaicUs")], ["other", t("mosaicOther")]];
+  const bucket = (source) => (source.country === "US" || source.country === "CN" ? source.country : "other");
+  host.innerHTML = groups.map(([key, label]) => {
+    const inGroup = items.filter((source) => bucket(source) === key);
+    if (!inGroup.length) return "";
+    return `<div class="palette-group">
+      <div class="palette-group-label">${esc(label)}</div>
+      ${inGroup.map((source) => `
+        <button type="button" class="palette-item ${items.indexOf(source) === index ? "active" : ""}" data-source="${esc(source.sourceId)}">
+          <span class="src-dot ${source.sync.status === "fallback_snapshot" ? "warn" : "ok"}" aria-hidden="true"></span>
+          <span><strong>${esc(source.sourceName)}</strong><small>${esc(source.authority)}</small></span>
+          <span class="src-count">${Number(source.sync.recordCount || 0).toLocaleString()}</span>
+        </button>`).join("")}
+    </div>`;
+  }).join("") + `<div class="palette-foot"><span>${esc(t("paletteNav"))}</span><span>${esc(t("paletteEnter"))}</span><span>${esc(t("sourceQueryHint"))}</span></div>`;
+  host.querySelector(".palette-item.active")?.scrollIntoView({ block: "nearest" });
+}
+
+function activateSourceQuery(sourceId, prefill = "") {
+  const source = (state.coverage?.sources || []).find((item) => item.sourceId === sourceId);
+  if (!source) return;
+  state.sourceQuery = source;
+  state.activeGem = null;
+  closePalette();
+  $("questionInput").value = prefill;
+  $("questionInput").placeholder = t("sourceQueryPlaceholder");
+  renderActiveGem();
+  updateRouteHint();
+  $("questionInput").focus();
+}
+
+function clearSourceQuery() {
+  state.sourceQuery = null;
+  $("questionInput").placeholder = t("placeholder");
+  renderActiveGem();
+  updateRouteHint();
+}
+
 function paletteQuery() {
   const value = $("questionInput").value;
   // The palette only opens on a slash that starts the draft, so a URL or a date
@@ -519,10 +605,10 @@ function renderPalette() {
 }
 
 function movePalette(step) {
-  const { items } = state.palette;
+  const { items, mode } = state.palette;
   if (!items.length) return;
   state.palette.index = (state.palette.index + step + items.length) % items.length;
-  renderPalette();
+  if (mode === "source") renderSourcePalette(); else renderPalette();
 }
 
 function choosePalette() {
@@ -584,6 +670,8 @@ function estimatedRoute(question) {
 function updateRouteHint() {
   const value = $("questionInput").value.trim();
   const host = $("routeHint");
+  document.querySelector(".slash-hint").classList.toggle("hidden", Boolean(state.sourceQuery));
+  if (state.sourceQuery) { host.innerHTML = `<span>${esc(t("lookupMode"))}</span>`; return; }
   if (!value) { host.innerHTML = ""; return; }
   const agents = estimatedRoute(value);
   host.innerHTML = `<span>${t("routeLabel")}</span>${agents.map((a) => `<span class="route-tag">${agentName(a)}</span>`).join("")}`;
@@ -830,7 +918,11 @@ function pathMarkup(path) {
                   <span class="step-status">${esc(t(`status_${item.status}`))}</span>
                   ${item.cite ? `<span class="step-cite ${item.methodology === "derived" ? "derived" : ""}" title="${esc(item.citeNote || "")}">${esc(item.cite)}</span>` : ""}
                 </div>
-                ${item.basis.length ? `<ul class="step-basis">${item.basis.map((line) => `<li>${formatInline(line)}</li>`).join("")}</ul>` : ""}
+                ${item.basis.length ? `<ul class="step-basis">${item.basis.map((line) => {
+                  const sourceRef = String(line).match(/^([a-z0-9-]{4,32})[：:]/);
+                  const known = sourceRef && (state.coverage?.sources || []).some((source) => source.sourceId === sourceRef[1]);
+                  return `<li>${formatInline(line)}${known ? ` <button type="button" class="jump-source" data-jump-source="${esc(sourceRef[1])}" title="${esc(t("jumpSource"))}">⛁</button>` : ""}</li>`;
+                }).join("")}</ul>` : ""}
                 ${item.needs.length ? `<ul class="step-needs">${item.needs.map((line) => `<li>${formatInline(line)}</li>`).join("")}</ul>` : ""}
                 ${item.status === "evidence_needed" && item.inputs?.length ? stepInputsMarkup(item) : ""}
               </div>
@@ -1012,9 +1104,94 @@ async function loadCoverage() {
 
 /* ------------------------------------------------------------- analysis */
 
+const PARTY_FIELDS = [
+  ["entityNameEn", "英文名"], ["commonNames", "常用名"], ["aliases", "别名"],
+  ["country", "国别"], ["addresses", "地址"], ["address", "地址"],
+  ["registrationNumber", "注册号"], ["noticeNumber", "公告"], ["effectiveFrom", "生效"],
+  ["measures", "措施"], ["restrictionType", "限制类型"], ["sourceList", "所属名单"], ["programs", "项目"]
+];
+const TEXT_FIELDS = [["part", "所属部分"], ["effectiveDate", "版本日期"], ["noticeNumber", "公告"], ["publishedAt", "发布"], ["effectiveFrom", "生效"], ["measureType", "类型"]];
+
+function fieldValue(value) {
+  if (Array.isArray(value)) return value.filter(Boolean).slice(0, 4).map((item) => (typeof item === "object" ? JSON.stringify(item) : String(item))).join(" · ");
+  if (value && typeof value === "object") return JSON.stringify(value).slice(0, 160);
+  return value === null || value === undefined || value === "" ? "" : String(value);
+}
+
+function recordMarkup(record) {
+  const isParty = Boolean(record.entityName || record.entityNameEn);
+  const title = record.entityName || record.noticeTitle || record.title || record.recordId || "—";
+  const template = isParty ? PARTY_FIELDS : TEXT_FIELDS;
+  const rows = template
+    .map(([key, label]) => [label, fieldValue(record[key])])
+    .filter(([, value]) => value);
+
+  return `
+    <article class="rec">
+      <div class="rec-head">
+        <strong>${esc(title)}</strong>
+        ${record.sourceUrl ? `<a href="${esc(record.sourceUrl)}" target="_blank" rel="noopener noreferrer">${esc(t("rsOpen"))}</a>` : ""}
+      </div>
+      ${rows.length ? `<dl class="rec-fields">${rows.map(([label, value]) => `
+        <div><dt>${esc(label)}</dt><dd>${esc(value.slice(0, 220))}</dd></div>`).join("")}</dl>` : ""}
+      ${(record.matchSnippets || []).map((snippet) => `<p class="rec-snippet">${esc(snippet.text)}</p>`).join("")}
+      ${record.matchDisposition ? `<div class="rec-warn">${esc(t(`disp_${record.matchDisposition}`) || record.matchDisposition)}</div>` : ""}
+    </article>`;
+}
+
+async function runSourceQuery(event) {
+  event.preventDefault();
+  if (state.busy) return;
+  const source = state.sourceQuery;
+  const query = $("questionInput").value.trim();
+  if (query.length < 1) return toast(t("queryEmpty"));
+
+  $("startPanel").classList.add("hidden");
+  $("threadInner").insertAdjacentHTML("beforeend",
+    `<article class="msg msg-user"><div class="bubble"><span class="gem-tag">@${esc(source.sourceId)}</span><br>${esc(query)}</div></article>`);
+  $("questionInput").value = "";
+  state.busy = true; $("submitBtn").disabled = true;
+
+  try {
+    const response = await fetch("/api/data-sources/query", {
+      method: "POST", headers: { "Content-Type": "application/json", ...accessHeaders() },
+      body: JSON.stringify({ sourceId: source.sourceId, query, limit: 20 })
+    });
+    const raw = await response.text();
+    let data; try { data = JSON.parse(raw); } catch { throw new Error(`${t("badResponse")} (HTTP ${response.status})`); }
+    if (!response.ok) throw new Error(data.error || t("error"));
+
+    const stale = data.mode === "bundled_fallback_snapshot";
+    $("threadInner").insertAdjacentHTML("beforeend", `
+      <article class="msg msg-assistant">
+        <span class="avatar" aria-hidden="true">⛁</span>
+        <div>
+          <div class="msg-meta">
+            <span class="tag">@${esc(source.sourceId)}</span><span class="sep">·</span>
+            <span>${data.totalMatches ?? data.records.length} ${esc(t("queryHits"))}</span><span class="sep">·</span>
+            <span class="${stale ? "src-stale" : ""}">${esc(stale ? t("sourceArchived") : t("sourceCached"))} ${esc(String(data.capturedAt || "").slice(0, 10))}</span>
+          </div>
+          ${data.records.length
+            ? `<div class="rec-list">${data.records.map(recordMarkup).join("")}</div>
+               ${(data.totalMatches || 0) > data.records.length ? `<p class="msg-note">${esc(t("queryTruncated").replace("{shown}", data.records.length).replace("{total}", data.totalMatches))}</p>` : ""}
+               <div class="rec-actions"><button type="button" class="btn" data-escalate="${esc(query)}">${esc(t("queryEscalate"))}</button></div>`
+            : `<p class="msg-note">${esc(t("queryNoHit"))}</p>`}
+          <p class="msg-note">${esc(t("queryDisclaimer"))}</p>
+        </div>
+      </article>`);
+    $("threadInner").lastElementChild.scrollIntoView({ behavior: "smooth", block: "start" });
+  } catch (error) {
+    toast(`${t("error")}: ${error.message}`);
+  } finally {
+    state.busy = false; $("submitBtn").disabled = false;
+  }
+}
+
 async function analyze(event) {
   event.preventDefault();
   if (state.busy) return;
+  // A source query is a lookup, not an analysis, so it never reaches the agents.
+  if (state.sourceQuery) return runSourceQuery(event);
   closePalette();
   const raw = $("questionInput").value.trim();
   if (raw.length < 5) return toast(t("invalidQuestion"));
@@ -1312,8 +1489,12 @@ function applyLocale(locale) {
 /* --------------------------------------------------------------- events */
 
 $("questionInput").addEventListener("input", () => {
-  const query = paletteQuery();
-  if (query !== null) openPalette(query); else closePalette();
+  const sourceTrigger = state.sourceQuery ? null : sourceQueryTrigger();
+  if (sourceTrigger !== null) openSourcePalette(sourceTrigger);
+  else {
+    const query = paletteQuery();
+    if (query !== null) openPalette(query); else closePalette();
+  }
   updateRouteHint();
   if (state.activeGem) renderActiveGem();
 });
@@ -1322,10 +1503,19 @@ $("questionInput").addEventListener("keydown", (event) => {
   if (state.palette.open) {
     if (event.key === "ArrowDown") { event.preventDefault(); return movePalette(1); }
     if (event.key === "ArrowUp") { event.preventDefault(); return movePalette(-1); }
-    if (event.key === "Enter" || event.key === "Tab") { event.preventDefault(); return choosePalette(); }
+    if (event.key === "Enter" || event.key === "Tab") {
+      event.preventDefault();
+      if (state.palette.mode === "source") {
+        const source = state.palette.items[state.palette.index];
+        return source && activateSourceQuery(source.sourceId);
+      }
+      return choosePalette();
+    }
     if (event.key === "Escape") { event.preventDefault(); return closePalette(); }
   }
+  if (event.key === "Escape" && state.sourceQuery) { clearSourceQuery(); return; }
   if (event.key === "Escape" && state.activeGem) { clearGem(); return; }
+  if (event.key === "Backspace" && !$("questionInput").value && state.sourceQuery) { event.preventDefault(); clearSourceQuery(); return; }
   // Backspacing into an empty composer drops the gem, matching how chips behave
   // elsewhere, so the gem never feels stuck.
   if (event.key === "Backspace" && !$("questionInput").value && state.activeGem) { event.preventDefault(); clearGem(); return; }
@@ -1333,6 +1523,8 @@ $("questionInput").addEventListener("keydown", (event) => {
 });
 
 $("palette").addEventListener("click", (event) => {
+  const source = event.target.closest("[data-source]");
+  if (source) return activateSourceQuery(source.dataset.source);
   // The star curates without selecting, so the catalogue is also where a
   // workspace gets built.
   const pin = event.target.closest("[data-pin]");
@@ -1377,6 +1569,21 @@ $("gemNav").addEventListener("click", (event) => {
 // transcript records what was supplied and the conclusion is recomputed with it
 // rather than being patched in place.
 $("threadInner").addEventListener("click", (event) => {
+  const escalate = event.target.closest("[data-escalate]");
+  if (escalate) {
+    clearSourceQuery();
+    $("questionInput").value = t("escalatePrefix").replace("{q}", escalate.dataset.escalate);
+    updateRouteHint();
+    $("questionInput").focus();
+    return;
+  }
+  // The basis line of a step links to the source it stands on, so a reviewer can
+  // verify the claim in the source itself rather than taking it on trust.
+  const jump = event.target.closest("[data-jump-source]");
+  if (jump) {
+    activateSourceQuery(jump.dataset.jumpSource, jump.dataset.jumpQuery || "");
+    return;
+  }
   const choice = event.target.closest(".si-choice");
   if (choice) {
     const group = choice.closest(".si-choices");
@@ -1399,6 +1606,7 @@ $("threadInner").addEventListener("click", (event) => {
 });
 
 $("gemRow").addEventListener("click", (event) => {
+  if (event.target.closest("[data-source-drop]")) return clearSourceQuery();
   if (event.target.closest("[data-gem-drop]")) return clearGem();
   if (event.target.closest("[data-facts-toggle]")) { state.factsOpen = !state.factsOpen; return renderActiveGem(); }
   const detail = event.target.closest("[data-gem-detail]");
