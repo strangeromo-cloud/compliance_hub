@@ -28,6 +28,7 @@ export const SOURCES = [
   },
   {
     id: "ofac-50-rule",
+    refreshHours: 168,  // A published FAQ, revised rarely.
     agents: ["trade", "tpdd"],
     authority: "U.S. Office of Foreign Assets Control",
     title: "OFAC 50 Percent Rule FAQ",
@@ -46,6 +47,7 @@ export const SOURCES = [
   },
   {
     id: "nvidia-export",
+    refreshHours: 168,  // Manufacturer classification tables are revised infrequently.
     agents: ["product"],
     authority: "NVIDIA",
     title: "NVIDIA export classification",
@@ -55,6 +57,7 @@ export const SOURCES = [
   },
   {
     id: "nvidia-10k",
+    refreshHours: 720,  // A filed annual report does not change.
     agents: ["product", "trade"],
     authority: "U.S. SEC / NVIDIA filing",
     title: "NVIDIA FY2026 Form 10-K",
@@ -107,6 +110,7 @@ export const SOURCES = [
   },
   {
     id: "doj-eccp",
+    refreshHours: 168,  // Versioned policy guidance.
     agents: ["tpdd"],
     authority: "U.S. Department of Justice",
     title: "Evaluation of Corporate Compliance Programs",
@@ -116,6 +120,7 @@ export const SOURCES = [
   },
   {
     id: "oecd-third-party",
+    refreshHours: 720,
     agents: ["tpdd"],
     authority: "OECD",
     title: "Corruption risks in commodity trading transactions",
@@ -128,6 +133,7 @@ export const SOURCES = [
   },
   {
     id: "unodc-corruption",
+    refreshHours: 168,
     agents: ["tpdd"],
     authority: "United Nations Office on Drugs and Crime",
     title: "UNODC guidance on corruption and beneficial ownership",

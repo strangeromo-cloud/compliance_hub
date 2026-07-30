@@ -40,7 +40,7 @@ const i18n = {
     modeHint: "点击切换规则模式与实时模型",
     routeLabel: "路由", routedTo: "已路由至", specialistTrace: "专业 Agent 分析轨迹",
     overallAssessment: "总体判断", nextStep: "下一步", missingInfo: "仍需信息", actions: "建议行动", noItems: "暂无", limitations: "结论边界与限制",
-    sourceLive: "实时获取", sourceMetadata: "元数据", sourceUnavailable: "获取失败", sourceNotFetched: "未获取", sourceArchived: "已采集副本", sourceCitationOnly: "仅引用",
+    sourceLive: "实时获取", sourceMetadata: "元数据", sourceUnavailable: "获取失败", sourceNotFetched: "未获取", sourceArchived: "已采集副本", sourceCitationOnly: "仅引用", sourceCached: "缓存", sourceStale: "缓存（已过期）", evidenceCollapse: "收起证据栏", evidenceExpand: "展开证据栏",
     mockLabel: "规则 + 公开数据", liveLabel: "实时模型 + 公开数据",
     riskLow: "低", riskMedium: "中", riskHigh: "高", riskUnknown: "待定",
     accessPassword: "访问口令", accessRequired: "该部署需要访问口令，请在模型配置中填写。", keyFromServer: "服务器已配置模型，无需在此填写 API Key。", badResponse: "服务端未返回有效结果，通常是网关超时；请重试或缩短问题。", needKey: "请先在模型配置中填写 API Key，或使用规则模式。", invalidQuestion: "请先描述一个具体情景。", error: "分析失败",
@@ -91,7 +91,7 @@ const i18n = {
     modeHint: "Toggle between rules mode and the live model",
     routeLabel: "Route", routedTo: "Routed to", specialistTrace: "Specialist agent trace",
     overallAssessment: "Overall assessment", nextStep: "Next step", missingInfo: "Missing information", actions: "Recommended actions", noItems: "None", limitations: "Limits on this conclusion",
-    sourceLive: "Live", sourceMetadata: "Metadata", sourceUnavailable: "Unavailable", sourceNotFetched: "Not fetched", sourceArchived: "Archived copy", sourceCitationOnly: "Cited only",
+    sourceLive: "Live", sourceMetadata: "Metadata", sourceUnavailable: "Unavailable", sourceNotFetched: "Not fetched", sourceArchived: "Archived copy", sourceCitationOnly: "Cited only", sourceCached: "Cached", sourceStale: "Cached (stale)", evidenceCollapse: "Collapse evidence", evidenceExpand: "Expand evidence",
     mockLabel: "Rules + public data", liveLabel: "Live model + public data",
     riskLow: "Low", riskMedium: "Medium", riskHigh: "High", riskUnknown: "Unknown",
     accessPassword: "Access password", accessRequired: "This deployment requires an access password. Add it in Model settings.", keyFromServer: "The server already provides a model; no API key is needed here.", badResponse: "The server did not return a valid result, usually a gateway timeout. Retry or shorten the question.", needKey: "Add an API key in Model settings, or stay in rules mode.", invalidQuestion: "Describe a specific scenario first.", error: "Analysis failed",
@@ -151,6 +151,7 @@ const state = {
   threadId: null,
   factsOpen: false,
   rail: localStorage.getItem("compliance-rail") === "1",
+  evidenceCollapsed: localStorage.getItem("compliance-evidence-collapsed") === "1",
   activeGem: null,
   palette: { open: false, items: [], index: 0 }
 };
@@ -596,14 +597,16 @@ function renderEvidence(sources) {
   if (!sources.length) { $("evidenceList").innerHTML = `<p class="evidence-empty">${t("evidenceEmpty")}</p>`; return; }
   const statusLabel = (source) => ({
     live: t("sourceLive"), metadata_only: t("sourceMetadata"), unavailable: t("sourceUnavailable"),
-    not_fetched: t("sourceNotFetched"), archived: t("sourceArchived"), citation_only: t("sourceCitationOnly")
+    not_fetched: t("sourceNotFetched"), archived: t("sourceArchived"), citation_only: t("sourceCitationOnly"),
+    cached: source.stale ? t("sourceStale") : t("sourceCached")
   }[source.liveStatus] || source.liveStatus);
   $("evidenceList").innerHTML = sources.map((source) => `
     <article class="source-card">
       <div class="authority">${esc(source.authority)}</div>
       <a href="${esc(source.url)}" target="_blank" rel="noopener noreferrer">${esc(source.title)}</a>
       <div class="source-meta">
-        <span class="source-status ${esc(source.liveStatus)}">${esc(statusLabel(source))}</span>
+        <span class="source-status ${esc(source.liveStatus)}${source.stale ? " stale" : ""}">${esc(statusLabel(source))}</span>
+        ${source.cacheAge ? `<span class="source-age">${esc(source.cacheAge)}</span>` : ""}
         <time>${source.retrievedAt ? new Date(source.retrievedAt).toLocaleTimeString(state.locale === "zh" ? "zh-CN" : "en-US", { hour: "2-digit", minute: "2-digit" }) : "—"}</time>
       </div>
     </article>`).join("");
@@ -1303,6 +1306,14 @@ $("gemRow").addEventListener("click", (event) => {
   if (detail) return openGemDetail(detail.dataset.gemDetail);
 });
 
+function setEvidenceCollapsed(collapsed) {
+  state.evidenceCollapsed = collapsed;
+  localStorage.setItem("compliance-evidence-collapsed", collapsed ? "1" : "0");
+  $("app").classList.toggle("evidence-collapsed", collapsed);
+  $("evidenceToggle").setAttribute("aria-expanded", String(!collapsed));
+  $("evidenceToggle").title = t(collapsed ? "evidenceExpand" : "evidenceCollapse");
+}
+
 function setRail(collapsed) {
   state.rail = collapsed;
   localStorage.setItem("compliance-rail", collapsed ? "1" : "0");
@@ -1314,6 +1325,7 @@ function closeDrawer() {
   $("app").classList.remove("drawer-open");
   $("scrim").hidden = true;
 }
+$("evidenceToggle").addEventListener("click", () => setEvidenceCollapsed(!state.evidenceCollapsed));
 $("railToggle").addEventListener("click", () => setRail(true));
 // The toggle is hidden once collapsed, so the brand mark restores the sidebar.
 document.querySelector(".sidebar-brand").addEventListener("click", (event) => {
@@ -1379,6 +1391,7 @@ $("scenarioDialog").addEventListener("click", (event) => {
 setTheme(localStorage.getItem("compliance-theme") || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark"));
 if (sessionStorage.getItem("compliance-api-key")) state.rulesMode = false;
 setRail(state.rail);
+setEvidenceCollapsed(state.evidenceCollapsed);
 applyLocale(state.locale);
 renderEvidence([]);
 loadRuntimeCapabilities();

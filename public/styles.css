@@ -939,15 +939,47 @@ details.analysis-path > summary { color: var(--text); font-weight: 600; flex-wra
 .tone-muted .step-status { color: var(--text-3); }
 .tone-crit .step-status { color: var(--risk-high); }
 
-.step-basis, .step-needs { list-style: none; padding: 0; margin: 5px 0 0; display: grid; gap: 3px; }
-.step-basis li, .step-needs li { font-size: 11.5px; line-height: 1.6; padding-left: 15px; position: relative; word-break: break-word; }
-/* Basis is what the step stands on; needs is what would settle it. Different
-   marks, because confusing the two is exactly the mistake to avoid. */
+.step-basis, .step-needs { list-style: none; padding: 0; margin: 6px 0 0; display: grid; gap: 4px; }
+
+/* Basis is what the step stands on; needs is what would settle it. The label
+   gets its own column so it reads as a tag rather than running into the text —
+   and the two are visually distinct, because confusing them is exactly the
+   mistake to avoid. */
+.step-basis li, .step-needs li {
+  display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 9px;
+  align-items: baseline; font-size: 11.5px; line-height: 1.65; word-break: break-word;
+}
+.step-basis li::before, .step-needs li::before {
+  font: 600 9px/1.5 var(--mono); letter-spacing: .03em; text-align: center;
+  border: 1px solid currentColor; border-radius: 3px; padding: 1px 0; opacity: .85;
+}
 .step-basis li { color: var(--text-2); }
-.step-basis li::before { content: "依据"; position: absolute; left: 0; top: 0; font: 600 8px/2.1 var(--mono); color: var(--text-3); }
-.step-needs li { color: var(--risk-medium); }
-.step-needs li::before { content: "待补"; position: absolute; left: 0; top: 0; font: 600 8px/2.1 var(--mono); color: var(--risk-medium); opacity: .75; }
-html[lang="en"] .step-basis li::before { content: "▪"; font-size: 10px; line-height: 1.7; }
-html[lang="en"] .step-needs li::before { content: "▫"; font-size: 10px; line-height: 1.7; }
+.step-basis li::before { content: "依据"; color: var(--text-3); }
+.step-needs li { color: var(--text-2); }
+.step-needs li::before { content: "待补"; color: var(--risk-medium); }
+html[lang="en"] .step-basis li, html[lang="en"] .step-needs li { grid-template-columns: 46px minmax(0, 1fr); }
+html[lang="en"] .step-basis li::before { content: "BASIS"; font-size: 8px; }
+html[lang="en"] .step-needs li::before { content: "NEEDS"; font-size: 8px; }
 
 .action-grid.single { grid-template-columns: minmax(0, 1fr); }
+
+/* --------------------------------------------- evidence panel collapse */
+
+.evidence-toggle { width: 20px; height: 20px; display: grid; place-items: center; border: 0; background: transparent; color: var(--text-3); cursor: pointer; border-radius: 4px; flex: 0 0 auto; }
+.evidence-toggle:hover { color: var(--text); background: var(--surface-2); }
+.evidence-toggle svg { width: 14px; height: 14px; transition: transform .18s; }
+.app:not(.evidence-collapsed) .evidence-toggle svg { transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce) { .evidence-toggle svg { transition: none; } }
+
+/* Collapsed keeps the header as a handle, so the panel can be brought back. */
+.app.evidence-collapsed { grid-template-columns: var(--rail-w) minmax(0, 1fr) 42px; }
+.app.evidence-collapsed .evidence-head { padding: 0 10px; }
+.app.evidence-collapsed .evidence-head h2, .app.evidence-collapsed .evidence-head .spacer { display: none; }
+.app.evidence-collapsed .evidence-list { display: none; }
+.app.evidence-collapsed .count-badge { position: absolute; top: 54px; left: 50%; transform: translateX(-50%); }
+.app.evidence-collapsed .evidence { position: relative; }
+.app.evidence-collapsed.no-evidence { grid-template-columns: var(--rail-w) minmax(0, 1fr); }
+
+.source-age { font: 500 9.5px/1.6 var(--mono); color: var(--text-3); border: 1px solid var(--border); border-radius: 3px; padding: 0 4px; }
+.source-status.cached { color: var(--accent-text); }
+.source-status.cached.stale { color: var(--risk-medium); }
