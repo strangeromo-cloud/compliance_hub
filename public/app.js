@@ -1413,9 +1413,15 @@ async function analyze(event, options = {}) {
   // over three times a run. It is still one box — that is where a continuation
   // should be read — but it now says whose reasoning it is showing, and each lane
   // keeps its own copy so nothing is lost by the handover.
+  // Exactly one surface is live at a time. Writing the same text into both the
+  // resume box and the lane's own box put two boxes streaming at once, which is
+  // indistinguishable from two specialists running at once — the opposite of what
+  // sequential execution is meant to show. Keeping a second copy was meant to make
+  // the handover lossless; the label on the box already does that job.
   function streamInto(lane, who, text) {
-    setStream(live.querySelector("[data-resume-stream]"), who, text);
-    setStream(live.querySelector(`[data-lane-stream="${CSS.escape(lane)}"]`), who, text);
+    const box = live.querySelector("[data-resume-stream]")
+      || live.querySelector(`[data-lane-stream="${CSS.escape(lane)}"]`);
+    setStream(box, who, text);
     // The box scrolls itself, so the page only follows while the reader is
     // already at the bottom of it.
     const thread = $("thread");
@@ -1431,7 +1437,13 @@ async function analyze(event, options = {}) {
       const lane = laneNode.dataset.lane;
       laneNode.classList.toggle("running", lane === progress.activeLane);
       laneNode.classList.toggle("done", progress.doneLanes.has(lane));
-      if (progress.text[lane] !== undefined) setStream(laneNode.querySelector("[data-lane-stream]"), null, progress.text[lane]);
+      // While a continuation is running the resume box is the live surface, so
+      // lane boxes are left alone rather than repopulated with finished text that
+      // would read as a second stream still going.
+      if (live.querySelector("[data-resume-stream]")) continue;
+      if (lane === progress.activeLane && progress.text[lane] !== undefined) {
+        setStream(laneNode.querySelector("[data-lane-stream]"), null, progress.text[lane]);
+      }
     }
   }
 
@@ -1446,8 +1458,10 @@ async function analyze(event, options = {}) {
     host.innerHTML = pathMarkup(collected.path, collected.grounding, {
       allowInput: false, activeLane: progress.activeLane, doneLanes: progress.doneLanes, results: collected.agents
     });
-    for (const [lane, text] of Object.entries(progress.text)) {
-      setStream(host.querySelector(`[data-lane-stream="${CSS.escape(lane)}"]`), null, text);
+    // Only the lane being analysed shows a stream; a finished lane's text stays
+    // out of the way so there is never more than one box writing.
+    if (progress.activeLane && progress.text[progress.activeLane] !== undefined) {
+      setStream(host.querySelector(`[data-lane-stream="${CSS.escape(progress.activeLane)}"]`), null, progress.text[progress.activeLane]);
     }
     for (const lane of openLanes) host.querySelector(`[data-lane="${CSS.escape(lane)}"]`)?.setAttribute("data-open", "1");
   }
