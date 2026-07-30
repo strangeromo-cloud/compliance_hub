@@ -218,7 +218,10 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
   }
 
   analysisPath = resolveAnalysisPath(analysisPath, { question: contextualQuestion, grounding: groundingSummary, results, declaredFacts, templated: mock, final: true });
-  onEvent({ type: "path", path: analysisPath });
+  // Flagged so the client knows the sequence has finished and a step may now ask
+  // the user for input; a form offered mid-run would be answered against a path
+  // that is still moving.
+  onEvent({ type: "path", path: analysisPath, final: true });
 
   return {
     id,

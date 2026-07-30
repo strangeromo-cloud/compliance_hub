@@ -23,7 +23,7 @@ const i18n = {
     hfQuestion: "一个问题", hfAnswer: "统一答案", startersLabel: "快速开始", workspaceEmpty: "工作区还没有 Gem", gemBacking: "数据支撑",
     teachSlashTitle: "在输入框键入 /", teachSlashBody: "呼出 {n} 个 Gem 的完整目录，上下键选择，回车使用。",
     teachPinTitle: "把常用 Gem 加入工作区", teachPinBody: "在目录里点 ★，或在 Gem 详情里点「添加到工作区」，它会常驻左侧栏。",
-    historyLabel: "历史记录", historyEmpty: "暂无记录", turnUnit: "轮", historyOpenFailed: "无法打开该记录", pathTitle: "分析路径", pathBasis: "路径依据", pathTemplated: "规则模式：待补项来自内置模板，不是对本问题的分析结果。切换到实时模型可得到针对性判断。", pathDerivedNote: "本步骤无对应官方条文，由系统按问题结构补充", stConfirmed: "已确认", stEvidence: "需更多证据", stNotReached: "未进行", status_confirmed: "已确认", status_evidence_needed: "需更多证据", status_not_reached: "待前序步骤", status_review_required: "需人工复核", status_pending: "待执行", stPending: "待执行", status_declared: "已声明，待核验", stDeclared: "已声明", declareSubmit: "提交并继续", declareSkip: "暂无此信息", declareSkipped: "已跳过 — 该步骤仍需证据，已保留在下方行动清单中", declareReopen: "重新填写", declarePlaceholder: "填写后提交", declareNote: "填写的内容记为声明信息，不等于已核验证据", declareEmpty: "请先填写至少一项", declarePrefix: "补充信息 — ", declaredAdded: "已补充", reasoningTrace: "比对明细", rsSearched: "已检索的名单来源", rsMatched: "名称命中", rsCompared: "身份要素比对", rsFacts: "已核验事实",
+    historyLabel: "历史记录", historyEmpty: "暂无记录", turnUnit: "轮", historyOpenFailed: "无法打开该记录", pathTitle: "分析路径", pathPlanning: "分析路径（进行中）", laneRunning: "正在分析", laneQueued: "排队中", stAsking: "等待你补充", stAfterInput: "待补充信息后继续", pathBasis: "路径依据", pathTemplated: "规则模式：待补项来自内置模板，不是对本问题的分析结果。切换到实时模型可得到针对性判断。", pathDerivedNote: "本步骤无对应官方条文，由系统按问题结构补充", stConfirmed: "已确认", stEvidence: "需更多证据", stNotReached: "未进行", status_confirmed: "已确认", status_evidence_needed: "需更多证据", status_not_reached: "待前序步骤", status_review_required: "需人工复核", status_pending: "待执行", stPending: "待执行", status_declared: "已声明，待核验", stDeclared: "已声明", declareSubmit: "提交并继续", declareSkip: "暂无此信息", declareSkipped: "已跳过 — 该步骤仍需证据，已保留在下方行动清单中", declareReopen: "重新填写", declarePlaceholder: "填写后提交", declareNote: "填写的内容记为声明信息，不等于已核验证据", declareEmpty: "请先填写至少一项", declarePrefix: "补充信息 — ", declaredAdded: "已补充", reasoningTrace: "比对明细", rsSearched: "已检索的名单来源", rsMatched: "名称命中", rsCompared: "身份要素比对", rsFacts: "已核验事实",
     rsScore: "相似度", rsOpen: "查看原文", rsUnsynced: "未同步、本次未检索",
     el_country: "国别", el_registration_number: "注册号", el_address: "地址",
     st_agree: "一致", st_conflict: "冲突", st_unavailable: "缺失",
@@ -40,7 +40,7 @@ const i18n = {
     runtimeRules: "规则模式", runtimeReady: "实时模型", runtimeMissing: "未配置模型",
     modeHint: "点击切换规则模式与实时模型",
     routeLabel: "路由", routedTo: "已路由至", specialistTrace: "专业 Agent 分析轨迹",
-    overallAssessment: "总体判断", nextStep: "下一步", missingInfo: "仍需信息", actions: "建议行动", actionPlan: "行动清单", actionPlanHint: "按依赖顺序", unblocks: "→ 解锁", planBlocked: "待前序步骤完成：", planSuggested: "其他建议", planClosing: "结案：", noItems: "暂无", limitations: "结论边界与限制",
+    overallAssessment: "总体判断", nextStep: "下一步", missingInfo: "仍需信息", actions: "建议行动", actionPlan: "行动清单", actionPlanHint: "按依赖顺序", unblocks: "→ 解锁", actionNow: "现在这一步", planBlocked: "待前序步骤完成：", planSuggested: "其他建议", planClosing: "结案：", noItems: "暂无", limitations: "结论边界与限制",
     sourceLive: "实时获取", sourceMetadata: "元数据", sourceUnavailable: "获取失败", sourceNotFetched: "未获取", sourceArchived: "已采集副本", sourceCitationOnly: "仅引用", sourceCached: "缓存", noQueryableSource: "暂无可直查的来源（需先同步）", sourceQueryHint: "@ 直查数据源", sourceQueryPlaceholder: "输入实体名、公告号或条文关键词（按相关性排序；留空则浏览全部）…",
     queryEmpty: "请输入查询内容", queryHits: "{total} 条命中", browseCount: "共 {total} 条", browseAll: "浏览全部", pagePrev: "上一页", pageNext: "下一页", relMatched: "命中", relMissed: "未命中", relPartial: "另有 {n} 条仅命中部分检索词，未列出", queryNoHit: "该来源中未找到匹配记录", queryTruncated: "显示前 {shown} 条，共 {total} 条",
     queryEscalate: "以此发起完整筛查 →", escalatePrefix: "请对 {q} 做完整合规筛查",
@@ -77,7 +77,7 @@ const i18n = {
     hfQuestion: "One question", hfAnswer: "One answer", startersLabel: "Start here", workspaceEmpty: "No gems in your workspace yet", gemBacking: "Data behind it",
     teachSlashTitle: "Press / in the composer", teachSlashBody: "Opens the full catalogue of {n} gems. Arrow keys select, Enter uses.",
     teachPinTitle: "Pin the ones you use", teachPinBody: "Add to workspace from a gem's details and it stays in the sidebar.",
-    historyLabel: "History", historyEmpty: "No cases yet", turnUnit: "turns", historyOpenFailed: "That case could not be opened", pathTitle: "Analysis path", pathBasis: "Path follows", pathTemplated: "Rules mode: the outstanding items come from built-in templates, not from analysing this question. Switch to the live model for a specific assessment.", pathDerivedNote: "No official provision for this step; added by the system", stConfirmed: "settled", stEvidence: "need evidence", stNotReached: "not reached", status_confirmed: "Settled", status_evidence_needed: "Evidence needed", status_not_reached: "Awaiting earlier step", status_review_required: "Human review", status_pending: "Planned", stPending: "planned", status_declared: "Declared, unverified", stDeclared: "declared", declareSubmit: "Submit and continue", declareSkip: "Not available", declareSkipped: "Skipped — this step still needs evidence and stays in the action list below", declareReopen: "Fill in", declarePlaceholder: "Fill in, then submit", declareNote: "What you enter is recorded as a declaration, not as verified evidence", declareEmpty: "Fill in at least one field first", declarePrefix: "Additional information — ", declaredAdded: "Supplied", reasoningTrace: "Comparison detail", rsSearched: "Lists searched", rsMatched: "Name matches", rsCompared: "Identity comparison", rsFacts: "Verified facts",
+    historyLabel: "History", historyEmpty: "No cases yet", turnUnit: "turns", historyOpenFailed: "That case could not be opened", pathTitle: "Analysis path", pathPlanning: "Analysis path (running)", laneRunning: "analysing", laneQueued: "queued", stAsking: "waiting for you", stAfterInput: "continues once supplied", pathBasis: "Path follows", pathTemplated: "Rules mode: the outstanding items come from built-in templates, not from analysing this question. Switch to the live model for a specific assessment.", pathDerivedNote: "No official provision for this step; added by the system", stConfirmed: "settled", stEvidence: "need evidence", stNotReached: "not reached", status_confirmed: "Settled", status_evidence_needed: "Evidence needed", status_not_reached: "Awaiting earlier step", status_review_required: "Human review", status_pending: "Planned", stPending: "planned", status_declared: "Declared, unverified", stDeclared: "declared", declareSubmit: "Submit and continue", declareSkip: "Not available", declareSkipped: "Skipped — this step still needs evidence and stays in the action list below", declareReopen: "Fill in", declarePlaceholder: "Fill in, then submit", declareNote: "What you enter is recorded as a declaration, not as verified evidence", declareEmpty: "Fill in at least one field first", declarePrefix: "Additional information — ", declaredAdded: "Supplied", reasoningTrace: "Comparison detail", rsSearched: "Lists searched", rsMatched: "Name matches", rsCompared: "Identity comparison", rsFacts: "Verified facts",
     rsScore: "Similarity", rsOpen: "Open source", rsUnsynced: "Not synced, therefore not searched",
     el_country: "Country", el_registration_number: "Registration no.", el_address: "Address",
     st_agree: "agree", st_conflict: "conflict", st_unavailable: "missing",
@@ -94,7 +94,7 @@ const i18n = {
     runtimeRules: "Rules mode", runtimeReady: "Live model", runtimeMissing: "No model configured",
     modeHint: "Toggle between rules mode and the live model",
     routeLabel: "Route", routedTo: "Routed to", specialistTrace: "Specialist agent trace",
-    overallAssessment: "Overall assessment", nextStep: "Next step", missingInfo: "Missing information", actions: "Recommended actions", actionPlan: "Action list", actionPlanHint: "in dependency order", unblocks: "→ unblocks", planBlocked: "Awaiting the steps above: ", planSuggested: "Other suggestions", planClosing: "To close: ", noItems: "None", limitations: "Limits on this conclusion",
+    overallAssessment: "Overall assessment", nextStep: "Next step", missingInfo: "Missing information", actions: "Recommended actions", actionPlan: "Action list", actionPlanHint: "in dependency order", unblocks: "→ unblocks", actionNow: "do this now", planBlocked: "Awaiting the steps above: ", planSuggested: "Other suggestions", planClosing: "To close: ", noItems: "None", limitations: "Limits on this conclusion",
     sourceLive: "Live", sourceMetadata: "Metadata", sourceUnavailable: "Unavailable", sourceNotFetched: "Not fetched", sourceArchived: "Archived copy", sourceCitationOnly: "Cited only", sourceCached: "Cached", noQueryableSource: "No queryable source yet (sync one first)", sourceQueryHint: "@ query a source", sourceQueryPlaceholder: "Entity name, notice number or keyword — ranked by relevance; leave empty to browse all…",
     queryEmpty: "Enter something to look up", queryHits: "{total} matches", browseCount: "{total} records", browseAll: "Browse all", pagePrev: "Previous", pageNext: "Next", relMatched: "matched", relMissed: "not matched", relPartial: "{n} more records matched only part of the query and are not listed", queryNoHit: "No matching record in this source", queryTruncated: "Showing {shown} of {total}",
     queryEscalate: "Run a full screening on this →", escalatePrefix: "Run a full compliance screening on {q}",
@@ -744,16 +744,44 @@ function stepInputsMarkup(item) {
     </div>`;
 }
 
-// The path is the answer to "what do I do next": each step says whether it is
-// settled, on what, and what would settle it if not. The comparison detail and
-// the limits both live inside it now — four collapsible blocks saying
-// overlapping things was the reason nothing read as the point.
-function pathMarkup(path, grounding) {
+// The path is the whole progress display, not a summary printed next to one.
+// Showing a stage list, a planned path and a set of agent panels side by side
+// made three renderings of one process, and none of them read as the sequence
+// the work actually follows.
+//
+// Expansion follows position in that sequence: what is settled or waiting on the
+// user is open, what has not been reached is a collapsed line. Only the first
+// step that needs input carries a form — six forms at once is not a sequence, and
+// the request was to answer one thing and continue.
+function firstBlockedStep(path) {
+  for (const lane of path?.lanes || []) {
+    for (const item of lane.steps) {
+      if (item.status === "evidence_needed" && item.inputs?.length) return item.id;
+    }
+  }
+  return null;
+}
+
+// The title, not the id, because the action list refers to steps by title.
+function askingStepTitle(path) {
+  const id = firstBlockedStep(path);
+  if (!id) return null;
+  for (const lane of path?.lanes || []) {
+    const found = lane.steps.find((item) => item.id === id);
+    if (found) return found.title;
+  }
+  return null;
+}
+
+function pathMarkup(path, grounding, options = {}) {
   if (!path?.lanes?.length) return "";
   const s = path.summary;
+  const blocked = options.allowInput === false ? null : firstBlockedStep(path);
+  const activeLane = options.activeLane || null;
+  const doneLanes = options.doneLanes || new Set();
   return `
     <details class="trace analysis-path" open>
-      <summary>${esc(t("pathTitle"))}
+      <summary>${esc(t(options.allowInput === false ? "pathPlanning" : "pathTitle"))}
         <span class="path-summary">
           ${s.pending ? `<span class="ps pending">○ ${s.pending} ${esc(label(STEP_STATUS_VOCAB, "pending", state.locale))}</span>` : ""}
           ${s.confirmed ? `<span class="ps ok">✓ ${s.confirmed} ${esc(label(STEP_STATUS_VOCAB, "confirmed", state.locale))}</span>` : ""}
@@ -770,33 +798,51 @@ function pathMarkup(path, grounding) {
             ? `<a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">${esc(item.label)}</a>`
             : esc(item.label)}${item.authority ? `<i>${esc(item.authority)}</i>` : ""}</span>`).join("")}
         </div>` : ""}
-        ${path.lanes.map((lane) => `
-        <section class="path-lane">
-          <div class="path-lane-label">${esc(lane.label)}</div>
+        ${path.lanes.map((lane) => {
+          const running = lane.lane === activeLane;
+          const laneState = running ? "running" : doneLanes.has(lane.lane) ? "done" : options.allowInput === false ? "queued" : "";
+          return `
+        <section class="path-lane ${laneState}" data-lane="${esc(lane.lane)}">
+          <div class="path-lane-label">
+            ${esc(lane.label)}
+            ${running ? `<span class="thinking-dot" aria-hidden="true"></span><span class="lane-state">${esc(t("laneRunning"))}</span>` : ""}
+            ${laneState === "queued" ? `<span class="lane-state">${esc(t("laneQueued"))}</span>` : ""}
+          </div>
+          ${/* The specialist's reasoning belongs to the lane it is reasoning about,
+                so the live text and the steps it produces are one thing. */ ""}
+          <div class="lane-stream" data-lane-stream="${esc(lane.lane)}"></div>
           <ol class="path-steps">${lane.steps.map((item) => {
             const stepTone = tone(STEP_STATUS_VOCAB, item.status);
             const mark = STEP_STATUS_VOCAB[item.status]?.mark || "·";
+            const asking = item.id === blocked;
+            const reached = item.status !== "not_reached" && item.status !== "pending";
+            const open = asking || reached;
+            const waiting = Boolean(blocked) && !reached;
             return `
-            <li class="path-step tone-${stepTone}">
+            <li class="path-step tone-${stepTone} ${open ? "open" : "shut"} ${asking ? "asking" : ""}">
               <span class="step-mark" aria-hidden="true">${mark}</span>
               <div class="step-body">
-                <div class="step-head">
+                <button type="button" class="step-head" data-step-toggle aria-expanded="${open}">
                   <strong>${esc(item.title)}</strong>
-                  <span class="step-status">${esc(label(STEP_STATUS_VOCAB, item.status, state.locale))}</span>
+                  <span class="step-status">${esc(waiting ? t("stAfterInput") : label(STEP_STATUS_VOCAB, item.status, state.locale))}</span>
                   ${item.cite ? `<span class="step-cite ${item.methodology === "derived" ? "derived" : ""}" title="${esc(item.citeNote || "")}">${esc(item.cite)}</span>` : ""}
+                  ${asking ? `<span class="step-asking">${esc(t("stAsking"))}</span>` : ""}
+                </button>
+                <div class="step-detail-wrap">
+                  ${item.basis.length ? `<ul class="step-basis">${item.basis.map((line) => {
+                    const sourceRef = String(line).match(/^([a-z0-9-]{4,32})[：:]/);
+                    const known = sourceRef && (state.coverage?.sources || []).some((source) => source.sourceId === sourceRef[1]);
+                    return `<li>${formatInline(line)}${known ? ` <button type="button" class="jump-source" data-jump-source="${esc(sourceRef[1])}" title="${esc(t("jumpSource"))}">⛁</button>` : ""}</li>`;
+                  }).join("")}</ul>` : ""}
+                  ${item.needs.length ? `<ul class="step-needs">${item.needs.map((line) => `<li>${formatInline(line)}</li>`).join("")}</ul>` : ""}
+                  ${stepDetailMarkup(item, grounding)}
+                  ${asking ? stepInputsMarkup(item) : ""}
                 </div>
-                ${item.basis.length ? `<ul class="step-basis">${item.basis.map((line) => {
-                  const sourceRef = String(line).match(/^([a-z0-9-]{4,32})[：:]/);
-                  const known = sourceRef && (state.coverage?.sources || []).some((source) => source.sourceId === sourceRef[1]);
-                  return `<li>${formatInline(line)}${known ? ` <button type="button" class="jump-source" data-jump-source="${esc(sourceRef[1])}" title="${esc(t("jumpSource"))}">⛁</button>` : ""}</li>`;
-                }).join("")}</ul>` : ""}
-                ${item.needs.length ? `<ul class="step-needs">${item.needs.map((line) => `<li>${formatInline(line)}</li>`).join("")}</ul>` : ""}
-                ${stepDetailMarkup(item, grounding)}
-                ${item.status === "evidence_needed" && item.inputs?.length ? stepInputsMarkup(item) : ""}
               </div>
             </li>`;
           }).join("")}</ol>
-        </section>`).join("")}
+        </section>`;
+        }).join("")}
         ${grounding?.limitations?.length ? `<div class="path-limits">
           <div class="pl-label">${esc(t("limitations"))}<span class="trace-count">${grounding.limitations.length}</span></div>
           <ul>${grounding.limitations.map((line) => `<li>${formatInline(line)}</li>`).join("")}</ul>
@@ -851,7 +897,10 @@ function stepDetailMarkup(item, grounding) {
 // replaces a recommended-actions block and a separate next step that restated
 // its first line — two lists saying the same thing left the reader deciding
 // which one to act on.
-function actionPlanMarkup(plan) {
+// The list and the path have to point at each other, or they read as two
+// separate to-dos: the item that unblocks the step currently asking for input is
+// marked as the one to do now.
+function actionPlanMarkup(plan, askingStep = null) {
   if (!plan) return "";
   const total = plan.actions.length;
   if (!total && !plan.suggested.length) return "";
@@ -862,13 +911,17 @@ function actionPlanMarkup(plan) {
         ${total ? `<span class="action-count">${total}</span>` : ""}
         <span class="plan-hint">${esc(t("actionPlanHint"))}</span>
       </div>
-      ${total ? `<ol class="plan-items">${plan.actions.map((item, index) => `
-        <li>
+      ${total ? `<ol class="plan-items">${plan.actions.map((item, index) => {
+        const now = askingStep && item.unblocks === askingStep;
+        return `
+        <li class="${now ? "now" : ""}">
           <span class="marker" aria-hidden="true">${index + 1}</span>
           <span class="item-body">${formatInline(item.action)}
+            ${now ? `<span class="now-chip">${esc(t("actionNow"))}</span>` : ""}
             <span class="unblocks">${esc(t("unblocks"))} ${esc(item.unblocks)}</span>
           </span>
-        </li>`).join("")}</ol>` : ""}
+        </li>`;
+      }).join("")}</ol>` : ""}
       ${plan.blocked.length ? `<p class="plan-blocked">${esc(t("planBlocked"))}${plan.blocked.map(esc).join("、")}</p>` : ""}
       ${plan.suggested.length ? `
         <details class="plan-extra">
@@ -900,10 +953,14 @@ function answerMarkup(data) {
             </div>
           </div>
 
-          ${actionPlanMarkup(data.actionPlan)}
         </section>
 
-        ${pathMarkup(data.analysisPath, data.grounding)}
+        ${/* The path comes before the action list: the list is what follows from
+              where the analysis stopped, and reading the consequence first was
+              part of why the two halves felt unrelated. */ ""}
+        ${pathMarkup(data.analysisPath, data.grounding, { allowInput: true })}
+
+        ${actionPlanMarkup(data.actionPlan, askingStepTitle(data.analysisPath))}
 
         <details class="trace">
           <summary>${t("specialistTrace")}<span class="trace-count">${data.results.length}</span></summary>
@@ -935,6 +992,7 @@ function createLiveMessage() {
     <div>
       <div class="msg-meta" data-live-meta></div>
       <ol class="live-steps" data-live-steps></ol>
+      <div data-live-path></div>
       <div class="live-agents" data-live-agents></div>
     </div>`;
   $("threadInner").appendChild(node);
@@ -1150,6 +1208,24 @@ async function analyze(event) {
   const live = createLiveMessage();
   const done = new Set();
   const collected = { agents: [], sources: [] };
+  // Lane progress is kept outside the DOM so a redraw can restore the streamed
+  // text: the path is re-rendered whenever a lane starts or finishes.
+  const progress = { activeLane: null, doneLanes: new Set(), text: {}, summary: {} };
+
+  function drawPath() {
+    if (!collected.path) return;
+    const host = live.querySelector("[data-live-path]");
+    const openLanes = [...host.querySelectorAll(".path-lane")].filter((lane) => lane.dataset.open === "1").map((lane) => lane.dataset.lane);
+    host.innerHTML = pathMarkup(collected.path, collected.grounding, {
+      allowInput: false, activeLane: progress.activeLane, doneLanes: progress.doneLanes
+    });
+    for (const [lane, text] of Object.entries(progress.text)) {
+      const target = host.querySelector(`[data-lane-stream="${CSS.escape(lane)}"]`);
+      if (target) target.textContent = text;
+    }
+    for (const lane of openLanes) host.querySelector(`[data-lane="${CSS.escape(lane)}"]`)?.setAttribute("data-open", "1");
+  }
+
   renderSteps(live, done, "routed");
 
   const onEvent = (event) => {
@@ -1183,20 +1259,14 @@ async function analyze(event) {
     // A specialist gets its panel the moment it starts, so its reasoning can be
     // shown as it is written rather than appearing complete out of nowhere.
     if (event.type === "path") {
-      const existing = live.querySelector("[data-live-path]");
-      const markup = pathMarkup(event.path, collected.grounding);
-      if (existing) existing.outerHTML = markup.replace("<details", '<details data-live-path');
-      else live.querySelector("[data-live-steps]").insertAdjacentHTML("afterend", markup.replace("<details", '<details data-live-path'));
+      collected.path = event.path;
+      drawPath();
     }
     if (event.type === "agent_start") {
-      live.querySelector("[data-live-agents]").insertAdjacentHTML("beforeend", `
-        <section class="live-agent thinking" data-agent="${esc(event.agent)}">
-          <div class="trace-agent-head">
-            <strong>${agentName(event.agent)}</strong>
-            <span class="thinking-dot" aria-hidden="true"></span>
-          </div>
-          <p class="stream-text" data-stream></p>
-        </section>`);
+      // The lane becomes the active one, so the reasoning about to stream lands
+      // inside the steps it is reasoning about.
+      progress.activeLane = event.agent;
+      drawPath();
     }
     // A provider that ignores stream: true degrades to one update at the end,
     // which is indistinguishable from a broken feature unless it is said.
@@ -1205,9 +1275,10 @@ async function analyze(event) {
         `<p class="live-note stream-notice" data-stream-notice>${esc(t("noStreamNotice"))}</p>`);
     }
     if (event.type === "agent_delta") {
-      const panel = live.querySelector(`[data-agent="${CSS.escape(event.agent)}"] [data-stream]`);
-      if (panel) {
-        panel.textContent = event.text;
+      progress.text[event.agent] = event.text;
+      const lane = live.querySelector(`[data-lane-stream="${CSS.escape(event.agent)}"]`);
+      if (lane) {
+        lane.textContent = event.text;
         // Only follow the stream while the reader is already at the bottom.
         const thread = $("thread");
         if (thread.scrollHeight - thread.scrollTop - thread.clientHeight < 120) thread.scrollTop = thread.scrollHeight;
@@ -1215,30 +1286,25 @@ async function analyze(event) {
     }
     if (event.type === "agent") {
       collected.agents.push(event.result);
-      const panel = live.querySelector(`[data-agent="${CSS.escape(event.result.agent)}"]`);
-      const markup = `
-          <div class="trace-agent-head">
-            <strong>${agentName(event.result.agent)}</strong>
-            <span class="risk-chip risk-${esc(event.result.riskLevel)}">${esc(riskLabel(event.result.riskLevel))}</span>
-          </div>
-          <p>${esc(event.result.summary)}</p>`;
-      if (panel) { panel.classList.remove("thinking"); panel.innerHTML = markup; }
-      else live.querySelector("[data-live-agents]").insertAdjacentHTML("beforeend", `<section class="live-agent">${markup}</section>`);
+      progress.doneLanes.add(event.result.agent);
+      progress.summary[event.result.agent] = event.result;
+      if (progress.activeLane === event.result.agent) progress.activeLane = null;
+      drawPath();
     }
     if (event.type === "synthesis_delta") {
-      let panel = live.querySelector("[data-synthesis-stream]");
-      if (!panel) {
-        live.querySelector("[data-live-agents]").insertAdjacentHTML("beforeend",
-          `<section class="live-agent thinking"><div class="trace-agent-head"><strong>${t("step_synthesizing")}</strong><span class="thinking-dot" aria-hidden="true"></span></div><p class="stream-text" data-synthesis-stream></p></section>`);
-        panel = live.querySelector("[data-synthesis-stream]");
+      progress.text.review = event.text;
+      const lane = live.querySelector('[data-lane-stream="review"]');
+      if (lane) {
+        lane.textContent = event.text;
+        const thread = $("thread");
+        if (thread.scrollHeight - thread.scrollTop - thread.clientHeight < 120) thread.scrollTop = thread.scrollHeight;
       }
-      panel.textContent = event.text;
-      const thread = $("thread");
-      if (thread.scrollHeight - thread.scrollTop - thread.clientHeight < 120) thread.scrollTop = thread.scrollHeight;
     }
     if (event.type === "synthesizing") {
       done.add("agents");
+      progress.activeLane = "review";
       renderSteps(live, done, "synthesizing");
+      drawPath();
     }
   };
 
@@ -1547,6 +1613,16 @@ $("gemNav").addEventListener("click", (event) => {
 // transcript records what was supplied and the conclusion is recomputed with it
 // rather than being patched in place.
 $("threadInner").addEventListener("click", (event) => {
+  // A collapsed step can still be opened: collapsing is about what to read first,
+  // not about hiding what a step concluded.
+  const stepToggle = event.target.closest("[data-step-toggle]");
+  if (stepToggle) {
+    const step = stepToggle.closest(".path-step");
+    const open = step.classList.toggle("open");
+    step.classList.toggle("shut", !open);
+    stepToggle.setAttribute("aria-expanded", String(open));
+    return;
+  }
   // Paging re-runs the same lookup and swaps the panel in place.
   const page = event.target.closest("[data-page]");
   if (page) {
