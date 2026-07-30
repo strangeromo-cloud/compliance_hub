@@ -743,7 +743,15 @@ function flowMarkup(path, options = {}) {
   if (!path?.lanes?.length) return "";
   const steps = path.lanes.flatMap((lane) => lane.steps);
   const executed = steps.filter((item) => item.status !== "pending" && item.status !== "not_reached").length;
-  const asking = firstBlockedStep(path);
+  // Two different meanings of "current", and showing the wrong one made the rail
+  // contradict the body: while a specialist is running, "current" is where the
+  // work is; only once the run has stopped to ask does it become the question
+  // waiting on the user. Marking the pending question during a run left the rail
+  // pointing at Trade while Ethics & TPDD was visibly streaming.
+  const runningLane = options.activeLane ? path.lanes.find((lane) => lane.lane === options.activeLane) : null;
+  const asking = runningLane
+    ? runningLane.steps.find((item) => item.status !== "confirmed" && item.status !== "declared")?.id || null
+    : firstBlockedStep(path);
   const percent = Math.round((executed / steps.length) * 100);
 
   return `
@@ -902,6 +910,30 @@ function derivationMarkup(path) {
 // is what made a run unreadable — seventeen steps, nine of them blocked, with no
 // way to tell which one to act on. The full plan lives in the flow rail, which is
 // where "how much is left" belongs.
+// Streamed reasoning always looks the same wherever it appears: a label saying
+// whose it is, the text, and a placeholder that runs until the first token lands.
+// Without the placeholder the gap between "started" and "first token" — several
+// seconds on a live model — looks like nothing happening at all.
+function streamBoxMarkup(attr) {
+  return `<div class="stream-box" ${attr}>
+    <div class="sb-who"></div>
+    <div class="sb-text"></div>
+    <div class="sb-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+  </div>`;
+}
+
+// The text pane is the scroller, so a long run stays inside its own box instead
+// of pushing the rest of the answer down the page, and it follows the output.
+function setStream(box, who, text) {
+  if (!box) return;
+  if (who !== null) box.querySelector(".sb-who").textContent = who || "";
+  const pane = box.querySelector(".sb-text");
+  pane.textContent = text || "";
+  box.classList.toggle("is-live", Boolean(who) || Boolean(text));
+  box.classList.toggle("is-waiting", !text);
+  pane.scrollTop = pane.scrollHeight;
+}
+
 function pathMarkup(path, grounding, options = {}) {
   if (!path?.lanes?.length) return "";
   const blocked = options.allowInput === false ? null : firstBlockedStep(path);
@@ -971,7 +1003,7 @@ function pathMarkup(path, grounding, options = {}) {
           ${result?.findings?.length ? `<ul class="lane-findings">${result.findings.map((finding) => `
             <li><b>${esc(finding.title)}</b> ${formatInline(finding.detail)}${(finding.evidenceSourceIds || []).length
               ? `<span class="cite">${finding.evidenceSourceIds.map((id) => `<span>${esc(id)}</span>`).join("")}</span>` : ""}</li>`).join("")}</ul>` : ""}
-          <div class="lane-stream" data-lane-stream="${esc(lane.lane)}"></div>
+          ${streamBoxMarkup(`data-lane-stream="${esc(lane.lane)}"`)}
         </section>`;
     });
 
@@ -1382,14 +1414,10 @@ async function analyze(event, options = {}) {
   // should be read — but it now says whose reasoning it is showing, and each lane
   // keeps its own copy so nothing is lost by the handover.
   function streamInto(lane, who, text) {
-    const box = live.querySelector("[data-resume-stream]");
-    if (box) {
-      box.querySelector("[data-resume-who]").textContent = who;
-      box.querySelector("[data-resume-text]").textContent = text;
-    }
-    const own = live.querySelector(`[data-lane-stream="${CSS.escape(lane)}"]`);
-    if (own) own.textContent = text;
-    // Only follow the stream while the reader is already at the bottom.
+    setStream(live.querySelector("[data-resume-stream]"), who, text);
+    setStream(live.querySelector(`[data-lane-stream="${CSS.escape(lane)}"]`), who, text);
+    // The box scrolls itself, so the page only follows while the reader is
+    // already at the bottom of it.
     const thread = $("thread");
     if (thread.scrollHeight - thread.scrollTop - thread.clientHeight < 120) thread.scrollTop = thread.scrollHeight;
   }
@@ -1403,8 +1431,7 @@ async function analyze(event, options = {}) {
       const lane = laneNode.dataset.lane;
       laneNode.classList.toggle("running", lane === progress.activeLane);
       laneNode.classList.toggle("done", progress.doneLanes.has(lane));
-      const stream = laneNode.querySelector("[data-lane-stream]");
-      if (stream && progress.text[lane] !== undefined) stream.textContent = progress.text[lane];
+      if (progress.text[lane] !== undefined) setStream(laneNode.querySelector("[data-lane-stream]"), null, progress.text[lane]);
     }
   }
 
@@ -1420,8 +1447,7 @@ async function analyze(event, options = {}) {
       allowInput: false, activeLane: progress.activeLane, doneLanes: progress.doneLanes, results: collected.agents
     });
     for (const [lane, text] of Object.entries(progress.text)) {
-      const target = host.querySelector(`[data-lane-stream="${CSS.escape(lane)}"]`);
-      if (target) target.textContent = text;
+      setStream(host.querySelector(`[data-lane-stream="${CSS.escape(lane)}"]`), null, text);
     }
     for (const lane of openLanes) host.querySelector(`[data-lane="${CSS.escape(lane)}"]`)?.setAttribute("data-open", "1");
   }
@@ -1474,6 +1500,8 @@ async function analyze(event, options = {}) {
       renderSteps(live, done, "agents", `${agentName(event.agent)} · ${progress.index}/${progress.total}`);
       progress.clock = startElapsed(live);
       drawPath();
+      // Label and placeholder go up immediately; the first token can be seconds away.
+      streamInto(event.agent, `${agentName(event.agent)} · ${progress.index}/${progress.total}`, "");
       renderFlowPanel(collected.path, { activeLane: progress.activeLane });
     }
     // A provider that ignores stream: true degrades to one update at the end,
@@ -1504,6 +1532,7 @@ async function analyze(event, options = {}) {
       clearInterval(progress.clock);
       renderSteps(live, done, "synthesizing");
       progress.clock = startElapsed(live);
+      streamInto("review", t("step_synthesizing"), "");
       drawPath();
       renderFlowPanel(collected.path, { activeLane: progress.activeLane });
     }
@@ -1920,10 +1949,7 @@ $("threadInner").addEventListener("click", (event) => {
       <span class="thinking-dot" aria-hidden="true"></span>
       <span class="sis-state">${esc(t("declareContinuing"))}</span>
     </div>
-    <div class="si-stream" data-resume-stream>
-      <div class="ss-who" data-resume-who></div>
-      <div class="ss-text" data-resume-text></div>
-    </div>`);
+    ${streamBoxMarkup("data-resume-stream")}`);
 
   // The same analysis carries on with one more fact, inside the answer already on
   // screen — not a new question producing a second answer below it.
