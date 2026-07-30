@@ -12,6 +12,7 @@
 //   confirmed        settled, and `basis` says on what
 //   evidence_needed  reached but blocked, and `needs` says by what
 //   not_reached      an earlier step must settle first
+//   not_applicable   the conditions for this step do not arise, so it needs no work
 //   review_required  only a person can close this
 //
 // Statuses are never taken from the model's own account of its work. A model
@@ -227,7 +228,8 @@ function summarize(lanes) {
     confirmed: all.filter((item) => item.status === "confirmed").length,
     declared: all.filter((item) => item.status === "declared").length,
     evidenceNeeded: all.filter((item) => item.status === "evidence_needed").length,
-    notReached: all.filter((item) => item.status === "not_reached").length
+    notReached: all.filter((item) => item.status === "not_reached").length,
+    notApplicable: all.filter((item) => item.status === "not_applicable").length
   };
 }
 
@@ -289,7 +291,10 @@ function tradeSteps(question, grounding, results) {
   }
 
   if (!matches.length) {
-    steps.push(step("identity_resolution", "身份要素消歧", "not_reached", { needs: ["无名称命中，无需消歧"] }));
+    // Nothing matched, so there is nothing to disambiguate. That is a step with no
+    // work in it, not a step waiting on earlier work — counting it as outstanding
+    // made a finished analysis read as one that had stopped short.
+    steps.push(step("identity_resolution", "身份要素消歧", "not_applicable", { basis: ["无名称命中，本步骤不适用"] }));
   } else if (!internal.length) {
     steps.push(step("identity_resolution", "身份要素消歧", "evidence_needed",
       { needs: ["需提供该主体的注册国别、注册号和注册地址，才能与名单条目逐项比对"] }));

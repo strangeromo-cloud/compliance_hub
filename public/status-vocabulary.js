@@ -39,6 +39,9 @@ export const STEP_STATUS_VOCAB = {
   confirmed:       { zh: "已确认",       en: "Settled",              tone: "ok",      mark: "✓" },
   declared:        { zh: "已声明，待核验", en: "Declared, unverified", tone: "declared", mark: "◐" },
   evidence_needed: { zh: "需更多证据",   en: "Evidence needed",      tone: "warn",    mark: "!" },
+  // A step with no work in it. Distinct from not_reached, which is work that is
+  // still waiting: one is finished business, the other is outstanding.
+  not_applicable:  { zh: "不适用",       en: "Not applicable",   tone: "muted", mark: "–" },
   not_reached:     { zh: "待前序步骤",   en: "Awaiting earlier step", tone: "muted",  mark: "·" },
   review_required: { zh: "需人工复核",   en: "Human review",         tone: "crit",    mark: "▲" }
 };

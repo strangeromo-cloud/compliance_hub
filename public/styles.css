@@ -1321,3 +1321,5 @@ html[lang="en"] .step-needs li::before { content: "NEEDS"; font-size: 8px; }
 .answer-extra.is-limits li::before { background: var(--risk-medium); }
 /* Inside the collapsed interim there is no frame, so it aligns with its text. */
 .interim-body .answer-extra { padding-left: 0; padding-right: 0; }
+.fl-step.na .fl-node { border-style: dotted; color: var(--text-3); }
+.fl-step.na .fl-text { color: var(--text-3); text-decoration: line-through; text-decoration-color: var(--border-strong); }

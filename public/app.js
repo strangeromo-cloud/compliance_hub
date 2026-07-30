@@ -719,10 +719,11 @@ function setPanelTab(tab) {
 // of the plan stays visible.
 // Settled means the step is closed: established, declared by the user, or handed
 // to a human. Reached-but-blocked is not progress.
-const SETTLED_STATUS = new Set(["confirmed", "declared", "review_required"]);
+const SETTLED_STATUS = new Set(["confirmed", "declared", "review_required", "not_applicable"]);
 
 const FLOW_STATE = {
   confirmed: { cls: "done", mark: "✓" },
+  not_applicable: { cls: "na", mark: "–" },
   declared: { cls: "declared", mark: "◐" },
   evidence_needed: { cls: "blocked", mark: "!" },
   review_required: { cls: "review", mark: "▲" },
@@ -785,7 +786,7 @@ function flowMarkup(path, options = {}) {
           const current = item.id === asking;
           return `
           <li class="fl-step ${shape.cls} ${current ? "current" : ""}">
-            <button type="button" data-flow-step="${esc(item.id)}" title="${esc(label(STEP_STATUS_VOCAB, item.status, state.locale))}">
+            <button type="button" data-flow-step="${esc(item.id)}" title="${esc([label(STEP_STATUS_VOCAB, item.status, state.locale), item.needs?.[0] || item.basis?.[0] || ""].filter(Boolean).join(" — "))}">
               <span class="fl-node" aria-hidden="true">${shape.mark}</span>
               <span class="fl-text">${esc(item.title)}</span>
             </button>
@@ -966,7 +967,7 @@ function pathMarkup(path, grounding, options = {}) {
   const activeLane = options.activeLane || null;
   const doneLanes = options.doneLanes || new Set();
   const results = options.results || [];
-  const settled = (item) => item.status === "confirmed" || item.status === "declared" || item.status === "review_required";
+  const settled = (item) => SETTLED_STATUS.has(item.status);
   // Forward-only reveal, per lane. A lane that has been analysed keeps everything
   // it established plus its own next open question; a lane that has not run is not
   // drawn at all. Deciding this globally hid whole lanes that had just produced a
