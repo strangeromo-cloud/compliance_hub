@@ -80,6 +80,20 @@ function requireAccess(request) {
   }
 }
 
+// Rules mode spends nothing, so it stays open and the app is never a dead end
+// without a code. A live call spends the server's model budget, so it needs one.
+// With a server key and no ACCESS_PASSWORD there is no code that could be
+// checked, so the correct answer is to refuse rather than to serve the budget
+// openly — an operator who wants live answers sets the variable.
+function requireModelAccess(request, mock) {
+  if (mock) return;
+  if (ACCESS_PASSWORD) return requireAccess(request);
+  if (process.env.OPENAI_API_KEY) {
+    throw Object.assign(new Error("Live-model calls are disabled because ACCESS_PASSWORD is not set on the server."), { status: 503, code: "access_code_unset" });
+  }
+  // No server key: the caller supplied their own, so it is their budget to spend.
+}
+
 function cleanConfig(input = {}) {
   // When the key comes from the environment, so must the endpoint and the model.
   // Letting a caller supply baseUrl while the server supplies the key would mean
@@ -157,6 +171,9 @@ const server = createServer(async (request, response) => {
       return sendJson(response, 200, {
         liveModelConfigured: Boolean(process.env.OPENAI_API_KEY),
         accessPasswordRequired: Boolean(ACCESS_PASSWORD),
+        // A server key with no access code cannot be used: say so here so the
+        // client shows rules mode rather than failing on the first question.
+        liveModelBlocked: Boolean(process.env.OPENAI_API_KEY) && !ACCESS_PASSWORD,
         model: process.env.OPENAI_MODEL || null,
         demoMode: "grounded_rules",
         demoLimitation: "Grounded rules cover the built-in compliance domains; an LLM is required for open-ended synthesis."
@@ -183,14 +200,14 @@ const server = createServer(async (request, response) => {
     }
 
     if (request.method === "POST" && url.pathname === "/api/assess") {
-      requireAccess(request);
       const body = await readJson(request);
       const question = String(body.question || "").trim();
       if (question.length < 5 || question.length > 5000) {
         throw Object.assign(new Error("Question must contain 5–5000 characters."), { status: 400 });
       }
-      const config = cleanConfig(body.config);
       const mock = Boolean(body.mock);
+      requireModelAccess(request, mock);
+      const config = cleanConfig(body.config);
       if (!mock && !config.apiKey) throw Object.assign(new Error("API key is required for live-model mode."), { status: 400 });
       const locale = body.locale === "en" ? "en" : "zh";
       const result = await assessScenario({ question, locale, config, mock, gemId: body.gemId, declaredFacts: cleanDeclaredFacts(body.declaredFacts), history: cleanHistory(body.history) });
@@ -202,14 +219,14 @@ const server = createServer(async (request, response) => {
     // POST, so this is a chunked fetch body the client reads incrementally
     // rather than SSE. /api/assess keeps returning a single JSON document.
     if (request.method === "POST" && url.pathname === "/api/assess/stream") {
-      requireAccess(request);
       const body = await readJson(request);
       const question = String(body.question || "").trim();
       if (question.length < 5 || question.length > 5000) {
         throw Object.assign(new Error("Question must contain 5–5000 characters."), { status: 400 });
       }
-      const config = cleanConfig(body.config);
       const mock = Boolean(body.mock);
+      requireModelAccess(request, mock);
+      const config = cleanConfig(body.config);
       if (!mock && !config.apiKey) throw Object.assign(new Error("API key is required for live-model mode."), { status: 400 });
 
       response.writeHead(200, {
@@ -252,7 +269,7 @@ const server = createServer(async (request, response) => {
     }
 
     if (request.method === "POST" && url.pathname === "/api/test-connection") {
-      requireAccess(request);
+      requireModelAccess(request, false);
       const body = await readJson(request);
       const config = cleanConfig(body.config);
       if (!config.apiKey) throw Object.assign(new Error("API key is required."), { status: 400 });
@@ -271,7 +288,11 @@ const server = createServer(async (request, response) => {
     sendJson(response, 404, { error: "Not found." });
   } catch (error) {
     const status = Number(error.status) || 500;
-    const safeMessage = status >= 500 ? "The request could not be completed. Check the model configuration or public-source connectivity." : error.message;
+    // Unexpected 5xx messages are withheld because they can carry internals, but
+    // a deliberate refusal (503 with a code) is the message the caller needs.
+    const safeMessage = status >= 500 && !error.code
+      ? "The request could not be completed. Check the model configuration or public-source connectivity."
+      : error.message;
     sendJson(response, status, { error: safeMessage, ...(error.code ? { code: error.code } : {}) });
   }
 });

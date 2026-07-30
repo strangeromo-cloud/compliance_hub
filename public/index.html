@@ -157,6 +157,10 @@
         <label class="field"><span>API Key</span><span class="pw"><input id="apiKeyInput" type="password" placeholder="sk-…"><button id="showKeyBtn" type="button" data-i18n="show">显示</button></span></label>
       </div>
       <label class="field" id="accessField" hidden><span data-i18n="accessPassword">访问口令</span><input id="accessPasswordInput" type="text" autocomplete="off" placeholder="compliance-hub"></label>
+      <div class="note note-warn" id="modelBlockedNote" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 9v4m0 3.5v.5"/><path d="M10.3 4.3 2.8 17.5A2 2 0 0 0 4.5 20.5h15a2 2 0 0 0 1.7-3L13.7 4.3a2 2 0 0 0-3.4 0Z"/></svg>
+        <p id="modelBlockedText"></p>
+      </div>
       <div class="note" id="keyNoteBlock">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
         <p id="keyNoteText" data-i18n="keyNote">API Key 仅保存在当前浏览器会话中，用于转发本次调用；不会写入服务器文件或日志。</p>

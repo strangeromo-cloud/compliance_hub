@@ -11,7 +11,7 @@ const i18n = {
     questionLabel: "输入合规情景", placeholder: "描述交易方、产品、路线、最终用户或付款安排……",
     slashHint: "Gem", composerNote: "原型输出仅用于研究与风险分流，不构成法律意见。请勿输入商业秘密或未公开交易数据。",
     evidence: "证据与来源", evidenceEmpty: "完成一次分析后，这里显示引用来源、获取状态与访问时间。",
-    modelSettings: "模型配置", settingsIntro: "支持 OpenAI-compatible Chat Completions API。", settingsIntroServer: "本部署的模型由服务器提供。你只需填写访问口令。", accessSettings: "访问设置", codeNote: "访问口令保存在本浏览器，用于调用受保护的接口。它是共享口令，不是身份认证。", serverModelNote: "模型由服务器提供，无需在此填写 API Key。", show: "显示", hide: "隐藏",
+    modelSettings: "模型配置", settingsIntro: "支持 OpenAI-compatible Chat Completions API。", settingsIntroServer: "本部署的模型由服务器提供。你只需填写访问口令。", settingsIntroBlocked: "本部署已配置模型，但服务器未设置访问口令，因此实时模型不可用。", accessSettings: "访问设置", codeNote: "访问口令保存在本浏览器，用于调用受保护的接口。它是共享口令，不是身份认证。", serverModelNote: "模型由服务器提供，无需在此填写 API Key。", show: "显示", hide: "隐藏",
     keyNote: "API Key 仅保存在当前浏览器会话中，用于转发本次调用；不会写入服务器文件或日志。",
     testConnection: "测试连接", saveSession: "保存", analyzing: "正在检索官方来源并组织答案……",
     dataLoading: "数据状态载入中", dataSynced: "个来源已同步", dataFallback: "个用兜底快照", dataFailed: "个失败", dataNone: "暂无可用来源",
@@ -23,7 +23,7 @@ const i18n = {
     hfQuestion: "一个问题", hfAnswer: "统一答案", startersLabel: "快速开始", workspaceEmpty: "工作区还没有 Gem", gemBacking: "数据支撑",
     teachSlashTitle: "在输入框键入 /", teachSlashBody: "呼出 {n} 个 Gem 的完整目录，上下键选择，回车使用。",
     teachPinTitle: "把常用 Gem 加入工作区", teachPinBody: "在目录里点 ★，或在 Gem 详情里点「添加到工作区」，它会常驻左侧栏。",
-    historyLabel: "历史记录", historyEmpty: "暂无记录", turnUnit: "轮", historyOpenFailed: "无法打开该记录", pathTitle: "分析路径", pathBasis: "路径依据", pathTemplated: "规则模式：待补项来自内置模板，不是对本问题的分析结果。切换到实时模型可得到针对性判断。", pathDerivedNote: "本步骤无对应官方条文，由系统按问题结构补充", stConfirmed: "已确认", stEvidence: "需更多证据", stNotReached: "未进行", status_confirmed: "已确认", status_evidence_needed: "需更多证据", status_not_reached: "待前序步骤", status_review_required: "需人工复核", status_pending: "待执行", stPending: "待执行", status_declared: "已声明，待核验", stDeclared: "已声明", declareSubmit: "提交并继续", declarePlaceholder: "填写后提交", declareNote: "填写的内容记为声明信息，不等于已核验证据", declareEmpty: "请先填写至少一项", declarePrefix: "补充信息 — ", reasoningTrace: "比对明细", rsSearched: "已检索的名单来源", rsMatched: "名称命中", rsCompared: "身份要素比对", rsFacts: "已核验事实",
+    historyLabel: "历史记录", historyEmpty: "暂无记录", turnUnit: "轮", historyOpenFailed: "无法打开该记录", pathTitle: "分析路径", pathBasis: "路径依据", pathTemplated: "规则模式：待补项来自内置模板，不是对本问题的分析结果。切换到实时模型可得到针对性判断。", pathDerivedNote: "本步骤无对应官方条文，由系统按问题结构补充", stConfirmed: "已确认", stEvidence: "需更多证据", stNotReached: "未进行", status_confirmed: "已确认", status_evidence_needed: "需更多证据", status_not_reached: "待前序步骤", status_review_required: "需人工复核", status_pending: "待执行", stPending: "待执行", status_declared: "已声明，待核验", stDeclared: "已声明", declareSubmit: "提交并继续", declareSkip: "暂无此信息", declareSkipped: "已跳过 — 该步骤仍需证据，已保留在下方行动清单中", declareReopen: "重新填写", declarePlaceholder: "填写后提交", declareNote: "填写的内容记为声明信息，不等于已核验证据", declareEmpty: "请先填写至少一项", declarePrefix: "补充信息 — ", declaredAdded: "已补充", reasoningTrace: "比对明细", rsSearched: "已检索的名单来源", rsMatched: "名称命中", rsCompared: "身份要素比对", rsFacts: "已核验事实",
     rsScore: "相似度", rsOpen: "查看原文", rsUnsynced: "未同步、本次未检索",
     el_country: "国别", el_registration_number: "注册号", el_address: "地址",
     st_agree: "一致", st_conflict: "冲突", st_unavailable: "缺失",
@@ -47,7 +47,7 @@ const i18n = {
     queryDisclaimer: "直查返回的是来源原始记录，不是判定结论。", jumpSource: "在该来源中直查", lookupMode: "直查模式 · 不经 Agent 分析", sourceStale: "缓存（已过期）", evidenceCollapse: "收起证据栏", evidenceExpand: "展开证据栏",
     mockLabel: "规则 + 公开数据", liveLabel: "实时模型 + 公开数据",
     riskLow: "低", riskMedium: "中", riskHigh: "高", riskUnknown: "待定",
-    accessPassword: "访问口令", accessRequired: "该部署需要访问口令，请在模型配置中填写。", keyFromServer: "服务器已配置模型，无需在此填写 API Key。", badResponse: "服务端未返回有效结果，通常是网关超时；请重试或缩短问题。", needKey: "请先在模型配置中填写 API Key，或使用规则模式。", invalidQuestion: "请先描述一个具体情景。", error: "分析失败",
+    accessPassword: "访问口令", accessRequired: "该部署需要访问口令，请先填写口令后再使用实时模型。", access_password_required: "访问口令不正确，实时模型未调用。", access_code_unset: "服务器未设置 ACCESS_PASSWORD，实时模型已停用；当前仅可使用规则模式。", keyFromServer: "服务器已配置模型，无需在此填写 API Key。", badResponse: "服务端未返回有效结果，通常是网关超时；请重试或缩短问题。", needKey: "请先在模型配置中填写 API Key，或使用规则模式。", invalidQuestion: "请先描述一个具体情景。", error: "分析失败",
     saved: "已保存到当前会话", testing: "正在测试连接……", connected: "连接成功。", connectionFailed: "连接失败，请检查配置。",
     gemInstruction: "指令", gemSources: "绑定数据源", gemFacts: "必填事实", gemOutput: "输出结构",
     gemAdd: "添加到工作区", gemRemove: "从工作区移除", gemUse: "使用此 Gem", gemAdded: "已添加到工作区", gemRemoved: "已从工作区移除",
@@ -65,7 +65,7 @@ const i18n = {
     questionLabel: "Enter a compliance scenario", placeholder: "Describe the party, product, route, end user or payment arrangement…",
     slashHint: "Gem", composerNote: "Prototype output is for research and triage only and is not legal advice. Do not enter trade secrets or confidential transaction data.",
     evidence: "Evidence & sources", evidenceEmpty: "After an analysis, cited sources, retrieval status and access time appear here.",
-    modelSettings: "Model settings", settingsIntro: "Supports OpenAI-compatible Chat Completions APIs.", settingsIntroServer: "This deployment provides the model. You only need the access code.", accessSettings: "Access", codeNote: "The access code is kept in this browser and used to call the protected endpoints. It is a shared code, not authentication.", serverModelNote: "The model is provided by the server; no API key is needed here.", show: "Show", hide: "Hide",
+    modelSettings: "Model settings", settingsIntro: "Supports OpenAI-compatible Chat Completions APIs.", settingsIntroServer: "This deployment provides the model. You only need the access code.", settingsIntroBlocked: "This deployment has a model configured, but the server has no access code set, so the live model is unavailable.", accessSettings: "Access", codeNote: "The access code is kept in this browser and used to call the protected endpoints. It is a shared code, not authentication.", serverModelNote: "The model is provided by the server; no API key is needed here.", show: "Show", hide: "Hide",
     keyNote: "The API key stays in this browser session and is used only to forward this call. It is never written to server files or logs.",
     testConnection: "Test connection", saveSession: "Save", analyzing: "Retrieving official sources and composing the answer…",
     dataLoading: "Loading data status", dataSynced: "synced", dataFallback: "on bundled copy", dataFailed: "failed", dataNone: "No sources available",
@@ -77,7 +77,7 @@ const i18n = {
     hfQuestion: "One question", hfAnswer: "One answer", startersLabel: "Start here", workspaceEmpty: "No gems in your workspace yet", gemBacking: "Data behind it",
     teachSlashTitle: "Press / in the composer", teachSlashBody: "Opens the full catalogue of {n} gems. Arrow keys select, Enter uses.",
     teachPinTitle: "Pin the ones you use", teachPinBody: "Add to workspace from a gem's details and it stays in the sidebar.",
-    historyLabel: "History", historyEmpty: "No cases yet", turnUnit: "turns", historyOpenFailed: "That case could not be opened", pathTitle: "Analysis path", pathBasis: "Path follows", pathTemplated: "Rules mode: the outstanding items come from built-in templates, not from analysing this question. Switch to the live model for a specific assessment.", pathDerivedNote: "No official provision for this step; added by the system", stConfirmed: "settled", stEvidence: "need evidence", stNotReached: "not reached", status_confirmed: "Settled", status_evidence_needed: "Evidence needed", status_not_reached: "Awaiting earlier step", status_review_required: "Human review", status_pending: "Planned", stPending: "planned", status_declared: "Declared, unverified", stDeclared: "declared", declareSubmit: "Submit and continue", declarePlaceholder: "Fill in, then submit", declareNote: "What you enter is recorded as a declaration, not as verified evidence", declareEmpty: "Fill in at least one field first", declarePrefix: "Additional information — ", reasoningTrace: "Comparison detail", rsSearched: "Lists searched", rsMatched: "Name matches", rsCompared: "Identity comparison", rsFacts: "Verified facts",
+    historyLabel: "History", historyEmpty: "No cases yet", turnUnit: "turns", historyOpenFailed: "That case could not be opened", pathTitle: "Analysis path", pathBasis: "Path follows", pathTemplated: "Rules mode: the outstanding items come from built-in templates, not from analysing this question. Switch to the live model for a specific assessment.", pathDerivedNote: "No official provision for this step; added by the system", stConfirmed: "settled", stEvidence: "need evidence", stNotReached: "not reached", status_confirmed: "Settled", status_evidence_needed: "Evidence needed", status_not_reached: "Awaiting earlier step", status_review_required: "Human review", status_pending: "Planned", stPending: "planned", status_declared: "Declared, unverified", stDeclared: "declared", declareSubmit: "Submit and continue", declareSkip: "Not available", declareSkipped: "Skipped — this step still needs evidence and stays in the action list below", declareReopen: "Fill in", declarePlaceholder: "Fill in, then submit", declareNote: "What you enter is recorded as a declaration, not as verified evidence", declareEmpty: "Fill in at least one field first", declarePrefix: "Additional information — ", declaredAdded: "Supplied", reasoningTrace: "Comparison detail", rsSearched: "Lists searched", rsMatched: "Name matches", rsCompared: "Identity comparison", rsFacts: "Verified facts",
     rsScore: "Similarity", rsOpen: "Open source", rsUnsynced: "Not synced, therefore not searched",
     el_country: "Country", el_registration_number: "Registration no.", el_address: "Address",
     st_agree: "agree", st_conflict: "conflict", st_unavailable: "missing",
@@ -101,7 +101,7 @@ const i18n = {
     queryDisclaimer: "A lookup returns the source's own records, not a determination.", jumpSource: "Look this up in the source", lookupMode: "Lookup mode · does not run the agents", sourceStale: "Cached (stale)", evidenceCollapse: "Collapse evidence", evidenceExpand: "Expand evidence",
     mockLabel: "Rules + public data", liveLabel: "Live model + public data",
     riskLow: "Low", riskMedium: "Medium", riskHigh: "High", riskUnknown: "Unknown",
-    accessPassword: "Access password", accessRequired: "This deployment requires an access password. Add it in Model settings.", keyFromServer: "The server already provides a model; no API key is needed here.", badResponse: "The server did not return a valid result, usually a gateway timeout. Retry or shorten the question.", needKey: "Add an API key in Model settings, or stay in rules mode.", invalidQuestion: "Describe a specific scenario first.", error: "Analysis failed",
+    accessPassword: "Access password", accessRequired: "This deployment requires an access code. Enter it before using the live model.", access_password_required: "The access code is not correct; the live model was not called.", access_code_unset: "ACCESS_PASSWORD is not set on the server, so live-model calls are disabled. Rules mode is still available.", keyFromServer: "The server already provides a model; no API key is needed here.", badResponse: "The server did not return a valid result, usually a gateway timeout. Retry or shorten the question.", needKey: "Add an API key in Model settings, or stay in rules mode.", invalidQuestion: "Describe a specific scenario first.", error: "Analysis failed",
     saved: "Saved for this session", testing: "Testing…", connected: "Connected.", connectionFailed: "Connection failed. Check the settings.",
     gemInstruction: "Instruction", gemSources: "Bound sources", gemFacts: "Required facts", gemOutput: "Output",
     gemAdd: "Add to workspace", gemRemove: "Remove from workspace", gemUse: "Use this gem", gemAdded: "Added to workspace", gemRemoved: "Removed from workspace",
@@ -153,12 +153,14 @@ const state = {
   serverModelConfigured: false,
   serverModel: null,
   accessPasswordRequired: false,
+  liveModelBlocked: false,
   rulesMode: true,
   coverage: null,
   cases: [],
   threadId: null,
   declaredFacts: {},
   sourceQuery: null,
+  pendingDeclaration: false,
   factsOpen: false,
   rail: localStorage.getItem("compliance-rail") === "1",
   evidenceCollapsed: localStorage.getItem("compliance-evidence-collapsed") === "1",
@@ -732,7 +734,12 @@ function stepInputsMarkup(item) {
            </div>`).join("")}
       <div class="si-actions">
         <button type="button" class="btn btn-primary si-submit">${esc(t("declareSubmit"))}</button>
+        <button type="button" class="btn si-skip">${esc(t("declareSkip"))}</button>
         <span class="si-note">${esc(t("declareNote"))}</span>
+      </div>
+      <div class="si-skipped">
+        <span class="si-skipped-text">${esc(t("declareSkipped"))}</span>
+        <button type="button" class="si-reopen">${esc(t("declareReopen"))}</button>
       </div>
     </div>`;
 }
@@ -1085,6 +1092,10 @@ async function analyze(event) {
   const config = getConfig();
   const mock = state.rulesMode;
   if (!mock && !config.apiKey && !state.serverModelConfigured) { toast(t("needKey")); return openSettings(); }
+  // The code is checked before the request rather than after: a rejected live
+  // call would otherwise land as a failed analysis in the thread.
+  if (!mock && state.liveModelBlocked) { toast(t("access_code_unset")); return; }
+  if (!mock && state.accessPasswordRequired && !accessHeaders()["x-access-password"]) { toast(t("accessRequired")); return openSettings(); }
 
   // The gem contributes its instruction and its bound-source whitelist; the
   // user's text stays verbatim so the transcript shows what was actually asked.
@@ -1093,10 +1104,16 @@ async function analyze(event) {
     : raw;
 
   const priorHistory = state.conversation.slice(-6);
+  const declaring = state.pendingDeclaration;
+  state.pendingDeclaration = false;
+  // The answer node a declaration updates, captured before the new run starts.
+  const supersedes = declaring ? $("threadInner").querySelector(".msg-assistant:last-of-type") : null;
+
   state.conversation.push({ role: "user", content: question });
   $("startPanel").classList.add("hidden");
-  $("threadInner").insertAdjacentHTML("beforeend", `
-    <article class="msg msg-user"><div class="bubble">${gem ? `<span class="gem-tag">${esc(gem.command)}</span><br>` : ""}${esc(raw)}</div></article>`);
+  $("threadInner").insertAdjacentHTML("beforeend", declaring
+    ? `<article class="msg msg-declared"><div class="declared-chip"><span class="dc-label">${esc(t("declaredAdded"))}</span>${esc(raw.replace(t("declarePrefix"), ""))}</div></article>`
+    : `<article class="msg msg-user"><div class="bubble">${gem ? `<span class="gem-tag">${esc(gem.command)}</span><br>` : ""}${esc(raw)}</div></article>`);
   $("questionInput").value = "";
   updateRouteHint();
   renderActiveGem();
@@ -1205,6 +1222,15 @@ async function analyze(event) {
       body: JSON.stringify({ question, locale: state.locale, mock, config, history: priorHistory, threadId: ensureThreadId(), gemId: gem?.id || null, declaredFacts: state.declaredFacts })
     });
     if (response.status === 401) { toast(t("accessRequired")); openSettings(); throw new Error(t("accessRequired")); }
+    // The server refuses live calls when it has a key but no code to check it
+    // against; drop to rules mode so the user has a working path, not an error.
+    if (response.status === 503) {
+      state.liveModelBlocked = true;
+      state.rulesMode = true;
+      updateModePill();
+      toast(t("access_code_unset"));
+      throw new Error(t("access_code_unset"));
+    }
     if (!response.ok || !response.body) {
       const raw = await response.text();
       let payload = null;
@@ -1242,6 +1268,8 @@ async function analyze(event) {
     state.conversation.push({ role: "assistant", content: `${finished.synthesis.headline}\n${finished.synthesis.executiveSummary}` });
     live.id = `answer-${finished.id}`;
     live.innerHTML = answerMarkup(finished);
+    // Only one analysis of a question stays on screen; a declaration refreshes it.
+    if (supersedes && supersedes !== live) supersedes.remove();
     renderEvidence(finished.sources || []);
     live.scrollIntoView({ behavior: "smooth", block: "start" });
     loadCases();
@@ -1274,11 +1302,19 @@ function newConversation() {
 
 /* -------------------------------------------------------------- settings */
 
+// "Ready" means a live call would actually be accepted: a model to call, and
+// the access code the server will ask for. Anything less stays rules mode.
+function liveModelReady() {
+  if (state.liveModelBlocked) return false;
+  if (state.accessPasswordRequired && !localStorage.getItem("compliance-access-password")) return false;
+  return state.serverModelConfigured || Boolean(sessionStorage.getItem("compliance-api-key"));
+}
+
 function updateModePill() {
   const pill = $("modePill");
-  const ready = state.serverModelConfigured || Boolean(sessionStorage.getItem("compliance-api-key"));
+  const ready = liveModelReady();
   pill.classList.toggle("live", !state.rulesMode && ready);
-  pill.title = t("modeHint");
+  pill.title = state.liveModelBlocked ? t("access_code_unset") : state.accessPasswordRequired && !ready ? t("accessRequired") : t("modeHint");
   $("modePillText").textContent = state.rulesMode ? t("runtimeRules") : ready ? t("runtimeReady") : t("runtimeMissing");
 }
 
@@ -1289,17 +1325,23 @@ function openSettings() {
   // refuses client configuration in this mode, so offering the inputs would
   // invite someone to fill in values that quietly do nothing.
   $("clientModelFields").hidden = serverProvides;
+  // Hiding a control does not exempt it from constraint validation, and one
+  // invalid hidden field blocks submit with no visible cause — which made the
+  // access code unsaveable on a server-key deployment. Disabling exempts them.
+  $("clientModelFields").querySelectorAll("input").forEach((input) => { input.disabled = serverProvides; });
   $("serverModelNote").hidden = !serverProvides;
-  $("settingsIntro").textContent = t(serverProvides ? "settingsIntroServer" : "settingsIntro");
+  $("settingsIntro").textContent = t(state.liveModelBlocked ? "settingsIntroBlocked" : serverProvides ? "settingsIntroServer" : "settingsIntro");
   $("settingsTitle").textContent = t(serverProvides ? "accessSettings" : "modelSettings");
   $("keyNoteText").textContent = t(serverProvides ? "codeNote" : "keyNote");
   $("serverModelName").textContent = state.serverModel || "";
   $("testConnectionBtn").hidden = serverProvides;
-  $("baseUrlInput").value = config.baseUrl;
-  $("modelInput").value = config.model;
-  $("apiKeyInput").value = config.apiKey;
+  $("baseUrlInput").value = config.baseUrl || "https://api.openai.com/v1";
+  $("modelInput").value = config.model || "gpt-5.4-mini";
+  $("apiKeyInput").value = config.apiKey || "";
   $("accessPasswordInput").value = localStorage.getItem("compliance-access-password") || "";
   $("accessField").hidden = !state.accessPasswordRequired;
+  $("modelBlockedNote").hidden = !state.liveModelBlocked;
+  $("modelBlockedText").textContent = state.liveModelBlocked ? t("access_code_unset") : "";
   $("connectionStatus").textContent = "";
   $("connectionStatus").className = "status-line";
   $("settingsDialog").showModal();
@@ -1317,6 +1359,10 @@ function saveSettings(event) {
   const key = $("apiKeyInput").value.trim();
   if (key) { sessionStorage.setItem("compliance-api-key", key); state.rulesMode = false; }
   else sessionStorage.removeItem("compliance-api-key");
+  // Supplying the code is what unlocks live mode on a server-key deployment,
+  // so it takes effect here rather than waiting for the pill to be clicked.
+  if (liveModelReady() && state.serverModelConfigured) state.rulesMode = false;
+  else if (!liveModelReady()) state.rulesMode = true;
   updateModePill();
   $("settingsDialog").close();
   toast(t("saved"));
@@ -1348,7 +1394,10 @@ async function loadRuntimeCapabilities() {
     state.serverModelConfigured = Boolean(capabilities.liveModelConfigured);
     state.serverModel = capabilities.model || null;
     state.accessPasswordRequired = Boolean(capabilities.accessPasswordRequired);
-    if (state.serverModelConfigured) state.rulesMode = false;
+    state.liveModelBlocked = Boolean(capabilities.liveModelBlocked);
+    // Live mode is only pre-selected when it can actually run: a server key
+    // behind a code the browser does not have yet still starts in rules mode.
+    if (state.serverModelConfigured && !state.liveModelBlocked && liveModelReady()) state.rulesMode = false;
     document.querySelector('#settingsBtn .side-label').textContent = t(state.serverModelConfigured ? "accessSettings" : "modelSettings");
     updateModePill();
   } catch { /* Rules mode remains available when capability discovery fails. */ }
@@ -1493,6 +1542,13 @@ $("threadInner").addEventListener("click", (event) => {
     group.querySelectorAll(".si-choice").forEach((button) => button.classList.toggle("on", button === choice));
     return;
   }
+  // Skipping is a UI action only: nothing was supplied, so there is nothing to
+  // re-analyse. The step keeps its "evidence needed" status and stays in the
+  // action list; the form just stops demanding an answer the user does not have.
+  const skip = event.target.closest(".si-skip");
+  if (skip) return skip.closest(".step-inputs").classList.add("skipped");
+  const reopen = event.target.closest(".si-reopen");
+  if (reopen) return reopen.closest(".step-inputs").classList.remove("skipped");
   const submit = event.target.closest(".si-submit");
   if (!submit) return;
   const host = submit.closest(".step-inputs");
@@ -1501,6 +1557,9 @@ $("threadInner").addEventListener("click", (event) => {
   host.querySelectorAll(".si-choice.on").forEach((button) => { facts[button.dataset.field] = button.dataset.value; });
   if (!Object.keys(facts).length) return toast(t("declareEmpty"));
   state.declaredFacts = { ...state.declaredFacts, ...facts };
+  // Marks this submission as a declaration so the answer is replaced rather
+  // than appended, and the supplied values show as a chip instead of a question.
+  state.pendingDeclaration = true;
   const labels = [...host.querySelectorAll(".si-row")]
     .filter((row) => row.querySelector(".si-text")?.value.trim() || row.querySelector(".si-choice.on"))
     .map((row) => `${row.querySelector(".si-label").textContent}：${row.querySelector(".si-text")?.value.trim() || row.querySelector(".si-choice.on").dataset.value}`);
@@ -1567,7 +1626,17 @@ document.addEventListener("click", (event) => {
 
 $("questionForm").addEventListener("submit", analyze);
 $("newChatBtn").addEventListener("click", newConversation);
-$("modePill").addEventListener("click", () => { state.rulesMode = !state.rulesMode; updateModePill(); });
+$("modePill").addEventListener("click", () => {
+  // Switching to live mode is refused where it cannot work, so the pill never
+  // claims a capability the next question would fail on.
+  if (state.rulesMode && !liveModelReady()) {
+    if (state.liveModelBlocked) return toast(t("access_code_unset"));
+    toast(t(state.accessPasswordRequired ? "accessRequired" : "needKey"));
+    return openSettings();
+  }
+  state.rulesMode = !state.rulesMode;
+  updateModePill();
+});
 $("zhBtn").addEventListener("click", () => applyLocale("zh"));
 $("enBtn").addEventListener("click", () => applyLocale("en"));
 $("themeBtn").addEventListener("click", () => setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark"));
