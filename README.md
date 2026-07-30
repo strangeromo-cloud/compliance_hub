@@ -97,7 +97,7 @@ npm run start:env
 
 | 变量 | 值 | 说明 |
 |---|---|---|
-| `SYNC_ON_BOOT` | `china-dual-use,china-control-entities,china-unreliable-entity,china-licence-catalogue,bis-ear-734,bis-ear-740,bis-ear-744` | 容器启动后台同步。**不要**放 `trade-csl` / `ofac-sls`，它们是几十 MB 全量下载 |
+| `SYNC_ON_BOOT` | 见下方完整值 | 容器启动后在后台依次同步。**不要**放 `trade-csl` / `ofac-sls` / `un-consolidated` / `uk-sanctions`，它们是几十 MB 全量下载；也不要放 `doj-eccp`（它没有 sync adapter，只是引用页面） |
 | `COMPLIANCE_HUB_USER_AGENT` | `ComplianceHubPrototype/0.1 <你的邮箱>` | SEC 等政府接口要求可识别的 UA |
 | `OPENAI_API_KEY` / `OPENAI_BASE_URL` / `OPENAI_MODEL` | 你的模型配置 | 配置后页面自动进入实时模型模式，使用者不必再自己填 Key |
 | `ACCESS_PASSWORD` | 自定义口令 | **配置了服务器侧 Key 就应该同时配这个**，见下 |
@@ -105,6 +105,20 @@ npm run start:env
 `HOST` 不需要手工配置：进程检测到自己是容器里的 PID 1（或存在 `ZEABUR_SERVICE_ID`）时会自动绑定 `0.0.0.0`，本机运行仍然只绑回环。
 
 3. Networking 里绑定域名。
+
+`SYNC_ON_BOOT` 的推荐完整值——覆盖分析路径引用的全部官方流程条文，以及中国侧四个源：
+
+```
+china-dual-use,china-control-entities,china-unreliable-entity,china-licence-catalogue,bis-ear-732,bis-ear-734,bis-ear-736,bis-ear-740,bis-ear-744,bis-ccl,bis-country-chart
+```
+
+（`bis-ear` 即 Part 736，注册 id 为 `bis-ear`。）
+
+每个 eCFR part 约 10–15 秒、67 KB–2 MB，全部跑完约两分钟。**同步在后台进行，服务器立即可用**：期间中国来源走兜底快照，美国条文的 ⛁ 跳源按钮在对应源同步完成后生效。
+
+`trade-csl` 和 `ofac-sls` 请在「数据覆盖」页按需手动同步——它们分别约 33 MB 和 45 MB。
+
+**不要设置 `PORT` 或 `HOST`**：进程自己判断（容器内 PID 1 → 绑 `0.0.0.0`，端口以平台注入值优先、缺省 8080）。手工设错 `PORT` 会导致启动崩溃循环。
 
 ### 为什么必须显式处理 SIGTERM
 
