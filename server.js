@@ -196,7 +196,7 @@ const server = createServer(async (request, response) => {
       const body = await readJson(request);
       const sourceId = String(body.sourceId || "").trim();
       if (!sourceId) throw Object.assign(new Error("sourceId is required."), { status: 400 });
-      return sendJson(response, 200, await queryDataSource(sourceId, body.query, body.limit));
+      return sendJson(response, 200, await queryDataSource(sourceId, body.query, body.limit, body.offset));
     }
 
     if (request.method === "POST" && url.pathname === "/api/assess") {

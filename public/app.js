@@ -41,8 +41,8 @@ const i18n = {
     modeHint: "点击切换规则模式与实时模型",
     routeLabel: "路由", routedTo: "已路由至", specialistTrace: "专业 Agent 分析轨迹",
     overallAssessment: "总体判断", nextStep: "下一步", missingInfo: "仍需信息", actions: "建议行动", actionPlan: "行动清单", actionPlanHint: "按依赖顺序", unblocks: "→ 解锁", planBlocked: "待前序步骤完成：", planSuggested: "其他建议", planClosing: "结案：", noItems: "暂无", limitations: "结论边界与限制",
-    sourceLive: "实时获取", sourceMetadata: "元数据", sourceUnavailable: "获取失败", sourceNotFetched: "未获取", sourceArchived: "已采集副本", sourceCitationOnly: "仅引用", sourceCached: "缓存", noQueryableSource: "暂无可直查的来源（需先同步）", sourceQueryHint: "@ 直查数据源", sourceQueryPlaceholder: "输入实体名、公告号或条文关键词…",
-    queryEmpty: "请输入查询内容", queryHits: "条命中", queryNoHit: "该来源中未找到匹配记录", queryTruncated: "显示前 {shown} 条，共 {total} 条",
+    sourceLive: "实时获取", sourceMetadata: "元数据", sourceUnavailable: "获取失败", sourceNotFetched: "未获取", sourceArchived: "已采集副本", sourceCitationOnly: "仅引用", sourceCached: "缓存", noQueryableSource: "暂无可直查的来源（需先同步）", sourceQueryHint: "@ 直查数据源", sourceQueryPlaceholder: "输入实体名、公告号或条文关键词（按相关性排序；留空则浏览全部）…",
+    queryEmpty: "请输入查询内容", queryHits: "{total} 条命中", browseCount: "共 {total} 条", browseAll: "浏览全部", pagePrev: "上一页", pageNext: "下一页", relMatched: "命中", relMissed: "未命中", relPartial: "另有 {n} 条仅命中部分检索词，未列出", queryNoHit: "该来源中未找到匹配记录", queryTruncated: "显示前 {shown} 条，共 {total} 条",
     queryEscalate: "以此发起完整筛查 →", escalatePrefix: "请对 {q} 做完整合规筛查",
     queryDisclaimer: "直查返回的是来源原始记录，不是判定结论。", jumpSource: "在该来源中直查", lookupMode: "直查模式 · 不经 Agent 分析", sourceStale: "缓存（已过期）", evidenceCollapse: "收起证据栏", evidenceExpand: "展开证据栏",
     mockLabel: "规则 + 公开数据", liveLabel: "实时模型 + 公开数据",
@@ -95,8 +95,8 @@ const i18n = {
     modeHint: "Toggle between rules mode and the live model",
     routeLabel: "Route", routedTo: "Routed to", specialistTrace: "Specialist agent trace",
     overallAssessment: "Overall assessment", nextStep: "Next step", missingInfo: "Missing information", actions: "Recommended actions", actionPlan: "Action list", actionPlanHint: "in dependency order", unblocks: "→ unblocks", planBlocked: "Awaiting the steps above: ", planSuggested: "Other suggestions", planClosing: "To close: ", noItems: "None", limitations: "Limits on this conclusion",
-    sourceLive: "Live", sourceMetadata: "Metadata", sourceUnavailable: "Unavailable", sourceNotFetched: "Not fetched", sourceArchived: "Archived copy", sourceCitationOnly: "Cited only", sourceCached: "Cached", noQueryableSource: "No queryable source yet (sync one first)", sourceQueryHint: "@ query a source", sourceQueryPlaceholder: "Entity name, notice number or provision keyword…",
-    queryEmpty: "Enter something to look up", queryHits: "matches", queryNoHit: "No matching record in this source", queryTruncated: "Showing {shown} of {total}",
+    sourceLive: "Live", sourceMetadata: "Metadata", sourceUnavailable: "Unavailable", sourceNotFetched: "Not fetched", sourceArchived: "Archived copy", sourceCitationOnly: "Cited only", sourceCached: "Cached", noQueryableSource: "No queryable source yet (sync one first)", sourceQueryHint: "@ query a source", sourceQueryPlaceholder: "Entity name, notice number or keyword — ranked by relevance; leave empty to browse all…",
+    queryEmpty: "Enter something to look up", queryHits: "{total} matches", browseCount: "{total} records", browseAll: "Browse all", pagePrev: "Previous", pageNext: "Next", relMatched: "matched", relMissed: "not matched", relPartial: "{n} more records matched only part of the query and are not listed", queryNoHit: "No matching record in this source", queryTruncated: "Showing {shown} of {total}",
     queryEscalate: "Run a full screening on this →", escalatePrefix: "Run a full compliance screening on {q}",
     queryDisclaimer: "A lookup returns the source's own records, not a determination.", jumpSource: "Look this up in the source", lookupMode: "Lookup mode · does not run the agents", sourceStale: "Cached (stale)", evidenceCollapse: "Collapse evidence", evidenceExpand: "Expand evidence",
     mockLabel: "Rules + public data", liveLabel: "Live model + public data",
@@ -1027,52 +1027,78 @@ function recordMarkup(record) {
       </div>
       ${rows.length ? `<dl class="rec-fields">${rows.map(([label, value]) => `
         <div><dt>${esc(label)}</dt><dd>${esc(value.slice(0, 220))}</dd></div>`).join("")}</dl>` : ""}
+      ${record.relevance ? `<div class="rec-rel">
+        <span class="rr-bar" style="--fill:${Math.round(Math.min(1, record.relevance.score / 40) * 100)}%"></span>
+        <span class="rr-terms">${esc(t("relMatched"))} ${record.relevance.matchedTerms.map((term) => `<b>${esc(term)}</b>`).join("")}${record.relevance.missedTerms.length ? `<span class="rr-miss">${esc(t("relMissed"))} ${record.relevance.missedTerms.map(esc).join(" ")}</span>` : ""}</span>
+      </div>` : ""}
       ${(record.matchSnippets || []).map((snippet) => `<p class="rec-snippet">${esc(snippet.text)}</p>`).join("")}
       ${record.matchDisposition ? `<div class="rec-warn">${esc(t(`disp_${record.matchDisposition}`) || record.matchDisposition)}</div>` : ""}
     </article>`;
 }
 
-async function runSourceQuery(event) {
-  event.preventDefault();
+async function runSourceQuery(event, options = {}) {
+  if (event) event.preventDefault();
   if (state.busy) return;
-  const source = state.sourceQuery;
-  const query = $("questionInput").value.trim();
-  if (query.length < 1) return toast(t("queryEmpty"));
+  const source = options.source || state.sourceQuery;
+  // No terms is a request to browse the source rather than an empty query: a list
+  // you can page through is how you find out what a source actually holds.
+  const query = options.query !== undefined ? options.query : $("questionInput").value.trim();
+  const offset = Number(options.offset) || 0;
 
   $("startPanel").classList.add("hidden");
-  $("threadInner").insertAdjacentHTML("beforeend",
-    `<article class="msg msg-user"><div class="bubble"><span class="gem-tag">@${esc(source.sourceId)}</span><br>${esc(query)}</div></article>`);
-  $("questionInput").value = "";
+  if (!options.replace) {
+    $("threadInner").insertAdjacentHTML("beforeend",
+      `<article class="msg msg-user"><div class="bubble"><span class="gem-tag">@${esc(source.sourceId)}</span><br>${esc(query || t("browseAll"))}</div></article>`);
+    $("questionInput").value = "";
+  }
   state.busy = true; $("submitBtn").disabled = true;
 
   try {
     const response = await fetch("/api/data-sources/query", {
       method: "POST", headers: { "Content-Type": "application/json", ...accessHeaders() },
-      body: JSON.stringify({ sourceId: source.sourceId, query, limit: 20 })
+      body: JSON.stringify({ sourceId: source.sourceId, query, limit: 20, offset })
     });
     const raw = await response.text();
     let data; try { data = JSON.parse(raw); } catch { throw new Error(`${t("badResponse")} (HTTP ${response.status})`); }
     if (!response.ok) throw new Error(data.error || t("error"));
 
+    const total = data.kind === "browse" ? data.totalRecords : (data.totalMatches ?? data.records.length);
+    const shownTo = offset + data.records.length;
     const stale = data.mode === "bundled_fallback_snapshot";
-    $("threadInner").insertAdjacentHTML("beforeend", `
-      <article class="msg msg-assistant">
+    const markup = `
+      <article class="msg msg-assistant" data-lookup="${esc(source.sourceId)}" data-lookup-query="${esc(query)}" data-lookup-offset="${offset}">
         <span class="avatar" aria-hidden="true">⛁</span>
         <div>
           <div class="msg-meta">
             <span class="tag">@${esc(source.sourceId)}</span><span class="sep">·</span>
-            <span>${data.totalMatches ?? data.records.length} ${esc(t("queryHits"))}</span><span class="sep">·</span>
+            <span>${esc(t(data.kind === "browse" ? "browseCount" : "queryHits").replace("{total}", total))}</span>
+            ${total > data.records.length ? `<span class="sep">·</span><span>${offset + 1}–${shownTo}</span>` : ""}
+            <span class="sep">·</span>
             <span class="${stale ? "src-stale" : ""}">${esc(stale ? t("sourceArchived") : t("sourceCached"))} ${esc(String(data.capturedAt || "").slice(0, 10))}</span>
           </div>
+          ${data.partialMatchesExcluded ? `<p class="msg-note">${esc(t("relPartial").replace("{n}", data.partialMatchesExcluded))}</p>` : ""}
           ${data.records.length
             ? `<div class="rec-list">${data.records.map(recordMarkup).join("")}</div>
-               ${(data.totalMatches || 0) > data.records.length ? `<p class="msg-note">${esc(t("queryTruncated").replace("{shown}", data.records.length).replace("{total}", data.totalMatches))}</p>` : ""}
-               <div class="rec-actions"><button type="button" class="btn" data-escalate="${esc(query)}">${esc(t("queryEscalate"))}</button></div>`
-            : `<p class="msg-note">${esc(t("queryNoHit"))}</p>`}
+               ${total > data.records.length ? `<div class="rec-page">
+                   <button type="button" class="btn" data-page="${Math.max(0, offset - 20)}" ${offset === 0 ? "disabled" : ""}>${esc(t("pagePrev"))}</button>
+                   <span>${offset + 1}–${shownTo} / ${total}</span>
+                   <button type="button" class="btn" data-page="${offset + 20}" ${shownTo >= total ? "disabled" : ""}>${esc(t("pageNext"))}</button>
+                 </div>` : ""}
+               <div class="rec-actions">
+                 ${query ? `<button type="button" class="btn" data-escalate="${esc(query)}">${esc(t("queryEscalate"))}</button>` : ""}
+                 ${query ? `<button type="button" class="btn" data-browse="${esc(source.sourceId)}">${esc(t("browseAll"))}</button>` : ""}
+               </div>`
+            : `<p class="msg-note">${esc(t("queryNoHit"))}</p>
+               <div class="rec-actions"><button type="button" class="btn" data-browse="${esc(source.sourceId)}">${esc(t("browseAll"))}</button></div>`}
           <p class="msg-note">${esc(t("queryDisclaimer"))}</p>
         </div>
-      </article>`);
-    $("threadInner").lastElementChild.scrollIntoView({ behavior: "smooth", block: "start" });
+      </article>`;
+    // Paging replaces the panel in place rather than appending another copy of the
+    // same lookup, so the thread stays a record of questions, not of clicks.
+    if (options.replace) options.replace.outerHTML = markup;
+    else $("threadInner").insertAdjacentHTML("beforeend", markup);
+    (options.replace ? $("threadInner").querySelector(`[data-lookup-offset="${offset}"]`) : $("threadInner").lastElementChild)
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (error) {
     toast(`${t("error")}: ${error.message}`);
   } finally {
@@ -1084,7 +1110,7 @@ async function analyze(event) {
   event.preventDefault();
   if (state.busy) return;
   // A source query is a lookup, not an analysis, so it never reaches the agents.
-  if (state.sourceQuery) return runSourceQuery(event);
+  if (state.sourceQuery) return runSourceQuery(event);   // an empty box browses the source
   closePalette();
   const raw = $("questionInput").value.trim();
   if (raw.length < 5) return toast(t("invalidQuestion"));
@@ -1521,6 +1547,19 @@ $("gemNav").addEventListener("click", (event) => {
 // transcript records what was supplied and the conclusion is recomputed with it
 // rather than being patched in place.
 $("threadInner").addEventListener("click", (event) => {
+  // Paging re-runs the same lookup and swaps the panel in place.
+  const page = event.target.closest("[data-page]");
+  if (page) {
+    const panel = page.closest("[data-lookup]");
+    return runSourceQuery(null, {
+      source: { sourceId: panel.dataset.lookup },
+      query: panel.dataset.lookupQuery,
+      offset: Number(page.dataset.page),
+      replace: panel
+    });
+  }
+  const browse = event.target.closest("[data-browse]");
+  if (browse) return runSourceQuery(null, { source: { sourceId: browse.dataset.browse }, query: "" });
   const escalate = event.target.closest("[data-escalate]");
   if (escalate) {
     clearSourceQuery();

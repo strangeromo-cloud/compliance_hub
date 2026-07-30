@@ -113,51 +113,160 @@ export function syncSource(sourceId) {
   return promise;
 }
 
+// Queries are typed by people, not composed as boolean expressions. "3A090 服务器"
+// or "华为 深圳" should rank the records that hit both terms above the ones that
+// hit one — a substring match over the joined JSON instead returned nothing at
+// all unless some field happened to contain the whole string verbatim.
+const HAN = /\p{Script=Han}/u;
+
+// Chinese has no spaces, so a run of Han characters is indexed as overlapping
+// bigrams: "两用物项" becomes 两用/用物/物项, which is what makes a partial phrase
+// match at all.
+export function tokenizeQuery(query) {
+  const terms = [];
+  for (const chunk of String(query).toLocaleLowerCase().match(/\p{Script=Han}+|[\p{L}\p{N}][\p{L}\p{N}.\-/]*/gu) || []) {
+    if (HAN.test(chunk)) {
+      if (chunk.length < 2) terms.push(chunk);
+      else for (let at = 0; at + 2 <= chunk.length; at += 1) terms.push(chunk.slice(at, at + 2));
+    } else if (chunk.length >= 2 || /\d/.test(chunk)) {
+      terms.push(chunk);
+    }
+  }
+  return [...new Set(terms)].slice(0, 24);
+}
+
+// An identifier hit means far more than the same word inside a paragraph, so the
+// field decides the weight. Every other field is still searched, at weight 1 —
+// a fixed field list would silently make whatever it omits unfindable, and each
+// source names its fields differently.
+const FIELD_WEIGHTS = {
+  eccn: 6, entityName: 5, entityNameEn: 5, noticeNumber: 4, title: 4, noticeTitle: 4,
+  recordId: 3, aliases: 3, sourceList: 2, country: 2, countries: 2, supplement: 2,
+  restrictionType: 2, licenceRequiredFor: 2, addresses: 2, measureType: 2
+};
+
+// Fields that would match on every record of a source, or that hold no prose:
+// the source id repeats the name being searched, the URL repeats the country, and
+// the raw record is snapshot bookkeeping.
+const UNSEARCHED = new Set(["sourceId", "sourceUrl", "rawRecord", "matchSnippets", "relevance", "humanReviewRequired", "parserConfidence", "matchDisposition", "columnAlignment", "snapshotRecordIndex"]);
+
+function searchableText(value) {
+  if (value === null || value === undefined || typeof value === "boolean") return "";
+  if (Array.isArray(value)) return value.map(searchableText).join(" ");
+  if (typeof value === "object") return Object.values(value).map(searchableText).join(" ");
+  return String(value);
+}
+
+function scoreRecord(record, terms, phrase) {
+  const matched = new Set();
+  let score = 0;
+  for (const [field, value] of Object.entries(record)) {
+    if (UNSEARCHED.has(field)) continue;
+    const weight = FIELD_WEIGHTS[field] || 1;
+    const text = searchableText(value);
+    if (!text) continue;
+    const lower = text.toLocaleLowerCase();
+    // The whole query appearing verbatim is the strongest signal there is.
+    if (phrase && lower.includes(phrase)) score += weight * 4;
+    for (const term of terms) {
+      if (!lower.includes(term)) continue;
+      matched.add(term);
+      score += weight + (lower.startsWith(term) ? weight / 2 : 0);
+    }
+  }
+  // Coverage has to dominate the field weight, or one hit in a title ties three
+  // hits in a body and the ranking stops meaning "answers more of the question".
+  // A full match scores 3.3x a single-term match at equal field weight.
+  const coverage = matched.size / terms.length;
+  return { score: score && score * (0.25 + coverage * 1.75), matched: [...matched] };
+}
+
 // Long regulation and notice text is useless as a whole field in a result list,
 // so the matching passage is extracted with enough context to read. The offsets
 // are relative to the field, not the record, because a caller renders per field.
-function matchSnippets(record, needle, max = 2) {
+function matchSnippets(record, needles, max = 2) {
   const snippets = [];
   for (const field of ["contentText", "content", "excerpt", "notes"]) {
     const text = record[field];
     if (typeof text !== "string" || text.length < 80) continue;
     const lower = text.toLocaleLowerCase();
-    let from = 0;
-    while (snippets.length < max) {
-      const at = lower.indexOf(needle, from);
-      if (at < 0) break;
+    // The longest matching term first, so the snippet lands on the most specific
+    // part of the query rather than on whichever word came first.
+    for (const needle of [...needles].sort((left, right) => right.length - left.length)) {
+      if (snippets.length >= max) break;
+      const at = lower.indexOf(needle);
+      if (at < 0) continue;
       const start = Math.max(0, at - 90);
       const end = Math.min(text.length, at + needle.length + 130);
       snippets.push({
-        field,
+        field, term: needle,
         text: `${start > 0 ? "…" : ""}${text.slice(start, end).trim()}${end < text.length ? "…" : ""}`,
         matchAt: at - start + (start > 0 ? 1 : 0),
         matchLength: needle.length
       });
-      from = at + needle.length;
     }
   }
   return snippets;
 }
 
-export async function queryDataSource(sourceId, query, limit = 20) {
+export async function queryDataSource(sourceId, query, limit = 20, offset = 0) {
   const cleanQuery = String(query || "").trim();
-  if (!cleanQuery || cleanQuery.length > 200) throw Object.assign(new Error("A query of 1-200 characters is required."), { status: 400 });
+  if (cleanQuery.length > 200) throw Object.assign(new Error("A query of at most 200 characters is required."), { status: 400 });
+  const size = Math.min(100, Math.max(1, Number(limit) || 20));
+  const from = Math.max(0, Math.min(100_000, Number(offset) || 0));
+
   const adapter = ADAPTERS[sourceId];
-  if (adapter?.mode === "live_query" || sourceId === "gleif-lei") return { sourceId, mode: "live", records: await queryRemoteSource(sourceId, cleanQuery) };
+  if (adapter?.mode === "live_query" || sourceId === "gleif-lei") {
+    // A remote API answers a query; there is no local corpus to page through.
+    if (!cleanQuery) throw Object.assign(new Error("This source answers live queries, so it needs search terms."), { status: 400, code: "query_required" });
+    return { sourceId, mode: "live", records: await queryRemoteSource(sourceId, cleanQuery) };
+  }
+
   const normalized = await readNormalized(sourceId);
   if (!normalized) throw Object.assign(new Error("This source has not been synchronized yet."), { status: 409 });
-  const needle = cleanQuery.toLocaleLowerCase();
-  const hits = normalized.records.filter((record) => JSON.stringify(record).toLocaleLowerCase().includes(needle));
-  const records = hits.slice(0, Math.min(100, Math.max(1, Number(limit) || 20)))
-    .map((record) => ({ ...record, matchSnippets: matchSnippets(record, needle) }));
-  return {
-    sourceId,
-    totalMatches: hits.length,
+  const provenance = {
     mode: normalized.isFallback ? "bundled_fallback_snapshot" : "local_snapshot",
     provenance: normalized.provenance,
     capturedAt: normalized.capturedAt,
-    ...(normalized.isFallback ? { bundledAt: normalized.bundledAt, fallbackNotice: "Results come from a committed point-in-time copy because the official source was not synchronized on this host. Re-sync before relying on them." } : {}),
-    records
+    ...(normalized.isFallback ? { bundledAt: normalized.bundledAt, fallbackNotice: "Results come from a committed point-in-time copy because the official source was not synchronized on this host. Re-sync before relying on them." } : {})
+  };
+
+  // No terms means "show me what is in here". A source is easier to trust when
+  // its whole content can be paged through, not only sampled by guessing words.
+  if (!cleanQuery) {
+    return {
+      sourceId, ...provenance, kind: "browse",
+      totalRecords: normalized.records.length, offset: from, limit: size,
+      records: normalized.records.slice(from, from + size)
+    };
+  }
+
+  const terms = tokenizeQuery(cleanQuery);
+  const phrase = cleanQuery.toLocaleLowerCase();
+  const scored = [];
+  for (const record of normalized.records) {
+    const { score, matched } = scoreRecord(record, terms, phrase);
+    if (score > 0) scored.push({ record, score, matched });
+  }
+  scored.sort((left, right) => right.score - left.score);
+  // With Han bigrams a generic query touches nearly every record, so "206 of 206
+  // matched" tells the reader nothing. Records answering at least half the query
+  // are the result set; the rest are counted, not hidden, so a query that only
+  // ever matches weakly still returns its best effort rather than nothing.
+  const strong = scored.filter((hit) => hit.matched.length / terms.length >= 0.5);
+  const pool = strong.length ? strong : scored;
+  const page = pool.slice(from, from + size);
+  return {
+    sourceId, ...provenance, kind: "search",
+    totalMatches: pool.length, partialMatchesExcluded: pool.length === scored.length ? 0 : scored.length - pool.length,
+    totalRecords: normalized.records.length,
+    offset: from, limit: size, terms,
+    records: page.map(({ record, score, matched }) => ({
+      ...record,
+      // Reported so a result can be read as "why this one": which parts of the
+      // query it answered, and which it did not.
+      relevance: { score: Math.round(score * 10) / 10, matchedTerms: matched, missedTerms: terms.filter((term) => !matched.includes(term)) },
+      matchSnippets: matchSnippets(record, matched)
+    }))
   };
 }
