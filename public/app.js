@@ -44,7 +44,7 @@ const i18n = {
     runtimeRules: "规则模式", runtimeReady: "实时模型", runtimeMissing: "未配置模型",
     modeHint: "点击切换规则模式与实时模型",
     routeLabel: "路由", routedTo: "已路由至",
-    overallAssessment: "总体判断", nextStep: "下一步", missingInfo: "仍需信息", actions: "建议行动", planSuggested: "其他建议", notClosed: "分析未结案 — 还需要 {n} 项信息", notClosedLead: "补齐后分析会从当前步骤继续；在补齐之前不出具结论。", notClosedGo: "去补充：", interimVerdict: "阶段性判断（基于现有信息，未结案）", noItems: "暂无", limitations: "结论边界与限制",
+    overallAssessment: "总体判断", nextStep: "下一步", missingInfo: "仍需信息", actions: "建议行动", planSuggested: "其他建议", notClosed: "尚有 {n} 项未补齐", stepAsk: "分析在这里停下，需要你补充以下信息后继续", interimVerdict: "阶段性判断（基于现有信息，未结案）", noItems: "暂无", limitations: "结论边界与限制",
     sourceLive: "实时获取", sourceMetadata: "元数据", sourceUnavailable: "获取失败", sourceNotFetched: "未获取", sourceArchived: "已采集副本", sourceCitationOnly: "仅引用", sourceCached: "缓存", noQueryableSource: "暂无可直查的来源（需先同步）", sourceQueryHint: "@ 直查数据源", sourceQueryPlaceholder: "输入实体名、公告号或条文关键词（按相关性排序；留空则浏览全部）…",
     queryEmpty: "请输入查询内容", queryHits: "{total} 条命中", browseCount: "共 {total} 条", browseAll: "浏览全部", pagePrev: "上一页", pageNext: "下一页", relMatched: "命中", relMissed: "未命中", relPartial: "另有 {n} 条仅命中部分检索词，未列出", queryNoHit: "该来源中未找到匹配记录", queryTruncated: "显示前 {shown} 条，共 {total} 条",
     queryEscalate: "以此发起完整筛查 →", escalatePrefix: "请对 {q} 做完整合规筛查",
@@ -102,7 +102,7 @@ const i18n = {
     runtimeRules: "Rules mode", runtimeReady: "Live model", runtimeMissing: "No model configured",
     modeHint: "Toggle between rules mode and the live model",
     routeLabel: "Route", routedTo: "Routed to",
-    overallAssessment: "Overall assessment", nextStep: "Next step", missingInfo: "Missing information", actions: "Recommended actions", planSuggested: "Other suggestions", notClosed: "Not concluded — {n} items still needed", notClosedLead: "Supply them and the analysis continues from where it stopped. No conclusion is issued until then.", notClosedGo: "Supply: ", interimVerdict: "Interim assessment (on incomplete facts, not a conclusion)", noItems: "None", limitations: "Limits on this conclusion",
+    overallAssessment: "Overall assessment", nextStep: "Next step", missingInfo: "Missing information", actions: "Recommended actions", planSuggested: "Other suggestions", notClosed: "{n} items still open", stepAsk: "The analysis stops here and needs these to continue", interimVerdict: "Interim assessment (on incomplete facts, not a conclusion)", noItems: "None", limitations: "Limits on this conclusion",
     sourceLive: "Live", sourceMetadata: "Metadata", sourceUnavailable: "Unavailable", sourceNotFetched: "Not fetched", sourceArchived: "Archived copy", sourceCitationOnly: "Cited only", sourceCached: "Cached", noQueryableSource: "No queryable source yet (sync one first)", sourceQueryHint: "@ query a source", sourceQueryPlaceholder: "Entity name, notice number or keyword — ranked by relevance; leave empty to browse all…",
     queryEmpty: "Enter something to look up", queryHits: "{total} matches", browseCount: "{total} records", browseAll: "Browse all", pagePrev: "Previous", pageNext: "Next", relMatched: "matched", relMissed: "not matched", relPartial: "{n} more records matched only part of the query and are not listed", queryNoHit: "No matching record in this source", queryTruncated: "Showing {shown} of {total}",
     queryEscalate: "Run a full screening on this →", escalatePrefix: "Run a full compliance screening on {q}",
@@ -963,7 +963,7 @@ function pathMarkup(path, grounding, options = {}) {
                   }).join("")}</ul>` : ""}
                   ${item.needs.length ? `<ul class="step-needs">${item.needs.map((line) => `<li>${formatInline(line)}</li>`).join("")}</ul>` : ""}
                   ${stepDetailMarkup(item, grounding)}
-                  ${asking ? stepInputsMarkup(item) : ""}
+                  ${asking ? `<p class="step-ask">${esc(t("stepAsk"))}</p>${stepInputsMarkup(item)}` : ""}
                 </div>
               </div>
             </li>`;
@@ -1033,8 +1033,6 @@ function conclusionMarkup(data) {
   const synthesis = data.synthesis;
   const steps = (data.analysisPath?.lanes || []).flatMap((lane) => lane.steps);
   const outstanding = steps.filter((item) => item.status === "evidence_needed");
-  const askingId = firstBlockedStep(data.analysisPath);
-  const asking = steps.find((item) => item.id === askingId);
   const suggested = data.actionPlan?.suggested || [];
   const limits = data.grounding?.limitations || [];
   const limitsBlock = limits.length ? `
@@ -1052,31 +1050,28 @@ function conclusionMarkup(data) {
       </div>
     </div>`;
 
+  // One stable wrapper whatever the state, because a patched answer has to be
+  // findable: the open form and the closed form are different elements, and
+  // patching on the closed one silently left a stale footer behind.
   if (!outstanding.length) {
-    return `<section class="answer">${verdict}
+    return `<section class="conclusion"><section class="answer">${verdict}
       ${suggested.length ? `<ul class="answer-suggested">${suggested.map((item) => `<li>${formatInline(item)}</li>`).join("")}</ul>` : ""}
       ${limitsBlock}
-    </section>`;
+    </section></section>`;
   }
 
+  // Where the analysis is waiting is where it says so and where it is answered.
+  // A prompt at the foot of the answer meant the thing to act on was the furthest
+  // thing from the thing it was about, and it read as the case being closed while
+  // eleven items were open. What is left here is a footnote, not an interaction.
   return `
-    <section class="answer answer-open">
-      <div class="open-head">
-        <span class="risk-mark risk-unknown">…</span>
-        <div>
-          <h3>${esc(t("notClosed").replace("{n}", outstanding.length))}</h3>
-          <p class="open-lead">${esc(t("notClosedLead"))}</p>
-          ${asking ? `<button type="button" class="btn btn-primary" data-goto-step="${esc(asking.id)}">${esc(t("notClosedGo"))}${esc(asking.title)}</button>` : ""}
-        </div>
+    <section class="conclusion"><details class="interim">
+      <summary>${esc(t("interimVerdict"))} · ${esc(t("notClosed").replace("{n}", outstanding.length))}</summary>
+      <div class="interim-body">${verdict}
+        ${suggested.length ? `<ul class="interim-suggested">${suggested.map((item) => `<li>${formatInline(item)}</li>`).join("")}</ul>` : ""}
+        ${limitsBlock}
       </div>
-      <details class="interim">
-        <summary>${esc(t("interimVerdict"))}</summary>
-        <div class="interim-body">${verdict}
-          ${suggested.length ? `<ul class="interim-suggested">${suggested.map((item) => `<li>${formatInline(item)}</li>`).join("")}</ul>` : ""}
-          ${limitsBlock}
-        </div>
-      </details>
-    </section>`;
+    </details></section>`;
 }
 
 function answerMarkup(data) {
@@ -1327,7 +1322,7 @@ function patchAnswer(node, data) {
   // The conclusion changes shape as items close — an open analysis and a closed
   // one are different blocks — so it is replaced whole rather than patched field
   // by field.
-  replace(".answer", conclusionMarkup(data));
+  replace(".conclusion", conclusionMarkup(data));
 }
 
 async function analyze(event, options = {}) {
