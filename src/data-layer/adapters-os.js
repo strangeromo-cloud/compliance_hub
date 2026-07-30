@@ -31,11 +31,13 @@ export const OPENSANCTIONS_LICENCE = "CC-BY-NC 4.0";
 export const OPENSANCTIONS_ATTRIBUTION =
   "Contains data from OpenSanctions (opensanctions.org), licensed CC-BY-NC 4.0. Non-commercial use only.";
 
-// sourceId -> the dataset slug it mirrors.
+// sourceId -> the dataset slug it mirrors. Taiwan is deliberately absent: its
+// issuing ministry publishes the same list itself, openly licensed, with more
+// rows — see syncTaiwanShtc below. A mirror is only worth using where the source
+// does not offer a usable route of its own.
 export const OPENSANCTIONS_SETS = {
   "eu-fsf": "eu_fsf",
   "jp-meti-eul": "jp_meti_eul",
-  "tw-shtc": "tw_shtc",
   "us-uflpa": "us_dhs_uflpa",
   "us-dod-1260h": "us_dod_chinese_milcorps"
 };
@@ -93,9 +95,58 @@ export async function syncOpenSanctions(sourceId) {
   };
 }
 
+// Taiwan's Strategic High-Tech Commodities entity list, from the issuing ministry.
+//
+// Preferred over the OpenSanctions mirror on both counts that matter: it carries
+// 11,664 rows against the mirror's 10,170, and Taiwan's Open Government Data
+// License permits commercial use where CC-BY-NC does not. The endpoint answers a
+// bare request with a redirect stub rather than the file, so it needs a Referer
+// and redirects followed — which is why this looked unusable at first.
+const TW_SHTC_URL = "https://www.trade.gov.tw/OpenData/getOpenData.aspx?oid=0F2CD336A579151B";
+
+export async function syncTaiwanShtc() {
+  const file = await fetchPublicFile(TW_SHTC_URL, {
+    accept: "text/csv,application/octet-stream",
+    headers: { Referer: "https://data.gov.tw/dataset/102368" },
+    maxBytes: 20 * 1024 * 1024,
+    attempts: 2
+  });
+  const rows = rowsToObjects(parseCsv(file.bytes.toString("utf8").replace(/^\uFEFF/, "")));
+  const records = rows
+    .map((row, index) => ({
+      sourceId: "tw-shtc",
+      recordId: `tw-shtc-${index}`,
+      entityName: row["名稱name"] || null,
+      aliases: String(row["別名alias"] || "").split(";").map((alias) => alias.trim()).filter(Boolean),
+      addresses: [row["地址address"]].filter(Boolean),
+      identificationNumbers: [row["護照號碼IDNumber"]].filter(Boolean).map((number) => ({ type: "passport", number, country: null })),
+      sourceList: "Taiwan Strategic High-Tech Commodities Entity List",
+      // The ministry stamps each row with the date the file was produced, not the
+      // date the entity was listed. Named for what it is.
+      fileProducedOn: row["產製日期createdate"] || null,
+      sourceUrl: "https://data.gov.tw/dataset/102368",
+      licence: "Open Government Data License, Taiwan v1.0",
+      matchDisposition: "potential_match_requires_review",
+      rawRecord: { snapshotRecordIndex: index }
+    }))
+    .filter((record) => record.entityName);
+
+  if (rows.length && !records.length) {
+    throw new Error(`tw-shtc: ${rows.length} rows parsed but none carried a name — the CSV shape has changed.`);
+  }
+
+  return {
+    extension: "csv", file, records,
+    syncScope: `moea_opendata+${records.length}_entities`,
+    sourceUpdatedAt: records.map((record) => record.fileProducedOn).filter(Boolean).sort().at(-1) || file.lastModified
+  };
+}
+
 export const OS_ADAPTERS = Object.fromEntries(
   Object.keys(OPENSANCTIONS_SETS).map((sourceId) => [
     sourceId,
     { sync: () => syncOpenSanctions(sourceId), mode: "full_download", credential: null }
   ])
 );
+
+OS_ADAPTERS["tw-shtc"] = { sync: syncTaiwanShtc, mode: "full_download", credential: null };

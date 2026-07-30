@@ -23,14 +23,14 @@ export const DATA_SOURCE_REGISTRY = [
     attribution: "Contains data from OpenSanctions (opensanctions.org), licensed CC-BY-NC 4.0. Non-commercial use only."
   },
   {
-    sourceId: "tw-shtc", sourceName: "Taiwan Strategic High-Tech Commodities Entity List", module: "trade", country: "TW", authority: "Taiwan MOEA (via OpenSanctions)",
-    sourceType: "restricted_party_list", officialSource: false, accessMethod: "Bulk CSV", fileFormat: "CSV",
+    sourceId: "tw-shtc", sourceName: "Taiwan Strategic High-Tech Commodities Entity List", module: "trade", country: "TW", authority: "Taiwan MOEA International Trade Administration",
+    sourceType: "restricted_party_list", officialSource: true, accessMethod: "Bulk CSV", fileFormat: "CSV",
     automationStatus: "api_available", feasibility: "can_build_now", currentCoverage: "not_ingested", priority: 1, authenticationRequired: false, captchaPresent: false,
-    updateFrequency: "Daily", websiteUrl: "https://www.opensanctions.org/datasets/tw_shtc/", apiUrl: "https://data.opensanctions.org/datasets/latest/tw_shtc/targets.simple.csv",
-    dataCaptured: ["names", "aliases", "countries", "addresses"], targetData: ["WMD and military end-use concerns"],
-    webSearchUse: "supplement_only", notes: "The official MOEA site publishes HTML only; this is the route that does not require scraping.",
-    licence: "CC-BY-NC 4.0", commercialUseBlocked: true,
-    attribution: "Contains data from OpenSanctions (opensanctions.org), licensed CC-BY-NC 4.0. Non-commercial use only."
+    updateFrequency: "Twice daily", websiteUrl: "https://data.gov.tw/dataset/102368", apiUrl: "https://www.trade.gov.tw/OpenData/getOpenData.aspx?oid=0F2CD336A579151B",
+    dataCaptured: ["names", "aliases", "addresses", "passport numbers"], targetData: ["WMD and military end-use concerns"],
+    webSearchUse: "supplement_only", notes: "Straight from the issuing ministry's open-data feed: more rows than the OpenSanctions mirror and an open licence rather than CC-BY-NC. The endpoint returns a redirect stub without a Referer.",
+    licence: "Open Government Data License, Taiwan v1.0", commercialUseBlocked: false,
+    attribution: "Contains data from the Ministry of Economic Affairs, Taiwan, under the Open Government Data License v1.0."
   },
   {
     sourceId: "jp-meti-eul", sourceName: "Japan METI End User List", module: "trade", country: "JP", authority: "Japan METI (via OpenSanctions)",

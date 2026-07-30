@@ -8,6 +8,8 @@ test("every OpenSanctions source declares its licence and its commercial limit",
   // CC-BY-NC is a real constraint on what this data may be used for. A constraint
   // that only lives in a comment is one nobody sees, so it is a field, and the
   // interface renders it.
+  assert.ok(!Object.keys(OPENSANCTIONS_SETS).includes("tw-shtc"),
+    "Taiwan comes from the issuing ministry, not the mirror — the mirror has fewer rows and a stricter licence");
   for (const sourceId of Object.keys(OPENSANCTIONS_SETS)) {
     const source = DATA_SOURCE_REGISTRY.find((item) => item.sourceId === sourceId);
     assert.ok(source, `${sourceId} is not in the registry`);
@@ -29,7 +31,7 @@ test("a CSV whose shape has changed fails loudly rather than screening clean", a
     "\"id\",\"schema\",\"full_name\"\n\"a\",\"Company\",\"Some Entity\"\n",
     { status: 200, headers: { "content-type": "text/csv" } }
   );
-  await assert.rejects(() => ADAPTERS["tw-shtc"].sync(), /shape has changed/);
+  await assert.rejects(() => ADAPTERS["eu-fsf"].sync(), /shape has changed/);
 });
 
 test("targets are normalized into the shape screening already understands", async (t) => {
@@ -41,7 +43,7 @@ test("targets are normalized into the shape screening already understands", asyn
     + '"NK-1","Company","Huawei Device Co., Ltd.","Huawei Device;Shenzhen Huawei","cn","Bantian, Shenzhen","91440300","prog-1","Taiwan SHTC","2025-08-09","2026-07-30","2025-12-11"\n',
     { status: 200, headers: { "content-type": "text/csv" } }
   );
-  const { records, syncScope } = await ADAPTERS["tw-shtc"].sync();
+  const { records, syncScope } = await ADAPTERS["eu-fsf"].sync();
   assert.equal(records.length, 1);
   const [record] = records;
   assert.equal(record.entityName, "Huawei Device Co., Ltd.");
@@ -53,5 +55,5 @@ test("targets are normalized into the shape screening already understands", asyn
   // must not be readable as "listed on".
   assert.equal(record.firstObservedAt, "2025-08-09");
   assert.equal(record.designatedOn, undefined);
-  assert.match(syncScope, /opensanctions_tw_shtc/);
+  assert.match(syncScope, /opensanctions_eu_fsf/);
 });
