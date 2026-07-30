@@ -909,18 +909,27 @@ function pathMarkup(path, grounding, options = {}) {
   const doneLanes = options.doneLanes || new Set();
   const results = options.results || [];
   const settled = (item) => item.status === "confirmed" || item.status === "declared" || item.status === "review_required";
-  const shown = (item) => settled(item) || item.id === blocked;
+  // Forward-only reveal, per lane. A lane that has been analysed keeps everything
+  // it established plus its own next open question; a lane that has not run is not
+  // drawn at all. Deciding this globally hid whole lanes that had just produced a
+  // verdict and findings, because their reached steps were all blocked and only
+  // the first blocked step in the whole path was being shown — two thirds of a
+  // finished analysis simply disappeared.
+  const laneQuestion = (lane) => lane.steps.find((item) => item.status === "evidence_needed")?.id || null;
+  const analysed = new Set(results.map((item) => item.agent));
 
   const lanes = path.lanes
     .filter((lane) => {
       // The closing step is only drawn once there is something to close.
-      if (lane.lane === "review") return !blocked;
-      return lane.steps.some(shown) || lane.lane === activeLane;
+      if (lane.lane === "review") return !blocked && options.allowInput !== false;
+      return analysed.has(lane.lane) || lane.lane === activeLane || lane.steps.some(settled);
     })
     .map((lane) => {
-      const steps = lane.steps.filter(shown);
+      const question = laneQuestion(lane);
+      const steps = lane.steps.filter((item) => settled(item) || item.id === question);
       const result = results.find((item) => item.agent === lane.lane);
       const running = lane.lane === activeLane;
+      if (!steps.length && !result && !running) return "";
       const laneState = running ? "running" : doneLanes.has(lane.lane) ? "done" : "";
       return `
         <section class="path-lane ${laneState}" data-lane="${esc(lane.lane)}">
@@ -936,7 +945,7 @@ function pathMarkup(path, grounding, options = {}) {
           <ol class="path-steps">${steps.map((item) => {
             const stepTone = tone(STEP_STATUS_VOCAB, item.status);
             const mark = STEP_STATUS_VOCAB[item.status]?.mark || "·";
-            const asking = item.id === blocked;
+            const asking = item.id === blocked;   // one form at a time, path order
             return `
             <li class="path-step tone-${stepTone} open ${asking ? "asking" : ""}" data-step-id="${esc(item.id)}">
               <span class="step-mark" aria-hidden="true">${mark}</span>
@@ -1118,14 +1127,26 @@ function createLiveMessage() {
 // flow rail, listing the same run in different words. What it had that the rail
 // does not is the pre-analysis phases — retrieval and grounding happen before any
 // lane starts — so it collapses to one line naming the current phase.
-function renderSteps(node, done, current) {
+function renderSteps(node, done, current, detail = "") {
   // A resumed run writes into an answer that has already been rendered, so the
   // live scaffold is gone. Progress then shows on the path itself.
   const host = node.querySelector("[data-live-steps]");
   if (!host) return;
   host.innerHTML = current
-    ? `<span class="tick" aria-hidden="true"></span>${esc(t(`step_${current}`))}`
+    ? `<span class="tick" aria-hidden="true"></span>${esc(t(`step_${current}`))}${detail ? `<span class="live-detail">${esc(detail)}</span>` : ""}<span class="live-elapsed" data-elapsed></span>`
     : "";
+}
+
+// A specialist takes the better part of a minute. Without a clock the wait is
+// indistinguishable from a hang — which is exactly how it was reported.
+function startElapsed(node) {
+  const started = Date.now();
+  const tick = () => {
+    const target = node.querySelector("[data-elapsed]");
+    if (target) target.textContent = `${Math.round((Date.now() - started) / 1000)}s`;
+  };
+  tick();
+  return setInterval(tick, 1000);
 }
 
 
@@ -1354,7 +1375,7 @@ async function analyze(event, options = {}) {
   const collected = { agents: [], sources: [] };
   // Lane progress is kept outside the DOM so a redraw can restore the streamed
   // text: the path is re-rendered whenever a lane starts or finishes.
-  const progress = { activeLane: null, doneLanes: new Set(), text: {}, summary: {} };
+  const progress = { activeLane: null, doneLanes: new Set(), text: {}, summary: {}, index: 0, total: 0, clock: null };
 
   // Lane state and streamed reasoning are written into the path that is already
   // rendered, rather than replacing it. Nothing the reader is looking at moves.
@@ -1393,6 +1414,7 @@ async function analyze(event, options = {}) {
   const onEvent = (event) => {
     if (event.type === "routed") {
       done.add("routed");
+      progress.total = event.agents.length;
       const meta = live.querySelector("[data-live-meta]");
       if (meta) meta.innerHTML =
         `<span class="tag">${esc(event.id)}</span><span class="sep">·</span>`
@@ -1430,6 +1452,10 @@ async function analyze(event, options = {}) {
       // The lane becomes the active one, so the reasoning about to stream lands
       // inside the steps it is reasoning about.
       progress.activeLane = event.agent;
+      progress.index = (progress.index || 0) + 1;
+      clearInterval(progress.clock);
+      renderSteps(live, done, "agents", `${agentName(event.agent)} · ${progress.index}/${progress.total}`);
+      progress.clock = startElapsed(live);
       drawPath();
       renderFlowPanel(collected.path, { activeLane: progress.activeLane });
     }
@@ -1471,7 +1497,9 @@ async function analyze(event, options = {}) {
     if (event.type === "synthesizing") {
       done.add("agents");
       progress.activeLane = "review";
+      clearInterval(progress.clock);
       renderSteps(live, done, "synthesizing");
+      progress.clock = startElapsed(live);
       drawPath();
       renderFlowPanel(collected.path, { activeLane: progress.activeLane });
     }
@@ -1562,6 +1590,7 @@ async function analyze(event, options = {}) {
     }
     toast(`${t("error")}: ${error.message}`);
   } finally {
+    clearInterval(progress.clock);
     state.busy = false;
     $("submitBtn").disabled = false;
   }
