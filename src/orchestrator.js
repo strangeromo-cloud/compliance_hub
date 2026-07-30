@@ -140,7 +140,7 @@ async function synthesize(question, locale, results, config, history, grounding,
 // Stages report as they land instead of the caller waiting on the whole run.
 // The specialists take the longest, so each one is emitted the moment it
 // resolves rather than after Promise.all settles.
-export async function assessScenario({ question, locale = "zh", config = {}, mock = false, history = [], gemId = null, onEvent = () => {} }) {
+export async function assessScenario({ question, locale = "zh", config = {}, mock = false, history = [], gemId = null, declaredFacts = {}, onEvent = () => {} }) {
   const directAgents = routeQuestion(question, false);
   const contextualQuestion = `${history.filter((item) => item.role === "user").map((item) => item.content).join("\n")}\n${question}`;
   const contextualAgents = routeQuestion(contextualQuestion, false);
@@ -165,7 +165,7 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
   }));
   onEvent({ type: "sources", sources: publicSources });
 
-  const grounding = await collectGrounding(question, agents);
+  const grounding = await collectGrounding(contextualQuestion, agents, declaredFacts);
   // The comparison detail is the argument behind the conclusion. Returning only
   // counts left the reader with a verdict and no way to see how it was reached.
   // designatedRecord is dropped because it is the bulky raw list entry, and
@@ -184,7 +184,7 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
 
   // Screening steps can close once grounding is in; the rest wait for the
   // specialists rather than being guessed at.
-  analysisPath = resolveAnalysisPath(analysisPath, { question, grounding: groundingSummary, results: [] });
+  analysisPath = resolveAnalysisPath(analysisPath, { question: contextualQuestion, grounding: groundingSummary, results: [], declaredFacts });
   onEvent({ type: "path", path: analysisPath });
 
   let results;
@@ -217,7 +217,7 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
       (text) => onEvent({ type: "synthesis_delta", text }));
   }
 
-  analysisPath = resolveAnalysisPath(analysisPath, { question, grounding: groundingSummary, results, final: true });
+  analysisPath = resolveAnalysisPath(analysisPath, { question: contextualQuestion, grounding: groundingSummary, results, declaredFacts, final: true });
   onEvent({ type: "path", path: analysisPath });
 
   return {
@@ -225,6 +225,7 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
     createdAt: new Date().toISOString(),
     analysisPath,
     actionPlan: buildActionPlan(analysisPath, results),
+    declaredFacts,
     mode: mock ? "grounded-demo" : "live-model",
     intent: grounding.intent,
     grounding: groundingSummary,

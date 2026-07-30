@@ -86,23 +86,39 @@ async function chinaNoticeFacts(question) {
 // Re-screens each internal candidate against the designated record using the
 // internal party's own identity elements. Screening only the name can never
 // clear a hit; screening the identity can.
-async function internalPartiesFor(match) {
+async function internalPartiesFor(match, declared = {}) {
   const candidates = await findInternalParties(match.matchedName, { limit: 3 });
   if (!match.designatedRecord) return candidates;
   return candidates.map((candidate) => {
-    const [resolved] = matchParty(
-      { name: candidate.entityName, country: candidate.country, registrationNumber: candidate.registrationNumber, address: candidate.address },
-      [match.designatedRecord],
-      { limit: 1, threshold: 0.5 }
-    );
+    // A value the user supplied fills a gap the internal record did not have.
+    // It is tracked separately, because a declaration is not verified evidence
+    // and the interface has to be able to say which is which.
+    const declaredUsed = [];
+    const withDeclared = (field, value) => {
+      if (value || !declared[field]) return value;
+      declaredUsed.push(field);
+      return declared[field];
+    };
+    const subject = {
+      name: candidate.entityName,
+      country: withDeclared("country", candidate.country),
+      registrationNumber: withDeclared("registrationNumber", candidate.registrationNumber),
+      address: withDeclared("address", candidate.address)
+    };
+    const [resolved] = matchParty(subject, [match.designatedRecord], { limit: 1, threshold: 0.5 });
     if (!resolved) return candidate;
     return {
       ...candidate,
       designatedEntity: resolved.entityName,
       designationNoticeNumber: resolved.noticeNumber,
-      identityComparisons: resolved.identityComparisons,
+      identityComparisons: resolved.identityComparisons.map((row) => ({
+        ...row,
+        // Marks which side of this comparison came from a declaration.
+        declared: declaredUsed.includes({ country: "country", registration_number: "registrationNumber", address: "address" }[row.element])
+      })),
       matchScore: resolved.matchScore,
-      matchDisposition: resolved.matchDisposition
+      matchDisposition: resolved.matchDisposition,
+      declaredFields: declaredUsed
     };
   });
 }
@@ -136,7 +152,7 @@ async function productFacts(question) {
   return facts;
 }
 
-export async function collectGrounding(question, agents = []) {
+export async function collectGrounding(question, agents = [], declaredFacts = {}) {
   const intent = classifyQuestionIntent(question);
   const grounding = { intent, facts: [], listMatches: [], internalParties: [], screening: null, limitations: [] };
 
@@ -176,7 +192,7 @@ export async function collectGrounding(question, agents = []) {
       // external designation is joined back to internal master data. The
       // internal record supplies country, registration number and address, so
       // the comparison runs in the direction that can actually clear a name hit.
-      const internal = await internalPartiesFor(match);
+      const internal = await internalPartiesFor(match, declaredFacts);
       if (internal.length) grounding.internalParties.push({ designationName: match.matchedName, designationSource: match.sourceId, noticeNumber: match.noticeNumber, internalMatches: internal });
     }
     if (grounding.internalParties.length) {

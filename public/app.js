@@ -22,7 +22,7 @@ const i18n = {
     hfQuestion: "一个问题", hfAnswer: "统一答案", startersLabel: "快速开始", workspaceEmpty: "工作区还没有 Gem", gemBacking: "数据支撑",
     teachSlashTitle: "在输入框键入 /", teachSlashBody: "呼出 {n} 个 Gem 的完整目录，上下键选择，回车使用。",
     teachPinTitle: "把常用 Gem 加入工作区", teachPinBody: "在目录里点 ★，或在 Gem 详情里点「添加到工作区」，它会常驻左侧栏。",
-    historyLabel: "历史记录", historyEmpty: "暂无记录", turnUnit: "轮", historyOpenFailed: "无法打开该记录", pathTitle: "分析路径", stConfirmed: "已确认", stEvidence: "需更多证据", stNotReached: "未进行", status_confirmed: "已确认", status_evidence_needed: "需更多证据", status_not_reached: "待前序步骤", status_review_required: "需人工复核", status_pending: "待执行", stPending: "待执行", reasoningTrace: "比对明细", rsSearched: "已检索的名单来源", rsMatched: "名称命中", rsCompared: "身份要素比对", rsFacts: "已核验事实",
+    historyLabel: "历史记录", historyEmpty: "暂无记录", turnUnit: "轮", historyOpenFailed: "无法打开该记录", pathTitle: "分析路径", stConfirmed: "已确认", stEvidence: "需更多证据", stNotReached: "未进行", status_confirmed: "已确认", status_evidence_needed: "需更多证据", status_not_reached: "待前序步骤", status_review_required: "需人工复核", status_pending: "待执行", stPending: "待执行", status_declared: "已声明，待核验", stDeclared: "已声明", declareSubmit: "提交并继续", declarePlaceholder: "填写后提交", declareNote: "填写的内容记为声明信息，不等于已核验证据", declareEmpty: "请先填写至少一项", declarePrefix: "补充信息 — ", reasoningTrace: "比对明细", rsSearched: "已检索的名单来源", rsMatched: "名称命中", rsCompared: "身份要素比对", rsFacts: "已核验事实",
     rsScore: "相似度", rsOpen: "查看原文", rsUnsynced: "未同步、本次未检索",
     el_country: "国别", el_registration_number: "注册号", el_address: "地址",
     st_agree: "一致", st_conflict: "冲突", st_unavailable: "缺失",
@@ -73,7 +73,7 @@ const i18n = {
     hfQuestion: "One question", hfAnswer: "One answer", startersLabel: "Start here", workspaceEmpty: "No gems in your workspace yet", gemBacking: "Data behind it",
     teachSlashTitle: "Press / in the composer", teachSlashBody: "Opens the full catalogue of {n} gems. Arrow keys select, Enter uses.",
     teachPinTitle: "Pin the ones you use", teachPinBody: "Add to workspace from a gem's details and it stays in the sidebar.",
-    historyLabel: "History", historyEmpty: "No cases yet", turnUnit: "turns", historyOpenFailed: "That case could not be opened", pathTitle: "Analysis path", stConfirmed: "settled", stEvidence: "need evidence", stNotReached: "not reached", status_confirmed: "Settled", status_evidence_needed: "Evidence needed", status_not_reached: "Awaiting earlier step", status_review_required: "Human review", status_pending: "Planned", stPending: "planned", reasoningTrace: "Comparison detail", rsSearched: "Lists searched", rsMatched: "Name matches", rsCompared: "Identity comparison", rsFacts: "Verified facts",
+    historyLabel: "History", historyEmpty: "No cases yet", turnUnit: "turns", historyOpenFailed: "That case could not be opened", pathTitle: "Analysis path", stConfirmed: "settled", stEvidence: "need evidence", stNotReached: "not reached", status_confirmed: "Settled", status_evidence_needed: "Evidence needed", status_not_reached: "Awaiting earlier step", status_review_required: "Human review", status_pending: "Planned", stPending: "planned", status_declared: "Declared, unverified", stDeclared: "declared", declareSubmit: "Submit and continue", declarePlaceholder: "Fill in, then submit", declareNote: "What you enter is recorded as a declaration, not as verified evidence", declareEmpty: "Fill in at least one field first", declarePrefix: "Additional information — ", reasoningTrace: "Comparison detail", rsSearched: "Lists searched", rsMatched: "Name matches", rsCompared: "Identity comparison", rsFacts: "Verified facts",
     rsScore: "Similarity", rsOpen: "Open source", rsUnsynced: "Not synced, therefore not searched",
     el_country: "Country", el_registration_number: "Registration no.", el_address: "Address",
     st_agree: "agree", st_conflict: "conflict", st_unavailable: "missing",
@@ -149,6 +149,7 @@ const state = {
   coverage: null,
   cases: [],
   threadId: null,
+  declaredFacts: {},
   factsOpen: false,
   rail: localStorage.getItem("compliance-rail") === "1",
   evidenceCollapsed: localStorage.getItem("compliance-evidence-collapsed") === "1",
@@ -332,6 +333,7 @@ async function openCase(id) {
     // Reopening resumes the enquiry rather than starting a new one, so a
     // further follow-up joins the same thread.
     state.threadId = record.threadId;
+    state.declaredFacts = record.turns.at(-1)?.declaredFacts || {};
     state.conversation = [];
     $("threadInner").innerHTML = "";
     $("startPanel").classList.add("hidden");
@@ -759,6 +761,7 @@ function nextStepMarkup(value = "") {
 
 const STEP_STATUS = {
   pending: { tone: "pending", mark: "○" },
+  declared: { tone: "declared", mark: "◐" },
   confirmed: { tone: "ok", mark: "✓" },
   evidence_needed: { tone: "warn", mark: "!" },
   not_reached: { tone: "muted", mark: "·" },
@@ -769,6 +772,29 @@ const STEP_STATUS = {
 // settled, on what, and what would settle it if not. It replaces the flat
 // missing-information list, which said the same things without saying which
 // step each one blocked.
+// A blocked step can be answered in place. What the user types is a declaration,
+// never verified evidence — the status it produces says so, and the action list
+// then asks for it to be verified.
+function stepInputsMarkup(item) {
+  return `
+    <div class="step-inputs" data-step="${esc(item.id)}">
+      ${item.inputs.map((input) => input.kind === "choice"
+        ? `<div class="si-row">
+             <span class="si-label">${esc(input.label)}</span>
+             <div class="si-choices">${input.options.map((option) => `
+               <button type="button" class="si-choice" data-field="${esc(input.field)}" data-value="${esc(option)}">${esc(option)}</button>`).join("")}</div>
+           </div>`
+        : `<div class="si-row">
+             <span class="si-label">${esc(input.label)}</span>
+             <input class="si-text" type="text" data-field="${esc(input.field)}" maxlength="300" placeholder="${esc(t("declarePlaceholder"))}">
+           </div>`).join("")}
+      <div class="si-actions">
+        <button type="button" class="btn btn-primary si-submit">${esc(t("declareSubmit"))}</button>
+        <span class="si-note">${esc(t("declareNote"))}</span>
+      </div>
+    </div>`;
+}
+
 function pathMarkup(path) {
   if (!path?.lanes?.length) return "";
   const s = path.summary;
@@ -778,6 +804,7 @@ function pathMarkup(path) {
         <span class="path-summary">
           ${s.pending ? `<span class="ps pending">○ ${s.pending} ${esc(t("stPending"))}</span>` : ""}
           ${s.confirmed ? `<span class="ps ok">✓ ${s.confirmed} ${esc(t("stConfirmed"))}</span>` : ""}
+          ${s.declared ? `<span class="ps declared">◐ ${s.declared} ${esc(t("stDeclared"))}</span>` : ""}
           ${s.evidenceNeeded ? `<span class="ps warn">! ${s.evidenceNeeded} ${esc(t("stEvidence"))}</span>` : ""}
           ${s.notReached ? `<span class="ps muted">· ${s.notReached} ${esc(t("stNotReached"))}</span>` : ""}
         </span>
@@ -797,6 +824,7 @@ function pathMarkup(path) {
                 </div>
                 ${item.basis.length ? `<ul class="step-basis">${item.basis.map((line) => `<li>${formatInline(line)}</li>`).join("")}</ul>` : ""}
                 ${item.needs.length ? `<ul class="step-needs">${item.needs.map((line) => `<li>${formatInline(line)}</li>`).join("")}</ul>` : ""}
+                ${item.status === "evidence_needed" && item.inputs?.length ? stepInputsMarkup(item) : ""}
               </div>
             </li>`;
           }).join("")}</ol>
@@ -1102,7 +1130,7 @@ async function analyze(event) {
   try {
     const response = await fetch("/api/assess/stream", {
       method: "POST", headers: { "Content-Type": "application/json", ...accessHeaders() },
-      body: JSON.stringify({ question, locale: state.locale, mock, config, history: priorHistory, threadId: ensureThreadId(), gemId: gem?.id || null })
+      body: JSON.stringify({ question, locale: state.locale, mock, config, history: priorHistory, threadId: ensureThreadId(), gemId: gem?.id || null, declaredFacts: state.declaredFacts })
     });
     if (response.status === 401) { toast(t("accessRequired")); openSettings(); throw new Error(t("accessRequired")); }
     if (!response.ok || !response.body) {
@@ -1162,6 +1190,7 @@ async function analyze(event) {
 function newConversation() {
   state.conversation = [];
   state.threadId = null;
+  state.declaredFacts = {};
   $("threadInner").innerHTML = "";
   $("startPanel").classList.remove("hidden");
   $("questionInput").value = "";
@@ -1334,6 +1363,31 @@ $("gemNav").addEventListener("click", (event) => {
   if (state.activeGem?.id === button.dataset.gem) return openGemDetail(button.dataset.gem);
   activateGem(button.dataset.gem);
   closeDrawer();
+});
+
+// Declarations are submitted as another turn in the same thread, so the
+// transcript records what was supplied and the conclusion is recomputed with it
+// rather than being patched in place.
+$("threadInner").addEventListener("click", (event) => {
+  const choice = event.target.closest(".si-choice");
+  if (choice) {
+    const group = choice.closest(".si-choices");
+    group.querySelectorAll(".si-choice").forEach((button) => button.classList.toggle("on", button === choice));
+    return;
+  }
+  const submit = event.target.closest(".si-submit");
+  if (!submit) return;
+  const host = submit.closest(".step-inputs");
+  const facts = {};
+  host.querySelectorAll(".si-text").forEach((input) => { if (input.value.trim()) facts[input.dataset.field] = input.value.trim(); });
+  host.querySelectorAll(".si-choice.on").forEach((button) => { facts[button.dataset.field] = button.dataset.value; });
+  if (!Object.keys(facts).length) return toast(t("declareEmpty"));
+  state.declaredFacts = { ...state.declaredFacts, ...facts };
+  const labels = [...host.querySelectorAll(".si-row")]
+    .filter((row) => row.querySelector(".si-text")?.value.trim() || row.querySelector(".si-choice.on"))
+    .map((row) => `${row.querySelector(".si-label").textContent}：${row.querySelector(".si-text")?.value.trim() || row.querySelector(".si-choice.on").dataset.value}`);
+  $("questionInput").value = `${t("declarePrefix")}${labels.join("；")}`;
+  $("questionForm").requestSubmit();
 });
 
 $("gemRow").addEventListener("click", (event) => {

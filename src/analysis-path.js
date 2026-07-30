@@ -8,6 +8,7 @@
 // conclusion is presented in.
 //
 //   pending          planned, not yet attempted
+//   declared         the user supplied the fact, but nobody has verified it
 //   confirmed        settled, and `basis` says on what
 //   evidence_needed  reached but blocked, and `needs` says by what
 //   not_reached      an earlier step must settle first
@@ -23,29 +24,33 @@ const LANE_PLANS = {
   trade: {
     label: "Trade — 受限方与主体",
     steps: [
-      ["identify_party", "确定交易主体的法律实体"],
+      ["identify_party", "确定交易主体的法律实体", { field: "legalName", kind: "text", label: "法律实体全称" }],
       ["search_lists", "检索受限方名单"],
       ["name_match", "名称匹配"],
-      ["identity_resolution", "身份要素消歧"],
-      ["ownership", "所有权穿透（OFAC 50% 聚合）"]
+      ["identity_resolution", "身份要素消歧", [
+        { field: "registrationNumber", kind: "text", label: "注册号 / 统一社会信用代码" },
+        { field: "country", kind: "choice", label: "注册国别", options: ["CN", "US", "DE", "SG", "JP", "IN", "MX", "NL"] },
+        { field: "address", kind: "text", label: "注册地址" }
+      ]],
+      ["ownership", "所有权穿透（OFAC 50% 聚合）", { field: "ownership", kind: "text", label: "股权结构（如：A 持股 30%、B 持股 25%）" }]
     ]
   },
   product: {
     label: "Product — 物项与许可",
     steps: [
-      ["identify_item", "确定物项（准确型号或 part number）"],
-      ["classify", "归类（ECCN / 中国管制编码）"],
-      ["jurisdiction", "管辖判定（EAR 734 de minimis / FDP）"],
-      ["licence_path", "许可判定（管制理由 → 国别矩阵 → 例外）"]
+      ["identify_item", "确定物项（准确型号或 part number）", { field: "partNumber", kind: "text", label: "准确型号 / part number" }],
+      ["classify", "归类（ECCN / 中国管制编码）", { field: "eccn", kind: "text", label: "已知的 ECCN 或中国管制编码" }],
+      ["jurisdiction", "管辖判定（EAR 734 de minimis / FDP）", { field: "usContent", kind: "choice", label: "受控美国原产内容占比", options: ["< 10%", "10–25%", "> 25%", "不确定"] }],
+      ["licence_path", "许可判定（管制理由 → 国别矩阵 → 例外）", { field: "destination", kind: "text", label: "最终目的地、最终用户与最终用途" }]
     ]
   },
   tpdd: {
     label: "Ethics & TPDD — 第三方",
     steps: [
-      ["legal_existence", "核实主体存续与注册信息"],
-      ["beneficial_ownership", "确认受益所有权"],
-      ["rationale_fees", "评估商业合理性与费用水平"],
-      ["payment_path", "核查收款主体与付款路径"]
+      ["legal_existence", "核实主体存续与注册信息", { field: "registrationDocs", kind: "text", label: "注册证明文件情况" }],
+      ["beneficial_ownership", "确认受益所有权", { field: "ubo", kind: "text", label: "受益所有人" }],
+      ["rationale_fees", "评估商业合理性与费用水平", { field: "fees", kind: "text", label: "费用结构与交付物" }],
+      ["payment_path", "核查收款主体与付款路径", { field: "payee", kind: "text", label: "收款主体与账户所在地" }]
     ]
   },
   review: {
@@ -76,7 +81,10 @@ export function planAnalysisPath({ agents = [], gemId = null } = {}) {
     lane,
     label: LANE_PLANS[lane].label,
     leading: lane === lead,
-    steps: LANE_PLANS[lane].steps.map(([id, title]) => ({ id, title, status: "pending", basis: [], needs: [] }))
+    steps: LANE_PLANS[lane].steps.map(([id, title, inputs]) => ({
+      id, title, status: "pending", basis: [], needs: [],
+      inputs: inputs ? [].concat(inputs) : []
+    }))
   }));
   return { lanes, summary: summarize(lanes), planned: true };
 }
@@ -87,6 +95,7 @@ function summarize(lanes) {
     total: all.length,
     pending: all.filter((item) => item.status === "pending").length,
     confirmed: all.filter((item) => item.status === "confirmed").length,
+    declared: all.filter((item) => item.status === "declared").length,
     evidenceNeeded: all.filter((item) => item.status === "evidence_needed").length,
     notReached: all.filter((item) => item.status === "not_reached").length
   };
@@ -230,7 +239,7 @@ function tpddSteps(question, grounding, results) {
 // once during a run: after grounding, the screening steps can close; after the
 // specialists report, their statements of what they lack fill the rest. A step
 // with nothing yet to decide it stays pending rather than being guessed at.
-export function resolveAnalysisPath(plan, { question, grounding, results = [], final = false }) {
+export function resolveAnalysisPath(plan, { question, grounding, results = [], declaredFacts = {}, final = false }) {
   const resolvers = {
     trade: () => tradeSteps(question, grounding, results),
     product: () => productSteps(question, grounding, results),
@@ -244,7 +253,26 @@ export function resolveAnalysisPath(plan, { question, grounding, results = [], f
     // report there is nothing honest to say about them.
     if (!final && (group.lane === "tpdd" || group.lane === "review")) return group;
     const resolved = new Map(resolvers[group.lane]().map((item) => [item.id, item]));
-    return { ...group, steps: group.steps.map((item) => resolved.get(item.id) || item) };
+    return {
+      ...group,
+      steps: group.steps.map((planned) => {
+        const item = resolved.get(planned.id);
+        if (!item) return planned;
+        const answered = planned.inputs.filter((input) => String(declaredFacts[input.field] || "").trim());
+        // A declaration moves a blocked step forward but never to settled: the
+        // value came from the person asking, and nobody has checked it.
+        if (item.status === "evidence_needed" && answered.length) {
+          return {
+            ...item,
+            inputs: planned.inputs,
+            status: "declared",
+            basis: [...item.basis, ...answered.map((input) => `${input.label}：${declaredFacts[input.field]}（用户声明，未核验）`)],
+            needs: item.needs.filter((need) => !answered.some((input) => need.includes(input.label.split(" / ")[0])))
+          };
+        }
+        return { ...item, inputs: planned.inputs };
+      })
+    };
   });
 
   return { lanes, summary: summarize(lanes), planned: false, final };
@@ -264,6 +292,13 @@ export function buildActionPlan(path, results = []) {
 
   for (const lane of path?.lanes || []) {
     for (const item of lane.steps) {
+      if (item.status === "declared") {
+        actions.push({
+          action: `核验用户声明的信息：${item.inputs.map((input) => input.label).join("、")}`,
+          unblocks: item.title, lane: lane.lane, kind: "verify"
+        });
+        continue;
+      }
       if (item.status !== "evidence_needed") continue;
       for (const need of item.needs) {
         const text = String(need).trim();
