@@ -1372,6 +1372,28 @@ async function analyze(event, options = {}) {
   // text: the path is re-rendered whenever a lane starts or finishes.
   const progress = { activeLane: null, doneLanes: new Set(), text: {}, summary: {}, index: 0, total: 0, clock: null };
 
+  // Each delta carries the whole readable text of the call that produced it, not
+  // an increment — the projection re-normalizes whitespace, so diffing against the
+  // last send would fail its own monotonicity check and silence the agent. That
+  // means a new specialist's first delta REPLACES the previous one's text wherever
+  // it is written. In a continuation everything was being written to the single
+  // box under the submitted form, so the box appeared to wipe itself and start
+  // over three times a run. It is still one box — that is where a continuation
+  // should be read — but it now says whose reasoning it is showing, and each lane
+  // keeps its own copy so nothing is lost by the handover.
+  function streamInto(lane, who, text) {
+    const box = live.querySelector("[data-resume-stream]");
+    if (box) {
+      box.querySelector("[data-resume-who]").textContent = who;
+      box.querySelector("[data-resume-text]").textContent = text;
+    }
+    const own = live.querySelector(`[data-lane-stream="${CSS.escape(lane)}"]`);
+    if (own) own.textContent = text;
+    // Only follow the stream while the reader is already at the bottom.
+    const thread = $("thread");
+    if (thread.scrollHeight - thread.scrollTop - thread.clientHeight < 120) thread.scrollTop = thread.scrollHeight;
+  }
+
   // Lane state and streamed reasoning are written into the path that is already
   // rendered, rather than replacing it. Nothing the reader is looking at moves.
   function markLanes() {
@@ -1462,15 +1484,7 @@ async function analyze(event, options = {}) {
     }
     if (event.type === "agent_delta") {
       progress.text[event.agent] = event.text;
-      // A continuation reads from where it was started: the reasoning appears
-      // directly under the values just submitted, not in a lane further up.
-      const lane = live.querySelector("[data-resume-stream]") || live.querySelector(`[data-lane-stream="${CSS.escape(event.agent)}"]`);
-      if (lane) {
-        lane.textContent = event.text;
-        // Only follow the stream while the reader is already at the bottom.
-        const thread = $("thread");
-        if (thread.scrollHeight - thread.scrollTop - thread.clientHeight < 120) thread.scrollTop = thread.scrollHeight;
-      }
+      streamInto(event.agent, `${agentName(event.agent)} · ${progress.index}/${progress.total}`, event.text);
     }
     if (event.type === "agent") {
       collected.agents.push(event.result);
@@ -1482,12 +1496,7 @@ async function analyze(event, options = {}) {
     }
     if (event.type === "synthesis_delta") {
       progress.text.review = event.text;
-      const lane = live.querySelector("[data-resume-stream]") || live.querySelector('[data-lane-stream="review"]');
-      if (lane) {
-        lane.textContent = event.text;
-        const thread = $("thread");
-        if (thread.scrollHeight - thread.scrollTop - thread.clientHeight < 120) thread.scrollTop = thread.scrollHeight;
-      }
+      streamInto("review", t("step_synthesizing"), event.text);
     }
     if (event.type === "synthesizing") {
       done.add("agents");
@@ -1911,7 +1920,10 @@ $("threadInner").addEventListener("click", (event) => {
       <span class="thinking-dot" aria-hidden="true"></span>
       <span class="sis-state">${esc(t("declareContinuing"))}</span>
     </div>
-    <div class="si-stream" data-resume-stream></div>`);
+    <div class="si-stream" data-resume-stream>
+      <div class="ss-who" data-resume-who></div>
+      <div class="ss-text" data-resume-text></div>
+    </div>`);
 
   // The same analysis carries on with one more fact, inside the answer already on
   // screen — not a new question producing a second answer below it.

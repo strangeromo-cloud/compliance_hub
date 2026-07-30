@@ -152,6 +152,19 @@ const GEM_LEAD_LANE = {
   "case-memo": "review"
 };
 
+// Every field the path can ask a user for, derived from the plans themselves.
+//
+// The server used to keep its own hand-written copy of this list to validate
+// declarations against. The two drifted: `endUse` was asked for by the general
+// prohibitions step and missing from the server's copy, so that answer was
+// dropped on arrival, the step never settled, and the user was asked the same
+// question again after a full two-and-a-half minute run. A list that must match
+// another list will eventually not, so there is now only one.
+export const DECLARABLE_FIELDS = Object.freeze([...new Set(
+  Object.values(LANE_PLANS).flatMap((plan) => plan.steps.flatMap(([, , inputs]) =>
+    (inputs ? [].concat(inputs) : []).map((input) => input.field)))
+)]);
+
 export function planAnalysisPath({ agents = [], gemId = null, routeReasons = {}, routeMatched = true } = {}) {
   const order = ["trade", "product", "tpdd"].filter((lane) => agents.includes(lane));
   const lead = GEM_LEAD_LANE[gemId];

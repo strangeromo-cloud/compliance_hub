@@ -1293,3 +1293,6 @@ html[lang="en"] .step-needs li::before { content: "NEEDS"; font-size: 8px; }
 .path-step.asking > .step-body { border-left-width: 3px; }
 .interim { margin-top: 4px; }
 .interim > summary { padding: 6px 0; }
+.ss-who { font: 500 10.5px/1.8 var(--mono); color: var(--accent-text); }
+.ss-who:empty { display: none; }
+.ss-text { white-space: pre-wrap; }

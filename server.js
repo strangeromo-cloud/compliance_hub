@@ -6,6 +6,7 @@ import { assessScenario } from "./src/orchestrator.js";
 import { classifyModelError, testModelConnection } from "./src/llm.js";
 import { getDataSourceCoverage, queryDataSource, syncSource } from "./src/data-layer/service.js";
 import { deleteThread, listThreads, readThread, saveCase } from "./src/case-store.js";
+import { DECLARABLE_FIELDS } from "./src/analysis-path.js";
 
 const ROOT = fileURLToPath(new URL(".", import.meta.url));
 const PUBLIC_DIR = join(ROOT, "public");
@@ -116,18 +117,25 @@ function cleanConfig(input = {}) {
 }
 
 // Declarations come from a form, so they are bounded in count, key shape and
-// length before anything reasons over them.
-const DECLARABLE = new Set(["legalName", "registrationNumber", "country", "address", "ownership", "partNumber", "eccn", "usContent", "destination", "registrationDocs", "ubo", "fees", "payee"]);
+// length before anything reasons over them. The accepted fields are the ones the
+// path can actually ask for — derived from the plans rather than restated here,
+// because the restatement drifted and silently ate an answer.
+const DECLARABLE = new Set(DECLARABLE_FIELDS);
 
 function cleanDeclaredFacts(input) {
-  if (!input || typeof input !== "object") return {};
-  const out = {};
+  if (!input || typeof input !== "object") return { facts: {}, ignored: [] };
+  const facts = {};
+  const ignored = [];
   for (const [field, value] of Object.entries(input).slice(0, 20)) {
-    if (!DECLARABLE.has(field)) continue;
     const text = String(value ?? "").trim().slice(0, 300);
-    if (text) out[field] = text;
+    if (!text) continue;
+    // Dropping an answer without saying so is what made a rejected field look
+    // like a step that simply would not settle.
+    if (!DECLARABLE.has(field)) { ignored.push(field); continue; }
+    facts[field] = text;
   }
-  return out;
+  if (ignored.length) console.warn(`Declared facts rejected (not asked for by any step): ${ignored.join(", ")}`);
+  return { facts, ignored };
 }
 
 function cleanHistory(input) {
@@ -210,9 +218,10 @@ const server = createServer(async (request, response) => {
       const config = cleanConfig(body.config);
       if (!mock && !config.apiKey) throw Object.assign(new Error("API key is required for live-model mode."), { status: 400 });
       const locale = body.locale === "en" ? "en" : "zh";
-      const result = await assessScenario({ question, locale, config, mock, gemId: body.gemId, declaredFacts: cleanDeclaredFacts(body.declaredFacts), history: cleanHistory(body.history) });
+      const declared = cleanDeclaredFacts(body.declaredFacts);
+      const result = await assessScenario({ question, locale, config, mock, gemId: body.gemId, declaredFacts: declared.facts, history: cleanHistory(body.history) });
       await saveCase(result, question, locale, body.threadId).catch(() => null);
-      return sendJson(response, 200, result);
+      return sendJson(response, 200, { ...result, ignoredDeclaredFacts: declared.ignored });
     }
 
     // Streams one JSON object per line as each stage lands. EventSource cannot
@@ -239,7 +248,9 @@ const server = createServer(async (request, response) => {
       const send = (event) => { if (!response.writableEnded) response.write(`${JSON.stringify(event)}\n`); };
       try {
         const locale = body.locale === "en" ? "en" : "zh";
-        const result = await assessScenario({ question, locale, config, mock, gemId: body.gemId, declaredFacts: cleanDeclaredFacts(body.declaredFacts), history: cleanHistory(body.history), onEvent: send });
+        const declared = cleanDeclaredFacts(body.declaredFacts);
+        const result = await assessScenario({ question, locale, config, mock, gemId: body.gemId, declaredFacts: declared.facts, history: cleanHistory(body.history), onEvent: send });
+        result.ignoredDeclaredFacts = declared.ignored;
         // Persist before announcing completion, but a storage failure must not
         // discard an answer the user is already looking at.
         await saveCase(result, question, locale, body.threadId).catch(() => null);
