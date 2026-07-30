@@ -10,7 +10,7 @@ const copy = {
     automationLabels: { api_available: "API 可用", download_available: "文件下载可用", scraping_available: "网页采集可用", manual_only: "仅人工", blocked: "受阻", not_started: "未开始" },
     webLabels: { good_for_discovery: "适合政策发现", supplement_only: "仅作辅助线索", not_for_screening: "不能替代正式查询" },
     syncLabels: { not_synced: "尚未同步", syncing: "同步中", success: "同步成功", failed: "同步失败", configuration_required: "等待配置" },
-    adapterReady: "Adapter 已实现", queryReady: "支持实时查询", sync: "立即同步", retry: "重新同步", records: "条记录", lastSync: "最后同步", sourceVersion: "来源版本", syncScope: "同步范围", configKey: "需配置", syncFailed: "同步失败，请查看状态详情。"
+    adapterReady: "Adapter 已实现", queryReady: "支持实时查询", sync: "立即同步", retry: "重新同步", records: "条记录", lastSync: "最后同步", sourceVersion: "来源版本", syncScope: "同步范围", configKey: "需配置", syncFailed: "同步失败，请查看状态详情。", syncNeedsCode: "需要访问口令：请回到首页「访问设置」填写口令后重试。"
   },
   en: {
     brandSub: "Compliance intelligence", back: "Back to chat", title: "Public data coverage & integration status", lead: "See what the prototype actually reads today, what can be automated next, and which sources must remain manual.",
@@ -23,7 +23,7 @@ const copy = {
     automationLabels: { api_available: "API available", download_available: "Download available", scraping_available: "Web collection available", manual_only: "Manual only", blocked: "Blocked", not_started: "Not started" },
     webLabels: { good_for_discovery: "Good for policy discovery", supplement_only: "Supporting leads only", not_for_screening: "Not a screening substitute" },
     syncLabels: { not_synced: "Not synced", syncing: "Syncing", success: "Synced", failed: "Sync failed", configuration_required: "Configuration required" },
-    adapterReady: "Adapter implemented", queryReady: "Live query ready", sync: "Sync now", retry: "Sync again", records: "records", lastSync: "Last sync", sourceVersion: "Source version", syncScope: "Sync scope", configKey: "Configure", syncFailed: "Sync failed. Open the status details for the recorded error."
+    adapterReady: "Adapter implemented", queryReady: "Live query ready", sync: "Sync now", retry: "Sync again", records: "records", lastSync: "Last sync", sourceVersion: "Source version", syncScope: "Sync scope", configKey: "Configure", syncFailed: "Sync failed. Open the status details for the recorded error.", syncNeedsCode: "Access code required: enter it under Access on the home page, then retry."
   }
 };
 
@@ -88,8 +88,18 @@ $("sourceRegistry").addEventListener("click", async (event) => {
   const source = state.data.sources.find((item) => item.sourceId === button.dataset.syncSource); if (!source) return;
   source.sync = { ...source.sync, status: "syncing", error: null }; render();
   try {
-    const response = await fetch("/api/data-sources/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sourceId: source.sourceId }) });
-    const payload = await response.json(); if (!response.ok) throw new Error(payload.error || t().syncFailed);
+    // Sync is one of the gated endpoints, so this page has to send the access
+    // code too — without it every button on a code-protected deployment fails
+    // with a 401 that reads like the official source was unreachable.
+    const code = localStorage.getItem("compliance-access-password") || "";
+    const response = await fetch("/api/data-sources/sync", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...(code ? { "x-access-password": code } : {}) },
+      body: JSON.stringify({ sourceId: source.sourceId })
+    });
+    const payload = await response.json();
+    if (response.status === 401) throw new Error(t().syncNeedsCode);
+    if (!response.ok) throw new Error(payload.error || t().syncFailed);
     source.sync = payload.sync;
   } catch (error) { source.sync = { ...source.sync, status: "failed", completedAt: new Date().toISOString(), error: error.message || t().syncFailed }; }
   render(); $("connectedCount").textContent = state.data.sources.filter((item) => item.sync?.status === "success").length;

@@ -109,10 +109,12 @@ npm run start:env
 `SYNC_ON_BOOT` 的推荐完整值——覆盖分析路径引用的全部官方流程条文，以及中国侧四个源：
 
 ```
-china-dual-use,china-control-entities,china-unreliable-entity,china-licence-catalogue,bis-ear-732,bis-ear-734,bis-ear-736,bis-ear-740,bis-ear-744,bis-ccl,bis-country-chart
+bis-ear-732,bis-ear-734,bis-ear,bis-ear-740,bis-ear-744,bis-ccl,bis-country-chart,china-dual-use,china-control-entities,china-unreliable-entity,china-licence-catalogue
 ```
 
-（`bis-ear` 即 Part 736，注册 id 为 `bis-ear`。）
+**id 是 `bis-ear`，不是 `bis-ear-736`**——Part 736（十项一般禁令）在注册表里的 id 就叫 `bis-ear`，写成 `bis-ear-736` 会得到 `Unknown data source.`，那一条根本不会同步。
+
+美国来源排在前面是有意的：同步是顺序执行的，而部分部署所在的网络到不了 MOFCOM 的主机（`211.88.32.x` 会 ETIMEDOUT）。让能拉到的源先落地，够不到的排在最后失败，可用状态就不必等在几个连接超时后面。
 
 每个 eCFR part 约 10–15 秒、67 KB–2 MB，全部跑完约两分钟。**同步在后台进行，服务器立即可用**：期间中国来源走兜底快照，美国条文的 ⛁ 跳源按钮在对应源同步完成后生效。
 

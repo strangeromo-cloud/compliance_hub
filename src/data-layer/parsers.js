@@ -43,6 +43,36 @@ export function xmlTags(xml, name) {
   return [...String(xml).matchAll(new RegExp(`<${name}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/${name}>`, "gi"))].map((match) => match[1]);
 }
 
+// Like xmlTags but keeps the opening attributes, which is how an eCFR appendix
+// identifies which supplement it is (N="Supplement No. 4 to Part 744").
+export function xmlBlocks(xml, name) {
+  return [...String(xml).matchAll(new RegExp(`<${name}(\\s[^>]*)?>([\\s\\S]*?)<\\/${name}>`, "gi"))]
+    .map((match) => ({ attrs: match[1] || "", inner: match[2] }));
+}
+
+export function xmlAttr(attrs, name) {
+  const match = String(attrs).match(new RegExp(`\\b${name}="([^"]*)"`, "i"));
+  return match ? decodeXml(match[1]) : null;
+}
+
+// Regulation XML carries §, em dashes and quotes as numeric entities. Leaving
+// them encoded put literal "&#xA7;" in cited text, so every extraction decodes.
+export function xmlText(fragment = "") {
+  return decodeXml(String(fragment).replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+}
+
+// Table cells must keep their position, so an empty one has to be returned as an
+// empty string rather than skipped. The self-closing form is matched as its own
+// alternative and first: with `<TD[^>]*(?:/>|>…</TD>)` the greedy character class
+// consumes the slash, the paired branch then matches the following `>` and the
+// capture runs on to the NEXT cell's closing tag — silently merging two cells and
+// shifting every column after it. In the Commerce Country Chart that shift moves
+// an X into the wrong control reason, which changes the licence answer.
+export function xmlCells(row, name = "TD") {
+  const pattern = new RegExp(`<${name}\\b[^>]*\\/>|<${name}\\b[^>]*>([\\s\\S]*?)<\\/${name}>`, "gi");
+  return [...String(row).matchAll(pattern)].map((match) => (match[1] === undefined ? "" : xmlText(match[1])));
+}
+
 export function joinName(...parts) {
   return parts.filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
 }

@@ -1,5 +1,5 @@
 import { fetchPublicFile } from "./http.js";
-import { joinName, parseCsv, rowsToObjects, xmlTag, xmlTags } from "./parsers.js";
+import { joinName, parseCsv, rowsToObjects, xmlAttr, xmlBlocks, xmlCells, xmlTag, xmlTags, xmlText } from "./parsers.js";
 import { CN_ADAPTERS } from "./adapters-cn.js";
 
 const CSL_URL = "https://data.trade.gov/downloadable_consolidated_screening_list/v1/consolidated.json";
@@ -139,6 +139,166 @@ async function syncGleifSample() {
   return { extension: "json", file, records: (payload.data || []).map(normalizeGleif), syncScope: "sample_100_use_live_query_for_cases", sourceUpdatedAt: payload.meta?.goldenCopy?.publishDate || file.lastModified };
 }
 
+// An ECCN entry inside the CCL appendix begins with the number in bold; eCFR
+// gives the entries no structural element of their own, so this is the only
+// boundary available. Kept narrow (four characters, letter in position two) so a
+// cross-reference in running text cannot open a new record.
+const ECCN_ENTRY = /<(?:FP|P)[^>]*>\s*<B>\s*(\d[A-E]\d{3})\b/gi;
+
+function splitEccnEntries(inner, base) {
+  const starts = [...inner.matchAll(ECCN_ENTRY)];
+  if (starts.length < 2) return null;
+  const records = [];
+  const preamble = xmlText(inner.slice(0, starts[0].index));
+  if (preamble) records.push({ ...base, recordId: `${base.recordId}-preamble`, title: `${base.title} — 说明`, content: preamble });
+  starts.forEach((start, index) => {
+    const body = inner.slice(start.index, starts[index + 1]?.index);
+    const text = xmlText(body);
+    records.push({
+      ...base, recordId: `${base.recordId}-${start[1]}`, eccn: start[1], recordType: "control_list_entry",
+      // The heading runs from the ECCN to the end of the first sentence, which is
+      // the entry's own short title ("3A090 Integrated circuits as follows…").
+      title: text.slice(0, Math.min(160, (text.indexOf(". ") + 1) || 160)).trim(),
+      content: text
+    });
+  });
+  return records;
+}
+
+// Supplement No. 4 to Part 744 is the Entity List: a five-column table whose
+// country cell is filled only on the first row of each country group, so the
+// country has to be carried forward or most rows lose it.
+//
+// Names, addresses and aliases share one free-text cell. A corporate suffix is
+// the only reliable signal that a comma is still inside the name
+// ("Huawei Technologies Co., Ltd.") rather than the start of the address
+// ("Huawei Cloud Argentina, Buenos Aires, Argentina"), so the split stops at the
+// first segment that is not one.
+const CORPORATE_SUFFIX = /^(?:Ltd|Ltda|Co|Corp|Inc|LLC|L\.L\.C|S\.A|S\.A\.S|S\.p\.A|GmbH|A\.G|N\.V|B\.V|Pte|Pty|PLC|LLP|SARL|S\.R\.L|JSC|OJSC|PJSC|OOO|AO|Sdn|Bhd|K\.K|KK)\b\.?$/i;
+
+function splitEntityName(cell) {
+  const parts = String(cell).split(/,?\s*a\.?\s?k\.?\s?a\.?[.,:]?\s*(?:the following[^:]*:)?/i);
+  const segments = parts[0].split(";")[0].split(", ");
+  const kept = [segments[0]];
+  for (const segment of segments.slice(1)) {
+    if (!CORPORATE_SUFFIX.test(segment.trim())) break;
+    kept.push(segment);
+  }
+  const aliases = parts.slice(1).join("; ").split(/;|—|·/)
+    .map((alias) => alias
+      .replace(/^[-–—\s]+/, "")
+      // "and" joins the alias list; a period ends the aliases and starts the address.
+      .replace(/^(?:and|or)\s+/i, "")
+      .split(/\.\s/)[0]
+      .split(", ")[0]
+      .replace(/[.,;\s]+$/, "")
+      .trim())
+    .filter((alias) => alias.length > 2 && alias.length < 120 && !/^(?:and|or)$/i.test(alias));
+  return { name: kept.join(", ").replace(/[.,;\s]+$/, "").trim(), aliases: [...new Set(aliases)].slice(0, 20) };
+}
+
+function parseEntityListRows(inner, base) {
+  if (!/Entity List/i.test(base.title || "")) return null;
+  const records = [];
+  let country = null;
+  for (const row of xmlTags(inner, "TR")) {
+    const cells = xmlCells(row);
+    if (cells.length < 2) continue;
+    if (cells[0]) country = cells[0];
+    const { name, aliases } = splitEntityName(cells[1]);
+    if (!name) continue;
+    records.push({
+      ...base, recordId: `${base.recordId}-${records.length + 1}`, recordType: "listed_entry",
+      entityName: name, aliases, country, addresses: [cells[1]],
+      restrictionType: cells[2] || null, reviewPolicy: cells[3] || null, federalRegisterCitation: cells[4] || null,
+      sourceList: "BIS Entity List (Supplement No. 4 to Part 744)", content: cells.filter(Boolean).join(" | "),
+      // The name split is a heuristic over one free-text cell, so a hit is a
+      // pointer to the cited entry, never a finding on its own.
+      parserConfidence: "heuristic_name_split", matchDisposition: "potential_match_requires_review"
+    });
+  }
+  return records.length ? records : null;
+}
+
+// Supplement No. 1 to Part 738 is the Commerce Country Chart: one row per
+// destination, one column per control reason, and an X means a licence is
+// required for that reason. The columns are only meaningful if they line up, so
+// a row whose cell count does not match the header count keeps its text and
+// gets no column mapping rather than a guessed one.
+const CHART_COLUMN = /^(CB|NP|NS|MT|RS|FC|CC|AT)\s*(\d)$/i;
+
+function parseCountryChart(inner, base) {
+  if (!/Country Chart/i.test(base.title || "")) return null;
+  const columns = xmlTags(inner, "TH").map(xmlText)
+    .map((head) => head.match(CHART_COLUMN))
+    .filter(Boolean)
+    .map((match) => `${match[1].toUpperCase()}${match[2]}`);
+  if (columns.length < 8) return null;
+  const records = [];
+  for (const row of xmlTags(inner, "TR")) {
+    const cells = xmlCells(row);
+    // Footnote markers ride along in the country cell ("Albania 2 3").
+    const country = (cells[0] || "").replace(/\s+\d(\s+\d)*$/, "").trim();
+    // A row carrying only a country is a footnote row (Iran points to Part 746).
+    // It is recorded as unverified rather than dropped: a destination missing from
+    // the chart would read as "no control reason applies", which is the opposite
+    // of what a footnote row means.
+    if (!country || country.length > 60 || CHART_COLUMN.test(country) || /^Countries$/i.test(country)) continue;
+    const marks = cells.slice(1);
+    const aligned = marks.length === columns.length;
+    const required = aligned ? columns.filter((_, index) => /x/i.test(marks[index] || "")) : [];
+    records.push({
+      ...base, recordId: `${base.recordId}-${country.replace(/\s+/g, "-").toLowerCase()}`,
+      recordType: "country_chart_row", country, countryNotes: (cells[0] || "").slice(country.length).trim() || null,
+      columnAlignment: aligned ? "verified" : "unverified_cell_count",
+      licenceRequiredFor: required,
+      content: `${cells[0]}: ${aligned ? (required.join(", ") || "no control reason marked") : `${marks.filter(Boolean).length} marks, column alignment unverified`}`
+    });
+  }
+  return records.length ? records : null;
+}
+
+// Exported for the parser tests: the extraction is the part worth pinning down,
+// and it should not need a network round trip to exercise.
+export function parseEcfrPart(xml, { sourceId, part, versionDate = null, sourceUrl = null }) {
+  const common = { sourceId, part: String(part), effectiveDate: versionDate, sourceUrl, humanReviewRequired: true };
+
+  const sections = xmlTags(xml, "DIV8").map((block, index) => ({
+    ...common, recordId: `${part}-${xmlTag(block, "HEAD") || index}`, recordType: "regulation",
+    title: xmlTag(block, "HEAD"), content: xmlText(block), rawRecord: { snapshotRecordIndex: index }
+  }));
+
+  // eCFR marks numbered sections as DIV8 and supplements as DIV9. Every list the
+  // analysis path actually cites lives in a supplement — the ECCN entries, the
+  // Entity List, the Country Chart, the Part 732 steps chart — so reading only
+  // DIV8 captured the section headings of the EAR and none of its substance.
+  const supplements = xmlBlocks(xml, "DIV9").flatMap(({ attrs, inner }, index) => {
+    const name = xmlAttr(attrs, "N") || `Supplement ${index + 1}`;
+    const base = { ...common, recordId: `${part}-${name.replace(/\s+/g, "-").toLowerCase()}`, recordType: "supplement", title: xmlTag(inner, "HEAD") || name, supplement: name };
+    return splitEccnEntries(inner, base) || parseEntityListRows(inner, base) || parseCountryChart(inner, base) || [{ ...base, content: xmlText(inner) }];
+  });
+
+  const records = [...sections, ...supplements];
+  const entries = records.filter((record) => record.recordType === "control_list_entry").length;
+  const parties = records.filter((record) => record.recordType === "listed_entry").length;
+  const chartRows = records.filter((record) => record.recordType === "country_chart_row").length;
+  const misaligned = records.filter((record) => record.columnAlignment === "unverified_cell_count").length;
+  return {
+    records: records.length ? records : [{ ...common, recordId: `part-${part}` }],
+    // The scope names what was actually extracted, so a part whose list failed to
+    // parse cannot pass as a full capture of that list.
+    syncScope: [
+      "versioned_regulatory_snapshot",
+      `${sections.length}_sections`,
+      `${supplements.length - entries - parties - chartRows}_supplements`,
+      ...(entries ? [`${entries}_control_list_entries`] : []),
+      ...(parties ? [`${parties}_listed_entries`] : []),
+      ...(chartRows ? [`${chartRows}_country_chart_rows`] : []),
+      ...(misaligned ? [`${misaligned}_rows_alignment_unverified`] : [])
+    ].join("+")
+  };
+}
+
 async function syncEcfrPart(sourceId, part) {
   let file;
   let versionDate;
@@ -148,13 +308,8 @@ async function syncEcfrPart(sourceId, part) {
     try { file = await fetchPublicFile(url, { accept: "application/xml,text/xml", maxBytes: 40 * 1024 * 1024, attempts: 1 }); versionDate = date; break; }
     catch (error) { if (!String(error.message).includes("HTTP 404") || offset === 9) throw error; }
   }
-  const xml = file.bytes.toString("utf8");
-  const sections = xmlTags(xml, "DIV8").map((block, index) => ({
-    sourceId, recordId: `${part}-${xmlTag(block, "HEAD") || index}`, part: String(part), title: xmlTag(block, "HEAD"),
-    content: block.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim(), effectiveDate: versionDate,
-    sourceUrl: file.finalUrl, rawRecord: { snapshotRecordIndex: index }, humanReviewRequired: true
-  }));
-  return { extension: "xml", file, records: sections.length ? sections : [{ sourceId, recordId: `part-${part}`, part: String(part), effectiveDate: versionDate, sourceUrl: file.finalUrl, humanReviewRequired: true }], syncScope: "versioned_regulatory_snapshot_requires_parser_review", sourceUpdatedAt: versionDate };
+  const parsed = parseEcfrPart(file.bytes.toString("utf8"), { sourceId, part, versionDate, sourceUrl: file.finalUrl });
+  return { extension: "xml", file, ...parsed, sourceUpdatedAt: versionDate };
 }
 
 export const ADAPTERS = {
