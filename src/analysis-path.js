@@ -20,6 +20,8 @@
 // something a reviewer can check.
 
 
+import { triage } from "./triage.js";
+
 // Published methodologies the path follows.
 //
 // The step sequences below are not this product's invention: US export control
@@ -166,8 +168,16 @@ export const DECLARABLE_FIELDS = Object.freeze([...new Set(
     (inputs ? [].concat(inputs) : []).map((input) => input.field)))
 )]);
 
-export function planAnalysisPath({ agents = [], gemId = null, routeReasons = {}, routeMatched = true } = {}) {
-  const order = ["trade", "product", "tpdd"].filter((lane) => agents.includes(lane));
+export function planAnalysisPath({ agents = [], gemId = null, routeReasons = {}, routeMatched = true, question = "", declaredFacts = {} } = {}) {
+  // Triage before planning: a lane the procedure does not reach for is never put
+  // on the board, rather than put there and then explained away.
+  const gates = triage({ question, facts: declaredFacts });
+  const routed = ["trade", "product", "tpdd"].filter((lane) => agents.includes(lane));
+  const kept = routed.filter((lane) => !gates.droppedLanes.includes(lane));
+  // Triage narrows a review; it does not abolish one. If closing a gate would
+  // leave nothing to analyse, the question was routed on that lane alone and the
+  // honest response is to run it, not to answer with an empty path.
+  const order = kept.length ? kept : routed;
   const lead = GEM_LEAD_LANE[gemId];
   if (lead && order.includes(lead)) order.splice(order.indexOf(lead), 1), order.unshift(lead);
 
@@ -195,6 +205,9 @@ export function planAnalysisPath({ agents = [], gemId = null, routeReasons = {},
     basis: used.map((id) => METHODOLOGIES[id]).filter(Boolean)
       .sort((left, right) => (left.kind === "official" ? 0 : 1) - (right.kind === "official" ? 0 : 1)),
     followsOfficial: used.some((id) => METHODOLOGIES[id]?.kind === "official"),
+    // What triage closed, and on what. A path shorter than the published
+    // procedure has to say which rule allowed each omission.
+    triage: gates.applied,
     // How this path came to exist. "Why these steps, in this order" is a fair
     // question of any compliance conclusion, and the answer is checkable: which
     // words in the question selected the check, which published procedure supplies
@@ -398,6 +411,12 @@ export function resolveAnalysisPath(plan, { question, grounding, results = [], d
       { needs: ["以上步骤的结论与证据需经人工确认；系统不做交易放行"] })]
   };
 
+  // Step-level triage. A step the procedure does not reach for is marked as not
+  // arising, with the fact and the provision that closed it — never silently
+  // dropped, and never on a guess: a gate that cannot decide leaves the step
+  // standing.
+  const gates = triage({ question, facts: declaredFacts });
+
   // The specialists run one at a time, so a lane can close as soon as its own
   // specialist has reported rather than waiting for the whole run. The closing
   // step is different: it summarizes every lane, so it stays until the end.
@@ -427,6 +446,11 @@ export function resolveAnalysisPath(plan, { question, grounding, results = [], d
             basis: [...item.basis, ...answered.map((input) => `${input.label}：${declaredFacts[input.field]}（用户声明，未核验）`)],
             needs: item.needs.filter((need) => !answered.some((input) => need.includes(input.label.split(" / ")[0])))
           };
+        }
+        const gated = gates.droppedSteps.get(item.id);
+        if (gated && item.status !== "confirmed" && item.status !== "declared") {
+          return { ...item, ...keep, status: "not_applicable", needs: [],
+            basis: [`${gated.because}（依据 ${gated.cite}）`] };
         }
         return { ...item, ...keep };
       })

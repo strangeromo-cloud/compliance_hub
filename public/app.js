@@ -907,6 +907,12 @@ function derivationMarkup(path) {
   return `
     <section class="briefing">
       <p class="bf-lead">${esc(t("briefLead").replace("{n}", rows.length))}</p>
+      ${/* A review shorter than the published procedure has to say so, and say
+            which rule allowed each omission. Silent shortening is the one thing a
+            compliance tool must not do. */ ""}
+      ${(path.triage || []).length ? `<ul class="bf-triage">
+        ${path.triage.map((gate) => `<li><span class="bt-mark">−</span>${esc(gate.because)}<span class="bt-cite">${esc(gate.cite)}</span></li>`).join("")}
+      </ul>` : ""}
       <ol class="bf-scopes">
         ${rows.map((row) => {
           const lane = byLane.get(row.lane);

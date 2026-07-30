@@ -10,9 +10,23 @@ const RULES = {
   ]
 };
 
+// "无中间商" mentions an intermediary in order to deny it. Matching the noun and
+// ignoring the negation routed a direct sale into third-party diligence — and then
+// triage, reading the same sentence correctly, removed the only lane it had been
+// routed to and left nothing to analyse.
+// The negation covers a run of them, not just the next word: "不涉及第三方顾问"
+// denies both nouns, and stopping at the first left the second to match.
+const PARTY_NOUN = "中间商|中介|代理商|代理|经销商|分销商|第三方|顾问|咨询公司|货代";
+const NEGATED = new RegExp(`(?:无|没有|不涉及|未涉及|不通过|非)\\s*(?:(?:${PARTY_NOUN})\\s*[、和与或]?\\s*){1,4}`, "g");
+
+function readable(question) {
+  return String(question).replace(NEGATED, " ");
+}
+
 export function routeQuestion(question, fallback = true) {
+  const text = readable(question);
   const matches = Object.entries(RULES)
-    .filter(([, patterns]) => patterns.some((pattern) => pattern.test(question)))
+    .filter(([, patterns]) => patterns.some((pattern) => pattern.test(text)))
     .map(([agent]) => agent);
 
   return matches.length ? matches : fallback ? ["trade", "product", "tpdd"] : [];
@@ -23,8 +37,9 @@ export function routeQuestion(question, fallback = true) {
 // claim that the system decided so.
 export function routeReasons(question) {
   const reasons = {};
+  const text = readable(question);
   for (const [agent, patterns] of Object.entries(RULES)) {
-    const hits = patterns.flatMap((pattern) => [...String(question).matchAll(new RegExp(pattern.source, "gi"))].map((match) => match[0]));
+    const hits = patterns.flatMap((pattern) => [...text.matchAll(new RegExp(pattern.source, "gi"))].map((match) => match[0]));
     const unique = [...new Set(hits.map((hit) => hit.trim()).filter(Boolean))];
     if (unique.length) reasons[agent] = unique.slice(0, 6);
   }

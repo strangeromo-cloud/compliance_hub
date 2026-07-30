@@ -73,3 +73,43 @@ test("answering every question lets the run reach a conclusion", async () => {
   assert.ok(done.synthesis, "a conclusion is drawn once the run finishes");
   assert.equal(done.results.length, 3, "every lane ran");
 });
+
+test("triage only shortens a path on a stated fact and a stated provision", async () => {
+  const { planAnalysisPath: plan, resolveAnalysisPath: resolve } = await import("../src/analysis-path.js");
+  const grounding = { screening: { screenedSources: [], unsyncedSources: [] }, facts: [], listMatches: [], internalParties: [], limitations: [] };
+  const q = "我们直销一台服务器给德国最终用户，无中间商";
+
+  // EAR99 closes the Country Chart and licence exception, because neither arises
+  // for an item with no ECCN — and says so with the provision.
+  const path = resolve(plan({ agents: ["trade", "product"], question: q, declaredFacts: { eccn: "EAR99" } }),
+    { question: q, grounding, declaredFacts: { eccn: "EAR99" }, final: true });
+  const steps = path.lanes.flatMap((lane) => lane.steps);
+  for (const id of ["destination_chart", "licence_exception"]) {
+    const step = steps.find((item) => item.id === id);
+    assert.equal(step.status, "not_applicable", `${id} should not arise for EAR99`);
+    assert.match(step.basis[0], /EAR99/);
+    assert.match(step.basis[0], /依据/, "a dropped step must cite the rule that dropped it");
+  }
+  // The general prohibitions do not depend on classification, so they stay.
+  assert.notEqual(steps.find((item) => item.id === "prohibitions").status, "not_applicable");
+});
+
+test("an undecidable fact never shortens the path", async () => {
+  const { planAnalysisPath: plan, resolveAnalysisPath: resolve } = await import("../src/analysis-path.js");
+  const grounding = { screening: { screenedSources: [], unsyncedSources: [] }, facts: [], listMatches: [], internalParties: [], limitations: [] };
+  const q = "我们通过代理商出口一台服务器";
+  // "不确定" is an answer that decides nothing; the steps must all stand.
+  const path = resolve(plan({ agents: ["trade", "product", "tpdd"], question: q, declaredFacts: { usContent: "不确定", eccn: "" } }),
+    { question: q, grounding, declaredFacts: { usContent: "不确定" }, final: true });
+  const dropped = path.lanes.flatMap((lane) => lane.steps).filter((item) => item.status === "not_applicable" && item.id !== "identity_resolution");
+  assert.deepEqual(dropped, [], "nothing may be dropped on an undecided fact");
+  assert.ok(path.lanes.some((lane) => lane.lane === "tpdd"), "the third-party lane stays when a third party is mentioned");
+});
+
+test("triage never leaves a question with nothing to analyse", async () => {
+  const { planAnalysisPath: plan } = await import("../src/analysis-path.js");
+  // Routed to tpdd alone, and then the same sentence closes the third-party gate.
+  const path = plan({ agents: ["tpdd"], question: "本次交易没有代理商、经销商或中介" });
+  const analysisLanes = path.lanes.filter((lane) => lane.lane !== "review");
+  assert.ok(analysisLanes.length, "a narrowed review is still a review");
+});

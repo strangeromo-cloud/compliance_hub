@@ -165,7 +165,7 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
   // The plan goes out before any work: the user sees which steps this question
   // has to pass, and then watches them close.
   const routing = routeReasons(contextualQuestion);
-  let analysisPath = planAnalysisPath({ agents, gemId, routeReasons: routing.reasons, routeMatched: routing.matched });
+  let analysisPath = planAnalysisPath({ agents, gemId, routeReasons: routing.reasons, routeMatched: routing.matched, question: contextualQuestion, declaredFacts });
   onEvent({ type: "path", path: analysisPath });
 
   const selectedSources = sourcesForAgents(agents, question);
