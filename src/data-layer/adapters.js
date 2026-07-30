@@ -1,6 +1,7 @@
 import { fetchPublicFile } from "./http.js";
 import { joinName, parseCsv, rowsToObjects, xmlAttr, xmlBlocks, xmlCells, xmlTag, xmlTags, xmlText } from "./parsers.js";
 import { CN_ADAPTERS } from "./adapters-cn.js";
+import { OS_ADAPTERS } from "./adapters-os.js";
 
 const CSL_URL = "https://data.trade.gov/downloadable_consolidated_screening_list/v1/consolidated.json";
 const UK_URL = "https://sanctionslist.fcdo.gov.uk/docs/UK-Sanctions-List.csv";
@@ -329,7 +330,8 @@ export const ADAPTERS = {
   "bis-country-chart": { sync: () => syncEcfrPart("bis-country-chart", 738), mode: "versioned_snapshot", credential: null },
   "sam-exclusions": { mode: "live_query", credential: "SAM_GOV_API_KEY" },
   "companies-house": { mode: "live_query", credential: "COMPANIES_HOUSE_API_KEY" },
-  ...CN_ADAPTERS
+  ...CN_ADAPTERS,
+  ...OS_ADAPTERS
 };
 
 export async function queryRemoteSource(sourceId, query) {

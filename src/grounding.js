@@ -11,7 +11,14 @@ const PARTY_LIST_SOURCES = [
   { sourceId: "china-control-entities", label: "PRC export control control list / watch list" },
   { sourceId: "china-unreliable-entity", label: "PRC Unreliable Entity List" },
   { sourceId: "un-consolidated", label: "UN Security Council Consolidated List" },
-  { sourceId: "uk-sanctions", label: "UK Sanctions List" }
+  { sourceId: "uk-sanctions", label: "UK Sanctions List" },
+  // Gaps the US Consolidated Screening List does not carry. Taiwan's list is the
+  // most China-relevant of them and has no machine-readable official route.
+  { sourceId: "eu-fsf", label: "EU Consolidated Financial Sanctions List" },
+  { sourceId: "tw-shtc", label: "Taiwan Strategic High-Tech Commodities Entity List" },
+  { sourceId: "jp-meti-eul", label: "Japan METI End User List" },
+  { sourceId: "us-uflpa", label: "UFLPA Entity List" },
+  { sourceId: "us-dod-1260h", label: "DoD Section 1260H Chinese Military Companies" }
 ];
 
 const CHINA_NOTICE_SOURCES = ["china-dual-use", "china-licence-catalogue"];

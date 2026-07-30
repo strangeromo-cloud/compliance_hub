@@ -13,6 +13,56 @@ export const DATA_SOURCE_REGISTRY = [
     attribution: "This product uses the International Trade Administration's Data API but is not endorsed or certified by the International Trade Administration."
   },
   {
+    sourceId: "eu-fsf", sourceName: "EU Consolidated Financial Sanctions List", module: "trade", country: "EU", authority: "European Commission (via OpenSanctions)",
+    sourceType: "restricted_party_list", officialSource: false, accessMethod: "Bulk CSV", fileFormat: "CSV",
+    automationStatus: "api_available", feasibility: "can_build_now", currentCoverage: "not_ingested", priority: 1, authenticationRequired: false, captchaPresent: false,
+    updateFrequency: "Daily", websiteUrl: "https://www.opensanctions.org/datasets/eu_fsf/", apiUrl: "https://data.opensanctions.org/datasets/latest/eu_fsf/targets.simple.csv",
+    dataCaptured: ["names", "aliases", "countries", "addresses", "programmes"], targetData: ["EU designations"],
+    webSearchUse: "supplement_only", notes: "EU designations the US Consolidated Screening List does not carry.",
+    licence: "CC-BY-NC 4.0", commercialUseBlocked: true,
+    attribution: "Contains data from OpenSanctions (opensanctions.org), licensed CC-BY-NC 4.0. Non-commercial use only."
+  },
+  {
+    sourceId: "tw-shtc", sourceName: "Taiwan Strategic High-Tech Commodities Entity List", module: "trade", country: "TW", authority: "Taiwan MOEA (via OpenSanctions)",
+    sourceType: "restricted_party_list", officialSource: false, accessMethod: "Bulk CSV", fileFormat: "CSV",
+    automationStatus: "api_available", feasibility: "can_build_now", currentCoverage: "not_ingested", priority: 1, authenticationRequired: false, captchaPresent: false,
+    updateFrequency: "Daily", websiteUrl: "https://www.opensanctions.org/datasets/tw_shtc/", apiUrl: "https://data.opensanctions.org/datasets/latest/tw_shtc/targets.simple.csv",
+    dataCaptured: ["names", "aliases", "countries", "addresses"], targetData: ["WMD and military end-use concerns"],
+    webSearchUse: "supplement_only", notes: "The official MOEA site publishes HTML only; this is the route that does not require scraping.",
+    licence: "CC-BY-NC 4.0", commercialUseBlocked: true,
+    attribution: "Contains data from OpenSanctions (opensanctions.org), licensed CC-BY-NC 4.0. Non-commercial use only."
+  },
+  {
+    sourceId: "jp-meti-eul", sourceName: "Japan METI End User List", module: "trade", country: "JP", authority: "Japan METI (via OpenSanctions)",
+    sourceType: "restricted_party_list", officialSource: false, accessMethod: "Bulk CSV", fileFormat: "CSV",
+    automationStatus: "api_available", feasibility: "can_build_now", currentCoverage: "not_ingested", priority: 2, authenticationRequired: false, captchaPresent: false,
+    updateFrequency: "Daily", websiteUrl: "https://www.opensanctions.org/datasets/jp_meti_eul/", apiUrl: "https://data.opensanctions.org/datasets/latest/jp_meti_eul/targets.simple.csv",
+    dataCaptured: ["names", "aliases", "countries", "addresses"], targetData: ["WMD end-user concerns"],
+    webSearchUse: "supplement_only", notes: "METI serves the PDF only to browsers; this route avoids fighting that.",
+    licence: "CC-BY-NC 4.0", commercialUseBlocked: true,
+    attribution: "Contains data from OpenSanctions (opensanctions.org), licensed CC-BY-NC 4.0. Non-commercial use only."
+  },
+  {
+    sourceId: "us-uflpa", sourceName: "UFLPA Entity List", module: "trade", country: "US", authority: "U.S. DHS (via OpenSanctions)",
+    sourceType: "restricted_party_list", officialSource: false, accessMethod: "Bulk CSV", fileFormat: "CSV",
+    automationStatus: "api_available", feasibility: "can_build_now", currentCoverage: "not_ingested", priority: 1, authenticationRequired: false, captchaPresent: false,
+    updateFrequency: "Daily", websiteUrl: "https://www.opensanctions.org/datasets/us_dhs_uflpa/", apiUrl: "https://data.opensanctions.org/datasets/latest/us_dhs_uflpa/targets.simple.csv",
+    dataCaptured: ["names", "aliases", "countries", "addresses"], targetData: ["forced-labour import ban"],
+    webSearchUse: "supplement_only", notes: "Import prohibition rather than export control, and not carried by the Consolidated Screening List.",
+    licence: "CC-BY-NC 4.0", commercialUseBlocked: true,
+    attribution: "Contains data from OpenSanctions (opensanctions.org), licensed CC-BY-NC 4.0. Non-commercial use only."
+  },
+  {
+    sourceId: "us-dod-1260h", sourceName: "DoD Section 1260H Chinese Military Companies", module: "trade", country: "US", authority: "U.S. Department of Defense (via OpenSanctions)",
+    sourceType: "restricted_party_list", officialSource: false, accessMethod: "Bulk CSV", fileFormat: "CSV",
+    automationStatus: "api_available", feasibility: "can_build_now", currentCoverage: "not_ingested", priority: 2, authenticationRequired: false, captchaPresent: false,
+    updateFrequency: "Daily", websiteUrl: "https://www.opensanctions.org/datasets/us_dod_chinese_milcorps/", apiUrl: "https://data.opensanctions.org/datasets/latest/us_dod_chinese_milcorps/targets.simple.csv",
+    dataCaptured: ["names", "aliases", "countries"], targetData: ["military-civil fusion exposure"],
+    webSearchUse: "supplement_only", notes: "Not a prohibition in itself; a reputational and contracting signal that informs end-user review.",
+    licence: "CC-BY-NC 4.0", commercialUseBlocked: true,
+    attribution: "Contains data from OpenSanctions (opensanctions.org), licensed CC-BY-NC 4.0. Non-commercial use only."
+  },
+  {
     sourceId: "ofac-sls", sourceName: "OFAC Sanctions List Service", module: "trade", country: "US", authority: "U.S. Treasury OFAC",
     sourceType: "sanctions_list", officialSource: true, accessMethod: "Download service", fileFormat: "Advanced XML / XML / CSV",
     automationStatus: "download_available", feasibility: "can_build_now", currentCoverage: "planned", priority: 1, authenticationRequired: false, captchaPresent: false,
