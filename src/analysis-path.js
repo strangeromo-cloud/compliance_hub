@@ -425,21 +425,31 @@ export function buildActionPlan(path, results = []) {
   const actions = [];
   const claimed = new Set();
 
+  // One action can unblock several steps — "registration documents and a UBO
+  // declaration" closes both the existence check and the beneficial-ownership
+  // check. Recording every step it unblocks is what lets the same evidence be
+  // listed once without any step losing its entry: dropping the repeat outright
+  // is what left six blocked steps with nothing to do about them.
+  const byNeed = new Map();
   for (const lane of path?.lanes || []) {
     for (const item of lane.steps) {
       if (item.status === "declared") {
         actions.push({
           action: `核验用户声明的信息：${item.inputs.map((input) => input.label).join("、")}`,
-          unblocks: item.title, lane: lane.lane, kind: "verify"
+          unblocks: [item.title], lane: lane.lane, kind: "verify"
         });
         continue;
       }
       if (item.status !== "evidence_needed") continue;
       for (const need of item.needs) {
         const text = String(need).trim();
-        if (!text || claimed.has(text)) continue;
+        if (!text) continue;
+        const existing = byNeed.get(text);
+        if (existing) { if (!existing.unblocks.includes(item.title)) existing.unblocks.push(item.title); continue; }
         claimed.add(text);
-        actions.push({ action: text, unblocks: item.title, lane: lane.lane, kind: "unblock" });
+        const action = { action: text, unblocks: [item.title], lane: lane.lane, kind: "unblock" };
+        byNeed.set(text, action);
+        actions.push(action);
       }
     }
   }
@@ -464,8 +474,13 @@ export function buildActionPlan(path, results = []) {
   }
 
   const review = (path?.lanes || []).flatMap((lane) => lane.steps).find((item) => item.status === "review_required");
+  // Capped, but never silently: a list that shows 8 of 12 while the flow rail
+  // shows 11 blocked steps reads as the two disagreeing, when in fact the list
+  // had quietly thrown work away.
+  const CAP = 20;
   return {
-    actions: actions.slice(0, 8),
+    actions: actions.slice(0, CAP),
+    omittedActions: Math.max(0, actions.length - CAP),
     suggested: suggested.slice(0, 5),
     blocked: blocked.slice(0, 6),
     closing: review ? review.title : null
