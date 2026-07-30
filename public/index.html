@@ -125,12 +125,17 @@
         <button class="evidence-toggle" id="evidenceToggle" type="button" aria-expanded="true">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
         </button>
-        <h2 id="evidenceTitle" data-i18n="evidence">证据与来源</h2>
-        <span class="spacer"></span>
-        <span class="count-badge" id="sourceCount">0</span>
+        <div class="panel-tabs" role="tablist" aria-label="Right panel">
+          <button class="panel-tab" id="tabFlow" type="button" role="tab" aria-selected="true" aria-controls="flowPanel" data-panel-tab="flow">
+            <span data-i18n="flowTitle">执行流程</span><span class="count-badge" id="flowCount"></span>
+          </button>
+          <button class="panel-tab" id="tabEvidence" type="button" role="tab" aria-selected="false" aria-controls="evidenceList" data-panel-tab="evidence">
+            <span data-i18n="evidence">证据与来源</span><span class="count-badge" id="sourceCount">0</span>
+          </button>
+        </div>
       </div>
-      <div class="flow-panel" id="flowPanel" hidden></div>
-      <div class="evidence-list" id="evidenceList"></div>
+      <div class="flow-panel" id="flowPanel" role="tabpanel" aria-labelledby="tabFlow"></div>
+      <div class="evidence-list" id="evidenceList" role="tabpanel" aria-labelledby="tabEvidence"></div>
     </aside>
   </div>
 

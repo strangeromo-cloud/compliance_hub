@@ -23,7 +23,7 @@ const i18n = {
     hfQuestion: "一个问题", hfAnswer: "统一答案", startersLabel: "快速开始", workspaceEmpty: "工作区还没有 Gem", gemBacking: "数据支撑",
     teachSlashTitle: "在输入框键入 /", teachSlashBody: "呼出 {n} 个 Gem 的完整目录，上下键选择，回车使用。",
     teachPinTitle: "把常用 Gem 加入工作区", teachPinBody: "在目录里点 ★，或在 Gem 详情里点「添加到工作区」，它会常驻左侧栏。",
-    historyLabel: "历史记录", historyEmpty: "暂无记录", turnUnit: "轮", historyOpenFailed: "无法打开该记录", flowTitle: "执行流程", flowNotRun: "该步骤尚未执行", laneAhead: "还有 {n} 步未执行：", derivTitle: "分析路径的来源", derivLead: "主检查", derivSteps: "步",
+    historyLabel: "历史记录", historyEmpty: "暂无记录", turnUnit: "轮", historyOpenFailed: "无法打开该记录", flowTitle: "执行流程", flowEmpty: "提交一个问题后，这里显示分析路径的执行进度", flowNotRun: "该步骤尚未执行", laneAhead: "还有 {n} 步未执行：", derivTitle: "分析路径的来源", derivLead: "主检查", derivSteps: "步",
     derivMatched: "匹配依据", derivStandard: "遵循规范", derivBreakdown: "步骤构成",
     derivMatch_gem: "由所选 Gem 指定为主检查", derivMatch_always: "每次分析都执行", derivMatch_question_terms: "问题中的关键词",
     derivMatch_no_term_matched_all_lanes_run: "问题未命中任何关键词，三条检查全部执行",
@@ -83,7 +83,7 @@ const i18n = {
     hfQuestion: "One question", hfAnswer: "One answer", startersLabel: "Start here", workspaceEmpty: "No gems in your workspace yet", gemBacking: "Data behind it",
     teachSlashTitle: "Press / in the composer", teachSlashBody: "Opens the full catalogue of {n} gems. Arrow keys select, Enter uses.",
     teachPinTitle: "Pin the ones you use", teachPinBody: "Add to workspace from a gem's details and it stays in the sidebar.",
-    historyLabel: "History", historyEmpty: "No cases yet", turnUnit: "turns", historyOpenFailed: "That case could not be opened", flowTitle: "Execution flow", flowNotRun: "That step has not run yet", laneAhead: "{n} steps not yet run: ", derivTitle: "Where this path comes from", derivLead: "lead check", derivSteps: "steps",
+    historyLabel: "History", historyEmpty: "No cases yet", turnUnit: "turns", historyOpenFailed: "That case could not be opened", flowTitle: "Execution flow", flowEmpty: "Ask a question and the analysis path\u2019s progress appears here", flowNotRun: "That step has not run yet", laneAhead: "{n} steps not yet run: ", derivTitle: "Where this path comes from", derivLead: "lead check", derivSteps: "steps",
     derivMatched: "Matched on", derivStandard: "Procedure followed", derivBreakdown: "Step origin",
     derivMatch_gem: "set as the lead check by the selected gem", derivMatch_always: "runs on every analysis", derivMatch_question_terms: "terms in the question",
     derivMatch_no_term_matched_all_lanes_run: "no term matched, so all three checks run",
@@ -174,7 +174,8 @@ const state = {
   sourceQuery: null,
   factsOpen: false,
   rail: localStorage.getItem("compliance-rail") === "1",
-  evidenceCollapsed: localStorage.getItem("compliance-evidence-collapsed") === "1",
+  evidenceCollapsed: false,
+  panelTab: "flow",
   activeGem: null,
   palette: { open: false, items: [], index: 0 }
 };
@@ -702,10 +703,18 @@ function hydrateBars(root = document) {
   });
 }
 
-function showEvidencePanel(show) {
-  // The panel stays open while it has anything at all: the flow rail is useful
-  // before a single source has been retrieved.
-  $("app").classList.toggle("no-evidence", !show && $("flowPanel").hidden);
+// The right column holds two views of the same run — where the analysis is, and
+// what it stands on — so they are tabs rather than a stack. The flow is the
+// default because "which step are we on" is the question asked most often, and
+// the panel starts open: a panel that has to be found first is not a panel.
+function setPanelTab(tab) {
+  // Not persisted: every load opens on the flow. Which tab someone last looked
+  // at is a weaker signal than "where is this analysis now", which is the
+  // question the panel exists to answer.
+  state.panelTab = tab === "evidence" ? "evidence" : "flow";
+  $("evidencePanel").classList.toggle("show-evidence", state.panelTab === "evidence");
+  $("tabFlow").setAttribute("aria-selected", String(state.panelTab === "flow"));
+  $("tabEvidence").setAttribute("aria-selected", String(state.panelTab === "evidence"));
 }
 
 // The flow rail: every step of the path as a node, so what has run, what is
@@ -724,8 +733,10 @@ const FLOW_STATE = {
 function renderFlowPanel(path, options = {}) {
   const panel = $("flowPanel");
   const markup = flowMarkup(path, options);
-  panel.hidden = !markup;
-  panel.innerHTML = markup;
+  const steps = (path?.lanes || []).flatMap((lane) => lane.steps);
+  const executed = steps.filter((item) => item.status !== "pending" && item.status !== "not_reached").length;
+  $("flowCount").textContent = steps.length ? `${executed}/${steps.length}` : "";
+  panel.innerHTML = markup || `<p class="evidence-empty">${esc(t("flowEmpty"))}</p>`;
   hydrateBars(panel);
   // Below the breakpoint that hides the right column the rail has to live
   // somewhere, so the same markup is mirrored into the answer and CSS picks one.
@@ -779,7 +790,6 @@ function flowMarkup(path, options = {}) {
 
 function renderEvidence(sources) {
   $("sourceCount").textContent = sources.length;
-  showEvidencePanel(sources.length > 0);
   if (!sources.length) { $("evidenceList").innerHTML = `<p class="evidence-empty">${t("evidenceEmpty")}</p>`; return; }
   const statusKey = (source) => (source.liveStatus === "cached" && source.stale ? "cached_stale" : source.liveStatus);
   const statusLabel = (source) => label(EVIDENCE_STATUS, statusKey(source), state.locale);
@@ -1910,9 +1920,10 @@ $("gemRow").addEventListener("click", (event) => {
   if (detail) return openGemDetail(detail.dataset.gemDetail);
 });
 
+// Collapsing is a within-session gesture for reading width, not a preference to
+// carry forward: the panel opens on every load, like the tab it opens on.
 function setEvidenceCollapsed(collapsed) {
   state.evidenceCollapsed = collapsed;
-  localStorage.setItem("compliance-evidence-collapsed", collapsed ? "1" : "0");
   $("app").classList.toggle("evidence-collapsed", collapsed);
   $("evidenceToggle").setAttribute("aria-expanded", String(!collapsed));
   $("evidenceToggle").title = t(collapsed ? "evidenceExpand" : "evidenceCollapse");
@@ -1944,6 +1955,13 @@ document.addEventListener("click", (event) => {
 });
 
 $("evidenceToggle").addEventListener("click", () => setEvidenceCollapsed(!state.evidenceCollapsed));
+document.querySelector(".panel-tabs").addEventListener("click", (event) => {
+  const tab = event.target.closest("[data-panel-tab]");
+  // Choosing a tab on a collapsed panel means "show me this", so it opens too.
+  if (!tab) return;
+  if (state.evidenceCollapsed) setEvidenceCollapsed(false);
+  setPanelTab(tab.dataset.panelTab);
+});
 $("railToggle").addEventListener("click", () => setRail(true));
 // The toggle is hidden once collapsed, so the brand mark restores the sidebar.
 document.querySelector(".sidebar-brand").addEventListener("click", (event) => {
@@ -2020,7 +2038,9 @@ setTheme(localStorage.getItem("compliance-theme") || (matchMedia("(prefers-color
 if (sessionStorage.getItem("compliance-api-key")) state.rulesMode = false;
 setRail(state.rail);
 setEvidenceCollapsed(state.evidenceCollapsed);
+setPanelTab(state.panelTab);
 applyLocale(state.locale);
 renderEvidence([]);
+renderFlowPanel(null);
 loadRuntimeCapabilities();
 loadCases();

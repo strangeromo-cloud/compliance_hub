@@ -1221,3 +1221,20 @@ html[lang="en"] .step-needs li::before { content: "NEEDS"; font-size: 8px; }
   .flow-inline { display: block; margin-bottom: 12px; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface-2); }
 }
 .app.evidence-collapsed .flow-panel { display: none; }
+
+/* ---- right panel: two views of one run, as tabs ---- */
+.panel-tabs { display: flex; gap: 2px; min-width: 0; flex: 1; }
+.panel-tab { display: flex; align-items: center; gap: 6px; padding: 0 10px; height: 30px; border: 0; border-bottom: 2px solid transparent; background: none; color: var(--text-3); font-size: 12px; cursor: pointer; white-space: nowrap; }
+.panel-tab:hover { color: var(--text-2); }
+.panel-tab[aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent); }
+.panel-tab .count-badge { font: 500 10px/16px var(--mono); }
+.panel-tab[aria-selected="false"] .count-badge { opacity: .6; }
+/* One tab panel at a time; the flow is what shows unless evidence is chosen. */
+.evidence.show-evidence .flow-panel { display: none; }
+.evidence:not(.show-evidence) .evidence-list { display: none; }
+.flow-panel { border-bottom: 0; overflow-y: auto; }
+.app.evidence-collapsed .panel-tabs { display: none; }
+/* The tab already carries the title and the count; the inline mirror has no tab,
+   so it keeps its own heading. */
+#flowPanel .flow-head { display: none; }
+#flowPanel .flow-bar { margin-top: 2px; }
