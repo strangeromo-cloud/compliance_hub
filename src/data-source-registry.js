@@ -50,6 +50,15 @@ export const DATA_SOURCE_REGISTRY = [
     webSearchUse: "good_for_discovery", notes: "Web search is useful for finding the relevant rule; license logic must use versioned regulatory text and transaction date."
   },
   {
+    sourceId: "bis-ear-732", sourceName: "EAR Part 732 — Steps for Using the EAR", module: "product", country: "US", authority: "U.S. BIS / eCFR",
+    sourceType: "regulation", officialSource: true, accessMethod: "eCFR API", fileFormat: "XML",
+    automationStatus: "api_available", feasibility: "can_build_now", currentCoverage: "planned", priority: 1, authenticationRequired: false, captchaPresent: false,
+    updateFrequency: "Daily check", websiteUrl: "https://www.ecfr.gov/current/title-15/part-732", apiUrl: "https://www.ecfr.gov/developers/documentation/api/v1",
+    dataCaptured: [], targetData: ["numbered decision steps", "scope of the EAR", "ten general prohibitions", "licence exception steps", "export control decision tree", "Know Your Customer guidance and red flags"],
+    webSearchUse: "not_for_screening",
+    notes: "The published decision procedure itself: BIS's own numbered Steps, plus Supplement No. 1 (decision tree), No. 2 (subject to the EAR) and No. 3 (Know Your Customer guidance and red flags). This is what the product's analysis path follows, so its sequence is cited rather than invented."
+  },
+  {
     sourceId: "bis-ear-734", sourceName: "EAR Part 734 — Scope, de minimis and Foreign Direct Product Rules", module: "product", country: "US", authority: "U.S. BIS / eCFR",
     sourceType: "regulation", officialSource: true, accessMethod: "eCFR API", fileFormat: "XML",
     automationStatus: "api_available", feasibility: "can_build_now", currentCoverage: "planned", priority: 1, authenticationRequired: false, captchaPresent: false,

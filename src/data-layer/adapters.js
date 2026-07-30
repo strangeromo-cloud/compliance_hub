@@ -164,6 +164,7 @@ export const ADAPTERS = {
   "uk-sanctions": { sync: syncUk, mode: "full_download", credential: null },
   "gleif-lei": { sync: syncGleifSample, mode: "sample_plus_live_query", credential: null },
   "bis-ear": { sync: () => syncEcfrPart("bis-ear", 736), mode: "versioned_snapshot", credential: null },
+  "bis-ear-732": { sync: () => syncEcfrPart("bis-ear-732", 732), mode: "versioned_snapshot", credential: null },
   "bis-ear-734": { sync: () => syncEcfrPart("bis-ear-734", 734), mode: "versioned_snapshot", credential: null },
   "bis-ear-740": { sync: () => syncEcfrPart("bis-ear-740", 740), mode: "versioned_snapshot", credential: null },
   "bis-ear-744": { sync: () => syncEcfrPart("bis-ear-744", 744), mode: "versioned_snapshot", credential: null },

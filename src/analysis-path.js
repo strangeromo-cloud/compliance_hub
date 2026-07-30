@@ -18,44 +18,124 @@
 // asked whether a step is confirmed will say yes; "confirmed" here has to mean
 // something a reviewer can check.
 
-// The declared sequence per lane. This is the plan, and it does not depend on
-// what any particular run happens to find.
+
+// Published methodologies the path follows.
+//
+// The step sequences below are not this product's invention: US export control
+// has an official numbered decision procedure (EAR Part 732), ownership
+// aggregation has published OFAC guidance, and third-party diligence has the
+// DOJ's stated factors. Following them and citing them is what makes a path
+// defensible — a reviewer asking "why these steps" gets a provision, not an
+// opinion.
+//
+// Where no official procedure exists the path says so rather than implying one.
+// The PRC side in particular has no numbered decision tree, so its lane is
+// organised around the regulation's own requirements instead of being forced
+// into a symmetry that does not exist.
+export const METHODOLOGIES = {
+  ear732: {
+    id: "ear732",
+    label: "EAR Part 732 — Steps for Using the EAR",
+    authority: "U.S. Bureau of Industry and Security",
+    kind: "official",
+    sourceId: "bis-ear-732",
+    url: "https://www.ecfr.gov/current/title-15/part-732"
+  },
+  ofac50: {
+    id: "ofac50",
+    label: "OFAC 50 Percent Rule",
+    authority: "U.S. Office of Foreign Assets Control",
+    kind: "official",
+    sourceId: "ofac-50-rule",
+    url: "https://ofac.treasury.gov/faqs/401"
+  },
+  eccp: {
+    id: "eccp",
+    label: "DOJ Evaluation of Corporate Compliance Programs — Third-Party Management",
+    authority: "U.S. Department of Justice",
+    kind: "official",
+    sourceId: "doj-eccp",
+    url: "https://www.justice.gov/criminal/criminal-fraud/page/file/937501"
+  },
+  prcDualUse: {
+    id: "prcDualUse",
+    label: "两用物项出口管制条例 + 出口许可申请填报指南",
+    authority: "国务院 / 商务部",
+    kind: "official",
+    sourceId: "china-dual-use",
+    url: "https://exportcontrol.mofcom.gov.cn/article/zcfg/gnzcfg/gzjgfxwj/202410/1057.html"
+  },
+  derived: {
+    id: "derived",
+    label: "系统按问题结构生成",
+    authority: null,
+    kind: "derived",
+    sourceId: null,
+    url: null
+  }
+};
+
+// The declared sequence per lane, each step carrying the provision it comes
+// from. Order follows the official procedure, not convenience.
 const LANE_PLANS = {
   trade: {
     label: "Trade — 受限方与主体",
+    methodology: "ear732",
     steps: [
-      ["identify_party", "确定交易主体的法律实体", { field: "legalName", kind: "text", label: "法律实体全称" }],
-      ["search_lists", "检索受限方名单"],
-      ["name_match", "名称匹配"],
+      ["identify_party", "确定交易主体的法律实体", { field: "legalName", kind: "text", label: "法律实体全称" },
+        { cite: "Supplement No. 3 to Part 732", note: "BIS Know Your Customer 指引要求先确定实际交易方" }],
+      ["search_lists", "检索受限方名单", null,
+        { cite: "§ 732.3(g) Step 12", note: "General Prohibition Four — 被拒绝出口权利的人员" }],
+      ["name_match", "名称匹配", null,
+        { cite: "§ 732.3(g) Step 12", note: "同上；名称命中本身不是最终判定" }],
       ["identity_resolution", "身份要素消歧", [
         { field: "registrationNumber", kind: "text", label: "注册号 / 统一社会信用代码" },
         { field: "country", kind: "choice", label: "注册国别", options: ["CN", "US", "DE", "SG", "JP", "IN", "MX", "NL"] },
         { field: "address", kind: "text", label: "注册地址" }
-      ]],
-      ["ownership", "所有权穿透（OFAC 50% 聚合）", { field: "ownership", kind: "text", label: "股权结构（如：A 持股 30%、B 持股 25%）" }]
+      ], { cite: "Supplement No. 3 to Part 732", note: "以身份要素而非名称字符串区分真实命中与误报" }],
+      ["ownership", "所有权穿透（50% 聚合）", { field: "ownership", kind: "text", label: "股权结构（如：A 持股 30%、B 持股 25%）" },
+        { cite: "OFAC 50 Percent Rule FAQ 401", methodology: "ofac50", note: "间接与合计持股需穿透计算，名单检索不解决" }]
     ]
   },
   product: {
     label: "Product — 物项与许可",
+    methodology: "ear732",
     steps: [
-      ["identify_item", "确定物项（准确型号或 part number）", { field: "partNumber", kind: "text", label: "准确型号 / part number" }],
-      ["classify", "归类（ECCN / 中国管制编码）", { field: "eccn", kind: "text", label: "已知的 ECCN 或中国管制编码" }],
-      ["jurisdiction", "管辖判定（EAR 734 de minimis / FDP）", { field: "usContent", kind: "choice", label: "受控美国原产内容占比", options: ["< 10%", "10–25%", "> 25%", "不确定"] }],
-      ["licence_path", "许可判定（管制理由 → 国别矩阵 → 例外）", { field: "destination", kind: "text", label: "最终目的地、最终用户与最终用途" }]
+      ["identify_item", "确定物项（准确型号或 part number）", { field: "partNumber", kind: "text", label: "准确型号 / part number" },
+        { cite: "前置要件", methodology: "derived", note: "官方 Steps 未列此步；没有准确型号则后续无法进行" }],
+      ["jurisdiction", "是否受 EAR 管辖（de minimis / 外国直接产品）", { field: "usContent", kind: "choice", label: "受控美国原产内容占比", options: ["< 10%", "10–25%", "> 25%", "不确定"] },
+        { cite: "§ 732.2 Steps 1–6 · Supplement No. 2", note: "官方顺序要求先判管辖，再谈分类" }],
+      ["classify", "分类（ECCN）", { field: "eccn", kind: "text", label: "已知的 ECCN 或中国管制编码" },
+        { cite: "§ 732.3(b) Step 7", note: "Classification —— 对照 CCL（Part 774）" }],
+      ["destination_chart", "目的地与管制理由（Country Chart）", { field: "destination", kind: "text", label: "最终目的地" },
+        { cite: "§ 732.3(b)–(c) Steps 8–9", note: "目的地 + 管制理由查 Commerce Country Chart（Part 738）" }],
+      ["prohibitions", "十项一般禁令（最终用户、最终用途、禁运、知情）", { field: "endUse", kind: "text", label: "最终用户与最终用途" },
+        { cite: "§ 732.3(g) Steps 12–29", note: "General Prohibitions One–Ten" }],
+      ["licence_exception", "许可例外", null,
+        { cite: "§ 732.4 · Part 740", note: "确认是否有可用的 License Exception" }]
     ]
   },
   tpdd: {
     label: "Ethics & TPDD — 第三方",
+    methodology: "eccp",
     steps: [
-      ["legal_existence", "核实主体存续与注册信息", { field: "registrationDocs", kind: "text", label: "注册证明文件情况" }],
-      ["beneficial_ownership", "确认受益所有权", { field: "ubo", kind: "text", label: "受益所有人" }],
-      ["rationale_fees", "评估商业合理性与费用水平", { field: "fees", kind: "text", label: "费用结构与交付物" }],
-      ["payment_path", "核查收款主体与付款路径", { field: "payee", kind: "text", label: "收款主体与账户所在地" }]
+      ["rationale_fees", "商业合理性、服务范围与费用", { field: "fees", kind: "text", label: "费用结构与交付物" },
+        { cite: "ECCP — Third-Party Management", note: "DOJ 要求先说明为何需要该第三方，以及合同是否具体描述服务" }],
+      ["legal_existence", "主体存续与注册信息", { field: "registrationDocs", kind: "text", label: "注册证明文件情况" },
+        { cite: "ECCP — Risk-Based Due Diligence", note: "基于风险的尽调" }],
+      ["beneficial_ownership", "受益所有权", { field: "ubo", kind: "text", label: "受益所有人" },
+        { cite: "ECCP — Risk-Based Due Diligence", note: "同上；与 OFAC 50% 聚合互为输入" }],
+      ["payment_path", "收款主体与付款路径", { field: "payee", kind: "text", label: "收款主体与账户所在地" },
+        { cite: "ECCP — Controls / Payment", note: "付款机制控制" }],
+      ["ongoing_monitoring", "持续监控与再评估", null,
+        { cite: "ECCP — Management of Relationships", note: "DOJ 明确要求覆盖整个合作关系存续期，而非仅准入时点" }]
     ]
   },
   review: {
     label: "结案",
-    steps: [["human_review", "Compliance / Legal 人工复核"]]
+    methodology: "derived",
+    steps: [["human_review", "Compliance / Legal 人工复核", null,
+      { cite: "本系统边界", methodology: "derived", note: "系统不做交易放行" }]]
   }
 };
 
@@ -81,12 +161,27 @@ export function planAnalysisPath({ agents = [], gemId = null } = {}) {
     lane,
     label: LANE_PLANS[lane].label,
     leading: lane === lead,
-    steps: LANE_PLANS[lane].steps.map(([id, title, inputs]) => ({
+    methodology: LANE_PLANS[lane].methodology,
+    steps: LANE_PLANS[lane].steps.map(([id, title, inputs, source]) => ({
       id, title, status: "pending", basis: [], needs: [],
-      inputs: inputs ? [].concat(inputs) : []
+      inputs: inputs ? [].concat(inputs) : [],
+      // Where this step comes from. A step without a provision says so.
+      cite: source?.cite || null,
+      citeNote: source?.note || null,
+      methodology: source?.methodology || LANE_PLANS[lane].methodology
     }))
   }));
-  return { lanes, summary: summarize(lanes), planned: true };
+  // The methodologies actually in play, so the interface can show the path's
+  // own basis instead of asking the reader to take it on trust.
+  const used = [...new Set(lanes.flatMap((group) => group.steps.map((item) => item.methodology)))];
+  return {
+    lanes,
+    summary: summarize(lanes),
+    planned: true,
+    basis: used.map((id) => METHODOLOGIES[id]).filter(Boolean)
+      .sort((left, right) => (left.kind === "official" ? 0 : 1) - (right.kind === "official" ? 0 : 1)),
+    followsOfficial: used.some((id) => METHODOLOGIES[id]?.kind === "official")
+  };
 }
 
 function summarize(lanes) {
@@ -202,36 +297,51 @@ function productSteps(question, grounding, results) {
       ? { basis: [hasCode ? "问题中给出了管制编码" : "问题中给出了型号或 part number"] }
       : { needs: ["准确型号或 part number；产品系列名无法定位管制条目", ...needsMatching(results, "product", /型号|part|参数|规格/i)] }));
 
-  steps.push(step("classify", "归类（ECCN / 中国管制编码）",
-    classificationFacts.length ? "confirmed" : "evidence_needed",
-    classificationFacts.length
-      ? { basis: classificationFacts.slice(0, 3).map((fact) => `${fact.sourceId}${fact.noticeNumber ? `（${fact.noticeNumber}）` : ""}：${String(fact.fact).slice(0, 90)}`) }
-      : { needs: ["关键技术参数与厂商分类信息", ...needsMatching(results, "product", /参数|分类|eccn|编码/i)] }));
-
+  // Official order: scope of the EAR before classification.
   const hasContent = PERCENT.test(question) && /美国|us|含量|content|de\s*minimis/i.test(question);
-  steps.push(step("jurisdiction", "管辖判定（EAR 734 de minimis / FDP）",
+  steps.push(step("jurisdiction", "是否受 EAR 管辖（de minimis / 外国直接产品）",
     hasContent ? "confirmed" : "evidence_needed",
     hasContent
       ? { basis: ["问题中给出了受控美国原产内容占比"] }
       : { needs: ["受控美国原产内容的价值占比，以及是否使用美国技术或软件（FDP）", ...needsMatching(results, "product", /原产|含量|管辖|de\s*minimis/i)] }));
 
-  steps.push(step("licence_path", "许可判定（管制理由 → 国别矩阵 → 例外）", "not_reached",
-    { needs: ["归类与管辖成立后方可进行；还需最终目的地、最终用户与最终用途", ...needsMatching(results, "product", /目的地|最终用户|最终用途|许可/i)] }));
+  steps.push(step("classify", "分类（ECCN）",
+    classificationFacts.length ? "confirmed" : "evidence_needed",
+    classificationFacts.length
+      ? { basis: classificationFacts.slice(0, 3).map((fact) => `${fact.sourceId}${fact.noticeNumber ? `（${fact.noticeNumber}）` : ""}：${String(fact.fact).slice(0, 90)}`) }
+      : { needs: ["关键技术参数与厂商分类信息", ...needsMatching(results, "product", /参数|分类|eccn|编码/i)] }));
+
+  const classified = classificationFacts.length > 0;
+  const hasDestination = /目的地|出口到|运往|destination|export to|ship to/i.test(question);
+  steps.push(step("destination_chart", "目的地与管制理由（Country Chart）",
+    !classified ? "not_reached" : hasDestination ? "evidence_needed" : "evidence_needed",
+    !classified
+      ? { needs: ["分类成立后方可查 Country Chart"] }
+      : { needs: ["最终目的地，以及该 ECCN 的管制理由在 Country Chart 上对应的单元", ...needsMatching(results, "product", /目的地|国别|矩阵/i)] }));
+
+  steps.push(step("prohibitions", "十项一般禁令（最终用户、最终用途、禁运、知情）", "evidence_needed",
+    { needs: ["最终用户、最终用途与实际交易链；General Prohibitions 需逐项过", ...needsMatching(results, "product", /最终用户|最终用途|用途|禁令/i)] }));
+
+  steps.push(step("licence_exception", "许可例外", "not_reached",
+    { needs: ["管辖、分类与国别矩阵成立后方可判断是否有可用的 License Exception"] }));
 
   return steps;
 }
 
 function tpddSteps(question, grounding, results) {
+  // Ordered as the DOJ states it: business rationale first, then diligence,
+  // then the payment mechanism, then monitoring across the relationship.
   const rules = [
-    ["legal_existence", "核实主体存续与注册信息", /注册|执照|存续|营业|登记/i],
-    ["beneficial_ownership", "确认受益所有权", /ubo|受益所有|股东|股权/i],
-    ["rationale_fees", "评估商业合理性与费用水平", /费用|佣金|成功费|服务|交付|合理性/i],
-    ["payment_path", "核查收款主体与付款路径", /付款|收款|账户|汇款|payment/i]
+    ["rationale_fees", "商业合理性、服务范围与费用", /费用|佣金|成功费|折扣|返点|服务|交付|合理性/i],
+    ["legal_existence", "主体存续与注册信息", /注册|执照|存续|营业|登记/i],
+    ["beneficial_ownership", "受益所有权", /ubo|受益所有|股东|股权/i],
+    ["payment_path", "收款主体与付款路径", /付款|收款|账户|汇款|payment/i],
+    ["ongoing_monitoring", "持续监控与再评估", /监控|复审|再评估|定期|monitor/i]
   ];
   return rules.map(([id, title, pattern]) => {
     const needs = needsMatching(results, "tpdd", pattern);
     return step(id, title, "evidence_needed",
-      { needs: needs.length ? needs : ["需取得对应证明文件"] });
+      { needs: needs.length ? needs : [id === "ongoing_monitoring" ? "尚未设定复审周期与触发条件" : "需取得对应证明文件"] });
   });
 }
 
@@ -258,24 +368,27 @@ export function resolveAnalysisPath(plan, { question, grounding, results = [], d
       steps: group.steps.map((planned) => {
         const item = resolved.get(planned.id);
         if (!item) return planned;
+        // Provenance belongs to the plan. Resolution decides status only, so the
+        // citation must survive it rather than being rebuilt by each resolver.
+        const keep = { inputs: planned.inputs, cite: planned.cite, citeNote: planned.citeNote, methodology: planned.methodology };
         const answered = planned.inputs.filter((input) => String(declaredFacts[input.field] || "").trim());
         // A declaration moves a blocked step forward but never to settled: the
         // value came from the person asking, and nobody has checked it.
         if (item.status === "evidence_needed" && answered.length) {
           return {
             ...item,
-            inputs: planned.inputs,
+            ...keep,
             status: "declared",
             basis: [...item.basis, ...answered.map((input) => `${input.label}：${declaredFacts[input.field]}（用户声明，未核验）`)],
             needs: item.needs.filter((need) => !answered.some((input) => need.includes(input.label.split(" / ")[0])))
           };
         }
-        return { ...item, inputs: planned.inputs };
+        return { ...item, ...keep };
       })
     };
   });
 
-  return { lanes, summary: summarize(lanes), planned: false, final };
+  return { ...plan, lanes, summary: summarize(lanes), planned: false, final };
 }
 
 // One action list, ordered by the path's own dependencies.

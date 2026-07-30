@@ -1032,3 +1032,19 @@ html[lang="en"] .step-needs li::before { content: "NEEDS"; font-size: 8px; }
 .si-note { font-size: 10.5px; color: var(--risk-medium); }
 
 @media (max-width: 620px) { .si-row { grid-template-columns: 1fr; gap: 4px; } }
+
+/* --------------------------------------------------- where the path comes from */
+
+.path-basis { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; padding: 8px 0 12px; margin-bottom: 4px; border-bottom: 1px solid var(--border); }
+.pb-label { font: 600 9.5px/1.7 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--text-3); }
+.pb-item { font-size: 11.5px; color: var(--text-2); border: 1px solid var(--border); border-radius: 3px; padding: 1px 7px; }
+.pb-item a { color: var(--accent-text); text-decoration: none; }
+.pb-item a:hover { text-decoration: underline; }
+.pb-item i { font-style: normal; color: var(--text-3); font-size: 10px; margin-left: 6px; }
+/* A derived entry is visibly not an official one. */
+.pb-item.derived { border-style: dashed; color: var(--text-3); }
+
+/* The provision a step follows, so "why these steps" has an answer on screen. */
+.step-cite { font: 500 9.5px/1.7 var(--mono); color: var(--text-3); border: 1px solid var(--border); border-radius: 3px; padding: 0 5px; white-space: nowrap; cursor: help; }
+.step-cite.derived { border-style: dashed; opacity: .8; }
+@media (max-width: 620px) { .step-cite { display: none; } }
