@@ -1,4 +1,5 @@
 import { GEMS, GEM_BY_ID, GEM_GROUPS, factCoverage, matchGems, toggleWorkspaceGem, workspaceGemIds } from "/gems.js";
+import { EVIDENCE_STATUS, STEP_STATUS_VOCAB, label, tone } from "/status-vocabulary.js";
 
 const i18n = {
   zh: {
@@ -22,7 +23,7 @@ const i18n = {
     hfQuestion: "一个问题", hfAnswer: "统一答案", startersLabel: "快速开始", workspaceEmpty: "工作区还没有 Gem", gemBacking: "数据支撑",
     teachSlashTitle: "在输入框键入 /", teachSlashBody: "呼出 {n} 个 Gem 的完整目录，上下键选择，回车使用。",
     teachPinTitle: "把常用 Gem 加入工作区", teachPinBody: "在目录里点 ★，或在 Gem 详情里点「添加到工作区」，它会常驻左侧栏。",
-    historyLabel: "历史记录", historyEmpty: "暂无记录", turnUnit: "轮", historyOpenFailed: "无法打开该记录", pathTitle: "分析路径", pathBasis: "路径依据", pathDerivedNote: "本步骤无对应官方条文，由系统按问题结构补充", stConfirmed: "已确认", stEvidence: "需更多证据", stNotReached: "未进行", status_confirmed: "已确认", status_evidence_needed: "需更多证据", status_not_reached: "待前序步骤", status_review_required: "需人工复核", status_pending: "待执行", stPending: "待执行", status_declared: "已声明，待核验", stDeclared: "已声明", declareSubmit: "提交并继续", declarePlaceholder: "填写后提交", declareNote: "填写的内容记为声明信息，不等于已核验证据", declareEmpty: "请先填写至少一项", declarePrefix: "补充信息 — ", reasoningTrace: "比对明细", rsSearched: "已检索的名单来源", rsMatched: "名称命中", rsCompared: "身份要素比对", rsFacts: "已核验事实",
+    historyLabel: "历史记录", historyEmpty: "暂无记录", turnUnit: "轮", historyOpenFailed: "无法打开该记录", pathTitle: "分析路径", pathBasis: "路径依据", pathTemplated: "规则模式：待补项来自内置模板，不是对本问题的分析结果。切换到实时模型可得到针对性判断。", pathDerivedNote: "本步骤无对应官方条文，由系统按问题结构补充", stConfirmed: "已确认", stEvidence: "需更多证据", stNotReached: "未进行", status_confirmed: "已确认", status_evidence_needed: "需更多证据", status_not_reached: "待前序步骤", status_review_required: "需人工复核", status_pending: "待执行", stPending: "待执行", status_declared: "已声明，待核验", stDeclared: "已声明", declareSubmit: "提交并继续", declarePlaceholder: "填写后提交", declareNote: "填写的内容记为声明信息，不等于已核验证据", declareEmpty: "请先填写至少一项", declarePrefix: "补充信息 — ", reasoningTrace: "比对明细", rsSearched: "已检索的名单来源", rsMatched: "名称命中", rsCompared: "身份要素比对", rsFacts: "已核验事实",
     rsScore: "相似度", rsOpen: "查看原文", rsUnsynced: "未同步、本次未检索",
     el_country: "国别", el_registration_number: "注册号", el_address: "地址",
     st_agree: "一致", st_conflict: "冲突", st_unavailable: "缺失",
@@ -76,7 +77,7 @@ const i18n = {
     hfQuestion: "One question", hfAnswer: "One answer", startersLabel: "Start here", workspaceEmpty: "No gems in your workspace yet", gemBacking: "Data behind it",
     teachSlashTitle: "Press / in the composer", teachSlashBody: "Opens the full catalogue of {n} gems. Arrow keys select, Enter uses.",
     teachPinTitle: "Pin the ones you use", teachPinBody: "Add to workspace from a gem's details and it stays in the sidebar.",
-    historyLabel: "History", historyEmpty: "No cases yet", turnUnit: "turns", historyOpenFailed: "That case could not be opened", pathTitle: "Analysis path", pathBasis: "Path follows", pathDerivedNote: "No official provision for this step; added by the system", stConfirmed: "settled", stEvidence: "need evidence", stNotReached: "not reached", status_confirmed: "Settled", status_evidence_needed: "Evidence needed", status_not_reached: "Awaiting earlier step", status_review_required: "Human review", status_pending: "Planned", stPending: "planned", status_declared: "Declared, unverified", stDeclared: "declared", declareSubmit: "Submit and continue", declarePlaceholder: "Fill in, then submit", declareNote: "What you enter is recorded as a declaration, not as verified evidence", declareEmpty: "Fill in at least one field first", declarePrefix: "Additional information — ", reasoningTrace: "Comparison detail", rsSearched: "Lists searched", rsMatched: "Name matches", rsCompared: "Identity comparison", rsFacts: "Verified facts",
+    historyLabel: "History", historyEmpty: "No cases yet", turnUnit: "turns", historyOpenFailed: "That case could not be opened", pathTitle: "Analysis path", pathBasis: "Path follows", pathTemplated: "Rules mode: the outstanding items come from built-in templates, not from analysing this question. Switch to the live model for a specific assessment.", pathDerivedNote: "No official provision for this step; added by the system", stConfirmed: "settled", stEvidence: "need evidence", stNotReached: "not reached", status_confirmed: "Settled", status_evidence_needed: "Evidence needed", status_not_reached: "Awaiting earlier step", status_review_required: "Human review", status_pending: "Planned", stPending: "planned", status_declared: "Declared, unverified", stDeclared: "declared", declareSubmit: "Submit and continue", declarePlaceholder: "Fill in, then submit", declareNote: "What you enter is recorded as a declaration, not as verified evidence", declareEmpty: "Fill in at least one field first", declarePrefix: "Additional information — ", reasoningTrace: "Comparison detail", rsSearched: "Lists searched", rsMatched: "Name matches", rsCompared: "Identity comparison", rsFacts: "Verified facts",
     rsScore: "Similarity", rsOpen: "Open source", rsUnsynced: "Not synced, therefore not searched",
     el_country: "Country", el_registration_number: "Registration no.", el_address: "Address",
     st_agree: "agree", st_conflict: "conflict", st_unavailable: "missing",
@@ -280,10 +281,6 @@ function gemBackingMarkup(gem) {
   return `<div class="gem-meta">${parts.map(esc).join('<span class="sep">·</span>')}${gap}</div>`;
 }
 
-function orderedGems() {
-  const pinned = workspaceGemIds();
-  return [...GEMS].sort((a, b) => (pinned.includes(b.id) ? 1 : 0) - (pinned.includes(a.id) ? 1 : 0));
-}
 
 function renderGemNav() {
   const pinned = workspaceGemIds();
@@ -656,7 +653,6 @@ function openGemDetail(gemId) {
 /* ----------------------------------------------------------- rendering */
 
 function riskLabel(level) { return t(`risk${level.charAt(0).toUpperCase()}${level.slice(1)}`); }
-function renderList(items) { return items?.length ? `<ul>${items.map((item) => `<li>${formatInline(stripMarker(item))}</li>`).join("")}</ul>` : `<p>${t("noItems")}</p>`; }
 
 function estimatedRoute(question) {
   const lower = question.toLowerCase();
@@ -685,17 +681,14 @@ function renderEvidence(sources) {
   $("sourceCount").textContent = sources.length;
   showEvidencePanel(sources.length > 0);
   if (!sources.length) { $("evidenceList").innerHTML = `<p class="evidence-empty">${t("evidenceEmpty")}</p>`; return; }
-  const statusLabel = (source) => ({
-    live: t("sourceLive"), metadata_only: t("sourceMetadata"), unavailable: t("sourceUnavailable"),
-    not_fetched: t("sourceNotFetched"), archived: t("sourceArchived"), citation_only: t("sourceCitationOnly"),
-    cached: source.stale ? t("sourceStale") : t("sourceCached")
-  }[source.liveStatus] || source.liveStatus);
+  const statusKey = (source) => (source.liveStatus === "cached" && source.stale ? "cached_stale" : source.liveStatus);
+  const statusLabel = (source) => label(EVIDENCE_STATUS, statusKey(source), state.locale);
   $("evidenceList").innerHTML = sources.map((source) => `
     <article class="source-card">
       <div class="authority">${esc(source.authority)}</div>
       <a href="${esc(source.url)}" target="_blank" rel="noopener noreferrer">${esc(source.title)}</a>
       <div class="source-meta">
-        <span class="source-status ${esc(source.liveStatus)}${source.stale ? " stale" : ""}">${esc(statusLabel(source))}</span>
+        <span class="source-status tone-${esc(tone(EVIDENCE_STATUS, statusKey(source)))}">${esc(statusLabel(source))}</span>
         ${source.cacheAge ? `<span class="source-age">${esc(source.cacheAge)}</span>` : ""}
         <time>${source.retrievedAt ? new Date(source.retrievedAt).toLocaleTimeString(state.locale === "zh" ? "zh-CN" : "en-US", { hour: "2-digit", minute: "2-digit" }) : "—"}</time>
       </div>
@@ -706,44 +699,8 @@ function renderEvidence(sources) {
 // that block it, then what to do, then the trace. Missing information and
 // recommended actions used to be buried inside the collapsed trace, which is
 // where the eye goes last — they are the actionable part, so they come up.
-function collectAcross(results, key, limit = 6) {
-  const seen = new Map();
-  for (const result of results || []) {
-    for (const item of result[key] || []) {
-      const text = String(item).trim();
-      if (!text) continue;
-      const dedupe = text.replace(/[\s。．.,，、；;：:]+$/, "");
-      if (!seen.has(dedupe)) seen.set(dedupe, { text, agents: [] });
-      const entry = seen.get(dedupe);
-      if (!entry.agents.includes(result.agent)) entry.agents.push(result.agent);
-    }
-  }
-  return [...seen.values()].slice(0, limit);
-}
 
-function actionBlock(kind, label, items) {
-  if (!items.length) return "";
-  // Recommended actions are worked through in order, so they are numbered.
-  // Missing information is a set to collect, so it gets checkboxes instead.
-  const ordered = kind === "actions";
-  return `
-    <section class="action-block ${kind}">
-      <div class="action-head"><span class="action-label">${esc(label)}</span><span class="action-count">${items.length}</span></div>
-      <${ordered ? "ol" : "ul"} class="action-items">${items.map((item, index) => `
-        <li>
-          <span class="marker" aria-hidden="true">${ordered ? index + 1 : ""}</span>
-          <span class="item-body">${formatInline(stripMarker(item.text))}${item.agents.length > 1 ? `<span class="from">${item.agents.map(agentName).join(" · ")}</span>` : ""}</span>
-        </li>`).join("")}</${ordered ? "ol" : "ul"}>
-    </section>`;
-}
 
-const DISPOSITION_TONE = {
-  strong_potential_match_escalate_for_human_confirmation: "crit",
-  potential_match_requires_identity_review: "warn",
-  weak_potential_match_requires_identity_review: "warn",
-  likely_false_positive_identity_elements_conflict: "ok",
-  below_review_threshold: "muted"
-};
 
 function comparisonTable(comparisons) {
   if (!comparisons?.length) return "";
@@ -755,111 +712,6 @@ function comparisonTable(comparisons) {
     </div>`).join("")}</div>`;
 }
 
-// The chain from "which lists were searched" to "why this is or is not a hit".
-// Without it the interface states a verdict and hides the argument.
-function reasoningMarkup(grounding) {
-  if (!grounding) return "";
-  const screened = grounding.screening?.screenedSources || [];
-  const matches = grounding.listMatches || [];
-  const internal = grounding.internalParties || [];
-  const facts = grounding.facts || [];
-  if (!screened.length && !matches.length && !facts.length) return "";
-
-  const steps = [];
-
-  if (screened.length) {
-    steps.push(`
-      <li class="rstep">
-        <div class="rstep-head">${esc(t("rsSearched"))}<span class="rstep-count">${screened.length}</span></div>
-        <div class="rsource-list">${screened.map((source) => `
-          <div class="rsource">
-            <code>${esc(source.sourceId)}</code>
-            <span>${Number(source.recordCount).toLocaleString()} ${esc(t("gemRecordsUnit"))}</span>
-            <span class="prov ${source.provenance === "bundled_fallback_snapshot" ? "warn" : ""}">${esc(t(source.provenance === "bundled_fallback_snapshot" ? "sourceArchived" : "sourceLive"))}</span>
-            <time>${esc(String(source.capturedAt || "").slice(0, 10))}</time>
-          </div>`).join("")}</div>
-        ${grounding.screening?.unsyncedSources?.length ? `<p class="rstep-note">${esc(t("rsUnsynced"))}: ${grounding.screening.unsyncedSources.map(esc).join(" · ")}</p>` : ""}
-      </li>`);
-  }
-
-  if (matches.length) {
-    steps.push(`
-      <li class="rstep">
-        <div class="rstep-head">${esc(t("rsMatched"))}<span class="rstep-count">${matches.length}</span></div>
-        ${matches.map((match) => `
-          <div class="rmatch">
-            <div class="rmatch-head">
-              <strong>${esc(match.entityName || match.matchedName)}</strong>
-              ${match.entityNameEn ? `<span class="alt">${esc(match.entityNameEn)}</span>` : ""}
-              <span class="score">${esc(t("rsScore"))} ${match.matchScore}</span>
-            </div>
-            <div class="rmatch-meta">
-              <code>${esc(match.sourceId)}</code>
-              ${match.noticeNumber ? `<span>${esc(match.noticeNumber)}</span>` : ""}
-              <span>${esc(t(`basis_${match.matchBasis}`))}</span>
-              ${match.sourceUrl ? `<a href="${esc(match.sourceUrl)}" target="_blank" rel="noopener noreferrer">${esc(t("rsOpen"))}</a>` : ""}
-            </div>
-          </div>`).join("")}
-      </li>`);
-  }
-
-  if (internal.length) {
-    steps.push(`
-      <li class="rstep">
-        <div class="rstep-head">${esc(t("rsCompared"))}<span class="rstep-count">${internal.reduce((n, e) => n + e.internalMatches.length, 0)}</span></div>
-        ${internal.flatMap((entry) => entry.internalMatches.map((item) => `
-          <div class="rverdict tone-${esc(DISPOSITION_TONE[item.matchDisposition] || "muted")}">
-            <div class="rverdict-head">
-              <span class="rv-party">${esc(item.entityName)}${item.partyId ? `<code>${esc(item.partyId)}</code>` : ""}</span>
-              <span class="rv-vs">vs</span>
-              <span class="rv-listed">${esc(item.designatedEntity || entry.designationName)}${item.designationNoticeNumber ? `<code>${esc(item.designationNoticeNumber)}</code>` : ""}</span>
-            </div>
-            ${comparisonTable(item.identityComparisons)}
-            <div class="rverdict-call">${esc(t(`disp_${item.matchDisposition}`))}</div>
-          </div>`)).join("")}
-      </li>`);
-  }
-
-  if (facts.length) {
-    steps.push(`
-      <li class="rstep">
-        <div class="rstep-head">${esc(t("rsFacts"))}<span class="rstep-count">${facts.length}</span></div>
-        <ul class="rfacts">${facts.map((fact) => `
-          <li><code>${esc(fact.sourceId)}</code>${fact.noticeNumber ? `<code>${esc(fact.noticeNumber)}</code>` : ""}<span>${formatInline(fact.fact)}</span></li>`).join("")}</ul>
-      </li>`);
-  }
-
-  return `
-    <details class="trace reasoning" open>
-      <summary>${esc(t("reasoningTrace"))}<span class="trace-count">${steps.length}</span></summary>
-      <div class="trace-body"><ol class="rsteps">${steps.join("")}</ol></div>
-    </details>`;
-}
-
-// A next step frequently arrives as one sentence of clauses separated by
-// semicolons or arrows. Those are steps; presenting them as a paragraph buries
-// the fact that there is more than one thing to do.
-function nextStepMarkup(value = "") {
-  const text = String(value).trim();
-  if (/\n/.test(text) || LIST_ITEM.test(text)) return `<div class="prose">${formatBlock(text)}</div>`;
-  const parts = text.split(/\s*(?:[；;]|→|->)\s*/).map((part) => part.replace(/[。.]$/, "").trim()).filter(Boolean);
-  if (parts.length < 2) return `<div class="prose">${formatBlock(text)}</div>`;
-  return `<ol class="next-steps">${parts.map((part) => `<li>${formatInline(part)}</li>`).join("")}</ol>`;
-}
-
-const STEP_STATUS = {
-  pending: { tone: "pending", mark: "○" },
-  declared: { tone: "declared", mark: "◐" },
-  confirmed: { tone: "ok", mark: "✓" },
-  evidence_needed: { tone: "warn", mark: "!" },
-  not_reached: { tone: "muted", mark: "·" },
-  review_required: { tone: "crit", mark: "▲" }
-};
-
-// The path is the answer to "what do I do next": each step says whether it is
-// settled, on what, and what would settle it if not. It replaces the flat
-// missing-information list, which said the same things without saying which
-// step each one blocked.
 // A blocked step can be answered in place. What the user types is a declaration,
 // never verified evidence — the status it produces says so, and the action list
 // then asks for it to be verified.
@@ -883,21 +735,26 @@ function stepInputsMarkup(item) {
     </div>`;
 }
 
-function pathMarkup(path) {
+// The path is the answer to "what do I do next": each step says whether it is
+// settled, on what, and what would settle it if not. The comparison detail and
+// the limits both live inside it now — four collapsible blocks saying
+// overlapping things was the reason nothing read as the point.
+function pathMarkup(path, grounding) {
   if (!path?.lanes?.length) return "";
   const s = path.summary;
   return `
     <details class="trace analysis-path" open>
       <summary>${esc(t("pathTitle"))}
         <span class="path-summary">
-          ${s.pending ? `<span class="ps pending">○ ${s.pending} ${esc(t("stPending"))}</span>` : ""}
-          ${s.confirmed ? `<span class="ps ok">✓ ${s.confirmed} ${esc(t("stConfirmed"))}</span>` : ""}
+          ${s.pending ? `<span class="ps pending">○ ${s.pending} ${esc(label(STEP_STATUS_VOCAB, "pending", state.locale))}</span>` : ""}
+          ${s.confirmed ? `<span class="ps ok">✓ ${s.confirmed} ${esc(label(STEP_STATUS_VOCAB, "confirmed", state.locale))}</span>` : ""}
           ${s.declared ? `<span class="ps declared">◐ ${s.declared} ${esc(t("stDeclared"))}</span>` : ""}
           ${s.evidenceNeeded ? `<span class="ps warn">! ${s.evidenceNeeded} ${esc(t("stEvidence"))}</span>` : ""}
           ${s.notReached ? `<span class="ps muted">· ${s.notReached} ${esc(t("stNotReached"))}</span>` : ""}
         </span>
       </summary>
       <div class="trace-body">
+        ${path.templated ? `<p class="path-templated">${esc(t("pathTemplated"))}</p>` : ""}
         ${path.basis?.length ? `<div class="path-basis">
           <span class="pb-label">${esc(t("pathBasis"))}</span>
           ${path.basis.map((item) => `<span class="pb-item ${item.kind}">${item.url
@@ -908,14 +765,15 @@ function pathMarkup(path) {
         <section class="path-lane">
           <div class="path-lane-label">${esc(lane.label)}</div>
           <ol class="path-steps">${lane.steps.map((item) => {
-            const tone = STEP_STATUS[item.status] || STEP_STATUS.not_reached;
+            const stepTone = tone(STEP_STATUS_VOCAB, item.status);
+            const mark = STEP_STATUS_VOCAB[item.status]?.mark || "·";
             return `
-            <li class="path-step tone-${tone.tone}">
-              <span class="step-mark" aria-hidden="true">${tone.mark}</span>
+            <li class="path-step tone-${stepTone}">
+              <span class="step-mark" aria-hidden="true">${mark}</span>
               <div class="step-body">
                 <div class="step-head">
                   <strong>${esc(item.title)}</strong>
-                  <span class="step-status">${esc(t(`status_${item.status}`))}</span>
+                  <span class="step-status">${esc(label(STEP_STATUS_VOCAB, item.status, state.locale))}</span>
                   ${item.cite ? `<span class="step-cite ${item.methodology === "derived" ? "derived" : ""}" title="${esc(item.citeNote || "")}">${esc(item.cite)}</span>` : ""}
                 </div>
                 ${item.basis.length ? `<ul class="step-basis">${item.basis.map((line) => {
@@ -924,12 +782,60 @@ function pathMarkup(path) {
                   return `<li>${formatInline(line)}${known ? ` <button type="button" class="jump-source" data-jump-source="${esc(sourceRef[1])}" title="${esc(t("jumpSource"))}">⛁</button>` : ""}</li>`;
                 }).join("")}</ul>` : ""}
                 ${item.needs.length ? `<ul class="step-needs">${item.needs.map((line) => `<li>${formatInline(line)}</li>`).join("")}</ul>` : ""}
+                ${stepDetailMarkup(item, grounding)}
                 ${item.status === "evidence_needed" && item.inputs?.length ? stepInputsMarkup(item) : ""}
               </div>
             </li>`;
           }).join("")}</ol>
-        </section>`).join("")}</div>
+        </section>`).join("")}
+        ${grounding?.limitations?.length ? `<div class="path-limits">
+          <div class="pl-label">${esc(t("limitations"))}<span class="trace-count">${grounding.limitations.length}</span></div>
+          <ul>${grounding.limitations.map((line) => `<li>${formatInline(line)}</li>`).join("")}</ul>
+        </div>` : ""}
+      </div>
     </details>`;
+}
+
+// Detail that used to sit in a separate "comparison" section now sits in the
+// step it belongs to. Four collapsible blocks saying overlapping things was the
+// reason nothing read as the point.
+function stepDetailMarkup(item, grounding) {
+  if (!grounding) return "";
+
+  if (item.id === "identity_resolution") {
+    const internal = (grounding.internalParties || []).flatMap((entry) => entry.internalMatches || []);
+    if (!internal.length) return "";
+    return internal.map((party) => `
+      <div class="step-detail">
+        <div class="sd-head">
+          <span>${esc(party.entityName)}</span><i>vs</i><span>${esc(party.designatedEntity || "—")}</span>
+          ${party.designationNoticeNumber ? `<code>${esc(party.designationNoticeNumber)}</code>` : ""}
+        </div>
+        ${comparisonTable(party.identityComparisons)}
+      </div>`).join("");
+  }
+
+  if (item.id === "name_match") {
+    const matches = grounding.listMatches || [];
+    if (!matches.length) return "";
+    return `<div class="step-detail">${matches.slice(0, 4).map((match) => `
+      <div class="sd-match">
+        <strong>${esc(match.entityName || match.matchedName)}</strong>
+        ${match.entityNameEn ? `<span>${esc(match.entityNameEn)}</span>` : ""}
+        <code>${esc(match.sourceId)}</code>
+        <span class="sd-score">${esc(t("rsScore"))} ${match.matchScore}</span>
+        ${match.sourceUrl ? `<a href="${esc(match.sourceUrl)}" target="_blank" rel="noopener noreferrer">${esc(t("rsOpen"))}</a>` : ""}
+      </div>`).join("")}</div>`;
+  }
+
+  if (item.id === "classify" || item.id === "jurisdiction") {
+    const facts = (grounding.facts || []).filter((fact) => /eccn|tpp|管制编码|分类|原产|含量/i.test(fact.fact || ""));
+    if (!facts.length) return "";
+    return `<div class="step-detail"><ul class="sd-facts">${facts.slice(0, 3).map((fact) => `
+      <li><code>${esc(fact.sourceId)}</code>${formatInline(String(fact.fact).slice(0, 200))}</li>`).join("")}</ul></div>`;
+  }
+
+  return "";
 }
 
 // One list, in dependency order, each item naming the step it unblocks. This
@@ -966,7 +872,6 @@ function actionPlanMarkup(plan) {
 
 function answerMarkup(data) {
   const synthesis = data.synthesis;
-  const limitations = data.grounding?.limitations || [];
 
   return `
       <span class="avatar" aria-hidden="true">CH</span>
@@ -989,15 +894,7 @@ function answerMarkup(data) {
           ${actionPlanMarkup(data.actionPlan)}
         </section>
 
-        ${pathMarkup(data.analysisPath)}
-
-        ${reasoningMarkup(data.grounding)}
-
-        ${limitations.length ? `
-        <details class="trace limits">
-          <summary>${t("limitations")}<span class="trace-count">${limitations.length}</span></summary>
-          <div class="trace-body"><ul class="limit-list">${limitations.map((item) => `<li>${formatInline(stripMarker(item))}</li>`).join("")}</ul></div>
-        </details>` : ""}
+        ${pathMarkup(data.analysisPath, data.grounding)}
 
         <details class="trace">
           <summary>${t("specialistTrace")}<span class="trace-count">${data.results.length}</span></summary>
@@ -1010,10 +907,6 @@ function answerMarkup(data) {
               <div class="prose">${formatBlock(result.summary)}</div>
               <ul class="trace-findings">${(result.findings || []).map((finding) => `
                 <li><b>${esc(finding.title)}</b> <span class="finding-detail">${formatInline(finding.detail)}</span><span class="cite">${(finding.evidenceSourceIds || []).map((id) => `<span>${esc(id)}</span>`).join("")}</span></li>`).join("")}</ul>
-              <div class="trace-cols">
-                <div><h4>${t("missingInfo")}</h4>${renderList((result.missingInfo || []))}</div>
-                <div><h4>${t("actions")}</h4>${renderList((result.recommendedActions || []))}</div>
-              </div>
             </section>`).join("")}</div>
         </details>
 
@@ -1047,15 +940,6 @@ function renderSteps(node, done, current) {
   }).join("");
 }
 
-function renderResult(data) {
-  const node = document.createElement("article");
-  node.className = "msg msg-assistant";
-  node.id = `answer-${data.id}`;
-  node.innerHTML = answerMarkup(data);
-  $("threadInner").appendChild(node);
-  renderEvidence(data.sources || []);
-  node.scrollIntoView({ behavior: "smooth", block: "start" });
-}
 
 /* ------------------------------------------------------------- coverage */
 
@@ -1241,6 +1125,7 @@ async function analyze(event) {
     }
     if (event.type === "grounding") {
       done.add("grounding");
+      collected.grounding = event.grounding;
       const g = event.grounding;
       const screened = g.screening?.screenedSources?.length || 0;
       live.querySelector("[data-live-steps]").insertAdjacentHTML("afterend",
@@ -1254,7 +1139,7 @@ async function analyze(event) {
     // shown as it is written rather than appearing complete out of nowhere.
     if (event.type === "path") {
       const existing = live.querySelector("[data-live-path]");
-      const markup = pathMarkup(event.path);
+      const markup = pathMarkup(event.path, collected.grounding);
       if (existing) existing.outerHTML = markup.replace("<details", '<details data-live-path');
       else live.querySelector("[data-live-steps]").insertAdjacentHTML("afterend", markup.replace("<details", '<details data-live-path'));
     }

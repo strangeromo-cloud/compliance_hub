@@ -184,7 +184,7 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
 
   // Screening steps can close once grounding is in; the rest wait for the
   // specialists rather than being guessed at.
-  analysisPath = resolveAnalysisPath(analysisPath, { question: contextualQuestion, grounding: groundingSummary, results: [], declaredFacts });
+  analysisPath = resolveAnalysisPath(analysisPath, { question: contextualQuestion, grounding: groundingSummary, results: [], declaredFacts, templated: mock });
   onEvent({ type: "path", path: analysisPath });
 
   let results;
@@ -217,7 +217,7 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
       (text) => onEvent({ type: "synthesis_delta", text }));
   }
 
-  analysisPath = resolveAnalysisPath(analysisPath, { question: contextualQuestion, grounding: groundingSummary, results, declaredFacts, final: true });
+  analysisPath = resolveAnalysisPath(analysisPath, { question: contextualQuestion, grounding: groundingSummary, results, declaredFacts, templated: mock, final: true });
   onEvent({ type: "path", path: analysisPath });
 
   return {

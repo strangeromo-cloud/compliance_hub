@@ -349,7 +349,7 @@ function tpddSteps(question, grounding, results) {
 // once during a run: after grounding, the screening steps can close; after the
 // specialists report, their statements of what they lack fill the rest. A step
 // with nothing yet to decide it stays pending rather than being guessed at.
-export function resolveAnalysisPath(plan, { question, grounding, results = [], declaredFacts = {}, final = false }) {
+export function resolveAnalysisPath(plan, { question, grounding, results = [], declaredFacts = {}, templated = false, final = false }) {
   const resolvers = {
     trade: () => tradeSteps(question, grounding, results),
     product: () => productSteps(question, grounding, results),
@@ -388,7 +388,7 @@ export function resolveAnalysisPath(plan, { question, grounding, results = [], d
     };
   });
 
-  return { ...plan, lanes, summary: summarize(lanes), planned: false, final };
+  return { ...plan, lanes, summary: summarize(lanes), planned: false, templated, final };
 }
 
 // One action list, ordered by the path's own dependencies.
