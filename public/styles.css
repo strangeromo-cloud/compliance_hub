@@ -633,6 +633,7 @@ dialog::backdrop { background: rgba(0,0,0,.55); }
 .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-3); flex: 0 0 auto; }
 .sync-success .sync-dot, .sync-dot.sync-success { background: var(--accent-text); }
 .sync-failed .sync-dot, .sync-dot.sync-failed { background: var(--risk-high); }
+.sync-refresh_failed .sync-dot { background: var(--risk-medium); }
 .sync-syncing .sync-dot, .sync-dot.sync-syncing { background: var(--risk-medium); }
 .sync-fallback_snapshot .sync-dot, .sync-dot.sync-fallback_snapshot { background: var(--risk-medium); }
 .sync-error { font-family: var(--mono); font-size: 10px; color: var(--risk-high); word-break: break-word; }

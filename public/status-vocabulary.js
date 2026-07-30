@@ -12,6 +12,9 @@ export const SYNC_STATUS = {
   fallback_snapshot:      { zh: "兜底快照",   en: "Bundled copy",     tone: "warn" },
   syncing:                { zh: "同步中",     en: "Syncing",          tone: "warn" },
   failed:                 { zh: "同步失败",   en: "Sync failed",      tone: "crit" },
+  // The snapshot is real and dated; only the attempt to refresh it failed. Told
+  // apart from "failed" because the two call for different actions.
+  refresh_failed:         { zh: "刷新失败",   en: "Refresh failed",   tone: "warn" },
   configuration_required: { zh: "待配置",     en: "Needs config",     tone: "muted" },
   not_synced:             { zh: "未同步",     en: "Not synced",       tone: "muted" }
 };

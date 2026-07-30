@@ -5,13 +5,20 @@ function wait(milliseconds) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
+// A rate limiter and a dead host are different failures. 429 says "come back
+// later", and fetching seven eCFR parts back to back is enough to trip one, so it
+// is retried — with the delay the server asked for — even when the caller wanted a
+// single attempt. Everything else keeps the caller's attempt budget.
+const RETRYABLE_STATUS = new Set([429, 502, 503, 504]);
+const MAX_RETRY_WAIT_MS = 15_000;
+
 export async function fetchPublicFile(url, options = {}) {
   const timeoutMs = options.timeoutMs || DEFAULT_TIMEOUT_MS;
   const maxBytes = options.maxBytes || DEFAULT_MAX_BYTES;
-  const attempts = Math.max(1, options.attempts || 2);
+  let maxAttempts = Math.max(1, options.attempts || 2);
   let lastError;
 
-  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
     try {
@@ -26,7 +33,13 @@ export async function fetchPublicFile(url, options = {}) {
           ...options.headers
         }
       });
-      if (!response.ok) throw new Error(`HTTP ${response.status} ${response.statusText}`);
+      if (!response.ok) {
+        throw Object.assign(new Error(`HTTP ${response.status} ${response.statusText}`), {
+          status: response.status,
+          // Honour the server's own answer to "when?" rather than guessing.
+          retryAfterMs: Math.min(MAX_RETRY_WAIT_MS, (Number(response.headers.get("retry-after")) || 0) * 1000)
+        });
+      }
       const declaredLength = Number(response.headers.get("content-length") || 0);
       if (declaredLength > maxBytes) throw new Error(`Source file exceeds ${maxBytes} bytes.`);
       const bytes = Buffer.from(await response.arrayBuffer());
@@ -40,7 +53,10 @@ export async function fetchPublicFile(url, options = {}) {
       };
     } catch (error) {
       lastError = error;
-      if (attempt < attempts) await wait(350 * attempt);
+      if (error.status === 429 && maxAttempts < 3) maxAttempts = 3;
+      const retryable = !error.status || RETRYABLE_STATUS.has(error.status);
+      if (!retryable || attempt >= maxAttempts) break;
+      await wait(error.retryAfterMs || (error.status === 429 ? 2000 * attempt : 350 * attempt));
     } finally {
       clearTimeout(timeout);
     }

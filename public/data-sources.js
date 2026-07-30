@@ -9,7 +9,7 @@ const copy = {
     feasibilityLabels: { can_build_now: "现在可开发", can_build_with_limitations: "有限制可开发", manual_only: "仅人工", not_recommended: "不建议" },
     automationLabels: { api_available: "API 可用", download_available: "文件下载可用", scraping_available: "网页采集可用", manual_only: "仅人工", blocked: "受阻", not_started: "未开始" },
     webLabels: { good_for_discovery: "适合政策发现", supplement_only: "仅作辅助线索", not_for_screening: "不能替代正式查询" },
-    syncLabels: { not_synced: "尚未同步", syncing: "同步中", success: "同步成功", failed: "同步失败", configuration_required: "等待配置" },
+    syncLabels: { not_synced: "尚未同步", syncing: "同步中", success: "同步成功", failed: "同步失败", refresh_failed: "快照可用，刷新失败", fallback_snapshot: "兜底快照", configuration_required: "等待配置" },
     adapterReady: "Adapter 已实现", queryReady: "支持实时查询", sync: "立即同步", retry: "重新同步", records: "条记录", lastSync: "最后同步", sourceVersion: "来源版本", syncScope: "同步范围", configKey: "需配置", syncFailed: "同步失败，请查看状态详情。", syncNeedsCode: "需要访问口令：请回到首页「访问设置」填写口令后重试。"
   },
   en: {
@@ -22,7 +22,7 @@ const copy = {
     feasibilityLabels: { can_build_now: "Build now", can_build_with_limitations: "Build with limits", manual_only: "Manual only", not_recommended: "Not recommended" },
     automationLabels: { api_available: "API available", download_available: "Download available", scraping_available: "Web collection available", manual_only: "Manual only", blocked: "Blocked", not_started: "Not started" },
     webLabels: { good_for_discovery: "Good for policy discovery", supplement_only: "Supporting leads only", not_for_screening: "Not a screening substitute" },
-    syncLabels: { not_synced: "Not synced", syncing: "Syncing", success: "Synced", failed: "Sync failed", configuration_required: "Configuration required" },
+    syncLabels: { not_synced: "Not synced", syncing: "Syncing", success: "Synced", failed: "Sync failed", refresh_failed: "Snapshot kept, refresh failed", fallback_snapshot: "Bundled copy", configuration_required: "Configuration required" },
     adapterReady: "Adapter implemented", queryReady: "Live query ready", sync: "Sync now", retry: "Sync again", records: "records", lastSync: "Last sync", sourceVersion: "Source version", syncScope: "Sync scope", configKey: "Configure", syncFailed: "Sync failed. Open the status details for the recorded error.", syncNeedsCode: "Access code required: enter it under Access on the home page, then retry."
   }
 };
@@ -54,8 +54,8 @@ function renderCard(source) {
   return `<article class="registry-card">
     <div class="registry-card-head"><div><span class="module-tag module-${esc(source.module)}">${esc(moduleLabel(source.module))}</span><h3>${esc(source.sourceName)}</h3><p>${esc(source.authority)} · ${esc(source.country)}</p></div><span class="coverage-state state-${esc(source.currentCoverage)}">${esc(c.currentLabels[source.currentCoverage])}</span></div>
     <div class="registry-badges"><span>${esc(c.automationLabels[source.automationStatus])}</span><span class="feasibility-${esc(source.feasibility)}">${esc(c.feasibilityLabels[source.feasibility])}</span><span>${esc(c.webLabels[source.webSearchUse])}</span>${adapter.implemented ? `<span class="adapter-badge">${c.adapterReady}</span>` : ""}${adapter.queryable ? `<span class="adapter-badge">${c.queryReady}</span>` : ""}${source.authenticationRequired ? `<span>${c.auth}</span>` : ""}${source.captchaPresent ? `<span class="warning-badge">${c.captcha}</span>` : ""}</div>
-    <div class="sync-panel sync-${esc(sync.status)}"><div><span class="sync-dot"></span><strong>${esc(c.syncLabels[sync.status] || sync.status)}</strong>${sync.recordCount !== undefined ? `<span>${Number(sync.recordCount).toLocaleString()} ${c.records}</span>` : ""}</div>${adapter.syncable ? `<button class="source-sync-button" type="button" data-sync-source="${esc(source.sourceId)}" ${sync.status === "syncing" ? "disabled" : ""}>${sync.status === "success" || sync.status === "failed" ? c.retry : c.sync}</button>` : ""}</div>
-    ${(sync.status === "success" || sync.status === "failed" || sync.status === "configuration_required") ? `<details class="sync-details"><summary>${state.locale === "zh" ? "查看同步状态" : "View sync status"}</summary><div class="registry-details"><dl><div><dt>${c.lastSync}</dt><dd>${esc(completedAt)}</dd></div>${sync.sourceUpdatedAt ? `<div><dt>${c.sourceVersion}</dt><dd>${esc(sync.sourceUpdatedAt)}</dd></div>` : ""}${sync.syncScope ? `<div><dt>${c.syncScope}</dt><dd>${esc(sync.syncScope)}</dd></div>` : ""}${adapter.credential && !adapter.credentialConfigured ? `<div><dt>${c.configKey}</dt><dd>${esc(adapter.credential)}</dd></div>` : ""}</dl>${sync.error ? `<p class="sync-error">${esc(sync.error)}</p>` : ""}</div></details>` : ""}
+    <div class="sync-panel sync-${esc(sync.status)}"><div><span class="sync-dot"></span><strong>${esc(c.syncLabels[sync.status] || sync.status)}</strong>${sync.recordCount !== undefined ? `<span>${Number(sync.recordCount).toLocaleString()} ${c.records}</span>` : ""}</div>${adapter.syncable ? `<button class="source-sync-button" type="button" data-sync-source="${esc(source.sourceId)}" ${sync.status === "syncing" ? "disabled" : ""}>${["success", "failed", "refresh_failed"].includes(sync.status) ? c.retry : c.sync}</button>` : ""}</div>
+    ${["success", "failed", "refresh_failed", "configuration_required"].includes(sync.status) ? `<details class="sync-details"><summary>${state.locale === "zh" ? "查看同步状态" : "View sync status"}</summary><div class="registry-details"><dl><div><dt>${c.lastSync}</dt><dd>${esc(completedAt)}</dd></div>${sync.sourceUpdatedAt ? `<div><dt>${c.sourceVersion}</dt><dd>${esc(sync.sourceUpdatedAt)}</dd></div>` : ""}${sync.syncScope ? `<div><dt>${c.syncScope}</dt><dd>${esc(sync.syncScope)}</dd></div>` : ""}${adapter.credential && !adapter.credentialConfigured ? `<div><dt>${c.configKey}</dt><dd>${esc(adapter.credential)}</dd></div>` : ""}</dl>${sync.error ? `<p class="sync-error">${esc(sync.error)}</p>` : ""}</div></details>` : ""}
     <div class="registry-fields"><div><strong>${c.current}</strong><ul>${current.map((item) => `<li>${esc(item)}</li>`).join("")}</ul></div><div><strong>${c.target}</strong><ul>${source.targetData.slice(0, 6).map((item) => `<li>${esc(item)}</li>`).join("")}</ul></div></div>
     <details><summary>${state.locale === "zh" ? "查看接入说明" : "View integration notes"}</summary><div class="registry-details"><dl><div><dt>${c.access}</dt><dd>${esc(source.accessMethod)} · ${esc(source.fileFormat)}</dd></div><div><dt>${c.frequency}</dt><dd>${esc(source.updateFrequency)}</dd></div><div><dt>${c.webSearch}</dt><dd>${esc(c.webLabels[source.webSearchUse])}</dd></div></dl><p>${esc(source.notes)}</p></div></details>
     <a class="official-source-link" href="${esc(source.websiteUrl)}" target="_blank" rel="noopener noreferrer">${state.locale === "zh" ? "打开官方来源" : "Open official source"}<span aria-hidden="true">↗</span></a>
@@ -75,7 +75,7 @@ function render() {
 async function loadRegistry() {
   try {
     const response = await fetch("/api/data-sources"); if (!response.ok) throw new Error(); state.data = await response.json();
-    const counts = state.data.counts; $("checkedAt").textContent = state.data.checkedAt; $("connectedCount").textContent = state.data.syncCounts?.success || 0; $("readyCount").textContent = counts.can_build_now || 0; $("limitedCount").textContent = counts.can_build_with_limitations || 0; $("manualCount").textContent = counts.manual_only || 0;
+    const counts = state.data.counts; $("checkedAt").textContent = state.data.checkedAt; $("connectedCount").textContent = (state.data.syncCounts?.success || 0) + (state.data.syncCounts?.refresh_failed || 0); $("readyCount").textContent = counts.can_build_now || 0; $("limitedCount").textContent = counts.can_build_with_limitations || 0; $("manualCount").textContent = counts.manual_only || 0;
     render();
   } catch { $("sourceRegistry").innerHTML = `<div class="registry-empty">Unable to load the data source registry.</div>`; }
 }
@@ -102,7 +102,7 @@ $("sourceRegistry").addEventListener("click", async (event) => {
     if (!response.ok) throw new Error(payload.error || t().syncFailed);
     source.sync = payload.sync;
   } catch (error) { source.sync = { ...source.sync, status: "failed", completedAt: new Date().toISOString(), error: error.message || t().syncFailed }; }
-  render(); $("connectedCount").textContent = state.data.sources.filter((item) => item.sync?.status === "success").length;
+  render(); $("connectedCount").textContent = state.data.sources.filter((item) => ["success", "refresh_failed"].includes(item.sync?.status)).length;
 });
 $("coverageZh").addEventListener("click", () => applyLocale("zh")); $("coverageEn").addEventListener("click", () => applyLocale("en"));
 $("coverageTheme").addEventListener("click", () => setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark"));

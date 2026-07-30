@@ -61,7 +61,7 @@ export async function getDataSourceCoverage() {
     const adapter = ADAPTERS[source.sourceId];
     const sync = statuses[source.sourceId] || null;
     const credentialConfigured = !adapter?.credential || Boolean(process.env[adapter.credential]);
-    const hasSnapshot = sync?.status === "success";
+    const hasSnapshot = sync?.status === "success" || sync?.status === "refresh_failed";
     const fallback = fallbacks[source.sourceId] || { available: false };
     const snapshotIsSample = hasSnapshot && String(sync.syncScope || "").startsWith("sample_");
     return {
@@ -100,7 +100,16 @@ async function executeSync(sourceId) {
     archiveIndex = null;
     return await updateSyncStatus(sourceId, { status: "success", startedAt, completedAt: new Date().toISOString(), recordCount: result.records.length, sourceUpdatedAt: result.sourceUpdatedAt, syncScope: result.syncScope, ...saved, error: null });
   } catch (error) {
-    await updateSyncStatus(sourceId, { status: "failed", startedAt, completedAt: new Date().toISOString(), error: safeError(error) });
+    // A refresh that fails on top of a snapshot that succeeded is not the same as
+    // having no data. Reporting it as "failed" hid 203 real Country Chart rows
+    // behind a rate-limit error and read as if the source were unavailable. The
+    // snapshot keeps its own capture time, so nothing here presents stale data as
+    // current — the refresh failure is stated alongside it.
+    const previous = (await readSyncStatus())[sourceId];
+    const keepsSnapshot = previous?.status === "success" || previous?.status === "refresh_failed";
+    await updateSyncStatus(sourceId, keepsSnapshot
+      ? { status: "refresh_failed", refreshStartedAt: startedAt, refreshFailedAt: new Date().toISOString(), error: safeError(error) }
+      : { status: "failed", startedAt, completedAt: new Date().toISOString(), error: safeError(error) });
     throw error;
   }
 }

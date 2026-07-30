@@ -1016,9 +1016,11 @@ async function loadCoverage() {
     if (!response.ok) return;
     const data = await response.json();
     state.coverage = data;
-    const synced = data.sources.filter((source) => source.sync?.status === "success");
+    // A snapshot whose refresh failed is still a snapshot with a capture date, so
+    // it counts as synced here and its failed refresh is counted separately.
+    const synced = data.sources.filter((source) => ["success", "refresh_failed"].includes(source.sync?.status));
     const fallback = data.sources.filter((source) => source.sync?.status === "fallback_snapshot");
-    const failed = data.sources.filter((source) => source.sync?.status === "failed");
+    const failed = data.sources.filter((source) => ["failed", "refresh_failed"].includes(source.sync?.status));
     const usable = [...synced, ...fallback];
     const records = usable.reduce((sum, source) => sum + (source.sync.recordCount || 0), 0);
     const cnUsable = usable.filter((source) => source.country === "CN").length;

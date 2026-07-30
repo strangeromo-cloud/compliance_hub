@@ -209,7 +209,7 @@ function parseEntityListRows(inner, base) {
     if (!name) continue;
     records.push({
       ...base, recordId: `${base.recordId}-${records.length + 1}`, recordType: "listed_entry",
-      entityName: name, aliases, country, addresses: [cells[1]],
+      title: name, entityName: name, aliases, country, addresses: [cells[1]],
       restrictionType: cells[2] || null, reviewPolicy: cells[3] || null, federalRegisterCitation: cells[4] || null,
       sourceList: "BIS Entity List (Supplement No. 4 to Part 744)", content: cells.filter(Boolean).join(" | "),
       // The name split is a heuristic over one free-text cell, so a hit is a
@@ -249,7 +249,9 @@ function parseCountryChart(inner, base) {
     const required = aligned ? columns.filter((_, index) => /x/i.test(marks[index] || "")) : [];
     records.push({
       ...base, recordId: `${base.recordId}-${country.replace(/\s+/g, "-").toLowerCase()}`,
-      recordType: "country_chart_row", country, countryNotes: (cells[0] || "").slice(country.length).trim() || null,
+      // A row is about its destination, so it is titled by it: every row
+      // inheriting the supplement's title made 203 records look identical.
+      recordType: "country_chart_row", title: `${country} — ${base.title}`, country, countryNotes: (cells[0] || "").slice(country.length).trim() || null,
       columnAlignment: aligned ? "verified" : "unverified_cell_count",
       licenceRequiredFor: required,
       content: `${cells[0]}: ${aligned ? (required.join(", ") || "no control reason marked") : `${marks.filter(Boolean).length} marks, column alignment unverified`}`
