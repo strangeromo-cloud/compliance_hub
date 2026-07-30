@@ -7,7 +7,10 @@ export const DATA_SOURCE_REGISTRY = [
     automationStatus: "api_available", feasibility: "can_build_now", currentCoverage: "query_context", priority: 1, authenticationRequired: false, captchaPresent: false,
     updateFrequency: "As published", websiteUrl: "https://www.trade.gov/consolidated-screening-list", apiUrl: "https://developer.trade.gov/consolidated-screening-list.html",
     dataCaptured: ["authority", "title", "official URL", "live page excerpt", "retrieval time"], targetData: ["names", "aliases", "addresses", "source list", "restriction terms"],
-    webSearchUse: "supplement_only", notes: "Use the API/download for screening. Web search can locate Federal Register context but must not decide a match."
+    webSearchUse: "supplement_only", notes: "Use the API/download for screening. Web search can locate Federal Register context but must not decide a match.",
+    // Required by the ITA's terms for anyone using this API. It is not optional
+    // and it is not a footnote: the terms say to display it.
+    attribution: "This product uses the International Trade Administration's Data API but is not endorsed or certified by the International Trade Administration."
   },
   {
     sourceId: "ofac-sls", sourceName: "OFAC Sanctions List Service", module: "trade", country: "US", authority: "U.S. Treasury OFAC",

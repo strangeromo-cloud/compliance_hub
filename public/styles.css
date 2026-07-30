@@ -1329,3 +1329,5 @@ html[lang="en"] .step-needs li::before { content: "NEEDS"; font-size: 8px; }
 .bt-mark { color: var(--risk-low); font: 600 11px/1.6 var(--mono); }
 .bt-cite { margin-left: auto; padding-left: 10px; font: 400 10px/1.6 var(--mono); color: var(--text-3); white-space: nowrap; }
 @media (max-width: 720px) { .bt-cite { display: none; } }
+.composer-note.attribution { margin-top: 3px; opacity: .62; }
+.source-attribution { margin: 6px 0 0; font-size: 10.5px; line-height: 1.6; color: var(--text-3); }
