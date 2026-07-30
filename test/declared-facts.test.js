@@ -46,3 +46,30 @@ test("a declared value moves its step off evidence_needed", () => {
       `${step.title} was answered through ${step.inputs.map((i) => i.field).join(", ")} but is still asking`);
   }
 });
+
+test("the run stops at the first question a user can answer", async () => {
+  const { assessScenario } = await import("../src/orchestrator.js");
+  const question = "我们计划向一家新加坡代理商出口高性能计算服务器，最终用户在中国，由一家咨询公司代为付款";
+
+  const stopped = await assessScenario({ question, locale: "zh", mock: true });
+  assert.ok(stopped.awaitingInput, "a run with an unanswered question should be waiting");
+  assert.equal(stopped.synthesis, null, "no conclusion is drawn over a gap the run stopped at");
+  // The question was already knowable from retrieval, so no specialist was spent
+  // on arriving at it.
+  assert.equal(stopped.results.length, 0, "no specialist runs to reach a question already on the path");
+
+  const asked = stopped.analysisPath.lanes.flatMap((lane) => lane.steps).find((step) => step.id === stopped.awaitingInput.step);
+  assert.equal(asked.status, "evidence_needed");
+  assert.ok(asked.inputs.length, "the step it stopped at is one the user can actually answer");
+});
+
+test("answering every question lets the run reach a conclusion", async () => {
+  const { assessScenario } = await import("../src/orchestrator.js");
+  const question = "我们计划向一家新加坡代理商出口高性能计算服务器，最终用户在中国，由一家咨询公司代为付款";
+  const declaredFacts = Object.fromEntries(DECLARABLE_FIELDS.map((field) => [field, "已提供"]));
+
+  const done = await assessScenario({ question, locale: "zh", mock: true, declaredFacts });
+  assert.equal(done.awaitingInput, null, "nothing left to ask");
+  assert.ok(done.synthesis, "a conclusion is drawn once the run finishes");
+  assert.equal(done.results.length, 3, "every lane ran");
+});

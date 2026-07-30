@@ -1252,20 +1252,6 @@ html[lang="en"] .step-needs li::before { content: "NEEDS"; font-size: 8px; }
 
 /* ---- the path is the body of the answer, not a collapsible aside ---- */
 .analysis-path { border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); padding: 14px 16px; margin-bottom: 14px; }
-/* Origin of the path: one line per check. */
-.path-origin { display: grid; gap: 3px; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px dashed var(--border); }
-.po-row { display: grid; grid-template-columns: minmax(0, 150px) minmax(0, 150px) minmax(0, 1fr) auto; gap: 10px; align-items: baseline; font-size: 11px; }
-.po-std { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.po-lane { color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.po-match code { font: 500 10.5px/1.5 var(--mono); padding: 0 4px; margin-right: 4px; border-radius: 3px; background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--accent-text); }
-.po-match { color: var(--text-3); }
-.po-std { color: var(--text-3); min-width: 0; }
-.po-std a { color: var(--text-2); }
-.po-kind { margin-left: 6px; font: 400 9.5px/1.7 var(--mono); padding: 0 5px; border-radius: 3px; }
-.po-kind.official { background: color-mix(in srgb, var(--risk-low) 15%, transparent); color: var(--risk-low); }
-.po-kind.derived { background: color-mix(in srgb, var(--risk-medium) 15%, transparent); color: var(--risk-medium); }
-.po-steps { font: 400 10.5px/1.6 var(--mono); color: var(--text-3); white-space: nowrap; }
-.po-steps i { display: block; font-style: normal; color: var(--risk-medium); }
 /* The specialist's verdict and findings sit in the lane they belong to. */
 .lane-verdict { margin: 2px 0 8px 18px; font-size: 12px; line-height: 1.7; color: var(--text-2); }
 .lane-findings { list-style: none; margin: 8px 0 0 18px; padding: 0; display: grid; gap: 5px; font-size: 11.5px; color: var(--text-2); }
@@ -1279,7 +1265,6 @@ html[lang="en"] .step-needs li::before { content: "NEEDS"; font-size: 8px; }
 .answer-suggested { margin-top: 10px; }
 .answer-limits li, .answer-suggested li { padding-left: 13px; position: relative; line-height: 1.6; }
 .answer-limits li::before, .answer-suggested li::before { content: ""; position: absolute; left: 0; top: 8px; width: 5px; height: 5px; border-radius: 1px; background: var(--risk-medium); }
-@media (max-width: 720px) { .po-row { grid-template-columns: 1fr; gap: 2px; } }
 .live-detail { color: var(--text-3); }
 .live-detail::before { content: "· "; }
 .live-elapsed { margin-left: auto; font: 400 10.5px/1 var(--mono); color: var(--text-3); }
@@ -1310,3 +1295,23 @@ html[lang="en"] .step-needs li::before { content: "NEEDS"; font-size: 8px; }
 @media (prefers-reduced-motion: reduce) { .sb-dots i { animation: none; opacity: .6; } }
 /* Inside a submitted form the box aligns with the form, not with the steps. */
 .step-inputs .stream-box { margin-left: 0; }
+
+/* ---- the briefing: scopes, the procedure each follows, and its steps ---- */
+.briefing { margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px dashed var(--border); }
+.bf-lead { margin: 0 0 10px; font-size: 12px; color: var(--text-2); }
+.bf-scopes { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; counter-reset: scope; }
+.bf-scope { padding-left: 22px; position: relative; counter-increment: scope; }
+.bf-scope::before { content: counter(scope); position: absolute; left: 0; top: 1px; width: 15px; height: 15px; border-radius: 50%; border: 1px solid var(--border-strong); font: 500 9px/14px var(--mono); text-align: center; color: var(--text-3); }
+.bf-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; font-size: 12.5px; }
+.bf-head b { font-weight: 500; }
+.bf-why { font-size: 10.5px; color: var(--text-3); }
+.bf-why code { font: 500 10.5px/1.5 var(--mono); padding: 0 4px; margin-left: 3px; border-radius: 3px; background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--accent-text); }
+.bf-std { margin-top: 2px; font-size: 11px; color: var(--text-2); }
+.bf-std-label { color: var(--text-3); margin-right: 6px; }
+.bf-std a { color: var(--accent-text); }
+.bf-std i { margin-left: 6px; font-style: normal; font-size: 10.5px; color: var(--text-3); }
+/* The steps as they will be worked through — the same list the flow rail shows. */
+.bf-steps { margin: 5px 0 0; padding-left: 18px; display: grid; gap: 1px; font-size: 11.5px; color: var(--text-2); }
+.bf-steps li { line-height: 1.65; }
+.bf-steps li::marker { color: var(--text-3); font-family: var(--mono); font-size: 10px; }
+.bf-tag { margin-left: 6px; font: 400 9.5px/1.6 var(--mono); padding: 0 5px; border-radius: 3px; background: color-mix(in srgb, var(--risk-medium) 15%, transparent); color: var(--risk-medium); }

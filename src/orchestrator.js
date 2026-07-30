@@ -140,6 +140,17 @@ async function synthesize(question, locale, results, config, history, grounding,
 // Stages report as they land instead of the caller waiting on the whole run.
 // The specialists take the longest, so each one is emitted the moment it
 // resolves rather than after Promise.all settles.
+// A step the user can actually answer. A step that is merely blocked by an
+// earlier one is not a question — nobody can do anything about it yet.
+function openQuestion(path) {
+  for (const lane of path?.lanes || []) {
+    for (const step of lane.steps) {
+      if (step.status === "evidence_needed" && step.inputs?.length) return step;
+    }
+  }
+  return null;
+}
+
 export async function assessScenario({ question, locale = "zh", config = {}, mock = false, history = [], gemId = null, declaredFacts = {}, onEvent = () => {} }) {
   const directAgents = routeQuestion(question, false);
   const contextualQuestion = `${history.filter((item) => item.role === "user").map((item) => item.content).join("\n")}\n${question}`;
@@ -198,9 +209,20 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
   // added together instead of the slowest one.
   const laneOrder = analysisPath.lanes.map((group) => group.lane).filter((lane) => agents.includes(lane));
   const results = [];
-  let synthesis;
+  let synthesis = null;
+  let awaiting = null;
 
   for (const agent of laneOrder) {
+    // Asked before the lane runs, not only after. Most questions come from the
+    // path itself once retrieval has landed — they are not findings a specialist
+    // produced — so running one to arrive at a question that was already known
+    // spends a minute of model time to learn nothing.
+    const asked = openQuestion(analysisPath);
+    if (asked) {
+      awaiting = asked;
+      onEvent({ type: "awaiting_input", step: asked.id, title: asked.title });
+      break;
+    }
     onEvent({ type: "agent_start", agent });
     if (mock) {
       // Rules mode does no token generation, so there is nothing to reveal over
@@ -221,10 +243,26 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
     // the order it is read rather than all at once at the end.
     analysisPath = resolveAnalysisPath(analysisPath, { question: contextualQuestion, grounding: groundingSummary, results, declaredFacts, templated: mock });
     onEvent({ type: "path", path: analysisPath });
+
+    // A lane that ends with a question the user can answer stops the run there.
+    // Carrying on to the next specialist would be analysing around a gap that has
+    // just been identified, and it would present the whole structure at once when
+    // what was asked for is one thing at a time: analyse, ask, wait, continue.
+    const pending = openQuestion(analysisPath);
+    if (pending) {
+      awaiting = pending;
+      onEvent({ type: "awaiting_input", step: pending.id, title: pending.title });
+      break;
+    }
   }
 
-  onEvent({ type: "synthesizing" });
-  if (mock) {
+  if (!awaiting) onEvent({ type: "synthesizing" });
+  if (awaiting) {
+    // No conclusion is drawn while a question is open. An assessment written over
+    // a gap the analysis has just stopped at would be the thing it is trying not
+    // to produce.
+    synthesis = null;
+  } else if (mock) {
     synthesis = createMockSynthesis(results, locale, question, grounding);
     const synthText = readableProjection(JSON.stringify(synthesis));
     if (synthText) onEvent({ type: "synthesis_delta", text: synthText });
@@ -233,7 +271,7 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
       (text) => onEvent({ type: "synthesis_delta", text }));
   }
 
-  analysisPath = resolveAnalysisPath(analysisPath, { question: contextualQuestion, grounding: groundingSummary, results, declaredFacts, templated: mock, final: true });
+  analysisPath = resolveAnalysisPath(analysisPath, { question: contextualQuestion, grounding: groundingSummary, results, declaredFacts, templated: mock, final: !awaiting });
   // Flagged so the client knows the sequence has finished and a step may now ask
   // the user for input; a form offered mid-run would be answered against a path
   // that is still moving.
@@ -243,6 +281,10 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
     id,
     createdAt: new Date().toISOString(),
     analysisPath,
+    // The run stopped to ask rather than finishing. Everything downstream — the
+    // conclusion, the case record, the thread summary — has to be able to tell
+    // "not answered yet" from "answered".
+    awaitingInput: awaiting ? { step: awaiting.id, title: awaiting.title } : null,
     actionPlan: buildActionPlan(analysisPath, results),
     declaredFacts,
     mode: mock ? "grounded-demo" : "live-model",

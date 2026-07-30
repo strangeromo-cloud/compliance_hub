@@ -2,6 +2,11 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { assessScenario } from "../src/orchestrator.js";
 import { classifyModelError } from "../src/llm.js";
+import { DECLARABLE_FIELDS } from "../src/analysis-path.js";
+
+// The run now stops at the first question a user could answer, so a test that
+// wants to reach the synthesis has to leave nothing to ask.
+const NOTHING_LEFT_TO_ASK = Object.fromEntries(DECLARABLE_FIELDS.map((field) => [field, "已提供"]));
 
 test("model connection errors are classified without exposing credentials", () => {
   assert.deepEqual(classifyModelError(Object.assign(new Error("unauthorized"), { status: 401 })), { code: "model_auth_error", providerStatus: 401 });
@@ -40,8 +45,8 @@ test("live-model path routes, grounds, and synthesizes different questions", asy
   };
 
   const config = { baseUrl: "https://fake-model.local/v1", model: "test-model", apiKey: "test-key" };
-  const policy = await assessScenario({ question: "中国两用物项的policy是什么？", locale: "zh", config, mock: false });
-  const product = await assessScenario({ question: "这个工业控制器是否属于中国受限产品？", locale: "zh", config, mock: false });
+  const policy = await assessScenario({ question: "中国两用物项的policy是什么？", locale: "zh", config, mock: false, declaredFacts: NOTHING_LEFT_TO_ASK });
+  const product = await assessScenario({ question: "这个工业控制器是否属于中国受限产品？", locale: "zh", config, mock: false, declaredFacts: NOTHING_LEFT_TO_ASK });
 
   assert.equal(policy.mode, "live-model");
   assert.deepEqual(policy.agents, ["product"]);
@@ -86,7 +91,8 @@ test("live H100 ECCN query removes route analysis from specialist trace", async 
     question: "请告诉我英伟达 H100 的 ECCN 值是多少？",
     locale: "zh",
     config: { baseUrl: "https://fake-model.local/v1", model: "test-model", apiKey: "test-key" },
-    mock: false
+    mock: false,
+    declaredFacts: NOTHING_LEFT_TO_ASK
   });
 
   assert.deepEqual(result.agents, ["product"]);

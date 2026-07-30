@@ -23,7 +23,7 @@ const i18n = {
     hfQuestion: "一个问题", hfAnswer: "统一答案", startersLabel: "快速开始", workspaceEmpty: "工作区还没有 Gem", gemBacking: "数据支撑",
     teachSlashTitle: "在输入框键入 /", teachSlashBody: "呼出 {n} 个 Gem 的完整目录，上下键选择，回车使用。",
     teachPinTitle: "把常用 Gem 加入工作区", teachPinBody: "在目录里点 ★，或在 Gem 详情里点「添加到工作区」，它会常驻左侧栏。",
-    historyLabel: "历史记录", historyEmpty: "暂无记录", turnUnit: "轮", historyOpenFailed: "无法打开该记录", flowTitle: "执行流程", flowEmpty: "提交一个问题后，这里显示分析路径的执行进度", flowNotRun: "该步骤尚未执行",
+    historyLabel: "历史记录", historyEmpty: "暂无记录", turnUnit: "轮", historyOpenFailed: "无法打开该记录", flowTitle: "执行流程", briefLead: "本次问题落在以下 {n} 个审查范围，按顺序逐步执行：", briefBecause: "命中 ", briefStandard: "标准程序", briefNoStandard: "无对应标准程序", briefDesigned: "系统设计", flowEmpty: "提交一个问题后，这里显示分析路径的执行进度", flowNotRun: "该步骤尚未执行",
     derivMatch_gem: "由所选 Gem 指定为主检查", derivMatch_always: "每次分析都执行", derivMatch_question_terms: "问题中的关键词",
     derivMatch_no_term_matched_all_lanes_run: "问题未命中任何关键词，三条检查全部执行",
     derivKind_official: "官方程序", derivKind_derived: "系统规划",
@@ -81,7 +81,7 @@ const i18n = {
     hfQuestion: "One question", hfAnswer: "One answer", startersLabel: "Start here", workspaceEmpty: "No gems in your workspace yet", gemBacking: "Data behind it",
     teachSlashTitle: "Press / in the composer", teachSlashBody: "Opens the full catalogue of {n} gems. Arrow keys select, Enter uses.",
     teachPinTitle: "Pin the ones you use", teachPinBody: "Add to workspace from a gem's details and it stays in the sidebar.",
-    historyLabel: "History", historyEmpty: "No cases yet", turnUnit: "turns", historyOpenFailed: "That case could not be opened", flowTitle: "Execution flow", flowEmpty: "Ask a question and the analysis path\u2019s progress appears here", flowNotRun: "That step has not run yet",
+    historyLabel: "History", historyEmpty: "No cases yet", turnUnit: "turns", historyOpenFailed: "That case could not be opened", flowTitle: "Execution flow", briefLead: "This question falls into {n} review scopes, worked through in order:", briefBecause: "matched ", briefStandard: "Standard procedure", briefNoStandard: "No standard procedure", briefDesigned: "designed here", flowEmpty: "Ask a question and the analysis path\u2019s progress appears here", flowNotRun: "That step has not run yet",
     derivMatch_gem: "set as the lead check by the selected gem", derivMatch_always: "runs on every analysis", derivMatch_question_terms: "terms in the question",
     derivMatch_no_term_matched_all_lanes_run: "no term matched, so all three checks run",
     derivKind_official: "official", derivKind_derived: "system-planned",
@@ -879,37 +879,55 @@ function firstBlockedStep(path) {
 // published procedure supplies its steps, and how many of those steps had no
 // provision and were planned here. It was three labelled rows per check, twelve
 // rows of preamble before any analysis, saying the same thing at greater length.
+// The briefing, before any step runs.
+//
+// A compliance review is not a verdict that arrives; it is a procedure someone
+// agreed to follow. So the answer opens by saying which scopes the question falls
+// into and why, which published procedure governs each, and the steps that
+// procedure lays down — in the order they will be worked through. Where no
+// procedure exists the step says it was designed here rather than borrowing the
+// authority of one that was not.
+//
+// It lists the whole plan while the body below shows only what has run, which is
+// what makes progress legible: the plan is stated once, the work arrives against
+// it, and the flow rail is the same list again.
 function derivationMarkup(path) {
   const rows = path?.derivation || [];
   if (!rows.length) return "";
+  const byLane = new Map((path.lanes || []).map((lane) => [lane.lane, lane]));
   return `
-    <div class="path-origin">
-      ${rows.map((row) => `
-        <div class="po-row">
-          <span class="po-lane">${esc(row.label)}</span>
-          <span class="po-match">${row.matchedTerms.length
-            ? row.matchedTerms.map((term) => `<code>${esc(term)}</code>`).join("")
-            : esc(t(`derivMatch_${row.matchedBy}`))}</span>
-          <span class="po-std">${row.methodology
-            ? (row.methodology.url
+    <section class="briefing">
+      <p class="bf-lead">${esc(t("briefLead").replace("{n}", rows.length))}</p>
+      <ol class="bf-scopes">
+        ${rows.map((row) => {
+          const lane = byLane.get(row.lane);
+          const kind = row.methodology?.kind || "derived";
+          return `
+          <li class="bf-scope">
+            <div class="bf-head">
+              <b>${esc(row.label)}</b>
+              <span class="bf-why">${row.matchedTerms.length
+                ? `${esc(t("briefBecause"))}${row.matchedTerms.map((term) => `<code>${esc(term)}</code>`).join("")}`
+                : esc(t(`derivMatch_${row.matchedBy}`))}</span>
+            </div>
+            <div class="bf-std">
+              <span class="bf-std-label">${esc(t(kind === "official" ? "briefStandard" : "briefNoStandard"))}</span>
+              ${row.methodology ? (row.methodology.url
                 ? `<a href="${esc(row.methodology.url)}" target="_blank" rel="noopener noreferrer">${esc(row.methodology.label)}</a>`
-                : esc(row.methodology.label))
-            : ""}<span class="po-kind ${esc(row.methodology?.kind || "derived")}">${esc(t(`derivKind_${row.methodology?.kind || "derived"}`))}</span></span>
-          <span class="po-steps">${row.officialStepCount ? esc(t("derivFromStandard").replace("{n}", `${row.officialStepCount}/${row.stepCount}`)) : ""}${
-            row.plannedStepCount ? `<i>${esc(t("derivFromSystem").replace("{n}", row.plannedStepCount))}</i>` : ""}</span>
-        </div>`).join("")}
-    </div>`;
+                : esc(row.methodology.label)) : ""}
+              ${row.methodology?.authority ? `<i>${esc(row.methodology.authority)}</i>` : ""}
+            </div>
+            <ol class="bf-steps">
+              ${(lane?.steps || []).map((step) => `
+                <li${step.methodology === "derived" ? ' class="designed"' : ""}>${esc(step.title)}${
+                  step.methodology === "derived" ? `<span class="bf-tag">${esc(t("briefDesigned"))}</span>` : ""}</li>`).join("")}
+            </ol>
+          </li>`;
+        }).join("")}
+      </ol>
+    </section>`;
 }
 
-// The path is the answer. Not a collapsible aside, not a summary printed beside
-// one — the body of the message is the sequence of checks and what each concluded.
-//
-// It reveals strictly forward. A step is shown once it has settled, and the one
-// step currently asking for input is shown; everything after that is not drawn at
-// all, including whole lanes that have not started. Drawing the full plan up front
-// is what made a run unreadable — seventeen steps, nine of them blocked, with no
-// way to tell which one to act on. The full plan lives in the flow rail, which is
-// where "how much is left" belongs.
 // Streamed reasoning always looks the same wherever it appears: a label saying
 // whose it is, the text, and a placeholder that runs until the first token lands.
 // Without the placeholder the gap between "started" and "first token" — several
@@ -1063,6 +1081,10 @@ function stepDetailMarkup(item, grounding) {
 // as interim and folded away, and what leads is the request for what is missing.
 function conclusionMarkup(data) {
   const synthesis = data.synthesis;
+  // The run stopped at a question, so there is no conclusion and nothing to put
+  // at the foot of the answer. The last thing on screen is the question itself,
+  // which is where the reader should be looking.
+  if (!synthesis) return `<section class="conclusion"></section>`;
   const steps = (data.analysisPath?.lanes || []).flatMap((lane) => lane.steps);
   const outstanding = steps.filter((item) => item.status === "evidence_needed");
   const suggested = data.actionPlan?.suggested || [];
@@ -1601,7 +1623,9 @@ async function analyze(event, options = {}) {
     if (streamError) throw new Error(i18n[state.locale][streamError.code] || streamError.error);
     if (!finished) throw new Error(t("badResponse"));
 
-    state.conversation.push({ role: "assistant", content: `${finished.synthesis.headline}\n${finished.synthesis.executiveSummary}` });
+    if (finished.synthesis) {
+      state.conversation.push({ role: "assistant", content: `${finished.synthesis.headline}\n${finished.synthesis.executiveSummary}` });
+    }
     live.id = `answer-${finished.id}`;
     // Patching replaces whole sections, which changes their height. The offset of
     // the message is measured across the swap and the scroll corrected by the
