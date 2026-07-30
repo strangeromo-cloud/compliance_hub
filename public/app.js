@@ -23,7 +23,7 @@ const i18n = {
     hfQuestion: "一个问题", hfAnswer: "统一答案", startersLabel: "快速开始", workspaceEmpty: "工作区还没有 Gem", gemBacking: "数据支撑",
     teachSlashTitle: "在输入框键入 /", teachSlashBody: "呼出 {n} 个 Gem 的完整目录，上下键选择，回车使用。",
     teachPinTitle: "把常用 Gem 加入工作区", teachPinBody: "在目录里点 ★，或在 Gem 详情里点「添加到工作区」，它会常驻左侧栏。",
-    historyLabel: "历史记录", historyEmpty: "暂无记录", turnUnit: "轮", historyOpenFailed: "无法打开该记录", pathTitle: "分析路径", pathPlanning: "分析路径（进行中）", laneRunning: "正在分析", laneQueued: "排队中", stAsking: "等待你补充", stAfterInput: "待补充信息后继续", pathBasis: "路径依据", pathTemplated: "规则模式：待补项来自内置模板，不是对本问题的分析结果。切换到实时模型可得到针对性判断。", pathDerivedNote: "本步骤无对应官方条文，由系统按问题结构补充", stConfirmed: "已确认", stEvidence: "需更多证据", stNotReached: "未进行", status_confirmed: "已确认", status_evidence_needed: "需更多证据", status_not_reached: "待前序步骤", status_review_required: "需人工复核", status_pending: "待执行", stPending: "待执行", status_declared: "已声明，待核验", stDeclared: "已声明", declareSubmit: "提交并继续", declareSkip: "暂无此信息", declareSkipped: "已跳过 — 该步骤仍需证据，已保留在下方行动清单中", declareReopen: "重新填写", declarePlaceholder: "填写后提交", declareNote: "填写的内容记为声明信息，不等于已核验证据", declareEmpty: "请先填写至少一项", declarePrefix: "补充信息 — ", declaredAdded: "已补充", reasoningTrace: "比对明细", rsSearched: "已检索的名单来源", rsMatched: "名称命中", rsCompared: "身份要素比对", rsFacts: "已核验事实",
+    historyLabel: "历史记录", historyEmpty: "暂无记录", turnUnit: "轮", historyOpenFailed: "无法打开该记录", pathTitle: "分析路径", pathPlanning: "分析路径（进行中）", laneRunning: "正在分析", laneQueued: "排队中", stAsking: "等待你补充", stAfterInput: "待补充信息后继续", pathBasis: "路径依据", pathTemplated: "规则模式：待补项来自内置模板，不是对本问题的分析结果。切换到实时模型可得到针对性判断。", pathDerivedNote: "本步骤无对应官方条文，由系统按问题结构补充", stConfirmed: "已确认", stEvidence: "需更多证据", stNotReached: "未进行", status_confirmed: "已确认", status_evidence_needed: "需更多证据", status_not_reached: "待前序步骤", status_review_required: "需人工复核", status_pending: "待执行", stPending: "待执行", status_declared: "已声明，待核验", stDeclared: "已声明", declareSubmit: "提交并继续", declareSkip: "暂无此信息", declareSkipped: "已跳过 — 该步骤仍需证据，已保留在下方行动清单中", declareReopen: "重新填写", declarePlaceholder: "填写后提交", declareNote: "填写的内容记为声明信息，不等于已核验证据", declareEmpty: "请先填写至少一项", declarePrefix: "补充信息 — ", declaredAdded: "已提交", declareContinuing: "正在继续分析…", reasoningTrace: "比对明细", rsSearched: "已检索的名单来源", rsMatched: "名称命中", rsCompared: "身份要素比对", rsFacts: "已核验事实",
     rsScore: "相似度", rsOpen: "查看原文", rsUnsynced: "未同步、本次未检索",
     el_country: "国别", el_registration_number: "注册号", el_address: "地址",
     st_agree: "一致", st_conflict: "冲突", st_unavailable: "缺失",
@@ -77,7 +77,7 @@ const i18n = {
     hfQuestion: "One question", hfAnswer: "One answer", startersLabel: "Start here", workspaceEmpty: "No gems in your workspace yet", gemBacking: "Data behind it",
     teachSlashTitle: "Press / in the composer", teachSlashBody: "Opens the full catalogue of {n} gems. Arrow keys select, Enter uses.",
     teachPinTitle: "Pin the ones you use", teachPinBody: "Add to workspace from a gem's details and it stays in the sidebar.",
-    historyLabel: "History", historyEmpty: "No cases yet", turnUnit: "turns", historyOpenFailed: "That case could not be opened", pathTitle: "Analysis path", pathPlanning: "Analysis path (running)", laneRunning: "analysing", laneQueued: "queued", stAsking: "waiting for you", stAfterInput: "continues once supplied", pathBasis: "Path follows", pathTemplated: "Rules mode: the outstanding items come from built-in templates, not from analysing this question. Switch to the live model for a specific assessment.", pathDerivedNote: "No official provision for this step; added by the system", stConfirmed: "settled", stEvidence: "need evidence", stNotReached: "not reached", status_confirmed: "Settled", status_evidence_needed: "Evidence needed", status_not_reached: "Awaiting earlier step", status_review_required: "Human review", status_pending: "Planned", stPending: "planned", status_declared: "Declared, unverified", stDeclared: "declared", declareSubmit: "Submit and continue", declareSkip: "Not available", declareSkipped: "Skipped — this step still needs evidence and stays in the action list below", declareReopen: "Fill in", declarePlaceholder: "Fill in, then submit", declareNote: "What you enter is recorded as a declaration, not as verified evidence", declareEmpty: "Fill in at least one field first", declarePrefix: "Additional information — ", declaredAdded: "Supplied", reasoningTrace: "Comparison detail", rsSearched: "Lists searched", rsMatched: "Name matches", rsCompared: "Identity comparison", rsFacts: "Verified facts",
+    historyLabel: "History", historyEmpty: "No cases yet", turnUnit: "turns", historyOpenFailed: "That case could not be opened", pathTitle: "Analysis path", pathPlanning: "Analysis path (running)", laneRunning: "analysing", laneQueued: "queued", stAsking: "waiting for you", stAfterInput: "continues once supplied", pathBasis: "Path follows", pathTemplated: "Rules mode: the outstanding items come from built-in templates, not from analysing this question. Switch to the live model for a specific assessment.", pathDerivedNote: "No official provision for this step; added by the system", stConfirmed: "settled", stEvidence: "need evidence", stNotReached: "not reached", status_confirmed: "Settled", status_evidence_needed: "Evidence needed", status_not_reached: "Awaiting earlier step", status_review_required: "Human review", status_pending: "Planned", stPending: "planned", status_declared: "Declared, unverified", stDeclared: "declared", declareSubmit: "Submit and continue", declareSkip: "Not available", declareSkipped: "Skipped — this step still needs evidence and stays in the action list below", declareReopen: "Fill in", declarePlaceholder: "Fill in, then submit", declareNote: "What you enter is recorded as a declaration, not as verified evidence", declareEmpty: "Fill in at least one field first", declarePrefix: "Additional information — ", declaredAdded: "Submitted", declareContinuing: "continuing the analysis…", reasoningTrace: "Comparison detail", rsSearched: "Lists searched", rsMatched: "Name matches", rsCompared: "Identity comparison", rsFacts: "Verified facts",
     rsScore: "Similarity", rsOpen: "Open source", rsUnsynced: "Not synced, therefore not searched",
     el_country: "Country", el_registration_number: "Registration no.", el_address: "Address",
     st_agree: "agree", st_conflict: "conflict", st_unavailable: "missing",
@@ -160,7 +160,6 @@ const state = {
   threadId: null,
   declaredFacts: {},
   sourceQuery: null,
-  pendingDeclaration: false,
   factsOpen: false,
   rail: localStorage.getItem("compliance-rail") === "1",
   evidenceCollapsed: localStorage.getItem("compliance-evidence-collapsed") === "1",
@@ -1001,7 +1000,11 @@ function createLiveMessage() {
 }
 
 function renderSteps(node, done, current) {
-  node.querySelector("[data-live-steps]").innerHTML = STEP_ORDER.map((step) => {
+  // A resumed run writes into an answer that has already been rendered, so the
+  // live scaffold is gone. Progress then shows on the path itself.
+  const host = node.querySelector("[data-live-steps]");
+  if (!host) return;
+  host.innerHTML = STEP_ORDER.map((step) => {
     const state = done.has(step) ? "done" : step === current ? "active" : "idle";
     return `<li class="${state}"><span class="tick" aria-hidden="true"></span>${esc(t(`step_${step}`))}</li>`;
   }).join("");
@@ -1166,15 +1169,40 @@ async function runSourceQuery(event, options = {}) {
   }
 }
 
-async function analyze(event) {
-  event.preventDefault();
+// `continueIn` is an answer already on screen. Supplying a fact does not start a
+// new analysis of a new question — it is the same analysis carrying on with more
+// to work from, so it updates that answer in place. Rendering a second complete
+// structure below the first was the reason it read as starting over.
+// Section-by-section, so the message keeps its identity and the reader keeps
+// their place. Rebuilding the whole node is what made a continuation look like a
+// brand new answer appearing.
+function patchAnswer(node, data) {
+  const replace = (selector, markup) => {
+    const target = node.querySelector(selector);
+    if (!target) return;
+    if (markup) target.outerHTML = markup;
+    else target.remove();
+  };
+  const head = node.querySelector(".answer-head h3");
+  if (head) head.textContent = data.synthesis.headline;
+  const summary = node.querySelector(".answer-head .prose");
+  if (summary) summary.innerHTML = formatBlock(data.synthesis.executiveSummary);
+  const mark = node.querySelector(".answer-head .risk-mark");
+  if (mark) { mark.className = `risk-mark risk-${data.synthesis.overallRisk}`; mark.textContent = riskLabel(data.synthesis.overallRisk); }
+  replace(".analysis-path", pathMarkup(data.analysisPath, data.grounding, { allowInput: true }));
+  replace(".plan-block", actionPlanMarkup(data.actionPlan, askingStepTitle(data.analysisPath)));
+}
+
+async function analyze(event, options = {}) {
+  if (event) event.preventDefault();
   if (state.busy) return;
+  const resuming = options.continueIn || null;
   // A source query is a lookup, not an analysis, so it never reaches the agents.
-  if (state.sourceQuery) return runSourceQuery(event);   // an empty box browses the source
+  if (!resuming && state.sourceQuery) return runSourceQuery(event);   // an empty box browses the source
   closePalette();
-  const raw = $("questionInput").value.trim();
-  if (raw.length < 5) return toast(t("invalidQuestion"));
-  const gem = state.activeGem;
+  const raw = resuming ? resuming.dataset.question : $("questionInput").value.trim();
+  if (!raw || raw.length < 5) return toast(t("invalidQuestion"));
+  const gem = resuming ? GEMS.find((item) => item.id === resuming.dataset.gem) || null : state.activeGem;
   const config = getConfig();
   const mock = state.rulesMode;
   if (!mock && !config.apiKey && !state.serverModelConfigured) { toast(t("needKey")); return openSettings(); }
@@ -1190,33 +1218,49 @@ async function analyze(event) {
     : raw;
 
   const priorHistory = state.conversation.slice(-6);
-  const declaring = state.pendingDeclaration;
-  state.pendingDeclaration = false;
-  // The answer node a declaration updates, captured before the new run starts.
-  const supersedes = declaring ? $("threadInner").querySelector(".msg-assistant:last-of-type") : null;
-
-  state.conversation.push({ role: "user", content: question });
-  $("startPanel").classList.add("hidden");
-  $("threadInner").insertAdjacentHTML("beforeend", declaring
-    ? `<article class="msg msg-declared"><div class="declared-chip"><span class="dc-label">${esc(t("declaredAdded"))}</span>${esc(raw.replace(t("declarePrefix"), ""))}</div></article>`
-    : `<article class="msg msg-user"><div class="bubble">${gem ? `<span class="gem-tag">${esc(gem.command)}</span><br>` : ""}${esc(raw)}</div></article>`);
-  $("questionInput").value = "";
-  updateRouteHint();
-  renderActiveGem();
+  if (!resuming) {
+    state.conversation.push({ role: "user", content: question });
+    $("startPanel").classList.add("hidden");
+    $("threadInner").insertAdjacentHTML("beforeend",
+      `<article class="msg msg-user"><div class="bubble">${gem ? `<span class="gem-tag">${esc(gem.command)}</span><br>` : ""}${esc(raw)}</div></article>`);
+    $("questionInput").value = "";
+    updateRouteHint();
+    renderActiveGem();
+  }
 
   state.busy = true;
   $("submitBtn").disabled = true;
 
-  const live = createLiveMessage();
+  const live = resuming || createLiveMessage();
+  if (!resuming) { live.dataset.question = question; live.dataset.gem = gem?.id || ""; }
+  live.classList.toggle("resuming", Boolean(resuming));
   const done = new Set();
   const collected = { agents: [], sources: [] };
   // Lane progress is kept outside the DOM so a redraw can restore the streamed
   // text: the path is re-rendered whenever a lane starts or finishes.
   const progress = { activeLane: null, doneLanes: new Set(), text: {}, summary: {} };
 
+  // Lane state and streamed reasoning are written into the path that is already
+  // rendered, rather than replacing it. Nothing the reader is looking at moves.
+  function markLanes() {
+    const path = live.querySelector(".analysis-path");
+    if (!path) return;
+    for (const laneNode of path.querySelectorAll(".path-lane")) {
+      const lane = laneNode.dataset.lane;
+      laneNode.classList.toggle("running", lane === progress.activeLane);
+      laneNode.classList.toggle("done", progress.doneLanes.has(lane));
+      const stream = laneNode.querySelector("[data-lane-stream]");
+      if (stream && progress.text[lane] !== undefined) stream.textContent = progress.text[lane];
+    }
+  }
+
   function drawPath() {
     if (!collected.path) return;
+    // While resuming, the path on screen is the finished one from the previous
+    // turn. It is left alone and only its lane states and streaming text are
+    // updated, so the reader keeps the steps they were already looking at.
     const host = live.querySelector("[data-live-path]");
+    if (!host) return markLanes();
     const openLanes = [...host.querySelectorAll(".path-lane")].filter((lane) => lane.dataset.open === "1").map((lane) => lane.dataset.lane);
     host.innerHTML = pathMarkup(collected.path, collected.grounding, {
       allowInput: false, activeLane: progress.activeLane, doneLanes: progress.doneLanes
@@ -1233,7 +1277,8 @@ async function analyze(event) {
   const onEvent = (event) => {
     if (event.type === "routed") {
       done.add("routed");
-      live.querySelector("[data-live-meta]").innerHTML =
+      const meta = live.querySelector("[data-live-meta]");
+      if (meta) meta.innerHTML =
         `<span class="tag">${esc(event.id)}</span><span class="sep">·</span>`
         + `<span>${event.mode === "live-model" ? t("liveLabel") : t("mockLabel")}</span><span class="sep">·</span>`
         + `<span>${t("routedTo")} ${event.agents.map(agentName).join(", ")}</span>`;
@@ -1251,7 +1296,7 @@ async function analyze(event) {
       collected.grounding = event.grounding;
       const g = event.grounding;
       const screened = g.screening?.screenedSources?.length || 0;
-      live.querySelector("[data-live-steps]").insertAdjacentHTML("afterend",
+      live.querySelector("[data-live-steps]")?.insertAdjacentHTML("afterend",
         `<p class="live-note">${esc(t("groundingNote")
           .replace("{screened}", screened)
           .replace("{matches}", g.listMatchCount)
@@ -1273,7 +1318,7 @@ async function analyze(event) {
     // A provider that ignores stream: true degrades to one update at the end,
     // which is indistinguishable from a broken feature unless it is said.
     if (event.type === "stream_mode" && event.streaming === false && !live.querySelector("[data-stream-notice]")) {
-      live.querySelector("[data-live-steps]").insertAdjacentHTML("afterend",
+      live.querySelector("[data-live-steps]")?.insertAdjacentHTML("afterend",
         `<p class="live-note stream-notice" data-stream-notice>${esc(t("noStreamNotice"))}</p>`);
     }
     if (event.type === "agent_delta") {
@@ -1361,19 +1406,29 @@ async function analyze(event) {
 
     state.conversation.push({ role: "assistant", content: `${finished.synthesis.headline}\n${finished.synthesis.executiveSummary}` });
     live.id = `answer-${finished.id}`;
-    live.innerHTML = answerMarkup(finished);
-    // Only one analysis of a question stays on screen; a declaration refreshes it.
-    if (supersedes && supersedes !== live) supersedes.remove();
+    if (resuming) patchAnswer(live, finished);
+    else live.innerHTML = answerMarkup(finished);
+    live.classList.remove("resuming");
     renderEvidence(finished.sources || []);
-    live.scrollIntoView({ behavior: "smooth", block: "start" });
+    // Resuming scrolls to the step now being asked, not to the top of an answer
+    // the reader has already read: the eye should land where the work continues.
+    (resuming ? live.querySelector(".path-step.asking") || live : live)
+      .scrollIntoView({ behavior: "smooth", block: resuming ? "center" : "start" });
     loadCases();
   } catch (error) {
-    live.innerHTML = `
-      <span class="avatar" aria-hidden="true">CH</span>
-      <div><section class="answer"><div class="answer-head">
-        <span class="risk-mark risk-unknown">!</span>
-        <div><h3>${t("error")}</h3><p>${esc(error.message)}</p></div>
-      </div></section></div>`;
+    // A failure part-way through a continuation must not discard the answer the
+    // reader already has; the submitted values are re-offered instead.
+    if (resuming) {
+      live.classList.remove("resuming");
+      live.querySelectorAll(".step-inputs.submitted").forEach((host) => host.classList.remove("submitted"));
+    } else {
+      live.innerHTML = `
+        <span class="avatar" aria-hidden="true">CH</span>
+        <div><section class="answer"><div class="answer-head">
+          <span class="risk-mark risk-unknown">!</span>
+          <div><h3>${t("error")}</h3><p>${esc(error.message)}</p></div>
+        </div></section></div>`;
+    }
     toast(`${t("error")}: ${error.message}`);
   } finally {
     state.busy = false;
@@ -1674,12 +1729,27 @@ $("threadInner").addEventListener("click", (event) => {
   host.querySelectorAll(".si-choice.on").forEach((button) => { facts[button.dataset.field] = button.dataset.value; });
   if (!Object.keys(facts).length) return toast(t("declareEmpty"));
   state.declaredFacts = { ...state.declaredFacts, ...facts };
-  // Marks this submission as a declaration so the answer is replaced rather
-  // than appended, and the supplied values show as a chip instead of a question.
-  state.pendingDeclaration = true;
+
+  // The form becomes a record of what was submitted before the request returns.
+  // Leaving the inputs editable while the analysis re-runs invites a second
+  // submission of the same fact and gives no sign the first one registered.
   const labels = [...host.querySelectorAll(".si-row")]
     .filter((row) => row.querySelector(".si-text")?.value.trim() || row.querySelector(".si-choice.on"))
     .map((row) => `${row.querySelector(".si-label").textContent}：${row.querySelector(".si-text")?.value.trim() || row.querySelector(".si-choice.on").dataset.value}`);
+  host.classList.add("submitted");
+  host.querySelectorAll("input, button").forEach((control) => { control.disabled = true; });
+  host.insertAdjacentHTML("beforeend", `
+    <div class="si-done">
+      <span class="sis-label">${esc(t("declaredAdded"))}</span>
+      <span class="sis-values">${labels.map(esc).join("；")}</span>
+      <span class="thinking-dot" aria-hidden="true"></span>
+      <span class="sis-state">${esc(t("declareContinuing"))}</span>
+    </div>`);
+
+  // The same analysis carries on with one more fact, inside the answer already on
+  // screen — not a new question producing a second answer below it.
+  const answer = host.closest(".msg-assistant");
+  if (answer?.dataset.question) return analyze(null, { continueIn: answer });
   $("questionInput").value = `${t("declarePrefix")}${labels.join("；")}`;
   $("questionForm").requestSubmit();
 });

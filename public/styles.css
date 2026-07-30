@@ -1115,9 +1115,6 @@ html[lang="en"] .step-needs li::before { content: "NEEDS"; font-size: 8px; }
 
 /* A declaration is evidence added to the answer above, not a new question, so it
    reads as an inline note rather than another turn in the conversation. */
-.msg-declared { display: flex; justify-content: center; margin-bottom: 14px; }
-.declared-chip { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; max-width: 90%; font-size: 11.5px; color: var(--text-2); border: 1px dashed color-mix(in srgb, var(--risk-medium) 45%, var(--border)); border-radius: 20px; padding: 4px 12px; background: rgba(217,154,61,.07); }
-.dc-label { font: 600 9.5px/1.7 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--risk-medium); }
 
 /* Relevance is shown per record: a bar for the score and the terms it did and
    did not answer, so a ranked list can be read rather than trusted. */
@@ -1148,3 +1145,13 @@ html[lang="en"] .step-needs li::before { content: "NEEDS"; font-size: 8px; }
 .plan-items li.now .item-body { color: var(--text); }
 .plan-items li.now .marker { background: var(--accent); border-color: var(--accent); color: #fff; }
 .now-chip { display: inline-block; margin-left: 7px; padding: 0 6px; border-radius: 999px; font: 500 10px/1.7 var(--mono); background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent-text); }
+
+/* A submitted form stays visible as the record of what was supplied, greyed and
+   locked, with the values spelled out. */
+.step-inputs.submitted { border-style: solid; background: color-mix(in srgb, var(--accent) 5%, transparent); }
+.step-inputs.submitted .si-row, .step-inputs.submitted .si-actions { opacity: 0.45; pointer-events: none; }
+.si-done { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 11.5px; color: var(--text-2); }
+.sis-label { font: 500 10px/1.7 var(--mono); padding: 0 6px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent-text); }
+.sis-state { font-size: 10.5px; color: var(--text-3); }
+/* While a continuation is in flight the answer stays put and says it is working. */
+.msg-assistant.resuming .analysis-path > summary::after { content: "···"; margin-left: 8px; color: var(--accent-text); letter-spacing: 2px; }
