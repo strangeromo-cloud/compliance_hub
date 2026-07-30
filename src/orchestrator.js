@@ -4,6 +4,7 @@ import { retrievePublicSources } from "./retrieval.js";
 import { callJsonModel, callJsonModelStream, readableProjection } from "./llm.js";
 import { createMockAgentResult, createMockSynthesis } from "./mock.js";
 import { collectGrounding, groundingContext } from "./grounding.js";
+import { buildAnalysisPath } from "./analysis-path.js";
 
 const RISK_LEVELS = new Set(["low", "medium", "high", "unknown"]);
 
@@ -206,9 +207,14 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
       (text) => onEvent({ type: "synthesis_delta", text }));
   }
 
+  // Built after the specialists run, because their own statements of what they
+  // lack are what populate the blocked steps.
+  const analysisPath = buildAnalysisPath({ question, agents, grounding: groundingSummary, results });
+
   return {
     id,
     createdAt: new Date().toISOString(),
+    analysisPath,
     mode: mock ? "grounded-demo" : "live-model",
     intent: grounding.intent,
     grounding: groundingSummary,

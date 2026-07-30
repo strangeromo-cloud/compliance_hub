@@ -903,3 +903,51 @@ details.trace.reasoning > summary { color: var(--text); font-weight: 600; }
   .hf-fan { display: none; }
   .hf-agents { grid-template-columns: 1fr; }
 }
+
+/* ------------------------------------------------------- the analysis path */
+
+details.analysis-path > summary { color: var(--text); font-weight: 600; flex-wrap: wrap; }
+.path-summary { display: flex; gap: 8px; margin-left: auto; flex-wrap: wrap; }
+.ps { font: 600 10px/1.7 var(--mono); border-radius: 3px; padding: 0 6px; white-space: nowrap; }
+.ps.ok { color: var(--accent-text); background: var(--accent-soft); }
+.ps.warn { color: var(--risk-medium); background: rgba(217,154,61,.13); }
+.ps.muted { color: var(--text-3); background: var(--surface-3); }
+
+.path-lane { padding: 10px 0; border-bottom: 1px solid var(--border); }
+.path-lane:last-child { border-bottom: 0; padding-bottom: 2px; }
+.path-lane-label { font: 600 10px/1.6 var(--mono); letter-spacing: .08em; color: var(--text-3); margin-bottom: 8px; }
+.path-steps { list-style: none; padding: 0; margin: 0; display: grid; gap: 9px; }
+
+.path-step { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 10px; align-items: start; position: relative; }
+.step-mark {
+  width: 18px; height: 18px; margin-top: 1px; display: grid; place-items: center;
+  border-radius: 5px; font: 700 10px/1 var(--mono); border: 1px solid currentColor;
+}
+.path-step.tone-ok .step-mark { color: var(--accent-text); background: var(--accent-soft); }
+.path-step.tone-warn .step-mark { color: var(--risk-medium); background: rgba(217,154,61,.11); }
+.path-step.tone-muted .step-mark { color: var(--text-3); background: var(--surface-3); }
+.path-step.tone-crit .step-mark { color: var(--risk-high); background: rgba(217,83,79,.11); }
+/* A spine, so the steps read as a sequence with an order that matters. */
+.path-step:not(:last-child)::after { content: ""; position: absolute; left: 9px; top: 22px; bottom: -9px; width: 1px; background: var(--border); }
+
+.step-body { min-width: 0; }
+.step-head { display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap; }
+.step-head strong { font-size: 12.5px; font-weight: 600; }
+.step-status { font: 600 9.5px/1.7 var(--mono); letter-spacing: .04em; }
+.tone-ok .step-status { color: var(--accent-text); }
+.tone-warn .step-status { color: var(--risk-medium); }
+.tone-muted .step-status { color: var(--text-3); }
+.tone-crit .step-status { color: var(--risk-high); }
+
+.step-basis, .step-needs { list-style: none; padding: 0; margin: 5px 0 0; display: grid; gap: 3px; }
+.step-basis li, .step-needs li { font-size: 11.5px; line-height: 1.6; padding-left: 15px; position: relative; word-break: break-word; }
+/* Basis is what the step stands on; needs is what would settle it. Different
+   marks, because confusing the two is exactly the mistake to avoid. */
+.step-basis li { color: var(--text-2); }
+.step-basis li::before { content: "依据"; position: absolute; left: 0; top: 0; font: 600 8px/2.1 var(--mono); color: var(--text-3); }
+.step-needs li { color: var(--risk-medium); }
+.step-needs li::before { content: "待补"; position: absolute; left: 0; top: 0; font: 600 8px/2.1 var(--mono); color: var(--risk-medium); opacity: .75; }
+html[lang="en"] .step-basis li::before { content: "▪"; font-size: 10px; line-height: 1.7; }
+html[lang="en"] .step-needs li::before { content: "▫"; font-size: 10px; line-height: 1.7; }
+
+.action-grid.single { grid-template-columns: minmax(0, 1fr); }

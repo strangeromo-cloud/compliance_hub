@@ -22,7 +22,7 @@ const i18n = {
     hfQuestion: "一个问题", hfAnswer: "统一答案", startersLabel: "快速开始", workspaceEmpty: "工作区还没有 Gem", gemBacking: "数据支撑",
     teachSlashTitle: "在输入框键入 /", teachSlashBody: "呼出 {n} 个 Gem 的完整目录，上下键选择，回车使用。",
     teachPinTitle: "把常用 Gem 加入工作区", teachPinBody: "在目录里点 ★，或在 Gem 详情里点「添加到工作区」，它会常驻左侧栏。",
-    historyLabel: "历史记录", historyEmpty: "暂无记录", turnUnit: "轮", historyOpenFailed: "无法打开该记录", reasoningTrace: "论证过程", rsSearched: "已检索的名单来源", rsMatched: "名称命中", rsCompared: "身份要素比对", rsFacts: "已核验事实",
+    historyLabel: "历史记录", historyEmpty: "暂无记录", turnUnit: "轮", historyOpenFailed: "无法打开该记录", pathTitle: "分析路径", stConfirmed: "已确认", stEvidence: "需更多证据", stNotReached: "未进行", status_confirmed: "已确认", status_evidence_needed: "需更多证据", status_not_reached: "待前序步骤", status_review_required: "需人工复核", reasoningTrace: "比对明细", rsSearched: "已检索的名单来源", rsMatched: "名称命中", rsCompared: "身份要素比对", rsFacts: "已核验事实",
     rsScore: "相似度", rsOpen: "查看原文", rsUnsynced: "未同步、本次未检索",
     el_country: "国别", el_registration_number: "注册号", el_address: "地址",
     st_agree: "一致", st_conflict: "冲突", st_unavailable: "缺失",
@@ -73,7 +73,7 @@ const i18n = {
     hfQuestion: "One question", hfAnswer: "One answer", startersLabel: "Start here", workspaceEmpty: "No gems in your workspace yet", gemBacking: "Data behind it",
     teachSlashTitle: "Press / in the composer", teachSlashBody: "Opens the full catalogue of {n} gems. Arrow keys select, Enter uses.",
     teachPinTitle: "Pin the ones you use", teachPinBody: "Add to workspace from a gem's details and it stays in the sidebar.",
-    historyLabel: "History", historyEmpty: "No cases yet", turnUnit: "turns", historyOpenFailed: "That case could not be opened", reasoningTrace: "How this was reached", rsSearched: "Lists searched", rsMatched: "Name matches", rsCompared: "Identity comparison", rsFacts: "Verified facts",
+    historyLabel: "History", historyEmpty: "No cases yet", turnUnit: "turns", historyOpenFailed: "That case could not be opened", pathTitle: "Analysis path", stConfirmed: "settled", stEvidence: "need evidence", stNotReached: "not reached", status_confirmed: "Settled", status_evidence_needed: "Evidence needed", status_not_reached: "Awaiting earlier step", status_review_required: "Human review", reasoningTrace: "Comparison detail", rsSearched: "Lists searched", rsMatched: "Name matches", rsCompared: "Identity comparison", rsFacts: "Verified facts",
     rsScore: "Similarity", rsOpen: "Open source", rsUnsynced: "Not synced, therefore not searched",
     el_country: "Country", el_registration_number: "Registration no.", el_address: "Address",
     st_agree: "agree", st_conflict: "conflict", st_unavailable: "missing",
@@ -754,9 +754,53 @@ function nextStepMarkup(value = "") {
   return `<ol class="next-steps">${parts.map((part) => `<li>${formatInline(part)}</li>`).join("")}</ol>`;
 }
 
+const STEP_STATUS = {
+  confirmed: { tone: "ok", mark: "✓" },
+  evidence_needed: { tone: "warn", mark: "!" },
+  not_reached: { tone: "muted", mark: "·" },
+  review_required: { tone: "crit", mark: "▲" }
+};
+
+// The path is the answer to "what do I do next": each step says whether it is
+// settled, on what, and what would settle it if not. It replaces the flat
+// missing-information list, which said the same things without saying which
+// step each one blocked.
+function pathMarkup(path) {
+  if (!path?.lanes?.length) return "";
+  const s = path.summary;
+  return `
+    <details class="trace analysis-path" open>
+      <summary>${esc(t("pathTitle"))}
+        <span class="path-summary">
+          <span class="ps ok">✓ ${s.confirmed} ${esc(t("stConfirmed"))}</span>
+          <span class="ps warn">! ${s.evidenceNeeded} ${esc(t("stEvidence"))}</span>
+          ${s.notReached ? `<span class="ps muted">· ${s.notReached} ${esc(t("stNotReached"))}</span>` : ""}
+        </span>
+      </summary>
+      <div class="trace-body">${path.lanes.map((lane) => `
+        <section class="path-lane">
+          <div class="path-lane-label">${esc(lane.label)}</div>
+          <ol class="path-steps">${lane.steps.map((item) => {
+            const tone = STEP_STATUS[item.status] || STEP_STATUS.not_reached;
+            return `
+            <li class="path-step tone-${tone.tone}">
+              <span class="step-mark" aria-hidden="true">${tone.mark}</span>
+              <div class="step-body">
+                <div class="step-head">
+                  <strong>${esc(item.title)}</strong>
+                  <span class="step-status">${esc(t(`status_${item.status}`))}</span>
+                </div>
+                ${item.basis.length ? `<ul class="step-basis">${item.basis.map((line) => `<li>${formatInline(line)}</li>`).join("")}</ul>` : ""}
+                ${item.needs.length ? `<ul class="step-needs">${item.needs.map((line) => `<li>${formatInline(line)}</li>`).join("")}</ul>` : ""}
+              </div>
+            </li>`;
+          }).join("")}</ol>
+        </section>`).join("")}</div>
+    </details>`;
+}
+
 function answerMarkup(data) {
   const synthesis = data.synthesis;
-  const gaps = collectAcross(data.results, "missingInfo");
   const actions = collectAcross(data.results, "recommendedActions");
   const limitations = data.grounding?.limitations || [];
 
@@ -778,13 +822,12 @@ function answerMarkup(data) {
             </div>
           </div>
 
-          ${gaps.length || actions.length ? `<div class="action-grid">
-            ${actionBlock("gaps", t("missingInfo"), gaps)}
-            ${actionBlock("actions", t("actions"), actions)}
-          </div>` : ""}
+          ${actions.length ? `<div class="action-grid single">${actionBlock("actions", t("actions"), actions)}</div>` : ""}
 
           <div class="next-step"><b>${t("nextStep")}</b>${nextStepMarkup(synthesis.nextStep)}</div>
         </section>
+
+        ${pathMarkup(data.analysisPath)}
 
         ${reasoningMarkup(data.grounding)}
 
