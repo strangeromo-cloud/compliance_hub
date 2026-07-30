@@ -29,7 +29,7 @@ const i18n = {
     derivMatch_no_term_matched_all_lanes_run: "问题未命中任何关键词，三条检查全部执行",
     derivKind_official: "官方发布的检查程序", derivKind_derived: "系统规划（无对应官方程序）",
     derivFromStandard: "{n} 步来自规范", derivFromSystem: "{n} 步由系统规划",
-    pathTitle: "分析路径", pathPlanning: "分析路径（进行中）", laneRunning: "正在分析", laneQueued: "排队中", stAsking: "等待你补充", stAfterInput: "待补充信息后继续", pathBasis: "路径依据", pathTemplated: "规则模式：待补项来自内置模板，不是对本问题的分析结果。切换到实时模型可得到针对性判断。", pathDerivedNote: "本步骤无对应官方条文，由系统按问题结构补充", stConfirmed: "已确认", stEvidence: "需更多证据", stepNeedsCount: "待补 {n} 项 · 见下方行动清单 →", stNotReached: "未进行", status_confirmed: "已确认", status_evidence_needed: "需更多证据", status_not_reached: "待前序步骤", status_review_required: "需人工复核", status_pending: "待执行", stPending: "待执行", status_declared: "已声明，待核验", stDeclared: "已声明", declareSubmit: "提交并继续", declareSkip: "暂无此信息", declareSkipped: "已跳过 — 该步骤仍需证据，已保留在下方行动清单中", declareReopen: "重新填写", declarePlaceholder: "填写后提交", declareNote: "填写的内容记为声明信息，不等于已核验证据", declareEmpty: "请先填写至少一项", declarePrefix: "补充信息 — ", declaredAdded: "已提交", declareContinuing: "正在继续分析…", reasoningTrace: "比对明细", rsSearched: "已检索的名单来源", rsMatched: "名称命中", rsCompared: "身份要素比对", rsFacts: "已核验事实",
+    pathTitle: "分析路径", pathPlanning: "分析路径（进行中）", laneRunning: "正在分析", laneQueued: "排队中", stAsking: "等待你补充", stAfterInput: "待补充信息后继续", pathBasis: "路径依据", pathTemplated: "规则模式：待补项来自内置模板，不是对本问题的分析结果。切换到实时模型可得到针对性判断。", pathDerivedNote: "本步骤无对应官方条文，由系统按问题结构补充", stConfirmed: "已确认", stEvidence: "需更多证据", stNotReached: "未进行", status_confirmed: "已确认", status_evidence_needed: "需更多证据", status_not_reached: "待前序步骤", status_review_required: "需人工复核", status_pending: "待执行", stPending: "待执行", status_declared: "已声明，待核验", stDeclared: "已声明", declareSubmit: "提交并继续", declareSkip: "暂无此信息", declareSkipped: "已跳过 — 该步骤仍需证据，已保留在下方行动清单中", declareReopen: "重新填写", declarePlaceholder: "填写后提交", declareNote: "填写的内容记为声明信息，不等于已核验证据", declareEmpty: "请先填写至少一项", declarePrefix: "补充信息 — ", declaredAdded: "已提交", declareContinuing: "正在继续分析…", reasoningTrace: "比对明细", rsSearched: "已检索的名单来源", rsMatched: "名称命中", rsCompared: "身份要素比对", rsFacts: "已核验事实",
     rsScore: "相似度", rsOpen: "查看原文", rsUnsynced: "未同步、本次未检索",
     el_country: "国别", el_registration_number: "注册号", el_address: "地址",
     st_agree: "一致", st_conflict: "冲突", st_unavailable: "缺失",
@@ -46,7 +46,7 @@ const i18n = {
     runtimeRules: "规则模式", runtimeReady: "实时模型", runtimeMissing: "未配置模型",
     modeHint: "点击切换规则模式与实时模型",
     routeLabel: "路由", routedTo: "已路由至", specialistTrace: "专业 Agent 分析轨迹",
-    overallAssessment: "总体判断", nextStep: "下一步", missingInfo: "仍需信息", actions: "建议行动", actionPlan: "行动清单", actionPlanHint: "按依赖顺序", unblocks: "→ 解锁", actionNow: "现在这一步", planBlocked: "待前序步骤完成：", planOmitted: "另有 {n} 项未列出", planSuggested: "其他建议", planClosing: "结案：", noItems: "暂无", limitations: "结论边界与限制",
+    overallAssessment: "总体判断", nextStep: "下一步", missingInfo: "仍需信息", actions: "建议行动", planSuggested: "其他建议", notClosed: "分析未结案 — 还需要 {n} 项信息", notClosedLead: "补齐后分析会从当前步骤继续；在补齐之前不出具结论。", notClosedGo: "去补充：", interimVerdict: "阶段性判断（基于现有信息，未结案）", noItems: "暂无", limitations: "结论边界与限制",
     sourceLive: "实时获取", sourceMetadata: "元数据", sourceUnavailable: "获取失败", sourceNotFetched: "未获取", sourceArchived: "已采集副本", sourceCitationOnly: "仅引用", sourceCached: "缓存", noQueryableSource: "暂无可直查的来源（需先同步）", sourceQueryHint: "@ 直查数据源", sourceQueryPlaceholder: "输入实体名、公告号或条文关键词（按相关性排序；留空则浏览全部）…",
     queryEmpty: "请输入查询内容", queryHits: "{total} 条命中", browseCount: "共 {total} 条", browseAll: "浏览全部", pagePrev: "上一页", pageNext: "下一页", relMatched: "命中", relMissed: "未命中", relPartial: "另有 {n} 条仅命中部分检索词，未列出", queryNoHit: "该来源中未找到匹配记录", queryTruncated: "显示前 {shown} 条，共 {total} 条",
     queryEscalate: "以此发起完整筛查 →", escalatePrefix: "请对 {q} 做完整合规筛查",
@@ -89,7 +89,7 @@ const i18n = {
     derivMatch_no_term_matched_all_lanes_run: "no term matched, so all three checks run",
     derivKind_official: "published decision procedure", derivKind_derived: "planned by the system (no official procedure)",
     derivFromStandard: "{n} from the procedure", derivFromSystem: "{n} planned here",
-    pathTitle: "Analysis path", pathPlanning: "Analysis path (running)", laneRunning: "analysing", laneQueued: "queued", stAsking: "waiting for you", stAfterInput: "continues once supplied", pathBasis: "Path follows", pathTemplated: "Rules mode: the outstanding items come from built-in templates, not from analysing this question. Switch to the live model for a specific assessment.", pathDerivedNote: "No official provision for this step; added by the system", stConfirmed: "settled", stEvidence: "need evidence", stepNeedsCount: "{n} items needed · see the action list below →", stNotReached: "not reached", status_confirmed: "Settled", status_evidence_needed: "Evidence needed", status_not_reached: "Awaiting earlier step", status_review_required: "Human review", status_pending: "Planned", stPending: "planned", status_declared: "Declared, unverified", stDeclared: "declared", declareSubmit: "Submit and continue", declareSkip: "Not available", declareSkipped: "Skipped — this step still needs evidence and stays in the action list below", declareReopen: "Fill in", declarePlaceholder: "Fill in, then submit", declareNote: "What you enter is recorded as a declaration, not as verified evidence", declareEmpty: "Fill in at least one field first", declarePrefix: "Additional information — ", declaredAdded: "Submitted", declareContinuing: "continuing the analysis…", reasoningTrace: "Comparison detail", rsSearched: "Lists searched", rsMatched: "Name matches", rsCompared: "Identity comparison", rsFacts: "Verified facts",
+    pathTitle: "Analysis path", pathPlanning: "Analysis path (running)", laneRunning: "analysing", laneQueued: "queued", stAsking: "waiting for you", stAfterInput: "continues once supplied", pathBasis: "Path follows", pathTemplated: "Rules mode: the outstanding items come from built-in templates, not from analysing this question. Switch to the live model for a specific assessment.", pathDerivedNote: "No official provision for this step; added by the system", stConfirmed: "settled", stEvidence: "need evidence", stNotReached: "not reached", status_confirmed: "Settled", status_evidence_needed: "Evidence needed", status_not_reached: "Awaiting earlier step", status_review_required: "Human review", status_pending: "Planned", stPending: "planned", status_declared: "Declared, unverified", stDeclared: "declared", declareSubmit: "Submit and continue", declareSkip: "Not available", declareSkipped: "Skipped — this step still needs evidence and stays in the action list below", declareReopen: "Fill in", declarePlaceholder: "Fill in, then submit", declareNote: "What you enter is recorded as a declaration, not as verified evidence", declareEmpty: "Fill in at least one field first", declarePrefix: "Additional information — ", declaredAdded: "Submitted", declareContinuing: "continuing the analysis…", reasoningTrace: "Comparison detail", rsSearched: "Lists searched", rsMatched: "Name matches", rsCompared: "Identity comparison", rsFacts: "Verified facts",
     rsScore: "Similarity", rsOpen: "Open source", rsUnsynced: "Not synced, therefore not searched",
     el_country: "Country", el_registration_number: "Registration no.", el_address: "Address",
     st_agree: "agree", st_conflict: "conflict", st_unavailable: "missing",
@@ -106,7 +106,7 @@ const i18n = {
     runtimeRules: "Rules mode", runtimeReady: "Live model", runtimeMissing: "No model configured",
     modeHint: "Toggle between rules mode and the live model",
     routeLabel: "Route", routedTo: "Routed to", specialistTrace: "Specialist agent trace",
-    overallAssessment: "Overall assessment", nextStep: "Next step", missingInfo: "Missing information", actions: "Recommended actions", actionPlan: "Action list", actionPlanHint: "in dependency order", unblocks: "→ unblocks", actionNow: "do this now", planBlocked: "Awaiting the steps above: ", planOmitted: "{n} further actions not listed", planSuggested: "Other suggestions", planClosing: "To close: ", noItems: "None", limitations: "Limits on this conclusion",
+    overallAssessment: "Overall assessment", nextStep: "Next step", missingInfo: "Missing information", actions: "Recommended actions", planSuggested: "Other suggestions", notClosed: "Not concluded — {n} items still needed", notClosedLead: "Supply them and the analysis continues from where it stopped. No conclusion is issued until then.", notClosedGo: "Supply: ", interimVerdict: "Interim assessment (on incomplete facts, not a conclusion)", noItems: "None", limitations: "Limits on this conclusion",
     sourceLive: "Live", sourceMetadata: "Metadata", sourceUnavailable: "Unavailable", sourceNotFetched: "Not fetched", sourceArchived: "Archived copy", sourceCitationOnly: "Cited only", sourceCached: "Cached", noQueryableSource: "No queryable source yet (sync one first)", sourceQueryHint: "@ query a source", sourceQueryPlaceholder: "Entity name, notice number or keyword — ranked by relevance; leave empty to browse all…",
     queryEmpty: "Enter something to look up", queryHits: "{total} matches", browseCount: "{total} records", browseAll: "Browse all", pagePrev: "Previous", pageNext: "Next", relMatched: "matched", relMissed: "not matched", relPartial: "{n} more records matched only part of the query and are not listed", queryNoHit: "No matching record in this source", queryTruncated: "Showing {shown} of {total}",
     queryEscalate: "Run a full screening on this →", escalatePrefix: "Run a full compliance screening on {q}",
@@ -868,17 +868,6 @@ function firstBlockedStep(path) {
   return null;
 }
 
-// The title, not the id, because the action list refers to steps by title.
-function askingStepTitle(path) {
-  const id = firstBlockedStep(path);
-  if (!id) return null;
-  for (const lane of path?.lanes || []) {
-    const found = lane.steps.find((item) => item.id === id);
-    if (found) return found.title;
-  }
-  return null;
-}
-
 // "Why these steps" answered from data the plan already carries: which words in
 // the question selected the check, which published procedure supplies its steps,
 // and which steps had no provision and were planned by the system.
@@ -938,7 +927,14 @@ function pathMarkup(path, grounding, options = {}) {
         ${path.templated ? `<p class="path-templated">${esc(t("pathTemplated"))}</p>` : ""}
         <div class="flow-inline">${flowMarkup(path, options)}</div>
         ${derivationMarkup(path)}
-        ${path.lanes.map((lane) => {
+        ${path.lanes.filter((lane) => {
+          // The closing step is only shown once there is something to close. With
+          // items outstanding it appeared in the body while the foot of the answer
+          // said the analysis was not concluded — the same word twice, meaning
+          // opposite things. Until then it lives in the flow rail as a node ahead.
+          if (lane.lane !== "review") return true;
+          return !blocked && !path.lanes.some((group) => group.steps.some((item) => item.status === "evidence_needed"));
+        }).map((lane) => {
           const running = lane.lane === activeLane;
           const laneState = running ? "running" : doneLanes.has(lane.lane) ? "done" : options.allowInput === false ? "queued" : "";
           return `
@@ -948,9 +944,6 @@ function pathMarkup(path, grounding, options = {}) {
             ${running ? `<span class="thinking-dot" aria-hidden="true"></span><span class="lane-state">${esc(t("laneRunning"))}</span>` : ""}
             ${laneState === "queued" ? `<span class="lane-state">${esc(t("laneQueued"))}</span>` : ""}
           </div>
-          ${/* The specialist's reasoning belongs to the lane it is reasoning about,
-                so the live text and the steps it produces are one thing. */ ""}
-          <div class="lane-stream" data-lane-stream="${esc(lane.lane)}"></div>
           <ol class="path-steps">${lane.steps.filter((item) => {
             // Only what has actually run. A plan of twelve steps rendered in full
             // before any of them executed is what made the state unreadable; the
@@ -980,18 +973,12 @@ function pathMarkup(path, grounding, options = {}) {
                     const known = sourceRef && (state.coverage?.sources || []).some((source) => source.sourceId === sourceRef[1]);
                     return `<li>${formatInline(line)}${known ? ` <button type="button" class="jump-source" data-jump-source="${esc(sourceRef[1])}" title="${esc(t("jumpSource"))}">⛁</button>` : ""}</li>`;
                   }).join("")}</ul>` : ""}
-                  ${/* A step's own "needs" are two different things wearing one
-                        name. On a blocked step they are evidence requests, and
-                        printing them here reprinted the action list word for word
-                        — 14 of 19 lines identical. On every other status they are
-                        the reason the step cannot proceed ("classification must
-                        settle before the Country Chart applies"), which is part
-                        of the argument and belongs nowhere else. So the requests
-                        become a pointer into the one ordered list, and the
-                        explanations stay. */ ""}
-                  ${item.needs.length ? (item.status === "evidence_needed"
-                    ? `<p class="step-needs-link"><button type="button" data-goto-actions="${esc(item.title)}">${esc(t("stepNeedsCount").replace("{n}", item.needs.length))}</button></p>`
-                    : `<ul class="step-needs">${item.needs.map((line) => `<li>${formatInline(line)}</li>`).join("")}</ul>`) : ""}
+                  ${/* What a step is missing belongs to the step, not to a list
+                        further down the page. Keeping them apart meant reading
+                        the same items twice and jumping between two places to act
+                        on them; the path already orders the work by dependency,
+                        which is what the separate list was for. */ ""}
+                  ${item.needs.length ? `<ul class="step-needs">${item.needs.map((line) => `<li>${formatInline(line)}</li>`).join("")}</ul>` : ""}
                   ${stepDetailMarkup(item, grounding)}
                   ${asking ? stepInputsMarkup(item) : ""}
                 </div>
@@ -1002,6 +989,10 @@ function pathMarkup(path, grounding, options = {}) {
             const ahead = lane.steps.filter((item) => (item.status === "not_reached" || item.status === "pending") && item.id !== blocked);
             return ahead.length ? `<p class="lane-ahead">${esc(t("laneAhead").replace("{n}", ahead.length))} ${ahead.map((item) => esc(item.title)).join(" · ")}</p>` : "";
           })()}
+          ${/* The specialist's reasoning appears under the steps it is producing,
+                so nothing a reader has already acted on is written over from
+                above. */ ""}
+          <div class="lane-stream" data-lane-stream="${esc(lane.lane)}"></div>
         </section>`;
         }).join("")}
         ${grounding?.limitations?.length ? `<div class="path-limits">
@@ -1054,44 +1045,51 @@ function stepDetailMarkup(item, grounding) {
   return "";
 }
 
-// One list, in dependency order, each item naming the step it unblocks. This
-// replaces a recommended-actions block and a separate next step that restated
-// its first line — two lists saying the same thing left the reader deciding
-// which one to act on.
-// The list and the path have to point at each other, or they read as two
-// separate to-dos: the item that unblocks the step currently asking for input is
-// marked as the one to do now.
-function actionPlanMarkup(plan, askingStep = null) {
-  if (!plan) return "";
-  const total = plan.actions.length;
-  if (!total && !plan.suggested.length) return "";
-  return `
-    <div class="plan-block">
-      <div class="action-head">
-        <span class="action-label">${esc(t("actionPlan"))}</span>
-        ${total ? `<span class="action-count">${total}</span>` : ""}
-        <span class="plan-hint">${esc(t("actionPlanHint"))}</span>
-      </div>
-      ${total ? `<ol class="plan-items">${plan.actions.map((item, index) => {
-        const unblocks = [].concat(item.unblocks || []);
-        const now = askingStep && unblocks.includes(askingStep);
-        return `
-        <li class="${now ? "now" : ""}">
-          <span class="marker" aria-hidden="true">${index + 1}</span>
-          <span class="item-body">${formatInline(item.action)}
-            ${now ? `<span class="now-chip">${esc(t("actionNow"))}</span>` : ""}
-            <span class="unblocks">${esc(t("unblocks"))} ${esc(unblocks.join("、"))}</span>
-          </span>
-        </li>`;
-      }).join("")}</ol>` : ""}
-      ${plan.omittedActions ? `<p class="plan-blocked">${esc(t("planOmitted").replace("{n}", plan.omittedActions))}</p>` : ""}
-      ${plan.suggested.length ? `
-        <details class="plan-extra">
-          <summary>${esc(t("planSuggested"))}<span class="trace-count">${plan.suggested.length}</span></summary>
-          <ul>${plan.suggested.map((item) => `<li>${formatInline(item)}</li>`).join("")}</ul>
-        </details>` : ""}
+// An outstanding item means the analysis is not finished, so it does not present
+// a conclusion as if it were. The verdict on incomplete facts is still shown —
+// withholding it would hide the reasoning that has been done — but it is labelled
+// as interim and folded away, and what leads is the request for what is missing.
+function conclusionMarkup(data) {
+  const synthesis = data.synthesis;
+  const steps = (data.analysisPath?.lanes || []).flatMap((lane) => lane.steps);
+  const outstanding = steps.filter((item) => item.status === "evidence_needed");
+  const askingId = firstBlockedStep(data.analysisPath);
+  const asking = steps.find((item) => item.id === askingId);
+  const suggested = data.actionPlan?.suggested || [];
 
+  const verdict = `
+    <div class="answer-head">
+      <span class="risk-mark risk-${esc(synthesis.overallRisk)}">${esc(riskLabel(synthesis.overallRisk))}</span>
+      <div>
+        <h3>${esc(synthesis.headline)}</h3>
+        <div class="prose">${formatBlock(synthesis.executiveSummary)}</div>
+      </div>
     </div>`;
+
+  if (!outstanding.length) {
+    return `<section class="answer">${verdict}
+      ${suggested.length ? `<details class="plan-extra"><summary>${esc(t("planSuggested"))}<span class="trace-count">${suggested.length}</span></summary>
+        <ul>${suggested.map((item) => `<li>${formatInline(item)}</li>`).join("")}</ul></details>` : ""}
+    </section>`;
+  }
+
+  return `
+    <section class="answer answer-open">
+      <div class="open-head">
+        <span class="risk-mark risk-unknown">…</span>
+        <div>
+          <h3>${esc(t("notClosed").replace("{n}", outstanding.length))}</h3>
+          <p class="open-lead">${esc(t("notClosedLead"))}</p>
+          ${asking ? `<button type="button" class="btn btn-primary" data-goto-step="${esc(asking.id)}">${esc(t("notClosedGo"))}${esc(asking.title)}</button>` : ""}
+        </div>
+      </div>
+      <details class="interim">
+        <summary>${esc(t("interimVerdict"))}</summary>
+        <div class="interim-body">${verdict}
+          ${suggested.length ? `<ul class="interim-suggested">${suggested.map((item) => `<li>${formatInline(item)}</li>`).join("")}</ul>` : ""}
+        </div>
+      </details>
+    </section>`;
 }
 
 function answerMarkup(data) {
@@ -1106,23 +1104,13 @@ function answerMarkup(data) {
           <span>${t("routedTo")} ${data.agents.map(agentName).join(", ")}</span>
         </div>
 
-        <section class="answer">
-          <div class="answer-head">
-            <span class="risk-mark risk-${esc(synthesis.overallRisk)}">${esc(riskLabel(synthesis.overallRisk))}</span>
-            <div>
-              <h3>${esc(synthesis.headline)}</h3>
-              <div class="prose">${formatBlock(synthesis.executiveSummary)}</div>
-            </div>
-          </div>
-
-        </section>
-
-        ${/* The path comes before the action list: the list is what follows from
-              where the analysis stopped, and reading the consequence first was
-              part of why the two halves felt unrelated. */ ""}
+        ${/* The conclusion is last, where the work ends. Printing it first meant
+              reading the verdict, then the reasoning that produced it, then
+              scrolling back — and it put the synthesis text far from where it had
+              streamed. Everything now runs in one direction. */ ""}
         ${pathMarkup(data.analysisPath, data.grounding, { allowInput: true })}
 
-        ${actionPlanMarkup(data.actionPlan, askingStepTitle(data.analysisPath))}
+        ${conclusionMarkup(data)}
 
         <details class="trace">
           <summary>${t("specialistTrace")}<span class="trace-count">${data.results.length}</span></summary>
@@ -1350,14 +1338,11 @@ function patchAnswer(node, data) {
     if (markup) target.outerHTML = markup;
     else target.remove();
   };
-  const head = node.querySelector(".answer-head h3");
-  if (head) head.textContent = data.synthesis.headline;
-  const summary = node.querySelector(".answer-head .prose");
-  if (summary) summary.innerHTML = formatBlock(data.synthesis.executiveSummary);
-  const mark = node.querySelector(".answer-head .risk-mark");
-  if (mark) { mark.className = `risk-mark risk-${data.synthesis.overallRisk}`; mark.textContent = riskLabel(data.synthesis.overallRisk); }
   replace(".analysis-path", pathMarkup(data.analysisPath, data.grounding, { allowInput: true }));
-  replace(".plan-block", actionPlanMarkup(data.actionPlan, askingStepTitle(data.analysisPath)));
+  // The conclusion changes shape as items close — an open analysis and a closed
+  // one are different blocks — so it is replaced whole rather than patched field
+  // by field.
+  replace(".answer", conclusionMarkup(data));
 }
 
 async function analyze(event, options = {}) {
@@ -1492,7 +1477,9 @@ async function analyze(event, options = {}) {
     }
     if (event.type === "agent_delta") {
       progress.text[event.agent] = event.text;
-      const lane = live.querySelector(`[data-lane-stream="${CSS.escape(event.agent)}"]`);
+      // A continuation reads from where it was started: the reasoning appears
+      // directly under the values just submitted, not in a lane further up.
+      const lane = live.querySelector("[data-resume-stream]") || live.querySelector(`[data-lane-stream="${CSS.escape(event.agent)}"]`);
       if (lane) {
         lane.textContent = event.text;
         // Only follow the stream while the reader is already at the bottom.
@@ -1510,7 +1497,7 @@ async function analyze(event, options = {}) {
     }
     if (event.type === "synthesis_delta") {
       progress.text.review = event.text;
-      const lane = live.querySelector('[data-lane-stream="review"]');
+      const lane = live.querySelector("[data-resume-stream]") || live.querySelector('[data-lane-stream="review"]');
       if (lane) {
         lane.textContent = event.text;
         const thread = $("thread");
@@ -1577,16 +1564,23 @@ async function analyze(event, options = {}) {
 
     state.conversation.push({ role: "assistant", content: `${finished.synthesis.headline}\n${finished.synthesis.executiveSummary}` });
     live.id = `answer-${finished.id}`;
+    // Patching replaces whole sections, which changes their height. The offset of
+    // the message is measured across the swap and the scroll corrected by the
+    // difference, so the page does not slide under the reader.
+    const thread = $("thread");
+    const before = live.getBoundingClientRect().top;
     if (resuming) patchAnswer(live, finished);
     else live.innerHTML = answerMarkup(finished);
+    const shift = live.getBoundingClientRect().top - before;
+    if (resuming && Math.abs(shift) > 1) thread.scrollTop += shift;
     hydrateBars(live);
     renderFlowPanel(finished.analysisPath);
     live.classList.remove("resuming");
     renderEvidence(finished.sources || []);
-    // Resuming scrolls to the step now being asked, not to the top of an answer
-    // the reader has already read: the eye should land where the work continues.
-    (resuming ? live.querySelector(".path-step.asking") || live : live)
-      .scrollIntoView({ behavior: "smooth", block: resuming ? "center" : "start" });
+    // Deliberately no scroll on completion. Output arrives in one direction and
+    // the reader is already at the end of it; jumping to the top of the answer, or
+    // to a step further up, is the "content moving around" that made the sequence
+    // impossible to follow.
     loadCases();
   } catch (error) {
     // A failure part-way through a continuation must not discard the answer the
@@ -1844,16 +1838,14 @@ $("gemNav").addEventListener("click", (event) => {
 // transcript records what was supplied and the conclusion is recomputed with it
 // rather than being patched in place.
 $("threadInner").addEventListener("click", (event) => {
-  // The pointer goes to the actions that unblock this step, and marks them, so
-  // "what is missing here" is answered without the answer being in two places.
-  const goto = event.target.closest("[data-goto-actions]");
-  if (goto) {
-    const title = goto.dataset.gotoActions;
-    const items = [...(goto.closest(".msg-assistant")?.querySelectorAll(".plan-items li") || [])]
-      .filter((li) => (li.querySelector(".unblocks")?.textContent || "").includes(title));
-    if (!items.length) return;
-    items.forEach((li) => { li.classList.add("flash"); setTimeout(() => li.classList.remove("flash"), 1400); });
-    items[0].scrollIntoView({ behavior: "smooth", block: "center" });
+  const gotoStep = event.target.closest("[data-goto-step]");
+  if (gotoStep) {
+    const step = gotoStep.closest(".msg-assistant")?.querySelector(`.path-step[data-step-id="${CSS.escape(gotoStep.dataset.gotoStep)}"]`);
+    if (!step) return;
+    step.classList.add("open", "flash"); step.classList.remove("shut");
+    step.scrollIntoView({ behavior: "smooth", block: "center" });
+    setTimeout(() => step.classList.remove("flash"), 1300);
+    step.querySelector(".si-text")?.focus();
     return;
   }
   // A collapsed step can still be opened: collapsing is about what to read first,
@@ -1930,7 +1922,8 @@ $("threadInner").addEventListener("click", (event) => {
       <span class="sis-values">${labels.map(esc).join("；")}</span>
       <span class="thinking-dot" aria-hidden="true"></span>
       <span class="sis-state">${esc(t("declareContinuing"))}</span>
-    </div>`);
+    </div>
+    <div class="si-stream" data-resume-stream></div>`);
 
   // The same analysis carries on with one more fact, inside the answer already on
   // screen — not a new question producing a second answer below it.

@@ -1239,3 +1239,18 @@ html[lang="en"] .step-needs li::before { content: "NEEDS"; font-size: 8px; }
 .step-needs-link button { border: 0; background: none; padding: 0; font: 400 11.5px/1.6 var(--font); color: var(--risk-medium); cursor: pointer; }
 .step-needs-link button:hover { text-decoration: underline; text-underline-offset: 2px; }
 .plan-items li.flash { animation: flash-step 1.3s ease; border-radius: var(--radius); }
+
+/* ---- conclusion last, and an unfinished analysis says so ---- */
+.answer-open { border-color: color-mix(in srgb, var(--risk-medium) 40%, var(--border)); }
+.open-head { display: flex; gap: 12px; align-items: flex-start; }
+.open-head h3 { font-size: 15px; margin: 0 0 4px; }
+.open-lead { margin: 0 0 10px; font-size: 12px; color: var(--text-2); line-height: 1.7; }
+.open-head .btn { height: 28px; }
+.interim { margin-top: 12px; border-top: 1px dashed var(--border); padding-top: 8px; }
+.interim > summary { font-size: 11.5px; color: var(--text-3); cursor: pointer; }
+.interim-body { padding-top: 8px; }
+.interim-body .answer-head h3 { font-size: 14px; }
+.interim-suggested { margin: 8px 0 0; padding-left: 18px; font-size: 11.5px; color: var(--text-2); }
+/* The continuation writes under the values that started it. */
+.si-stream { margin-top: 8px; font-size: 11.5px; line-height: 1.65; color: var(--text-2); white-space: pre-wrap; }
+.si-stream:empty { display: none; }
