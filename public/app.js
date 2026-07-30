@@ -23,13 +23,11 @@ const i18n = {
     hfQuestion: "一个问题", hfAnswer: "统一答案", startersLabel: "快速开始", workspaceEmpty: "工作区还没有 Gem", gemBacking: "数据支撑",
     teachSlashTitle: "在输入框键入 /", teachSlashBody: "呼出 {n} 个 Gem 的完整目录，上下键选择，回车使用。",
     teachPinTitle: "把常用 Gem 加入工作区", teachPinBody: "在目录里点 ★，或在 Gem 详情里点「添加到工作区」，它会常驻左侧栏。",
-    historyLabel: "历史记录", historyEmpty: "暂无记录", turnUnit: "轮", historyOpenFailed: "无法打开该记录", flowTitle: "执行流程", flowEmpty: "提交一个问题后，这里显示分析路径的执行进度", flowNotRun: "该步骤尚未执行", laneAhead: "还有 {n} 步未执行：", derivTitle: "分析路径的来源", derivLead: "主检查", derivSteps: "步",
-    derivMatched: "匹配依据", derivStandard: "遵循规范", derivBreakdown: "步骤构成",
+    historyLabel: "历史记录", historyEmpty: "暂无记录", turnUnit: "轮", historyOpenFailed: "无法打开该记录", flowTitle: "执行流程", flowEmpty: "提交一个问题后，这里显示分析路径的执行进度", flowNotRun: "该步骤尚未执行",
     derivMatch_gem: "由所选 Gem 指定为主检查", derivMatch_always: "每次分析都执行", derivMatch_question_terms: "问题中的关键词",
     derivMatch_no_term_matched_all_lanes_run: "问题未命中任何关键词，三条检查全部执行",
-    derivKind_official: "官方发布的检查程序", derivKind_derived: "系统规划（无对应官方程序）",
-    derivFromStandard: "{n} 步来自规范", derivFromSystem: "{n} 步由系统规划",
-    pathTitle: "分析路径", pathPlanning: "分析路径（进行中）", laneRunning: "正在分析", laneQueued: "排队中", stAsking: "等待你补充", stAfterInput: "待补充信息后继续", pathBasis: "路径依据", pathTemplated: "规则模式：待补项来自内置模板，不是对本问题的分析结果。切换到实时模型可得到针对性判断。", pathDerivedNote: "本步骤无对应官方条文，由系统按问题结构补充", stConfirmed: "已确认", stEvidence: "需更多证据", stNotReached: "未进行", status_confirmed: "已确认", status_evidence_needed: "需更多证据", status_not_reached: "待前序步骤", status_review_required: "需人工复核", status_pending: "待执行", stPending: "待执行", status_declared: "已声明，待核验", stDeclared: "已声明", declareSubmit: "提交并继续", declareSkip: "暂无此信息", declareSkipped: "已跳过 — 该步骤仍需证据，已保留在下方行动清单中", declareReopen: "重新填写", declarePlaceholder: "填写后提交", declareNote: "填写的内容记为声明信息，不等于已核验证据", declareEmpty: "请先填写至少一项", declarePrefix: "补充信息 — ", declaredAdded: "已提交", declareContinuing: "正在继续分析…", reasoningTrace: "比对明细", rsSearched: "已检索的名单来源", rsMatched: "名称命中", rsCompared: "身份要素比对", rsFacts: "已核验事实",
+    derivKind_official: "官方程序", derivKind_derived: "系统规划",
+    derivFromStandard: "{n} 来自规范", derivFromSystem: "{n} 步由系统规划", laneRunning: "正在分析", pathTemplated: "规则模式：待补项来自内置模板，不是对本问题的分析结果。切换到实时模型可得到针对性判断。", pathDerivedNote: "本步骤无对应官方条文，由系统按问题结构补充", stConfirmed: "已确认", stEvidence: "需更多证据", stNotReached: "未进行", status_confirmed: "已确认", status_evidence_needed: "需更多证据", status_not_reached: "待前序步骤", status_review_required: "需人工复核", status_pending: "待执行", stPending: "待执行", status_declared: "已声明，待核验", stDeclared: "已声明", declareSubmit: "提交并继续", declareSkip: "暂无此信息", declareSkipped: "已跳过 — 该步骤仍需证据，右侧执行流程中保留为待补", declareReopen: "重新填写", declarePlaceholder: "填写后提交", declareNote: "填写的内容记为声明信息，不等于已核验证据", declareEmpty: "请先填写至少一项", declarePrefix: "补充信息 — ", declaredAdded: "已提交", declareContinuing: "正在继续分析…", reasoningTrace: "比对明细", rsSearched: "已检索的名单来源", rsMatched: "名称命中", rsCompared: "身份要素比对", rsFacts: "已核验事实",
     rsScore: "相似度", rsOpen: "查看原文", rsUnsynced: "未同步、本次未检索",
     el_country: "国别", el_registration_number: "注册号", el_address: "地址",
     st_agree: "一致", st_conflict: "冲突", st_unavailable: "缺失",
@@ -45,7 +43,7 @@ const i18n = {
     filterAll: "全部", filterTrade: "Trade", filterProduct: "Product", filterTpdd: "TPDD", filterCross: "跨域",
     runtimeRules: "规则模式", runtimeReady: "实时模型", runtimeMissing: "未配置模型",
     modeHint: "点击切换规则模式与实时模型",
-    routeLabel: "路由", routedTo: "已路由至", specialistTrace: "专业 Agent 分析轨迹",
+    routeLabel: "路由", routedTo: "已路由至",
     overallAssessment: "总体判断", nextStep: "下一步", missingInfo: "仍需信息", actions: "建议行动", planSuggested: "其他建议", notClosed: "分析未结案 — 还需要 {n} 项信息", notClosedLead: "补齐后分析会从当前步骤继续；在补齐之前不出具结论。", notClosedGo: "去补充：", interimVerdict: "阶段性判断（基于现有信息，未结案）", noItems: "暂无", limitations: "结论边界与限制",
     sourceLive: "实时获取", sourceMetadata: "元数据", sourceUnavailable: "获取失败", sourceNotFetched: "未获取", sourceArchived: "已采集副本", sourceCitationOnly: "仅引用", sourceCached: "缓存", noQueryableSource: "暂无可直查的来源（需先同步）", sourceQueryHint: "@ 直查数据源", sourceQueryPlaceholder: "输入实体名、公告号或条文关键词（按相关性排序；留空则浏览全部）…",
     queryEmpty: "请输入查询内容", queryHits: "{total} 条命中", browseCount: "共 {total} 条", browseAll: "浏览全部", pagePrev: "上一页", pageNext: "下一页", relMatched: "命中", relMissed: "未命中", relPartial: "另有 {n} 条仅命中部分检索词，未列出", queryNoHit: "该来源中未找到匹配记录", queryTruncated: "显示前 {shown} 条，共 {total} 条",
@@ -83,13 +81,11 @@ const i18n = {
     hfQuestion: "One question", hfAnswer: "One answer", startersLabel: "Start here", workspaceEmpty: "No gems in your workspace yet", gemBacking: "Data behind it",
     teachSlashTitle: "Press / in the composer", teachSlashBody: "Opens the full catalogue of {n} gems. Arrow keys select, Enter uses.",
     teachPinTitle: "Pin the ones you use", teachPinBody: "Add to workspace from a gem's details and it stays in the sidebar.",
-    historyLabel: "History", historyEmpty: "No cases yet", turnUnit: "turns", historyOpenFailed: "That case could not be opened", flowTitle: "Execution flow", flowEmpty: "Ask a question and the analysis path\u2019s progress appears here", flowNotRun: "That step has not run yet", laneAhead: "{n} steps not yet run: ", derivTitle: "Where this path comes from", derivLead: "lead check", derivSteps: "steps",
-    derivMatched: "Matched on", derivStandard: "Procedure followed", derivBreakdown: "Step origin",
+    historyLabel: "History", historyEmpty: "No cases yet", turnUnit: "turns", historyOpenFailed: "That case could not be opened", flowTitle: "Execution flow", flowEmpty: "Ask a question and the analysis path\u2019s progress appears here", flowNotRun: "That step has not run yet",
     derivMatch_gem: "set as the lead check by the selected gem", derivMatch_always: "runs on every analysis", derivMatch_question_terms: "terms in the question",
     derivMatch_no_term_matched_all_lanes_run: "no term matched, so all three checks run",
-    derivKind_official: "published decision procedure", derivKind_derived: "planned by the system (no official procedure)",
-    derivFromStandard: "{n} from the procedure", derivFromSystem: "{n} planned here",
-    pathTitle: "Analysis path", pathPlanning: "Analysis path (running)", laneRunning: "analysing", laneQueued: "queued", stAsking: "waiting for you", stAfterInput: "continues once supplied", pathBasis: "Path follows", pathTemplated: "Rules mode: the outstanding items come from built-in templates, not from analysing this question. Switch to the live model for a specific assessment.", pathDerivedNote: "No official provision for this step; added by the system", stConfirmed: "settled", stEvidence: "need evidence", stNotReached: "not reached", status_confirmed: "Settled", status_evidence_needed: "Evidence needed", status_not_reached: "Awaiting earlier step", status_review_required: "Human review", status_pending: "Planned", stPending: "planned", status_declared: "Declared, unverified", stDeclared: "declared", declareSubmit: "Submit and continue", declareSkip: "Not available", declareSkipped: "Skipped — this step still needs evidence and stays in the action list below", declareReopen: "Fill in", declarePlaceholder: "Fill in, then submit", declareNote: "What you enter is recorded as a declaration, not as verified evidence", declareEmpty: "Fill in at least one field first", declarePrefix: "Additional information — ", declaredAdded: "Submitted", declareContinuing: "continuing the analysis…", reasoningTrace: "Comparison detail", rsSearched: "Lists searched", rsMatched: "Name matches", rsCompared: "Identity comparison", rsFacts: "Verified facts",
+    derivKind_official: "official", derivKind_derived: "system-planned",
+    derivFromStandard: "{n} from procedure", derivFromSystem: "{n} planned here", laneRunning: "analysing", pathTemplated: "Rules mode: the outstanding items come from built-in templates, not from analysing this question. Switch to the live model for a specific assessment.", pathDerivedNote: "No official provision for this step; added by the system", stConfirmed: "settled", stEvidence: "need evidence", stNotReached: "not reached", status_confirmed: "Settled", status_evidence_needed: "Evidence needed", status_not_reached: "Awaiting earlier step", status_review_required: "Human review", status_pending: "Planned", stPending: "planned", status_declared: "Declared, unverified", stDeclared: "declared", declareSubmit: "Submit and continue", declareSkip: "Not available", declareSkipped: "Skipped — this step still needs evidence and stays outstanding in the flow rail", declareReopen: "Fill in", declarePlaceholder: "Fill in, then submit", declareNote: "What you enter is recorded as a declaration, not as verified evidence", declareEmpty: "Fill in at least one field first", declarePrefix: "Additional information — ", declaredAdded: "Submitted", declareContinuing: "continuing the analysis…", reasoningTrace: "Comparison detail", rsSearched: "Lists searched", rsMatched: "Name matches", rsCompared: "Identity comparison", rsFacts: "Verified facts",
     rsScore: "Similarity", rsOpen: "Open source", rsUnsynced: "Not synced, therefore not searched",
     el_country: "Country", el_registration_number: "Registration no.", el_address: "Address",
     st_agree: "agree", st_conflict: "conflict", st_unavailable: "missing",
@@ -105,7 +101,7 @@ const i18n = {
     filterAll: "All", filterTrade: "Trade", filterProduct: "Product", filterTpdd: "TPDD", filterCross: "Cross-domain",
     runtimeRules: "Rules mode", runtimeReady: "Live model", runtimeMissing: "No model configured",
     modeHint: "Toggle between rules mode and the live model",
-    routeLabel: "Route", routedTo: "Routed to", specialistTrace: "Specialist agent trace",
+    routeLabel: "Route", routedTo: "Routed to",
     overallAssessment: "Overall assessment", nextStep: "Next step", missingInfo: "Missing information", actions: "Recommended actions", planSuggested: "Other suggestions", notClosed: "Not concluded — {n} items still needed", notClosedLead: "Supply them and the analysis continues from where it stopped. No conclusion is issued until then.", notClosedGo: "Supply: ", interimVerdict: "Interim assessment (on incomplete facts, not a conclusion)", noItems: "None", limitations: "Limits on this conclusion",
     sourceLive: "Live", sourceMetadata: "Metadata", sourceUnavailable: "Unavailable", sourceNotFetched: "Not fetched", sourceArchived: "Archived copy", sourceCitationOnly: "Cited only", sourceCached: "Cached", noQueryableSource: "No queryable source yet (sync one first)", sourceQueryHint: "@ query a source", sourceQueryPlaceholder: "Entity name, notice number or keyword — ranked by relevance; leave empty to browse all…",
     queryEmpty: "Enter something to look up", queryHits: "{total} matches", browseCount: "{total} records", browseAll: "Browse all", pagePrev: "Previous", pageNext: "Next", relMatched: "matched", relMissed: "not matched", relPartial: "{n} more records matched only part of the query and are not listed", queryNoHit: "No matching record in this source", queryTruncated: "Showing {shown} of {total}",
@@ -871,101 +867,84 @@ function firstBlockedStep(path) {
 // "Why these steps" answered from data the plan already carries: which words in
 // the question selected the check, which published procedure supplies its steps,
 // and which steps had no provision and were planned by the system.
+// Where the path came from, one line per check: what selected it, which
+// published procedure supplies its steps, and how many of those steps had no
+// provision and were planned here. It was three labelled rows per check, twelve
+// rows of preamble before any analysis, saying the same thing at greater length.
 function derivationMarkup(path) {
   const rows = path?.derivation || [];
   if (!rows.length) return "";
   return `
-    <details class="path-derivation" open>
-      <summary>${esc(t("derivTitle"))}<span class="trace-count">${rows.length}</span></summary>
-      <div class="deriv-body">
-        ${rows.map((row) => `
-        <section class="deriv-flow">
-          <div class="df-head">
-            <strong>${esc(row.label)}</strong>
-            ${row.leading ? `<span class="df-lead">${esc(t("derivLead"))}</span>` : ""}
-            <span class="df-steps">${row.stepCount} ${esc(t("derivSteps"))}</span>
-          </div>
-          <dl class="df-rows">
-            <div><dt>${esc(t("derivMatched"))}</dt><dd>${row.matchedTerms.length
-              ? row.matchedTerms.map((term) => `<code>${esc(term)}</code>`).join(" ")
-              : esc(t(`derivMatch_${row.matchedBy}`))}</dd></div>
-            <div><dt>${esc(t("derivStandard"))}</dt><dd>${row.methodology
-              ? `${row.methodology.url
-                  ? `<a href="${esc(row.methodology.url)}" target="_blank" rel="noopener noreferrer">${esc(row.methodology.label)}</a>`
-                  : esc(row.methodology.label)}
-                 ${row.methodology.authority ? `<span class="df-auth">${esc(row.methodology.authority)}</span>` : ""}
-                 <span class="df-kind ${esc(row.methodology.kind)}">${esc(t(`derivKind_${row.methodology.kind}`))}</span>`
-              : esc(t("derivKind_derived"))}</dd></div>
-            <div><dt>${esc(t("derivBreakdown"))}</dt><dd>
-              ${row.officialStepCount ? `<span class="df-official">${esc(t("derivFromStandard").replace("{n}", row.officialStepCount))}</span>` : ""}
-              ${row.plannedStepCount ? `<span class="df-planned">${esc(t("derivFromSystem").replace("{n}", row.plannedStepCount))}${row.plannedSteps.length ? `：${row.plannedSteps.map(esc).join("、")}` : ""}</span>` : ""}
-            </dd></div>
-          </dl>
-        </section>`).join("")}
-      </div>
-    </details>`;
+    <div class="path-origin">
+      ${rows.map((row) => `
+        <div class="po-row">
+          <span class="po-lane">${esc(row.label)}</span>
+          <span class="po-match">${row.matchedTerms.length
+            ? row.matchedTerms.map((term) => `<code>${esc(term)}</code>`).join("")
+            : esc(t(`derivMatch_${row.matchedBy}`))}</span>
+          <span class="po-std">${row.methodology
+            ? (row.methodology.url
+                ? `<a href="${esc(row.methodology.url)}" target="_blank" rel="noopener noreferrer">${esc(row.methodology.label)}</a>`
+                : esc(row.methodology.label))
+            : ""}<span class="po-kind ${esc(row.methodology?.kind || "derived")}">${esc(t(`derivKind_${row.methodology?.kind || "derived"}`))}</span></span>
+          <span class="po-steps">${row.officialStepCount ? esc(t("derivFromStandard").replace("{n}", `${row.officialStepCount}/${row.stepCount}`)) : ""}${
+            row.plannedStepCount ? `<i>${esc(t("derivFromSystem").replace("{n}", row.plannedStepCount))}</i>` : ""}</span>
+        </div>`).join("")}
+    </div>`;
 }
 
+// The path is the answer. Not a collapsible aside, not a summary printed beside
+// one — the body of the message is the sequence of checks and what each concluded.
+//
+// It reveals strictly forward. A step is shown once it has settled, and the one
+// step currently asking for input is shown; everything after that is not drawn at
+// all, including whole lanes that have not started. Drawing the full plan up front
+// is what made a run unreadable — seventeen steps, nine of them blocked, with no
+// way to tell which one to act on. The full plan lives in the flow rail, which is
+// where "how much is left" belongs.
 function pathMarkup(path, grounding, options = {}) {
   if (!path?.lanes?.length) return "";
-  const s = path.summary;
   const blocked = options.allowInput === false ? null : firstBlockedStep(path);
   const activeLane = options.activeLane || null;
   const doneLanes = options.doneLanes || new Set();
-  return `
-    <details class="trace analysis-path" open>
-      <summary>${esc(t(options.allowInput === false ? "pathPlanning" : "pathTitle"))}
-        <span class="path-summary">
-          ${s.pending ? `<span class="ps pending">○ ${s.pending} ${esc(label(STEP_STATUS_VOCAB, "pending", state.locale))}</span>` : ""}
-          ${s.confirmed ? `<span class="ps ok">✓ ${s.confirmed} ${esc(label(STEP_STATUS_VOCAB, "confirmed", state.locale))}</span>` : ""}
-          ${s.declared ? `<span class="ps declared">◐ ${s.declared} ${esc(t("stDeclared"))}</span>` : ""}
-          ${s.evidenceNeeded ? `<span class="ps warn">! ${s.evidenceNeeded} ${esc(t("stEvidence"))}</span>` : ""}
-          ${s.notReached ? `<span class="ps muted">· ${s.notReached} ${esc(t("stNotReached"))}</span>` : ""}
-        </span>
-      </summary>
-      <div class="trace-body">
-        ${path.templated ? `<p class="path-templated">${esc(t("pathTemplated"))}</p>` : ""}
-        <div class="flow-inline">${flowMarkup(path, options)}</div>
-        ${derivationMarkup(path)}
-        ${path.lanes.filter((lane) => {
-          // The closing step is only shown once there is something to close. With
-          // items outstanding it appeared in the body while the foot of the answer
-          // said the analysis was not concluded — the same word twice, meaning
-          // opposite things. Until then it lives in the flow rail as a node ahead.
-          if (lane.lane !== "review") return true;
-          return !blocked && !path.lanes.some((group) => group.steps.some((item) => item.status === "evidence_needed"));
-        }).map((lane) => {
-          const running = lane.lane === activeLane;
-          const laneState = running ? "running" : doneLanes.has(lane.lane) ? "done" : options.allowInput === false ? "queued" : "";
-          return `
+  const results = options.results || [];
+  const settled = (item) => item.status === "confirmed" || item.status === "declared" || item.status === "review_required";
+  const shown = (item) => settled(item) || item.id === blocked;
+
+  const lanes = path.lanes
+    .filter((lane) => {
+      // The closing step is only drawn once there is something to close.
+      if (lane.lane === "review") return !blocked;
+      return lane.steps.some(shown) || lane.lane === activeLane;
+    })
+    .map((lane) => {
+      const steps = lane.steps.filter(shown);
+      const result = results.find((item) => item.agent === lane.lane);
+      const running = lane.lane === activeLane;
+      const laneState = running ? "running" : doneLanes.has(lane.lane) ? "done" : "";
+      return `
         <section class="path-lane ${laneState}" data-lane="${esc(lane.lane)}">
           <div class="path-lane-label">
             ${esc(lane.label)}
+            ${/* The specialist's own verdict and one-line reading belong to its
+                  lane. They used to sit in a separate collapsed trace at the foot
+                  of the answer, detached from the steps they explain. */ ""}
+            ${result ? `<span class="risk-chip risk-${esc(result.riskLevel)}">${esc(riskLabel(result.riskLevel))}</span>` : ""}
             ${running ? `<span class="thinking-dot" aria-hidden="true"></span><span class="lane-state">${esc(t("laneRunning"))}</span>` : ""}
-            ${laneState === "queued" ? `<span class="lane-state">${esc(t("laneQueued"))}</span>` : ""}
           </div>
-          <ol class="path-steps">${lane.steps.filter((item) => {
-            // Only what has actually run. A plan of twelve steps rendered in full
-            // before any of them executed is what made the state unreadable; the
-            // ones still ahead are in the flow rail, where they belong.
-            const reached = item.status !== "not_reached" && item.status !== "pending";
-            return reached || item.id === blocked;
-          }).map((item) => {
+          ${result?.summary ? `<p class="lane-verdict">${esc(result.summary)}</p>` : ""}
+          <ol class="path-steps">${steps.map((item) => {
             const stepTone = tone(STEP_STATUS_VOCAB, item.status);
             const mark = STEP_STATUS_VOCAB[item.status]?.mark || "·";
             const asking = item.id === blocked;
-            const reached = item.status !== "not_reached" && item.status !== "pending";
-            const open = asking || reached;
-            const waiting = Boolean(blocked) && !reached;
             return `
-            <li class="path-step tone-${stepTone} ${open ? "open" : "shut"} ${asking ? "asking" : ""}" data-step-id="${esc(item.id)}">
+            <li class="path-step tone-${stepTone} open ${asking ? "asking" : ""}" data-step-id="${esc(item.id)}">
               <span class="step-mark" aria-hidden="true">${mark}</span>
               <div class="step-body">
-                <button type="button" class="step-head" data-step-toggle aria-expanded="${open}">
+                <button type="button" class="step-head" data-step-toggle aria-expanded="true">
                   <strong>${esc(item.title)}</strong>
-                  <span class="step-status">${esc(waiting ? t("stAfterInput") : label(STEP_STATUS_VOCAB, item.status, state.locale))}</span>
+                  <span class="step-status">${esc(label(STEP_STATUS_VOCAB, item.status, state.locale))}</span>
                   ${item.cite ? `<span class="step-cite ${item.methodology === "derived" ? "derived" : ""}" title="${esc(item.citeNote || "")}">${esc(item.cite)}</span>` : ""}
-                  ${asking ? `<span class="step-asking">${esc(t("stAsking"))}</span>` : ""}
                 </button>
                 <div class="step-detail-wrap">
                   ${item.basis.length ? `<ul class="step-basis">${item.basis.map((line) => {
@@ -973,11 +952,6 @@ function pathMarkup(path, grounding, options = {}) {
                     const known = sourceRef && (state.coverage?.sources || []).some((source) => source.sourceId === sourceRef[1]);
                     return `<li>${formatInline(line)}${known ? ` <button type="button" class="jump-source" data-jump-source="${esc(sourceRef[1])}" title="${esc(t("jumpSource"))}">⛁</button>` : ""}</li>`;
                   }).join("")}</ul>` : ""}
-                  ${/* What a step is missing belongs to the step, not to a list
-                        further down the page. Keeping them apart meant reading
-                        the same items twice and jumping between two places to act
-                        on them; the path already orders the work by dependency,
-                        which is what the separate list was for. */ ""}
                   ${item.needs.length ? `<ul class="step-needs">${item.needs.map((line) => `<li>${formatInline(line)}</li>`).join("")}</ul>` : ""}
                   ${stepDetailMarkup(item, grounding)}
                   ${asking ? stepInputsMarkup(item) : ""}
@@ -985,24 +959,21 @@ function pathMarkup(path, grounding, options = {}) {
               </div>
             </li>`;
           }).join("")}</ol>
-          ${(() => {
-            const ahead = lane.steps.filter((item) => (item.status === "not_reached" || item.status === "pending") && item.id !== blocked);
-            return ahead.length ? `<p class="lane-ahead">${esc(t("laneAhead").replace("{n}", ahead.length))} ${ahead.map((item) => esc(item.title)).join(" · ")}</p>` : "";
-          })()}
-          ${/* The specialist's reasoning appears under the steps it is producing,
-                so nothing a reader has already acted on is written over from
-                above. */ ""}
+          ${result?.findings?.length ? `<ul class="lane-findings">${result.findings.map((finding) => `
+            <li><b>${esc(finding.title)}</b> ${formatInline(finding.detail)}${(finding.evidenceSourceIds || []).length
+              ? `<span class="cite">${finding.evidenceSourceIds.map((id) => `<span>${esc(id)}</span>`).join("")}</span>` : ""}</li>`).join("")}</ul>` : ""}
           <div class="lane-stream" data-lane-stream="${esc(lane.lane)}"></div>
         </section>`;
-        }).join("")}
-        ${grounding?.limitations?.length ? `<div class="path-limits">
-          <div class="pl-label">${esc(t("limitations"))}<span class="trace-count">${grounding.limitations.length}</span></div>
-          <ul>${grounding.limitations.map((line) => `<li>${formatInline(line)}</li>`).join("")}</ul>
-        </div>` : ""}
-      </div>
-    </details>`;
-}
+    });
 
+  return `
+    <section class="analysis-path">
+      ${path.templated ? `<p class="path-templated">${esc(t("pathTemplated"))}</p>` : ""}
+      ${derivationMarkup(path)}
+      <div class="flow-inline">${flowMarkup(path, options)}</div>
+      ${lanes.join("")}
+    </section>`;
+}
 // Detail that used to sit in a separate "comparison" section now sits in the
 // step it belongs to. Four collapsible blocks saying overlapping things was the
 // reason nothing read as the point.
@@ -1056,6 +1027,12 @@ function conclusionMarkup(data) {
   const askingId = firstBlockedStep(data.analysisPath);
   const asking = steps.find((item) => item.id === askingId);
   const suggested = data.actionPlan?.suggested || [];
+  const limits = data.grounding?.limitations || [];
+  const limitsBlock = limits.length ? `
+    <div class="answer-limits">
+      <div class="al-label">${esc(t("limitations"))}</div>
+      <ul>${limits.map((line) => `<li>${formatInline(line)}</li>`).join("")}</ul>
+    </div>` : "";
 
   const verdict = `
     <div class="answer-head">
@@ -1068,8 +1045,8 @@ function conclusionMarkup(data) {
 
   if (!outstanding.length) {
     return `<section class="answer">${verdict}
-      ${suggested.length ? `<details class="plan-extra"><summary>${esc(t("planSuggested"))}<span class="trace-count">${suggested.length}</span></summary>
-        <ul>${suggested.map((item) => `<li>${formatInline(item)}</li>`).join("")}</ul></details>` : ""}
+      ${suggested.length ? `<ul class="answer-suggested">${suggested.map((item) => `<li>${formatInline(item)}</li>`).join("")}</ul>` : ""}
+      ${limitsBlock}
     </section>`;
   }
 
@@ -1087,6 +1064,7 @@ function conclusionMarkup(data) {
         <summary>${esc(t("interimVerdict"))}</summary>
         <div class="interim-body">${verdict}
           ${suggested.length ? `<ul class="interim-suggested">${suggested.map((item) => `<li>${formatInline(item)}</li>`).join("")}</ul>` : ""}
+          ${limitsBlock}
         </div>
       </details>
     </section>`;
@@ -1108,23 +1086,9 @@ function answerMarkup(data) {
               reading the verdict, then the reasoning that produced it, then
               scrolling back — and it put the synthesis text far from where it had
               streamed. Everything now runs in one direction. */ ""}
-        ${pathMarkup(data.analysisPath, data.grounding, { allowInput: true })}
+        ${pathMarkup(data.analysisPath, data.grounding, { allowInput: true, results: data.results })}
 
         ${conclusionMarkup(data)}
-
-        <details class="trace">
-          <summary>${t("specialistTrace")}<span class="trace-count">${data.results.length}</span></summary>
-          <div class="trace-body">${data.results.map((result) => `
-            <section class="trace-agent">
-              <div class="trace-agent-head">
-                <strong>${agentName(result.agent)}</strong>
-                <span class="risk-chip risk-${esc(result.riskLevel)}">${esc(riskLabel(result.riskLevel))}</span>
-              </div>
-              <div class="prose">${formatBlock(result.summary)}</div>
-              <ul class="trace-findings">${(result.findings || []).map((finding) => `
-                <li><b>${esc(finding.title)}</b> <span class="finding-detail">${formatInline(finding.detail)}</span><span class="cite">${(finding.evidenceSourceIds || []).map((id) => `<span>${esc(id)}</span>`).join("")}</span></li>`).join("")}</ul>
-            </section>`).join("")}</div>
-        </details>
 
         <p class="msg-note">${esc(data.disclaimer)}</p>
       </div>`;
@@ -1338,7 +1302,7 @@ function patchAnswer(node, data) {
     if (markup) target.outerHTML = markup;
     else target.remove();
   };
-  replace(".analysis-path", pathMarkup(data.analysisPath, data.grounding, { allowInput: true }));
+  replace(".analysis-path", pathMarkup(data.analysisPath, data.grounding, { allowInput: true, results: data.results }));
   // The conclusion changes shape as items close — an open analysis and a closed
   // one are different blocks — so it is replaced whole rather than patched field
   // by field.
@@ -1415,7 +1379,7 @@ async function analyze(event, options = {}) {
     if (!host) return markLanes();
     const openLanes = [...host.querySelectorAll(".path-lane")].filter((lane) => lane.dataset.open === "1").map((lane) => lane.dataset.lane);
     host.innerHTML = pathMarkup(collected.path, collected.grounding, {
-      allowInput: false, activeLane: progress.activeLane, doneLanes: progress.doneLanes
+      allowInput: false, activeLane: progress.activeLane, doneLanes: progress.doneLanes, results: collected.agents
     });
     for (const [lane, text] of Object.entries(progress.text)) {
       const target = host.querySelector(`[data-lane-stream="${CSS.escape(lane)}"]`);

@@ -1254,3 +1254,34 @@ html[lang="en"] .step-needs li::before { content: "NEEDS"; font-size: 8px; }
 /* The continuation writes under the values that started it. */
 .si-stream { margin-top: 8px; font-size: 11.5px; line-height: 1.65; color: var(--text-2); white-space: pre-wrap; }
 .si-stream:empty { display: none; }
+
+/* ---- the path is the body of the answer, not a collapsible aside ---- */
+.analysis-path { border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); padding: 14px 16px; margin-bottom: 14px; }
+/* Origin of the path: one line per check. */
+.path-origin { display: grid; gap: 3px; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px dashed var(--border); }
+.po-row { display: grid; grid-template-columns: minmax(0, 150px) minmax(0, 150px) minmax(0, 1fr) auto; gap: 10px; align-items: baseline; font-size: 11px; }
+.po-std { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.po-lane { color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.po-match code { font: 500 10.5px/1.5 var(--mono); padding: 0 4px; margin-right: 4px; border-radius: 3px; background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--accent-text); }
+.po-match { color: var(--text-3); }
+.po-std { color: var(--text-3); min-width: 0; }
+.po-std a { color: var(--text-2); }
+.po-kind { margin-left: 6px; font: 400 9.5px/1.7 var(--mono); padding: 0 5px; border-radius: 3px; }
+.po-kind.official { background: color-mix(in srgb, var(--risk-low) 15%, transparent); color: var(--risk-low); }
+.po-kind.derived { background: color-mix(in srgb, var(--risk-medium) 15%, transparent); color: var(--risk-medium); }
+.po-steps { font: 400 10.5px/1.6 var(--mono); color: var(--text-3); white-space: nowrap; }
+.po-steps i { display: block; font-style: normal; color: var(--risk-medium); }
+/* The specialist's verdict and findings sit in the lane they belong to. */
+.lane-verdict { margin: 2px 0 8px 18px; font-size: 12px; line-height: 1.7; color: var(--text-2); }
+.lane-findings { list-style: none; margin: 8px 0 0 18px; padding: 0; display: grid; gap: 5px; font-size: 11.5px; color: var(--text-2); }
+.lane-findings li { padding-left: 12px; position: relative; line-height: 1.65; }
+.lane-findings li::before { content: ""; position: absolute; left: 0; top: 8px; width: 4px; height: 4px; border-radius: 50%; background: var(--border-strong); }
+.lane-findings b { color: var(--text); font-weight: 500; }
+/* Limits belong with the conclusion they qualify. */
+.answer-limits { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--border); }
+.al-label { font-size: 11px; color: var(--risk-medium); margin-bottom: 5px; }
+.answer-limits ul, .answer-suggested { list-style: none; padding: 0; margin: 0; display: grid; gap: 5px; font-size: 11.5px; color: var(--text-2); }
+.answer-suggested { margin-top: 10px; }
+.answer-limits li, .answer-suggested li { padding-left: 13px; position: relative; line-height: 1.6; }
+.answer-limits li::before, .answer-suggested li::before { content: ""; position: absolute; left: 0; top: 8px; width: 5px; height: 5px; border-radius: 1px; background: var(--risk-medium); }
+@media (max-width: 720px) { .po-row { grid-template-columns: 1fr; gap: 2px; } }
