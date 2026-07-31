@@ -135,12 +135,26 @@ function clearanceBrief(clearance) {
   return `Clearance conditions NOT met: ${clearance.unmet.map((check) => check.because).join("; ")}. overallRisk must not be "low". `;
 }
 
+// The page renders headings, labelled lines and lists, and the model was never
+// asked for any of them — so a conclusion arrived as one undifferentiated
+// paragraph and the reader had to parse it to find the part they needed. This
+// asks for the structure the material already has: what was decided, what it
+// rests on, and what is still open.
+//
+// Markdown, not HTML: everything is escaped before any tag is applied, so no
+// model output can inject markup.
+const SUMMARY_SHAPE = "Write executiveSummary as short markdown sections, not as one paragraph. "
+  + "Use a bold line as a section heading (for example **结论** / **依据** / **仍需确认**, or **Conclusion** / **Basis** / **Still open**), "
+  + "and a hyphen list under a heading where there is more than one item. "
+  + "Put the provision or source in parentheses at the end of the line it supports. "
+  + "Omit a section that has nothing in it rather than writing that it is empty. Keep each line to one point.";
+
 async function synthesize(question, locale, results, config, history, grounding, onDelta) {
   const language = locale === "en" ? "English" : "Simplified Chinese";
   const result = await callJsonModelStream(config, [
     {
       role: "system",
-      content: `${clearanceBrief(grounding.clearance)}You are the Compliance Hub Master Agent. Synthesize specialist findings without overruling them or inventing facts. Respond in ${language}. The headline and executiveSummary must answer the current question directly and specifically. Never replace a requested policy explanation or factual value with a generic human-review statement. ${intentScope(grounding.intent)} Distinguish controlled status, license requirement and prohibition only when those issues are actually in scope. Return JSON only: {"overallRisk":"low|medium|high|unknown","headline":"...","executiveSummary":"...","nextStep":"..."}. Missing critical information must not become a low-risk result. This is not legal advice.`
+      content: `${clearanceBrief(grounding.clearance)}You are the Compliance Hub Master Agent. Synthesize specialist findings without overruling them or inventing facts. Respond in ${language}. The headline and executiveSummary must answer the current question directly and specifically. Never replace a requested policy explanation or factual value with a generic human-review statement. ${intentScope(grounding.intent)} Distinguish controlled status, license requirement and prohibition only when those issues are actually in scope. Return JSON only: {"overallRisk":"low|medium|high|unknown","headline":"...","executiveSummary":"...","nextStep":"..."}. ${SUMMARY_SHAPE} Missing critical information must not become a low-risk result. This is not legal advice.`
     },
     { role: "user", content: `Recent conversation:\n${conversationContext(history)}\n\nCurrent question:\n${question}\n\nQuestion intent: ${grounding.intent}\n\nSpecialist outputs:\n${JSON.stringify(results)}` }
   ], (text) => onDelta?.(text));
