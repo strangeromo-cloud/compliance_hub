@@ -28,6 +28,23 @@ const copy = {
 };
 
 const state = { locale: localStorage.getItem("compliance-locale") || "zh", module: "all", feasibility: "all", query: "", data: null };
+
+// How long ago a state was recorded.
+//
+// Sync status survives a redeploy now that a volume holds it, which is what it
+// is for — but it means a failure from this morning goes on being displayed as
+// though it were happening. Nothing has retried it; that is simply the last
+// thing that was tried. The age is the difference between "this is broken" and
+// "the last attempt, hours ago, failed", and only the second is true.
+function ago(iso, locale) {
+  const then = Date.parse(iso);
+  if (!Number.isFinite(then)) return null;
+  const minutes = Math.max(0, Math.round((Date.now() - then) / 60000));
+  if (minutes < 60) return locale === "zh" ? `${minutes} 分钟前` : `${minutes}m ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 48) return locale === "zh" ? `${hours} 小时前` : `${hours}h ago`;
+  return locale === "zh" ? `${Math.round(hours / 24)} 天前` : `${Math.round(hours / 24)}d ago`;
+}
 const $ = (id) => document.getElementById(id);
 const esc = (value = "") => String(value).replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[char]);
 const t = () => copy[state.locale];
@@ -50,11 +67,14 @@ function moduleLabel(module) { return module === "tpdd" ? "Ethics & TPDD" : `${m
 
 function renderCard(source) {
   const c = t(); const current = source.dataCaptured.length ? source.dataCaptured : [c.noData]; const sync = source.sync || { status: "not_synced" }; const adapter = source.adapter || {};
+  // Shown for every recorded state, not only failures: a snapshot from last week
+  // and one from ten minutes ago are different things too.
+  const lastAttempt = ago(sync.completedAt || sync.refreshFailedAt || sync.startedAt, state.locale);
   const completedAt = sync.completedAt ? new Intl.DateTimeFormat(state.locale === "zh" ? "zh-CN" : "en", { dateStyle: "medium", timeStyle: "short" }).format(new Date(sync.completedAt)) : "—";
   return `<article class="registry-card">
     <div class="registry-card-head"><div><span class="module-tag module-${esc(source.module)}">${esc(moduleLabel(source.module))}</span><h3>${esc(source.sourceName)}</h3><p>${esc(source.authority)} · ${esc(source.country)}</p></div><span class="coverage-state state-${esc(source.currentCoverage)}">${esc(c.currentLabels[source.currentCoverage])}</span></div>
     <div class="registry-badges"><span>${esc(c.automationLabels[source.automationStatus])}</span><span class="feasibility-${esc(source.feasibility)}">${esc(c.feasibilityLabels[source.feasibility])}</span><span>${esc(c.webLabels[source.webSearchUse])}</span>${adapter.implemented ? `<span class="adapter-badge">${c.adapterReady}</span>` : ""}${adapter.queryable ? `<span class="adapter-badge">${c.queryReady}</span>` : ""}${source.authenticationRequired ? `<span>${c.auth}</span>` : ""}${source.captchaPresent ? `<span class="warning-badge">${c.captcha}</span>` : ""}</div>
-    <div class="sync-panel sync-${esc(sync.status)}"><div><span class="sync-dot"></span><strong>${esc(c.syncLabels[sync.status] || sync.status)}</strong>${sync.recordCount !== undefined ? `<span>${Number(sync.recordCount).toLocaleString()} ${c.records}</span>` : ""}</div>${adapter.syncable ? `<button class="source-sync-button" type="button" data-sync-source="${esc(source.sourceId)}" ${sync.status === "syncing" ? "disabled" : ""}>${["success", "failed", "refresh_failed"].includes(sync.status) ? c.retry : c.sync}</button>` : ""}</div>
+    <div class="sync-panel sync-${esc(sync.status)}"><div><span class="sync-dot"></span><strong>${esc(c.syncLabels[sync.status] || sync.status)}</strong>${sync.recordCount !== undefined ? `<span>${Number(sync.recordCount).toLocaleString()} ${c.records}</span>` : ""}${lastAttempt ? `<span class="sync-age">${esc(lastAttempt)}</span>` : ""}</div>${adapter.syncable ? `<button class="source-sync-button" type="button" data-sync-source="${esc(source.sourceId)}" ${sync.status === "syncing" ? "disabled" : ""}>${["success", "failed", "refresh_failed"].includes(sync.status) ? c.retry : c.sync}</button>` : ""}</div>
     ${source.coveredBy ? `<p class="source-covered"><b>${esc(c.coveredByLabel)}</b>${esc(source.coveredBy.note)}</p>` : ""}
     ${source.attribution ? `<p class="source-attribution">${esc(source.attribution)}</p>` : ""}
     ${["success", "failed", "refresh_failed", "configuration_required"].includes(sync.status) ? `<details class="sync-details"><summary>${state.locale === "zh" ? "查看同步状态" : "View sync status"}</summary><div class="registry-details"><dl><div><dt>${c.lastSync}</dt><dd>${esc(completedAt)}</dd></div>${sync.sourceUpdatedAt ? `<div><dt>${c.sourceVersion}</dt><dd>${esc(sync.sourceUpdatedAt)}</dd></div>` : ""}${sync.syncScope ? `<div><dt>${c.syncScope}</dt><dd>${esc(sync.syncScope)}</dd></div>` : ""}${adapter.credential && !adapter.credentialConfigured ? `<div><dt>${c.configKey}</dt><dd>${esc(adapter.credential)}</dd></div>` : ""}</dl>${sync.error ? `<p class="sync-error">${esc(sync.error)}</p>` : ""}</div></details>` : ""}

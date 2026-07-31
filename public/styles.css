@@ -1461,3 +1461,6 @@ html[lang="en"] .step-needs li::before { content: "NEEDS"; font-size: 8px; }
 .source-covered { margin: 8px 0 0; font-size: 11px; line-height: 1.6; color: var(--text-3);
   border-left: 2px solid color-mix(in srgb, var(--accent) 40%, transparent); padding-left: 8px; }
 .source-covered b { color: var(--text-2); font-weight: 600; }
+/* When a state was recorded. A failure that survived a redeploy is still shown
+   in red; the age says whether anything has tried since. */
+.sync-age { font-size: 10.5px; color: var(--text-3); font-variant-numeric: tabular-nums; }
