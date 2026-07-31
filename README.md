@@ -138,6 +138,22 @@ bis-ear-732,bis-ear-734,bis-ear,bis-ear-740,bis-ear-744,bis-ccl,bis-country-char
 
 同理，启动命令不要写成 `HOST=0.0.0.0 node server.js`。这种内联赋值依赖 shell 展开，一旦被 exec-form 直接执行就是 `ENOENT`。
 
+### 构建必须用 Node 24
+
+`node:sqlite` 是 Node 24 才有的内置模块。三处都声明了这件事，**任何一处被绕过都会导致启动即崩溃**：
+
+| 声明位置 | 内容 |
+|---|---|
+| `Dockerfile` | `FROM node:24-alpine` |
+| `package.json` | `"engines": { "node": "24.x" }` |
+| `zbpack.json` | `{"dockerfile_path": "Dockerfile"}` |
+
+曾经出现过的现象：构建跑在 Node 20 上，容器反复重启，日志里只有 `Error [ERR_UNKNOWN_BUILTIN_MODULE]: No such built-in module: node:sqlite` ——这是模块加载器抛的，程序一行都没执行，所以什么也没说明。现在启动时会先检查版本并打印需要哪个版本、哪几处声明过，然后退出。
+
+`engines.node` 一度写成 `">=24"`。zbpack 文档给的例子是确定版本号（`"18.1.0"`），范围写法没有解析成功，于是回落到了旧版本。写成 `"24.x"`。
+
+本机开发同理：`nvm use 24`。
+
 ### 部署后必须注意
 
 ### 挂 Volume，否则每次重新部署都从零开始
@@ -151,11 +167,16 @@ bis-ear-732,bis-ear-734,bis-ear,bis-ear-740,bis-ear-744,bis-ccl,bis-country-char
 
 **换成数据库并不能替代这一步。** `hub.db` 也在 `data/runtime/` 下，跟原来的 JSON 一样会被重新部署清空——决定数据活不活的是盘挂在哪，不是存成什么格式。程序会自己判断并说出来：容器里检测到数据库和代码在同一个 overlay 上时，启动日志写 `CLEARED ON REDEPLOY`，左栏历史下方也会出现一行提示。
 
-在 Zeabur 给服务加一个 Volume，挂载路径填：
+在 Zeabur 给服务加一个 Volume：
 
-```
-data/runtime
-```
+| 字段 | 填 |
+|---|---|
+| Volume ID | `data`（只是标识，字母数字短横线；**不要事后改**，改 ID 等于换了一个空 Volume） |
+| Mount Directory | `/app/data/runtime`（必须绝对路径；Dockerfile 里 `WORKDIR /app`） |
+
+挂载会清空该目录在镜像中的内容——这里本来就是空的（`data/runtime` 在 `.dockerignore` 和 `.gitignore` 里），兜底快照在 `data/fallback`，不受影响。
+
+挂好后看部署日志应出现 `Store: /app/data/runtime/hub.db (mounted_volume)`；如果写的是 `container_overlay — CLEARED ON REDEPLOY`，说明路径没对上。
 
 挂上之后两者都能活过重新部署，**boot sync 也会自己跳过已经存下来的源**——重启时看到本地快照还新鲜（默认 7 天内）就完全不下载，日志里写 `skipped - stored 9h ago (11664 records)`。想改这个阈值用 `SYNC_MAX_AGE_HOURS`，设为 `0` 表示每次都重新拉。
 

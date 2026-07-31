@@ -15,7 +15,7 @@
 // the volume at data/runtime is what makes any of this durable. See
 // storageDurability() in case-store.js, which reports that honestly.
 
-import { DatabaseSync } from "node:sqlite";
+import { createRequire } from "node:module";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -98,10 +98,31 @@ CREATE TABLE IF NOT EXISTS page_cache (
 CREATE INDEX IF NOT EXISTS page_cache_by_age ON page_cache (captured_at);
 `;
 
+export const REQUIRED_NODE_MAJOR = 24;
+
+// Imported at first use rather than at module load. A static import of a
+// built-in that does not exist throws inside the loader, before any line of this
+// program runs — which is how a Node 20 deployment produced nothing but
+// ERR_UNKNOWN_BUILTIN_MODULE and a crash loop, with no statement of what was
+// required or by what.
+export function sqlite() {
+  try {
+    return createRequire(import.meta.url)("node:sqlite");
+  } catch (error) {
+    if (error?.code !== "ERR_UNKNOWN_BUILTIN_MODULE") throw error;
+    throw Object.assign(
+      new Error(`node:sqlite requires Node ${REQUIRED_NODE_MAJOR}; this process is ${process.version}. `
+        + "The Dockerfile pins node:24-alpine and package.json declares engines.node — a build that ignores both is the thing to fix."),
+      { code: "node_too_old" }
+    );
+  }
+}
+
 let handle = null;
 
 export function db() {
   if (handle) return handle;
+  const { DatabaseSync } = sqlite();
   mkdirSync(RUNTIME_DIR, { recursive: true });
   handle = new DatabaseSync(DB_PATH);
   // WAL keeps a reader from blocking the sync that is writing beneath it, which

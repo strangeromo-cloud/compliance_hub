@@ -7,12 +7,25 @@ import { classifyModelError, testModelConnection } from "./src/llm.js";
 import { getDataSourceCoverage, queryDataSource, syncSource } from "./src/data-layer/service.js";
 import { deleteThread, listThreads, readThread, saveCase, storageDurability } from "./src/case-store.js";
 import { DECLARABLE_FIELDS, describeProcedures } from "./src/analysis-path.js";
-import { closeDb, DB_PATH } from "./src/data-layer/db.js";
+import { closeDb, DB_PATH, REQUIRED_NODE_MAJOR } from "./src/data-layer/db.js";
 import { importLegacyStore } from "./src/data-layer/import-legacy.js";
 import { readSnapshotMeta } from "./src/data-layer/storage.js";
 
 const ROOT = fileURLToPath(new URL(".", import.meta.url));
 const PUBLIC_DIR = join(ROOT, "public");
+
+// Checked before anything else, because the alternative is what a Node 20
+// deployment actually produced: ERR_UNKNOWN_BUILTIN_MODULE from inside the
+// module loader, a crash loop, and no statement anywhere of what was needed.
+// The build is what has to be fixed, so the message says which build inputs
+// declare the requirement.
+const NODE_MAJOR = Number(process.versions.node.split(".")[0]);
+if (NODE_MAJOR < REQUIRED_NODE_MAJOR) {
+  console.error(`Compliance Hub needs Node ${REQUIRED_NODE_MAJOR} or newer for node:sqlite, but this is ${process.version}.`);
+  console.error("The Dockerfile pins node:24-alpine, package.json sets engines.node, and zbpack.json points at the Dockerfile.");
+  console.error("A build running an older Node has ignored all three — check the service's build settings rather than the code.");
+  process.exit(1);
+}
 
 // A containerized app runs as PID 1. That is also why shutdown has to be
 // handled explicitly further down, so the two checks share one definition.
