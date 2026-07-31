@@ -125,6 +125,112 @@ export function matchParty(query, records, { limit = 10, threshold = 0.55 } = {}
   return scored.sort((left, right) => right.matchScore - left.matchScore).slice(0, limit);
 }
 
+// Candidate legal entities for the party a question is about.
+//
+// findNamesMentioned below requires a designated name to appear in the question
+// literally. That is the right test for screening — a hit has to be traceable to
+// words the user actually wrote — but it is the wrong one for working out who
+// the counterparty is: "Aveox Technologies" in a question never reaches "Aveox
+// Technologies (Shenzhen) Co., Ltd." in a register, so the step gave up and
+// asked the user to type a name the system already had.
+//
+// This scores every known entity against the question's own words instead.
+// Corporate filler is not evidence of anything — half the register contains
+// "technologies" — so a candidate has to share a token that is actually
+// distinctive, and enough of its own name to be that name rather than a
+// coincidence.
+//
+// What it produces are candidates, never an identification. Identity resolution
+// is the step that settles which one, on registration number, country and
+// address; this only says which ones are worth putting to it.
+const CORPORATE_FILLER = new Set([
+  "technologies", "technology", "tech", "systems", "system", "solutions", "solution", "industries",
+  "industrial", "international", "global", "trading", "trade", "electronics", "electronic",
+  "engineering", "instruments", "equipment", "materials", "digital", "data", "science", "sciences",
+  "development", "manufacturing", "machinery", "energy", "new", "national", "state", "china", "shanghai",
+  "beijing", "shenzhen", "科技", "技术", "电子", "国际", "实业", "贸易", "发展", "工业", "设备", "材料"
+]);
+
+const CJK = /[\u4e00-\u9fff\u3040-\u30ff]/;
+
+// A word carries enough information to be evidence on its own only if it is both
+// uncommon and long. "B-CAT" is a real alias in the screening list, and without
+// this any question mentioning a cat matched Beijing China Aviation Technology —
+// the same failure as the alias "IFIC" matching inside "classification".
+const carriesAlone = (token) => !CORPORATE_FILLER.has(token) && (CJK.test(token) ? token.length >= 3 : token.length >= 5);
+const worthCounting = (token) => !CORPORATE_FILLER.has(token) && (CJK.test(token) ? token.length >= 2 : token.length >= 3);
+
+export function fuzzyPartyCandidates(question, records, { limit = 2, threshold = 0.5 } = {}) {
+  const asked = nameTokens(question);
+  const askedText = normalizeEntityName(question);
+  if (!asked.size && !askedText) return [];
+  const scored = [];
+
+  for (const record of records) {
+    let best = null;
+    for (const name of candidateNames(record)) {
+      const normalized = normalizeEntityName(name);
+      if (!normalized) continue;
+
+      // CJK names are written without spaces, so there is nothing to tokenize
+      // and containment is the only usable test. Latin names get the token
+      // comparison below, which is what reaches a register entry from a partial
+      // name the user actually typed.
+      if (CJK.test(normalized)) {
+        if (normalized.length >= 3 && askedText.includes(normalized)) {
+          const score = 0.9;
+          if (!best || score > best.score) best = { score, matchedName: name, covered: 1 };
+        }
+        continue;
+      }
+
+      const tokens = nameTokens(name);
+      if (!tokens.size) continue;
+      const shared = [...tokens].filter((token) => asked.has(token));
+      const meaningful = shared.filter(worthCounting);
+      if (!meaningful.length) continue;
+      // One word is only enough when that word could not plausibly be anything
+      // else; two independent words are enough on their own.
+      if (meaningful.length < 2 && !meaningful.some(carriesAlone)) continue;
+      // How much of the candidate's own name the question accounts for. Scoring
+      // the other way round would rank a one-word entity above a full name
+      // simply for being short.
+      const covered = shared.length / tokens.size;
+      if (covered < threshold) continue;
+      const score = Math.min(0.95, covered * 0.7 + Math.min(meaningful.length, 3) * 0.1);
+      if (!best || score > best.score) best = { score, matchedName: name, covered };
+    }
+    if (best) {
+      scored.push({
+        record,
+        entityName: record.entityName || record.legalName || best.matchedName,
+        matchedName: best.matchedName,
+        sourceId: record.sourceId || null,
+        matchScore: Math.round(best.score * 100) / 100,
+        matchBasis: best.covered === 1 ? "every_word_of_the_name_appears" : "distinctive_token_overlap"
+      });
+    }
+  }
+
+  scored.sort((left, right) => right.matchScore - left.matchScore
+    || String(left.entityName).length - String(right.entityName).length);
+
+  // One entity per candidate. The same company is listed more than once across
+  // and within sources — differing in case, punctuation, or nothing at all — and
+  // returning it twice fills both slots with a choice that is not a choice. The
+  // point of keeping two is to carry a real ambiguity forward.
+  const distinct = [];
+  const seen = new Set();
+  for (const candidate of scored) {
+    const key = normalizeEntityName(candidate.entityName);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    distinct.push(candidate);
+    if (distinct.length >= Math.max(1, limit)) break;
+  }
+  return distinct;
+}
+
 // Finds designated names that literally appear in a free-text question, so the
 // hub can screen whoever the user actually mentioned without a hardcoded alias
 // table. Short names are skipped because they generate noise, not signal.

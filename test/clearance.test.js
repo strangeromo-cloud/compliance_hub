@@ -164,3 +164,71 @@ test("every scenario advertised as clearing actually clears", async () => {
     }
   }
 });
+
+test("the party step resolves a partial name instead of asking for the full one", async () => {
+  // It used to settle only when the question carried a legal suffix, so
+  // "客户 Aveox Technologies" stopped the run to ask for a name the corpus
+  // already held — and typing it changed nothing the reader could see.
+  const { fuzzyPartyCandidates } = await import("../src/entity-matching.js");
+  const records = [
+    { sourceId: "list", entityName: "艾维奥克斯公司", aliases: ["Aveox, Inc."], country: "US" },
+    { sourceId: "list", entityName: "Red Cat Holdings, Inc.", country: "US" },
+    { sourceId: "list", entityName: "Beijing China Aviation Technology Co., Ltd", aliases: ["B-CAT"], country: "CN" }
+  ];
+
+  const found = fuzzyPartyCandidates("客户 Aveox Technologies 通过新加坡代理商采购服务器", records);
+  assert.equal(found.length, 1);
+  assert.equal(found[0].entityName, "艾维奥克斯公司", "a partial name must still reach the register entry");
+
+  // The failure this replaced: "B-CAT" normalises to the single token "cat", so
+  // any question mentioning a cat matched a Beijing aviation company. One short
+  // word is not evidence of an identity.
+  assert.deepEqual(fuzzyPartyCandidates("向 Red Cat Holdings 出售 20 台服务器", records).map((item) => item.entityName),
+    ["Red Cat Holdings, Inc."]);
+
+  // And nothing at all when the question names nobody.
+  assert.deepEqual(fuzzyPartyCandidates("出口一批服务器，请判断是否需要许可", records), []);
+});
+
+test("two candidates means two different entities", async () => {
+  // The same company appears more than once across sources, differing in case or
+  // punctuation or nothing. Returning it twice fills both slots with a choice
+  // that is not a choice — the point of keeping two is a real ambiguity.
+  const { fuzzyPartyCandidates } = await import("../src/entity-matching.js");
+  const records = [
+    { sourceId: "a", entityName: "HUAWEI TECHNOLOGIES CO., LTD." },
+    { sourceId: "b", entityName: "Huawei Technologies Co., Ltd." },
+    { sourceId: "c", entityName: "Huawei Device Co., Ltd." }
+  ];
+  const found = fuzzyPartyCandidates("请对交易方 Huawei Technologies 做受限方筛查", records, { limit: 2 });
+  assert.equal(found.length, 2);
+  const normalized = found.map((item) => item.entityName.toLowerCase().replace(/[^a-z]/g, ""));
+  assert.notEqual(normalized[0], normalized[1], "the two candidates must not be the same company twice");
+});
+
+test("a resolved party carries its candidates into the step that disambiguates", async () => {
+  const { planAnalysisPath, resolveAnalysisPath } = await import("../src/analysis-path.js");
+  const question = "客户 Aveox Technologies 是我们的直销客户，请做受限方筛查";
+  const grounding = {
+    screening: { screenedSources: [{ sourceId: "list", recordCount: 3, capturedAt: "2026-07-31" }], unsyncedSources: [] },
+    listMatches: [],
+    internalParties: [],
+    limitations: [],
+    partyCandidates: [{ entityName: "艾维奥克斯公司", matchedName: "Aveox, Inc.", sourceId: "list", matchScore: 0.8 }]
+  };
+  const path = resolveAnalysisPath(planAnalysisPath({ agents: ["trade"], question }), { question, grounding, declaredFacts: {}, final: true });
+  const steps = path.lanes.flatMap((lane) => lane.steps);
+
+  const party = steps.find((item) => item.id === "identify_party");
+  assert.equal(party.status, "confirmed", "a resolved candidate settles the step rather than asking");
+  assert.ok(party.basis.some((line) => line.includes("艾维奥克斯公司")), "the candidate is named in the basis");
+  assert.ok(party.basis.some((line) => /名称相似不等于同一主体/.test(line)),
+    "a similarity score must never read as an identification");
+
+  // Nothing was screened as a designated name, but a candidate was found — so
+  // there is something to disambiguate, and calling it not applicable would drop
+  // what the previous step just produced.
+  const resolution = steps.find((item) => item.id === "identity_resolution");
+  assert.equal(resolution.status, "evidence_needed");
+  assert.ok(resolution.basis.some((line) => line.includes("艾维奥克斯公司")));
+});

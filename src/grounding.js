@@ -1,6 +1,6 @@
 import { readNormalized } from "./data-layer/storage.js";
 import { classifyQuestionIntent, isChinaDualUseQuestion } from "./question-intent.js";
-import { findNamesMentioned, matchParty } from "./entity-matching.js";
+import { findNamesMentioned, fuzzyPartyCandidates, matchParty } from "./entity-matching.js";
 import { findBom, findInternalParties, findProducts, manufacturerFactsFor } from "./internal-data.js";
 
 // Every synchronized restricted-party source is screened, so adding an adapter
@@ -35,6 +35,31 @@ async function loadListRecords() {
   return loaded.filter(Boolean);
 }
 
+// Who the question is about, as far as the corpus can tell.
+//
+// Screening asks "does a designated name appear here"; this asks "which known
+// entity is this". They need different tests — a partial name a user actually
+// typed never appears verbatim in a register — so the party step no longer has
+// to stop and ask for a name the system could already find.
+//
+// Two candidates at most, because that is what a reviewer can carry: enough to
+// keep the real one when a name is ambiguous, few enough that the following
+// steps stay about resolving between them rather than listing them.
+async function resolveCounterparties(question, sources) {
+  const pool = sources.flatMap((source) => source.records.map((record) => ({ ...record, sourceId: source.sourceId })));
+  if (!pool.length) return [];
+  return fuzzyPartyCandidates(question, pool, { limit: 2 }).map((candidate) => ({
+    entityName: candidate.entityName,
+    matchedName: candidate.matchedName,
+    sourceId: candidate.sourceId,
+    matchScore: candidate.matchScore,
+    matchBasis: candidate.matchBasis,
+    country: candidate.record.countryCode || candidate.record.country || null,
+    registrationNumber: candidate.record.registrationNumber || null,
+    sourceUrl: candidate.record.sourceUrl || null
+  }));
+}
+
 async function screenQuestionParties(question) {
   const sources = await loadListRecords();
   if (!sources.length) return { matches: [], screenedSources: [], unsyncedSources: PARTY_LIST_SOURCES.map((source) => source.sourceId) };
@@ -52,6 +77,9 @@ async function screenQuestionParties(question) {
   const screenedIds = new Set(sources.map((source) => source.sourceId));
   return {
     matches: matches.slice(0, 12),
+    // The loaded records themselves, so counterparty resolution can run over the
+    // same corpus that was screened rather than loading it a second time.
+    sources,
     screenedSources: sources.map((source) => ({ sourceId: source.sourceId, label: source.label, recordCount: source.records.length, capturedAt: source.capturedAt, provenance: source.isFallback ? "bundled_fallback_snapshot" : "live_sync" })),
     fallbackSources: sources.filter((source) => source.isFallback).map((source) => ({ sourceId: source.sourceId, capturedAt: source.capturedAt })),
     unsyncedSources: PARTY_LIST_SOURCES.filter((source) => !screenedIds.has(source.sourceId)).map((source) => source.sourceId)
@@ -170,6 +198,7 @@ export async function collectGrounding(question, agents = [], declaredFacts = {}
     const screening = await screenQuestionParties(question);
     grounding.listMatches = screening.matches;
     grounding.screening = { screenedSources: screening.screenedSources, fallbackSources: screening.fallbackSources, unsyncedSources: screening.unsyncedSources };
+    grounding.partyCandidates = await resolveCounterparties(question, screening.sources || []);
     if (screening.unsyncedSources.length) {
       grounding.limitations.push(`以下名单来源尚未同步，本次未筛查：${screening.unsyncedSources.join("、")}。来源缺失不等于无风险。`);
     }

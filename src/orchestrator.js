@@ -220,6 +220,11 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
     facts: grounding.facts.slice(0, 10),
     listMatches: grounding.listMatches.slice(0, 8).map(({ designatedRecord, ...match }) => match),
     internalParties: grounding.internalParties.slice(0, 5),
+    // The resolvers see this summary, not the grounding itself, so anything they
+    // need has to be projected onto it. The party candidates were computed and
+    // then dropped here, which is why the step went on asking for a name that
+    // had already been found.
+    partyCandidates: grounding.partyCandidates || [],
     limitations: grounding.limitations
   };
   onEvent({ type: "grounding", intent: grounding.intent, grounding: groundingSummary });

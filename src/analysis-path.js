@@ -308,12 +308,31 @@ function tradeSteps(question, grounding, results) {
   const matches = grounding.listMatches || [];
   const internal = (grounding.internalParties || []).flatMap((entry) => entry.internalMatches || []);
 
+  // The party step resolves from the corpus before it resorts to asking.
+  //
+  // It used to settle only when the question carried a legal suffix, so
+  // "客户 Aveox Technologies" stopped the whole run to ask for a name the
+  // system could already find — and typing it changed nothing anyone could see.
+  // Candidates carry their score and the name they matched on, and where there
+  // is more than one, both go forward: which of them it is belongs to identity
+  // resolution, on registration number and address, not to a similarity number.
+  const candidates = grounding.partyCandidates || [];
   const namedEntity = LEGAL_SUFFIX.test(question);
   steps.push(step("identify_party", "确定交易主体的法律实体",
-    namedEntity ? "confirmed" : "evidence_needed",
-    namedEntity
-      ? { basis: ["问题中提供了带法律后缀的实体名称"] }
-      : { needs: ["法律实体全称（含注册后缀）", ...needsMatching(results, "trade", /实体|名称|地址|注册/)] }));
+    candidates.length || namedEntity ? "confirmed" : "evidence_needed",
+    candidates.length
+      ? {
+        basis: [
+          ...candidates.map((candidate) => `候选主体：${candidate.entityName}（${candidate.sourceId}，匹配于「${candidate.matchedName}」，相似度 ${candidate.matchScore}）`),
+          candidates.length > 1
+            ? `问题中的名称对应多个候选，取最相近的 ${candidates.length} 个继续后续步骤`
+            : "问题中的名称在已同步来源中检索到一个候选",
+          "名称相似不等于同一主体：下一步按注册号、国别和地址逐项比对"
+        ]
+      }
+      : namedEntity
+        ? { basis: ["问题中提供了带法律后缀的实体名称"] }
+        : { needs: ["法律实体全称（含注册后缀）", ...needsMatching(results, "trade", /实体|名称|地址|注册/)] }));
 
   steps.push(step("search_lists", "检索受限方名单",
     screened.length ? "confirmed" : "evidence_needed",
@@ -334,7 +353,16 @@ function tradeSteps(question, grounding, results) {
         : { basis: [`在已同步来源中未发现名称命中（共检索 ${screened.reduce((n, s) => n + s.recordCount, 0).toLocaleString()} 条）`] }));
   }
 
-  if (!matches.length) {
+  if (!matches.length && candidates.length) {
+    // Nothing was screened as a designated name, but the party step did resolve
+    // candidates — so there is something to disambiguate after all, and saying
+    // "not applicable" here would drop what the previous step just found.
+    steps.push(step("identity_resolution", "身份要素消歧", "evidence_needed",
+      {
+        basis: candidates.map((candidate) => `待消歧：${candidate.entityName}（${candidate.sourceId}）`),
+        needs: [`需提供该主体的注册国别、注册号和注册地址，以在 ${candidates.length} 个候选之间做出区分`]
+      }));
+  } else if (!matches.length) {
     // Nothing matched, so there is nothing to disambiguate. That is a step with no
     // work in it, not a step waiting on earlier work — counting it as outstanding
     // made a finished analysis read as one that had stopped short.
