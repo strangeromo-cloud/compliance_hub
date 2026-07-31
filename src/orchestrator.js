@@ -4,7 +4,7 @@ import { retrievePublicSources } from "./retrieval.js";
 import { callJsonModel, callJsonModelStream, readableProjection } from "./llm.js";
 import { assessClearance } from "./clearance.js";
 import { resolveLookup } from "./lookup.js";
-import { localizePath } from "./path-i18n.js";
+import { localizePath, localizeLines } from "./path-i18n.js";
 import { buildBriefing } from "./briefing.js";
 import { GEM_KINDS } from "./gem-kinds.js";
 import { createMockAgentResult, createMockSynthesis } from "./mock.js";
@@ -231,6 +231,7 @@ async function answerBriefing({ question, locale, mock, onEvent }) {
   grounding.limitations.push(isEn
     ? "This lists what was published. Whether any of it applies to a given transaction is a review, not a summary."
     : "本简报列出的是已发布的内容；其中哪些适用于某笔具体交易，属于审查而非汇总。");
+  grounding.limitations = localizeLines(grounding.limitations, locale);
   onEvent({ type: "grounding", intent: grounding.intent, grounding });
 
   let path = planAnalysisPath({ agents: ["briefing"], question });
@@ -308,6 +309,7 @@ async function answerMemo({ question, locale, history, mock, onEvent }) {
   grounding.limitations.push(isEn
     ? "A memo records the analysis already performed in this session; it introduces no new conclusion."
     : "备忘录记录本会话已完成的分析，不引入新的结论。");
+  grounding.limitations = localizeLines(grounding.limitations, locale);
   onEvent({ type: "grounding", intent: grounding.intent, grounding });
 
   let path = planAnalysisPath({ agents: ["memo"], question });
@@ -372,6 +374,7 @@ async function answerLookup({ question, locale, lookup, mock, onEvent }) {
       ? "One of the values comes from synthetic demonstration master data and cannot be used as a real classification."
       : "其中一个值来自合成演示主数据，不能作为实际分类依据。");
   }
+  grounding.limitations = localizeLines(grounding.limitations, locale);
   onEvent({ type: "grounding", intent: grounding.intent, grounding });
 
   let path = planAnalysisPath({ agents: ["lookup"], question });
@@ -475,7 +478,7 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
     // had already been found.
     partyCandidates: grounding.partyCandidates || [],
     ownership: grounding.ownership || null,
-    limitations: grounding.limitations
+    limitations: localizeLines(grounding.limitations, locale)
   };
   onEvent({ type: "grounding", intent: grounding.intent, grounding: groundingSummary });
 

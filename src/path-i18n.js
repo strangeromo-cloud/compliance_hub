@@ -112,12 +112,30 @@ const TERMS = {
 
 export const translateTerm = (value, locale) => (locale === "en" ? TERMS[value] || value : value);
 
+// A line the resolvers built by interpolation, carried in both languages.
+//
+// The fixed vocabulary above can be mapped after the fact because it is a
+// closed set of literals. "已检索 8 个来源，共 51,220 条" cannot: the sentence is
+// assembled around data, so the only place both versions can exist is where it
+// is written. bi() is what the resolvers use to write it once in each language;
+// everything downstream treats the pair as a line.
+export const bi = (zh, en) => ({ zh, en });
+
+const isPair = (line) => line && typeof line === "object" && typeof line.zh === "string";
+
+// Resolves a line to the reader's language whichever form it arrives in: a pair
+// picks its side, a plain string goes through the term table.
+export const localizeLine = (line, locale) =>
+  (isPair(line) ? (locale === "en" ? line.en : line.zh) : translateTerm(line, locale));
+
+export const localizeLines = (lines, locale) => (lines || []).map((line) => localizeLine(line, locale));
+
 // Everything the interface shows from a path, put through the table. Only the
 // fixed vocabulary is translated; a line carrying data — a party name, a notice
 // number, a date — passes through as written, which is correct: those are not
 // this system's words.
 export function localizePath(path, locale) {
-  if (locale !== "en" || !path?.lanes) return path;
+  if (!path?.lanes) return path;
   const term = (value) => translateTerm(value, locale);
   return {
     ...path,
@@ -127,8 +145,8 @@ export function localizePath(path, locale) {
       steps: lane.steps.map((step) => ({
         ...step,
         title: term(step.title),
-        basis: (step.basis || []).map(term),
-        needs: (step.needs || []).map(term),
+        basis: localizeLines(step.basis, locale),
+        needs: localizeLines(step.needs, locale),
         inputs: (step.inputs || []).map((input) => ({
           ...input,
           label: term(input.label),

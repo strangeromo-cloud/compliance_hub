@@ -3,6 +3,7 @@ import { classifyQuestionIntent, isChinaDualUseQuestion } from "./question-inten
 import { findNamesMentioned, fuzzyPartyCandidates, matchParty } from "./entity-matching.js";
 import { findBom, findInternalParties, findProducts, manufacturerFactsFor } from "./internal-data.js";
 import { resolveOwnership } from "./ownership.js";
+import { bi } from "./path-i18n.js";
 import { isConfigured as cslApiConfigured, searchName } from "./data-layer/csl-search.js";
 
 // Every synchronized restricted-party source is screened, so adding an adapter
@@ -248,7 +249,9 @@ export async function collectGrounding(question, agents = [], declaredFacts = {}
     const subject = String(declaredFacts.legalName || "").trim() || grounding.partyCandidates[0]?.entityName || null;
     if (subject) grounding.ownership = await resolveOwnership(subject).catch(() => null);
     if (screening.unsyncedSources.length) {
-      grounding.limitations.push(`以下名单来源尚未同步，本次未筛查：${screening.unsyncedSources.join("、")}。来源缺失不等于无风险。`);
+      grounding.limitations.push(bi(
+        `以下名单来源尚未同步，本次未筛查：${screening.unsyncedSources.join("、")}。来源缺失不等于无风险。`,
+        `Not screened because they are not synced: ${screening.unsyncedSources.join(", ")}. A missing source is not an absence of risk.`));
     }
     if (screening.fallbackSources.length) {
       // Surfaced as a limitation, not a footnote: the reader has to know the
@@ -265,8 +268,10 @@ export async function collectGrounding(question, agents = [], declaredFacts = {}
 
   if (grounding.listMatches.length) {
     grounding.limitations.push(
-      "名单检索只产生 potential match；必须用法律实体、地址、注册号和交易角色消除误报。",
-      "名单命中不解决 OFAC 50 Percent Rule 的完整所有权判断。"
+      bi("名单检索只产生 potential match；必须用法律实体、地址、注册号和交易角色消除误报。",
+        "List screening produces potential matches only; legal entity, address, registration number and transaction role are what resolve a false positive."),
+      bi("名单命中不解决 OFAC 50 Percent Rule 的完整所有权判断。",
+        "A list hit does not settle the ownership question the OFAC 50 Percent Rule asks.")
     );
     const seen = new Set();
     for (const match of grounding.listMatches.slice(0, 4)) {
@@ -280,9 +285,11 @@ export async function collectGrounding(question, agents = [], declaredFacts = {}
       if (internal.length) grounding.internalParties.push({ designationName: match.matchedName, designationSource: match.sourceId, noticeNumber: match.noticeNumber, internalMatches: internal });
     }
     if (grounding.internalParties.length) {
-      grounding.limitations.push("内部主数据为合成演示数据，命中仅用于演示外部名单与内部主数据的关联方式。");
+      grounding.limitations.push(bi("内部主数据为合成演示数据，命中仅用于演示外部名单与内部主数据的关联方式。",
+        "The internal master data is synthetic demonstration data; a hit only shows how an external list would join to it."));
       if (grounding.internalParties.some((entry) => entry.internalMatches.some((item) => item.matchDisposition === "likely_false_positive_identity_elements_conflict"))) {
-        grounding.limitations.push("存在身份要素冲突的命中，系统判定为疑似误报；该判定仍需人工用注册证据确认，不能自动放行。");
+        grounding.limitations.push(bi("存在身份要素冲突的命中，系统判定为疑似误报；该判定仍需人工用注册证据确认，不能自动放行。",
+        "A hit whose identity elements conflict is reported as a likely false positive. That still has to be confirmed against registration evidence by a person; nothing is released automatically."));
       }
     }
   }

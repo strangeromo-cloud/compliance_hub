@@ -21,6 +21,7 @@
 
 
 import { triage } from "./triage.js";
+import { bi } from "./path-i18n.js";
 
 // Published methodologies the path follows.
 //
@@ -408,16 +409,21 @@ function briefingSteps(grounding) {
   const brief = grounding.briefing;
   if (!brief) return [step("notice_timeline", "按时间顺序汇总已发布公告", "not_reached", {})];
   const basis = [
-    `窗口：${brief.window.since} 起至今（${brief.window.days} 天，${brief.window.stated ? "取自问题" : "默认，问题未指定"}）`,
-    ...brief.searched.map((source) => `已检索 ${source.label}（${source.recordCount} 条${source.fallback ? "，时点副本" : ""}）`),
-    ...brief.unavailable.map((source) => `未检索 ${source.label}（该来源未同步）`)
+    bi(`窗口：${brief.window.since} 起至今（${brief.window.days} 天，${brief.window.stated ? "取自问题" : "默认，问题未指定"}）`,
+      `Window: ${brief.window.since} to today (${brief.window.days} days, ${brief.window.stated ? "taken from the question" : "default; none was stated"})`),
+    ...brief.searched.map((source) => bi(
+      `已检索 ${source.label}（${source.recordCount} 条${source.fallback ? "，时点副本" : ""}）`,
+      `Read ${source.sourceId} (${source.recordCount} records${source.fallback ? ", committed copy" : ""})`)),
+    ...brief.unavailable.map((source) => bi(
+      `未检索 ${source.label}（该来源未同步）`, `Not read: ${source.sourceId} (not synced)`))
   ];
   if (!brief.items.length) {
     return [step("notice_timeline", "按时间顺序汇总已发布公告", "confirmed",
-      { basis: [...basis, "该窗口内没有已收录的公告；这不代表期间没有发布，只代表已同步的来源里没有"] })];
+      { basis: [...basis, bi("该窗口内没有已收录的公告；这不代表期间没有发布，只代表已同步的来源里没有",
+        "No ingested notice falls in this window. That is not the same as nothing having been published — only that the synced sources hold none.")] })];
   }
   return [step("notice_timeline", "按时间顺序汇总已发布公告", "confirmed",
-    { basis: [`共 ${brief.items.length} 项变化`, ...basis] })];
+    { basis: [bi(`共 ${brief.items.length} 项变化`, `${brief.items.length} changes`), ...basis] })];
 }
 
 // A memo does not analyse; it writes up what was analysed. With nothing to write
@@ -429,7 +435,8 @@ function memoSteps(grounding) {
       { needs: ["本会话尚无已完成的分析可供整理；请先提交一个情景完成审查，再生成备忘录"] })];
   }
   return [step("case_writeup", "整理本会话已产出的结论与证据", "confirmed",
-    { basis: [`已整理本会话 ${turns} 轮分析`, "备忘录记录既有结论与证据，不产生新的判断"] })];
+    { basis: [bi(`已整理本会话 ${turns} 轮分析`, `Assembled from ${turns} prior turns in this session`),
+      "备忘录记录既有结论与证据，不产生新的判断"] })];
 }
 
 function tradeSteps(question, grounding, results) {
@@ -454,10 +461,13 @@ function tradeSteps(question, grounding, results) {
     candidates.length
       ? {
         basis: [
-          ...candidates.map((candidate) => `候选主体：${candidate.entityName}（${candidate.sourceId}，匹配于「${candidate.matchedName}」，相似度 ${candidate.matchScore}）`),
+          ...candidates.map((candidate) => bi(
+            `候选主体：${candidate.entityName}（${candidate.sourceId}，匹配于「${candidate.matchedName}」，相似度 ${candidate.matchScore}）`,
+            `Candidate: ${candidate.entityName} (${candidate.sourceId}, matched on "${candidate.matchedName}", score ${candidate.matchScore})`)),
           candidates.length > 1
-            ? `问题中的名称对应多个候选，取最相近的 ${candidates.length} 个继续后续步骤`
-            : "问题中的名称在已同步来源中检索到一个候选",
+            ? bi(`问题中的名称对应多个候选，取最相近的 ${candidates.length} 个继续后续步骤`,
+              `The name matches more than one entity; the ${candidates.length} closest go forward`)
+            : bi("问题中的名称在已同步来源中检索到一个候选", "One candidate was found in the synced sources"),
           "名称相似不等于同一主体：下一步按注册号、国别和地址逐项比对"
         ]
       }
@@ -469,10 +479,19 @@ function tradeSteps(question, grounding, results) {
     screened.length ? "confirmed" : "evidence_needed",
     screened.length
       ? {
-        basis: screened.map((source) => `${source.sourceId}：${Number(source.recordCount).toLocaleString()} 条，采集于 ${String(source.capturedAt).slice(0, 10)}${source.provenance === "bundled_fallback_snapshot" ? "（时点副本）" : ""}`),
-        needs: unsynced.length ? [`以下来源未同步，本次未检索：${unsynced.join("、")}`] : []
+        basis: screened.map((source) => {
+          const count = Number(source.recordCount).toLocaleString();
+          const at = String(source.capturedAt).slice(0, 10);
+          const copy = source.provenance === "bundled_fallback_snapshot";
+          return bi(`${source.sourceId}：${count} 条，采集于 ${at}${copy ? "（时点副本）" : ""}`,
+            `${source.sourceId}: ${count} records, captured ${at}${copy ? " (committed copy)" : ""}`);
+        }),
+        needs: unsynced.length
+          ? [bi(`以下来源未同步，本次未检索：${unsynced.join("、")}`,
+            `Not searched because they are not synced: ${unsynced.join(", ")}`)]
+          : []
       }
-      : { needs: ["尚无已同步的受限方名单来源，需先完成同步"] }));
+      : { needs: [bi("尚无已同步的受限方名单来源，需先完成同步", "No restricted-party list is synced yet; sync one first")] }));
 
   if (!screened.length) {
     steps.push(step("name_match", "名称匹配", "not_reached", { needs: ["名单来源同步后方可进行"] }));
@@ -480,8 +499,19 @@ function tradeSteps(question, grounding, results) {
     steps.push(step("name_match", "名称匹配",
       "confirmed",
       matches.length
-        ? { basis: matches.slice(0, 3).map((match) => `${match.entityName || match.matchedName}：相似度 ${match.matchScore}，${match.matchBasis === "normalized_name_identical" ? "规范化后名称完全一致" : match.matchBasis}${match.noticeNumber ? `，${match.noticeNumber}` : ""}`) }
-        : { basis: [`在已同步来源中未发现名称命中（共检索 ${screened.reduce((n, s) => n + s.recordCount, 0).toLocaleString()} 条）`] }));
+        ? { basis: matches.slice(0, 3).map((match) => {
+          const name = match.entityName || match.matchedName;
+          const identical = match.matchBasis === "normalized_name_identical";
+          const notice = match.noticeNumber ? `，${match.noticeNumber}` : "";
+          const noticeEn = match.noticeNumber ? `, ${match.noticeNumber}` : "";
+          return bi(`${name}：相似度 ${match.matchScore}，${identical ? "规范化后名称完全一致" : match.matchBasis}${notice}`,
+            `${name}: score ${match.matchScore}, ${identical ? "identical after normalisation" : match.matchBasis}${noticeEn}`);
+        }) }
+        : { basis: [(() => {
+          const total = screened.reduce((n, s) => n + s.recordCount, 0).toLocaleString();
+          return bi(`在已同步来源中未发现名称命中（共检索 ${total} 条）`,
+            `No name matched in the synced sources (${total} records searched)`);
+        })()] }));
   }
 
   if (!matches.length && candidates.length) {
@@ -490,8 +520,10 @@ function tradeSteps(question, grounding, results) {
     // "not applicable" here would drop what the previous step just found.
     steps.push(step("identity_resolution", "身份要素消歧", "evidence_needed",
       {
-        basis: candidates.map((candidate) => `待消歧：${candidate.entityName}（${candidate.sourceId}）`),
-        needs: [`需提供该主体的注册国别、注册号和注册地址，以在 ${candidates.length} 个候选之间做出区分`]
+        basis: candidates.map((candidate) => bi(`待消歧：${candidate.entityName}（${candidate.sourceId}）`,
+          `To disambiguate: ${candidate.entityName} (${candidate.sourceId})`)),
+        needs: [bi(`需提供该主体的注册国别、注册号和注册地址，以在 ${candidates.length} 个候选之间做出区分`,
+          `Country of registration, registration number and address, to tell the ${candidates.length} candidates apart`)]
       }));
   } else if (!matches.length) {
     // Nothing matched, so there is nothing to disambiguate. That is a step with no
@@ -507,15 +539,21 @@ function tradeSteps(question, grounding, results) {
     const unavailable = internal.flatMap((item) => (item.identityComparisons || []).filter((row) => row.status === "unavailable"));
     const decided = internal.filter((item) => item.matchDisposition && item.matchDisposition !== "below_review_threshold");
     const label = { country: "注册国别", registration_number: "注册号", address: "注册地址" };
+    const labelEn = { country: "country of registration", registration_number: "registration number", address: "registered address" };
     steps.push(step("identity_resolution", "身份要素消歧",
       unavailable.length ? "evidence_needed" : "confirmed",
       {
         basis: decided.map((item) => {
-          const compared = (item.identityComparisons || []).filter((row) => row.status !== "unavailable")
-            .map((row) => `${label[row.element] || row.element}${row.status === "conflict" ? "冲突" : "一致"}`).join("、");
-          return `${item.entityName} vs ${item.designatedEntity || "名单条目"}：${compared || "无可比要素"}`;
+          const rows = (item.identityComparisons || []).filter((row) => row.status !== "unavailable");
+          const zh = rows.map((row) => `${label[row.element] || row.element}${row.status === "conflict" ? "冲突" : "一致"}`).join("、");
+          const en = rows.map((row) => `${labelEn[row.element] || row.element} ${row.status === "conflict" ? "conflicts" : "agrees"}`).join(", ");
+          const entry = item.designatedEntity || null;
+          return bi(`${item.entityName} vs ${entry || "名单条目"}：${zh || "无可比要素"}`,
+            `${item.entityName} vs ${entry || "the list entry"}: ${en || "no comparable elements"}`);
         }),
-        needs: [...new Set(unavailable.map((row) => `${label[row.element] || row.element}（双方之一缺失，无法比对）`))]
+        needs: [...new Map(unavailable.map((row) => [row.element, bi(
+          `${label[row.element] || row.element}（双方之一缺失，无法比对）`,
+          `${labelEn[row.element] || row.element} (missing on one side, so no comparison is possible)`)])).values()]
       }));
   }
 
@@ -532,10 +570,17 @@ function tradeSteps(question, grounding, results) {
   const chainFound = chain?.subject && (chain.directParent || chain.ultimateParent);
   const chainLines = chainFound
     ? [
-      `GLEIF 登记主体：${chain.subject.name}（LEI ${chain.subject.lei}${chain.subject.country ? `，${chain.subject.country}` : ""}）`,
-      chain.directParent ? `直接母公司：${chain.directParent.name}（LEI ${chain.directParent.lei}）` : "该实体未申报直接母公司",
-      chain.ultimateParent ? `最终母公司：${chain.ultimateParent.name}（LEI ${chain.ultimateParent.lei}）` : "该实体未申报最终母公司",
-      chain.meaning
+      bi(`GLEIF 登记主体：${chain.subject.name}（LEI ${chain.subject.lei}${chain.subject.country ? `，${chain.subject.country}` : ""}）`,
+        `GLEIF record: ${chain.subject.name} (LEI ${chain.subject.lei}${chain.subject.country ? `, ${chain.subject.country}` : ""})`),
+      chain.directParent
+        ? bi(`直接母公司：${chain.directParent.name}（LEI ${chain.directParent.lei}）`,
+          `Direct parent: ${chain.directParent.name} (LEI ${chain.directParent.lei})`)
+        : bi("该实体未申报直接母公司", "The entity has declared no direct parent"),
+      chain.ultimateParent
+        ? bi(`最终母公司：${chain.ultimateParent.name}（LEI ${chain.ultimateParent.lei}）`,
+          `Ultimate parent: ${chain.ultimateParent.name} (LEI ${chain.ultimateParent.lei})`)
+        : bi("该实体未申报最终母公司", "The entity has declared no ultimate parent"),
+      bi(chain.meaning, "GLEIF's parent is the accounting consolidating parent, self-declared and LOU-validated. It carries no shareholding percentage, and the 50 Percent Rule turns on percentages — so the chain is a lead, not a conclusion.")
     ]
     : [];
 
@@ -551,9 +596,14 @@ function tradeSteps(question, grounding, results) {
       basis: chainLines,
       needs: [
         chainFound
-          ? "名单存在潜在命中，需按 OFAC 50% 规则计算被列名主体的直接与间接合计持股；GLEIF 不公布持股比例"
+          ? bi("名单存在潜在命中，需按 OFAC 50% 规则计算被列名主体的直接与间接合计持股；GLEIF 不公布持股比例",
+            "A list matched, so the designated party's direct and indirect holdings must be aggregated under the 50 Percent Rule; GLEIF publishes no percentages")
           : "完整股权结构与受益所有权证据；名单检索不解决间接或合计持股",
-        ...(chain?.noConfidentMatch ? [`GLEIF 中未找到与该名称完全一致的登记实体（返回但未采信：${chain.rejected.map((item) => item.name).slice(0, 2).join("、")}）`] : []),
+        ...(chain?.noConfidentMatch ? [(() => {
+          const rejected = chain.rejected.map((item) => item.name).slice(0, 2);
+          return bi(`GLEIF 中未找到与该名称完全一致的登记实体（返回但未采信：${rejected.join("、")}）`,
+            `No GLEIF record matches this name exactly (returned but not used: ${rejected.join(", ")})`);
+        })()] : []),
         ...(chain?.notInRegister ? ["该名称在 GLEIF 中无登记记录；未持有 LEI 的实体需另行取得股权证据"] : []),
         ...needsMatching(results, null, /ubo|受益所有|股权|所有权|持股/i)
       ]

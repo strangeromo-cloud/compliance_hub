@@ -219,10 +219,13 @@ test("a resolved party carries its candidates into the step that disambiguates",
   const path = resolveAnalysisPath(planAnalysisPath({ agents: ["trade"], question }), { question, grounding, declaredFacts: {}, final: true });
   const steps = path.lanes.flatMap((lane) => lane.steps);
 
+  const { localizeLines } = await import("../src/path-i18n.js");
+  const shown = (step) => localizeLines(step.basis, "zh").concat(localizeLines(step.needs, "zh"));
+
   const party = steps.find((item) => item.id === "identify_party");
   assert.equal(party.status, "confirmed", "a resolved candidate settles the step rather than asking");
-  assert.ok(party.basis.some((line) => line.includes("艾维奥克斯公司")), "the candidate is named in the basis");
-  assert.ok(party.basis.some((line) => /名称相似不等于同一主体/.test(line)),
+  assert.ok(shown(party).some((line) => line.includes("艾维奥克斯公司")), "the candidate is named in the basis");
+  assert.ok(shown(party).some((line) => /名称相似不等于同一主体/.test(line)),
     "a similarity score must never read as an identification");
 
   // Nothing was screened as a designated name, but a candidate was found — so
@@ -230,7 +233,7 @@ test("a resolved party carries its candidates into the step that disambiguates",
   // what the previous step just produced.
   const resolution = steps.find((item) => item.id === "identity_resolution");
   assert.equal(resolution.status, "evidence_needed");
-  assert.ok(resolution.basis.some((line) => line.includes("艾维奥克斯公司")));
+  assert.ok(shown(resolution).some((line) => line.includes("艾维奥克斯公司")));
 });
 
 test("a lookup is answered, not put through a review", async () => {
@@ -355,9 +358,12 @@ test("a resolved chain does not become a 50 Percent Rule conclusion", async () =
 
   const clean = resolveAnalysisPath(planAnalysisPath({ agents: ["trade"], question }),
     { question, grounding: { ...base, listMatches: [] }, declaredFacts: {}, final: true });
+  const { localizeLines } = await import("../src/path-i18n.js");
+  const zh = (step) => localizeLines(step.basis, "zh").concat(localizeLines(step.needs, "zh"));
+
   const settled = clean.lanes.flatMap((lane) => lane.steps).find((item) => item.id === "ownership");
   assert.equal(settled.status, "confirmed", "a chain plus no designated name leaves nothing to compute");
-  assert.ok(settled.basis.some((line) => /不含持股比例/.test(line)),
+  assert.ok(zh(settled).some((line) => /不含持股比例/.test(line)),
     "what the register does not publish must be said where the chain is shown");
 
   // The moment a designated name is in play, the percentage is the question and
@@ -366,8 +372,8 @@ test("a resolved chain does not become a 50 Percent Rule conclusion", async () =
     { question, grounding: { ...base, listMatches: [{ entityName: "Acme Holding AG", matchScore: 0.9 }] }, declaredFacts: {}, final: true });
   const open = hit.lanes.flatMap((lane) => lane.steps).find((item) => item.id === "ownership");
   assert.equal(open.status, "evidence_needed");
-  assert.ok(open.basis.some((line) => /直接母公司/.test(line)), "the chain is still shown");
-  assert.ok(open.needs.some((line) => /50%/.test(line)), "and the aggregate is still asked for");
+  assert.ok(zh(open).some((line) => /直接母公司/.test(line)), "the chain is still shown");
+  assert.ok(zh(open).some((line) => /50%/.test(line)), "and the aggregate is still asked for");
 });
 
 test("a gem's kind decides whether a review procedure applies at all", async () => {
@@ -535,4 +541,20 @@ test("the English answer runs an English procedure", async () => {
   }
   const untranslated = [...new Set(planned)].filter((term) => CJK.test(term) && !TRANSLATABLE_TERMS[term]);
   assert.deepEqual(untranslated, [], `no English for: ${untranslated.join(" / ")}`);
+
+  // The explanation lines are built around data, so they cannot be mapped after
+  // the fact — they carry both languages from where they are written. What is
+  // left in Chinese on the English side must be data and nothing else: a
+  // register's own entity name, a notice number. Translating those would be
+  // inventing a name the register does not use.
+  const lines = steps.flatMap((step) => [...(step.basis || []), ...(step.needs || [])]);
+  const framed = lines.filter((line) => CJK.test(line));
+  for (const line of framed) {
+    const withoutData = line
+      .replace(/[\u4e00-\u9fff]+(公司|集团|株式会社|研究所|大学|中心|银行)/g, "")
+      .replace(/商务部公告\d{4}年第\d+号/g, "")
+      .replace(/[（(][^）)]*[）)]/g, "");
+    assert.ok(!/[\u4e00-\u9fff]{4,}/.test(withoutData),
+      `an English line still carries Chinese wording of its own: ${line}`);
+  }
 });
