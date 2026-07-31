@@ -1,4 +1,5 @@
 import { DATA_SOURCE_REGISTRY, dataSourceCoverage } from "../data-source-registry.js";
+import { SOURCE_PURPOSE } from "../source-purpose.js";
 import { ADAPTERS, queryRemoteSource } from "./adapters.js";
 import { readFallbackMeta, readNormalized, readRecordsPage, readSnapshotMeta, readSyncStatus, saveSourceData, updateSyncStatus } from "./storage.js";
 
@@ -64,8 +65,13 @@ export async function getDataSourceCoverage() {
     const hasSnapshot = sync?.status === "success" || sync?.status === "refresh_failed";
     const fallback = fallbacks[source.sourceId] || { available: false };
     const snapshotIsSample = hasSnapshot && String(sync.syncScope || "").startsWith("sample_");
+    // What the source is for, and which steps read it. `notes` answers "how do we
+    // get it"; a compliance reader looking at thirty-four cards needs "what is it
+    // for", and needs to see when the answer is "nothing reads it yet".
+    const purpose = SOURCE_PURPOSE[source.sourceId] || null;
     return {
       ...source,
+      purpose: purpose ? { zh: purpose.zh, en: purpose.en, usedIn: purpose.usedIn } : null,
       currentCoverage: hasSnapshot ? (snapshotIsSample ? "sample_snapshot" : "structured_snapshot") : source.currentCoverage,
       dataCaptured: hasSnapshot ? [
         "official raw snapshot",

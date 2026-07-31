@@ -225,3 +225,36 @@ test("no source file carries a control character where an escape was meant", asy
   }
   assert.deepEqual(bad, [], `control characters found in: ${bad.join(", ")}`);
 });
+
+test("every registered source says what it is for", async () => {
+  // The registry's notes answer "how do we fetch it". A reader looking at
+  // thirty-four cards needs "what is it for" — and needs to see when the honest
+  // answer is "nothing reads it yet", which is a fact about scope rather than a
+  // fault, and is invisible without saying it.
+  const { DATA_SOURCE_REGISTRY } = await import("../src/data-source-registry.js");
+  const { SOURCE_PURPOSE } = await import("../src/source-purpose.js");
+
+  const missing = DATA_SOURCE_REGISTRY.filter((source) => !SOURCE_PURPOSE[source.sourceId]).map((source) => source.sourceId);
+  assert.deepEqual(missing, [], `no stated purpose for: ${missing.join(", ")}`);
+
+  const stray = Object.keys(SOURCE_PURPOSE)
+    .filter((id) => !DATA_SOURCE_REGISTRY.some((source) => source.sourceId === id));
+  assert.deepEqual(stray, [], `purpose written for sources that do not exist: ${stray.join(", ")}`);
+
+  for (const [id, purpose] of Object.entries(SOURCE_PURPOSE)) {
+    assert.ok(purpose.zh?.length > 10 && purpose.en?.length > 10, `${id} needs both languages`);
+    assert.ok(Array.isArray(purpose.usedIn), `${id} must state which steps read it, even if none`);
+  }
+
+  // A source claimed to be read by a step has to be referenced by the code that
+  // runs it, or the page is describing an integration that does not exist.
+  const { readFile } = await import("node:fs/promises");
+  let code = "";
+  for (const file of ["grounding.js", "lookup.js", "briefing.js", "ownership.js", "clearance.js", "analysis-path.js"]) {
+    code += await readFile(new URL(`../src/${file}`, import.meta.url), "utf8");
+  }
+  const claimedButAbsent = Object.entries(SOURCE_PURPOSE)
+    .filter(([id, purpose]) => purpose.usedIn.length && !code.includes(`"${id}"`) && !/^methodology:/.test(purpose.usedIn[0]))
+    .map(([id]) => id);
+  assert.deepEqual(claimedButAbsent, [], `claimed as read but not referenced in the analysis: ${claimedButAbsent.join(", ")}`);
+});

@@ -23,6 +23,9 @@
 import { fetchPublicFile } from "./data-layer/http.js";
 import { scoreNameMatch } from "./entity-matching.js";
 
+// The registry entry this resolver is the implementation of, so the coverage
+// page's claim that the ownership step reads it can be checked against code.
+export const SOURCE_ID = "gleif-lei";
 const API = "https://api.gleif.org/api/v1/lei-records";
 const ACCEPT = "application/vnd.api+json";
 

@@ -1487,3 +1487,12 @@ html[lang="en"] .step-needs li::before { content: "NEEDS"; font-size: 8px; }
 .prose > p + p { margin-top: 6px; }
 .prose ul, .prose ol { margin: 6px 0; padding-left: 18px; }
 .prose li { margin: 3px 0; line-height: 1.7; }
+/* What a source is for, and which steps read it. The unused note is deliberately
+   plain rather than a warning: a source nothing reads is often there to be
+   searched by hand, and that is a fact about scope, not a fault. */
+.source-purpose { margin: 8px 0 0; font-size: 11.5px; line-height: 1.65; color: var(--text-2); }
+.source-usedin { margin: 5px 0 0; font-size: 10.5px; color: var(--text-3); display: flex; flex-wrap: wrap; gap: 4px; align-items: baseline; }
+.source-usedin b { font-weight: 600; color: var(--text-3); }
+.source-usedin code { font: 500 10px/1.6 var(--mono); padding: 0 5px; border-radius: 3px;
+  background: var(--surface-2); border: 1px solid var(--border); color: var(--text-2); }
+.source-usedin.unused { font-style: normal; opacity: .85; }
