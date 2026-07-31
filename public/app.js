@@ -912,12 +912,25 @@ function stepInputsMarkup(item) {
 // the run moved past it, the page recomputed the same step from the path and asked
 // again, and declining did nothing for ever. The path carries the run's own answer
 // now, and this only fills in for a path that predates it.
+// One definition of "this step is still asking the reader something", used by
+// the body and by the rail.
+//
+// They had a copy each, and the rail's did not know about declined fields. So
+// after a reader clicked 暂无 on identity resolution, the body moved on to the
+// ownership step while the rail went on pointing at the one just passed over —
+// two different answers to the same question, three feet apart on screen.
+function isAskable(item) {
+  if (item?.status !== "evidence_needed" || !item.inputs?.length) return false;
+  const declined = new Set(state.unavailableFacts);
+  return !item.inputs.every((input) => declined.has(input.field));
+}
+
 function firstBlockedStep(path) {
   if (path?.awaitingInput?.step) return path.awaitingInput.step;
   if (path?.awaitingInput === null && path?.final) return null;
   for (const lane of path?.lanes || []) {
     for (const item of lane.steps) {
-      if (item.status === "evidence_needed" && item.inputs?.length) return item.id;
+      if (isAskable(item)) return item.id;
     }
   }
   return null;
@@ -1030,9 +1043,7 @@ function pathMarkup(path, grounding, options = {}) {
   // no longer a question, so a lane holding only declined steps is finished with
   // the reader and the page must move on to the next one. Getting that wrong
   // stalled the run twice with no question on the page and no conclusion.
-  const declined = new Set(state.unavailableFacts);
-  const askable = (item) => item.status === "evidence_needed" && item.inputs?.length
-    && !item.inputs.every((input) => declined.has(input.field));
+  const askable = isAskable;
   const laneQuestion = (lane) => {
     if (blocked && lane.steps.some((item) => item.id === blocked)) return blocked;
     return lane.steps.find(askable)?.id || null;
