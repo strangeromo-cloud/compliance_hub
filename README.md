@@ -146,7 +146,7 @@ bis-ear-732,bis-ear-734,bis-ear,bis-ear-740,bis-ear-744,bis-ccl,bis-country-char
 |---|---|
 | `Dockerfile` | `FROM node:24-alpine` |
 | `package.json` | `"engines": { "node": "24.x" }` |
-| `zbpack.json` | `{"dockerfile_path": "Dockerfile"}` |
+| `zbpack.json` | `{"dockerfile": {"path": "Dockerfile"}}` — 键是嵌套的，写成 `dockerfile_path` 是无效键，会被忽略 |
 
 曾经出现过的现象：构建跑在 Node 20 上，容器反复重启，日志里只有 `Error [ERR_UNKNOWN_BUILTIN_MODULE]: No such built-in module: node:sqlite` ——这是模块加载器抛的，程序一行都没执行，所以什么也没说明。现在启动时会先检查版本并打印需要哪个版本、哪几处声明过，然后退出。
 
