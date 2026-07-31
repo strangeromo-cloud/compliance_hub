@@ -4,6 +4,7 @@ import { retrievePublicSources } from "./retrieval.js";
 import { callJsonModel, callJsonModelStream, readableProjection } from "./llm.js";
 import { assessClearance } from "./clearance.js";
 import { resolveLookup } from "./lookup.js";
+import { localizePath } from "./path-i18n.js";
 import { buildBriefing } from "./briefing.js";
 import { GEM_KINDS } from "./gem-kinds.js";
 import { createMockAgentResult, createMockSynthesis } from "./mock.js";
@@ -234,7 +235,7 @@ async function answerBriefing({ question, locale, mock, onEvent }) {
 
   let path = planAnalysisPath({ agents: ["briefing"], question });
   path = resolveAnalysisPath(path, { question, grounding, results: [], declaredFacts: {}, templated: mock, final: true });
-  onEvent({ type: "path", path });
+  onEvent({ type: "path", path: localizePath(path, locale) });
 
   // What the period amounts to, before the notices that make it up. A reader
   // asking what changed over six months wants the aggregate first; the list of
@@ -282,7 +283,7 @@ async function answerBriefing({ question, locale, mock, onEvent }) {
 
   onEvent({ type: "agent_delta", agent: "briefing", text: synthesis.executiveSummary });
   return {
-    id, createdAt: new Date().toISOString(), analysisPath: path, awaitingInput: null,
+    id, createdAt: new Date().toISOString(), analysisPath: localizePath(path, locale), awaitingInput: null,
     unavailableFacts: [], actionPlan: [], declaredFacts: {},
     mode: mock ? "grounded-demo" : "live-model",
     intent: grounding.intent, grounding, agents: ["briefing"],
@@ -311,7 +312,7 @@ async function answerMemo({ question, locale, history, mock, onEvent }) {
 
   let path = planAnalysisPath({ agents: ["memo"], question });
   path = resolveAnalysisPath(path, { question, grounding, results: [], declaredFacts: {}, templated: mock, final: true });
-  onEvent({ type: "path", path });
+  onEvent({ type: "path", path: localizePath(path, locale) });
 
   const synthesis = priorTurns.length
     ? {
@@ -331,7 +332,7 @@ async function answerMemo({ question, locale, history, mock, onEvent }) {
 
   onEvent({ type: "agent_delta", agent: "memo", text: synthesis.executiveSummary });
   return {
-    id, createdAt: new Date().toISOString(), analysisPath: path, awaitingInput: null,
+    id, createdAt: new Date().toISOString(), analysisPath: localizePath(path, locale), awaitingInput: null,
     unavailableFacts: [], actionPlan: [], declaredFacts: {},
     mode: mock ? "grounded-demo" : "live-model",
     intent: grounding.intent, grounding, agents: ["memo"],
@@ -375,7 +376,7 @@ async function answerLookup({ question, locale, lookup, mock, onEvent }) {
 
   let path = planAnalysisPath({ agents: ["lookup"], question });
   path = resolveAnalysisPath(path, { question, grounding, results: [], declaredFacts: {}, templated: mock, final: true });
-  onEvent({ type: "path", path });
+  onEvent({ type: "path", path: localizePath(path, locale) });
 
   const synthesis = found.length
     ? {
@@ -401,7 +402,7 @@ async function answerLookup({ question, locale, lookup, mock, onEvent }) {
       };
 
   const result = {
-    id, createdAt: new Date().toISOString(), analysisPath: path, awaitingInput: null,
+    id, createdAt: new Date().toISOString(), analysisPath: localizePath(path, locale), awaitingInput: null,
     unavailableFacts: [], actionPlan: [], declaredFacts: {},
     mode: mock ? "grounded-demo" : "live-model",
     intent: grounding.intent, grounding, agents: ["lookup"],
@@ -444,7 +445,7 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
   // has to pass, and then watches them close.
   const routing = routeReasons(contextualQuestion);
   let analysisPath = planAnalysisPath({ agents, gemId, routeReasons: routing.reasons, routeMatched: routing.matched, question: contextualQuestion, declaredFacts });
-  onEvent({ type: "path", path: analysisPath });
+  onEvent({ type: "path", path: localizePath(analysisPath, locale) });
 
   const selectedSources = sourcesForAgents(agents, question);
   const sources = await retrievePublicSources(selectedSources);
@@ -481,7 +482,7 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
   // Screening steps can close once grounding is in; the rest wait for the
   // specialists rather than being guessed at.
   analysisPath = resolveAnalysisPath(analysisPath, { question: contextualQuestion, grounding: groundingSummary, results: [], declaredFacts, templated: mock });
-  onEvent({ type: "path", path: analysisPath });
+  onEvent({ type: "path", path: localizePath(analysisPath, locale) });
 
   // The specialists run one after another, in the order the path lists them.
   //
@@ -550,7 +551,7 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
     // This lane's steps close before the next lane starts, so the path fills in
     // the order it is read rather than all at once at the end.
     analysisPath = resolveAnalysisPath(analysisPath, { question: contextualQuestion, grounding: groundingSummary, results, declaredFacts, templated: mock });
-    onEvent({ type: "path", path: analysisPath });
+    onEvent({ type: "path", path: localizePath(analysisPath, locale) });
 
     // A lane that ends with a question the user can answer stops the run there.
     // Carrying on to the next specialist would be analysing around a gap that has
@@ -594,7 +595,7 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
   return {
     id,
     createdAt: new Date().toISOString(),
-    analysisPath,
+    analysisPath: localizePath(analysisPath, locale),
     // The run stopped to ask rather than finishing. Everything downstream — the
     // conclusion, the case record, the thread summary — has to be able to tell
     // "not answered yet" from "answered".

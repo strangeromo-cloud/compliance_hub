@@ -74,13 +74,13 @@ const copy = {
     procDerivedTag: "非官方",
     procDerivedNote: "「系统按问题结构生成」不是官方程序，所以它在开场说明和右侧流程里都单独标注。把自己设计的步骤说成官方要求，是这份文档最不该出现的东西。",
     procPrcNote: "两用物项出口管制条例目前只作为**数据来源**被引用，没有自己的步骤序列：中国出口问题走的是「物项与许可」这条线的步骤（结构取自 EAR Part 732），检索的是中国的管制清单、许可证目录和商务部公告。中国侧没有公布编号决策树，所以这里不硬造一个对称结构——但这也意味着这条线的步骤标题读起来是美国口径。",
-    procStepsTitle: "每条线的步骤",
+    procStepsTitle: "每条线的步骤", procStepUnit: "步", procStepsNote: "点开查看该条线的完整步骤与条文依据。",
     procStepHeads: ["#", "步骤", "依据", "需要你提供"],
     procAsksNone: "—",
     procGemTitle: "每个 Gem 从哪条线起步",
     procGemLead: "Gem 决定分析从哪条线开始，不决定只走哪条线——路由会根据问题本身追加其他线。下表是起步位置和它对应的程序。",
     procGemHeads: ["Gem", "起步线", "起步程序", "可能追加"],
-    procLaneNames: { trade: "Trade — 受限方与主体", product: "Product — 物项与许可", tpdd: "Ethics & TPDD — 第三方", review: "结案" },
+    procLaneNames: { trade: "Trade — 受限方与主体", product: "Product — 物项与许可", tpdd: "Ethics & TPDD — 第三方", review: "结案", lookup: "查询", briefing: "监管变化简报", memo: "案件备忘录" },
     useLabel: "使用方法", useTitle: "在输入框键入 /",
     useLead: "上下键选择 Gem，回车确认。每个 Gem 绑定五样东西：产出类型、指令、数据源白名单、必填事实清单、输出模板。产出类型决定它走哪条路——/reg-brief 是简报，不会触发受限方筛查；必填事实清单则让系统在提交前就知道自己缺什么，而不是让模型悄悄猜。",
     gemsLabel: "可用 Gem", gemBound: "个来源", gemRecords: "条记录", gemUnsynced: "个未同步", gemNone: "不绑定外部来源",
@@ -205,13 +205,13 @@ const copy = {
     procDerivedTag: "not official",
     procDerivedNote: "\u201cDesigned here\u201d is not an official procedure, so it is labelled separately in the opening briefing and in the execution rail. Presenting a step we designed as something a regulator requires is the one thing this page must not do.",
     procPrcNote: "The PRC dual-use regulation is currently cited as a **source** only; it has no step sequence of its own. A China export question runs the Item & licence lane, whose structure comes from EAR Part 732, while searching the PRC control list, licence catalogue and MOFCOM notices. China publishes no numbered decision tree, so no symmetrical one is invented here — but it does mean those step titles read in US terms.",
-    procStepsTitle: "The steps in each lane",
+    procStepsTitle: "The steps in each lane", procStepUnit: "steps", procStepsNote: "Open a lane for its full sequence and the provision behind each step.",
     procStepHeads: ["#", "Step", "Basis", "What it asks you for"],
     procAsksNone: "\u2014",
     procGemTitle: "Where each gem starts",
     procGemLead: "A gem decides which lane the analysis opens with, not which lanes run — routing adds the others from the question itself. Below is the starting point and the procedure it belongs to.",
     procGemHeads: ["Gem", "Opening lane", "Opening procedure", "May add"],
-    procLaneNames: { trade: "Trade — parties", product: "Product — item & licence", tpdd: "Ethics & TPDD", review: "Close" },
+    procLaneNames: { trade: "Trade — parties", product: "Product — item & licence", tpdd: "Ethics & TPDD", review: "Close", lookup: "Lookup", briefing: "Regulatory briefing", memo: "Case memo" },
     useLabel: "How to use", useTitle: "Press / in the composer",
     useLead: "Arrow keys select a gem, Enter confirms. A gem binds five things: what it produces, the instruction, the bound-source whitelist, the facts it requires, and the output template. The first decides which path it takes \u2014 /reg-brief is a briefing and never opens a party screening \u2014 and the fourth is what makes a gem more than a saved prompt: the interface knows what is missing before anything is submitted.",
     gemsLabel: "Available gems", gemBound: "sources", gemRecords: "records", gemUnsynced: "not synced", gemNone: "no bound sources",
@@ -340,9 +340,10 @@ function proceduresSection() {
         <p class="guide-note">${esc(t.procDerivedNote)}</p>
 
         <h3>${esc(t.procStepsTitle)}</h3>
+        <p class="guide-note">${esc(t.procStepsNote)}</p>
         ${data.lanes.map((lane) => `
-          <div class="proc-lane">
-            <h4>${esc(laneName(lane.lane))} <span>${esc(byId[lane.methodology]?.label || lane.methodology)}</span></h4>
+          <details class="proc-lane">
+            <summary><b>${esc(laneName(lane.lane))}</b><span>${esc(byId[lane.methodology]?.label || lane.methodology)}</span><em>${lane.steps.length} ${esc(t.procStepUnit)}</em></summary>
             <div class="table-wrap"><table>
               <thead><tr>${t.procStepHeads.map((head) => `<th>${esc(head)}</th>`).join("")}</tr></thead>
               <tbody>${lane.steps.map((step, index) => `<tr>
@@ -352,7 +353,7 @@ function proceduresSection() {
                 <td>${step.asks.length ? step.asks.map((ask) => esc(ask)).join("<br>") : esc(t.procAsksNone)}</td>
               </tr>`).join("")}</tbody>
             </table></div>
-          </div>`).join("")}
+          </details>`).join("")}
 
         <h3>${esc(t.procGemTitle)}</h3>
         <p>${esc(t.procGemLead)}</p>

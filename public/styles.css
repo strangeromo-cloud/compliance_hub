@@ -1464,9 +1464,20 @@ html[lang="en"] .step-needs li::before { content: "NEEDS"; font-size: 8px; }
 
 /* Procedures section: dense tables that have to stay readable on a phone, so
    they scroll inside their own wrapper rather than widening the page. */
-.proc-lane { margin-top: 18px; }
-.proc-lane h4 { margin: 0 0 8px; font-size: 13px; font-weight: 600; display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; }
-.proc-lane h4 span { font-size: 11px; font-weight: 400; color: var(--text-3); }
+/* Each lane's steps behind a summary line. Five step tables plus the procedure
+   table plus the gem table put nine tables in one section — accurate, and a wall
+   to read. The sequence is detail for someone checking a lane, not the point of
+   the section. */
+.proc-lane { margin-top: 8px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
+.proc-lane > summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px;
+  padding: 9px 12px; cursor: pointer; font-size: 13px; list-style: none; }
+.proc-lane > summary::-webkit-details-marker { display: none; }
+.proc-lane > summary::before { content: "›"; display: inline-block; transition: transform .15s ease; color: var(--text-3); }
+.proc-lane[open] > summary::before { transform: rotate(90deg); }
+.proc-lane > summary b { font-weight: 600; }
+.proc-lane > summary span { font-size: 11px; font-weight: 400; color: var(--text-3); }
+.proc-lane > summary em { margin-left: auto; font-style: normal; font: 500 10.5px/1 var(--mono); color: var(--text-3); }
+.proc-lane > .table-wrap { padding: 0 12px 12px; }
 .proc-n { color: var(--text-3); font-variant-numeric: tabular-nums; width: 1%; }
 .proc-count { font-variant-numeric: tabular-nums; }
 .proc-count span { display: block; font-size: 10px; color: var(--text-3); }

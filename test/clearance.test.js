@@ -496,3 +496,43 @@ test("a record the register has retired is not a candidate", async () => {
   assert.ok(!found.otherCandidates.some((item) => /DUPLICATE/i.test(item.registrationStatus || "")),
     "a duplicate registration must not be offered as an alternative either");
 });
+
+test("the English answer runs an English procedure", async () => {
+  // The path was written in one language and stayed that way: lane names, step
+  // titles and every input label came back in Chinese however the interface was
+  // set, so an English reader got an English conclusion over a Chinese procedure.
+  const { assessScenario } = await import("../src/orchestrator.js");
+  const { TRANSLATABLE_TERMS } = await import("../src/path-i18n.js");
+  const { planAnalysisPath } = await import("../src/analysis-path.js");
+  const CJK = /[一-鿿]/;
+
+  const english = await assessScenario({
+    question: "We ship servers to a customer in Germany through a Singapore agent", locale: "en", mock: true
+  });
+  const steps = english.analysisPath.lanes.flatMap((lane) => lane.steps);
+  assert.ok(steps.length);
+  assert.deepEqual(english.analysisPath.lanes.filter((lane) => CJK.test(lane.label)).map((lane) => lane.label), []);
+  assert.deepEqual(steps.filter((step) => CJK.test(step.title)).map((step) => step.title), []);
+  assert.deepEqual(steps.flatMap((step) => step.inputs || []).filter((input) => CJK.test(input.label)).map((input) => input.label), []);
+
+  // Chinese is untouched: the resolvers still write one language and only the
+  // boundary translates.
+  const chinese = await assessScenario({
+    question: "我们通过新加坡代理商向德国客户出口服务器", locale: "zh", mock: true
+  });
+  assert.ok(chinese.analysisPath.lanes.every((lane) => CJK.test(lane.label)));
+
+  // Every fixed term a plan can produce has a translation, so a new step cannot
+  // be added without one.
+  const planned = [];
+  for (const agents of [["trade", "product", "tpdd"], ["lookup"], ["briefing"], ["memo"]]) {
+    for (const lane of planAnalysisPath({ agents }).lanes) {
+      planned.push(lane.label, ...lane.steps.map((step) => step.title));
+      for (const input of lane.steps.flatMap((step) => step.inputs || [])) {
+        planned.push(input.label, ...(input.options || []));
+      }
+    }
+  }
+  const untranslated = [...new Set(planned)].filter((term) => CJK.test(term) && !TRANSLATABLE_TERMS[term]);
+  assert.deepEqual(untranslated, [], `no English for: ${untranslated.join(" / ")}`);
+});
