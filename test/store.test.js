@@ -116,3 +116,29 @@ test("cached page text carries the time it was captured", async () => {
   assert.ok(entry.ageMs < 60_000, "a page just written is not old");
   assert.equal(await pages.readCachedPage("https://example.gov/never-fetched"), null);
 });
+
+test("every China source ships a fallback, and every fallback says it is one", async () => {
+  // PRC hosts time out from some regions — the deployment's boot log is nothing
+  // but ETIMEDOUT for them. A source with no bundled copy is simply absent
+  // there, which is how PRC classification had nothing to work from.
+  const { readdir, readFile } = await import("node:fs/promises");
+  const dir = new URL("../data/fallback/", import.meta.url);
+  const names = (await readdir(dir)).filter((name) => name.endsWith(".json"));
+
+  const { DATA_SOURCE_REGISTRY } = await import("../src/data-source-registry.js");
+  const { ADAPTERS } = await import("../src/data-layer/adapters.js");
+  const reachablePrc = DATA_SOURCE_REGISTRY
+    .filter((source) => source.country === "CN" && ADAPTERS[source.sourceId]?.sync)
+    .map((source) => source.sourceId);
+  for (const sourceId of reachablePrc) {
+    assert.ok(names.includes(`${sourceId}.json`), `${sourceId} has a sync adapter but no bundled fallback`);
+  }
+
+  for (const name of names) {
+    const snapshot = JSON.parse(await readFile(new URL(name, dir), "utf8"));
+    assert.equal(snapshot.provenance, "bundled_fallback_snapshot", `${name} must declare what it is`);
+    assert.ok(snapshot.bundledAt, `${name} must carry its capture date`);
+    assert.ok(snapshot.records?.length, `${name} must actually contain records`);
+    assert.match(snapshot.note, /re-sync|point-in-time/i, `${name} must state its limits`);
+  }
+});
