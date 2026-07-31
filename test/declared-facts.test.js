@@ -181,3 +181,19 @@ test("an informational question is answered rather than interrogated", async () 
     assert.ok(result.synthesis, `${question} should reach a conclusion`);
   }
 });
+
+test("history durability is reported, never assumed", async () => {
+  // An emptied history has two very different causes — nothing was ever asked,
+  // or the disk it was on went away with the container. The page can only tell
+  // the difference if the server says which disk it is on.
+  const { storageDurability } = await import("../src/case-store.js");
+  const state = await storageDurability();
+  assert.ok(["boolean", "object"].includes(typeof state.persistent), "persistent is true, false, or null");
+  assert.ok(state.reason, "the verdict comes with its ground");
+  // Development runs on an ordinary disk, so nothing here may claim otherwise.
+  assert.equal(state.persistent, true);
+  assert.equal(state.reason, "host_filesystem");
+
+  const source = await readFile(new URL("../server.js", import.meta.url), "utf8");
+  assert.match(source, /historyPersistent: storage\.persistent/, "the capability endpoint must publish it");
+});

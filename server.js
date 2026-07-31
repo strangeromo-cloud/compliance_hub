@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { assessScenario } from "./src/orchestrator.js";
 import { classifyModelError, testModelConnection } from "./src/llm.js";
 import { getDataSourceCoverage, queryDataSource, syncSource } from "./src/data-layer/service.js";
-import { deleteThread, listThreads, readThread, saveCase } from "./src/case-store.js";
+import { deleteThread, listThreads, readThread, saveCase, storageDurability } from "./src/case-store.js";
 import { DECLARABLE_FIELDS } from "./src/analysis-path.js";
 
 const ROOT = fileURLToPath(new URL(".", import.meta.url));
@@ -184,7 +184,13 @@ const server = createServer(async (request, response) => {
     }
 
     if (request.method === "GET" && url.pathname === "/api/runtime-capabilities") {
+      const storage = await storageDurability();
       return sendJson(response, 200, {
+        // History is written to disk, and on an unmounted container that disk
+        // goes away with the container. The page says so rather than letting an
+        // emptied list read as a bug.
+        historyPersistent: storage.persistent,
+        historyStorage: storage.reason,
         liveModelConfigured: Boolean(process.env.OPENAI_API_KEY),
         accessPasswordRequired: Boolean(ACCESS_PASSWORD),
         // A server key with no access code cannot be used: say so here so the
@@ -228,7 +234,7 @@ const server = createServer(async (request, response) => {
       const locale = body.locale === "en" ? "en" : "zh";
       const declared = cleanDeclaredFacts(body.declaredFacts);
       const result = await assessScenario({ question, locale, config, mock, gemId: body.gemId, declaredFacts: declared.facts, unavailableFacts: cleanUnavailable(body.unavailableFacts), history: cleanHistory(body.history) });
-      await saveCase(result, question, locale, body.threadId).catch(() => null);
+      await saveCase(result, question, locale, body.threadId).catch(noteSaveFailure);
       return sendJson(response, 200, { ...result, ignoredDeclaredFacts: declared.ignored });
     }
 
@@ -261,7 +267,7 @@ const server = createServer(async (request, response) => {
         result.ignoredDeclaredFacts = declared.ignored;
         // Persist before announcing completion, but a storage failure must not
         // discard an answer the user is already looking at.
-        await saveCase(result, question, locale, body.threadId).catch(() => null);
+        await saveCase(result, question, locale, body.threadId).catch(noteSaveFailure);
         send({ type: "done", result });
       } catch (error) {
         // The status line is already sent, so a failure has to arrive as an
@@ -336,6 +342,14 @@ function describeSyncError(error, depth = 0) {
   const parts = [error.code, error.syscall, error.address, error.message].filter(Boolean);
   const nested = error.cause ? [error.cause] : Array.isArray(error.errors) ? error.errors.slice(0, 1) : [];
   return [[...new Set(parts)].join(" "), ...nested.map((item) => describeSyncError(item, depth + 1))].filter(Boolean).join(" <- ");
+}
+
+// A case that cannot be stored must not take down an answer the user is already
+// reading, but it must not disappear quietly either: an empty history with a
+// clean log is indistinguishable from one that was never written to.
+function noteSaveFailure(error) {
+  console.log(`Case not stored: ${String(error?.message || error).slice(0, 200)}`);
+  return null;
 }
 
 // A hosted container starts with an empty data/runtime, so the hub would have no

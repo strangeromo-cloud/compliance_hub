@@ -23,7 +23,7 @@ const i18n = {
     hfQuestion: "一个问题", hfAnswer: "统一答案", startersLabel: "快速开始", workspaceEmpty: "工作区还没有 Gem", gemBacking: "数据支撑",
     teachSlashTitle: "在输入框键入 /", teachSlashBody: "呼出 {n} 个 Gem 的完整目录，上下键选择，回车使用。",
     teachPinTitle: "把常用 Gem 加入工作区", teachPinBody: "在目录里点 ★，或在 Gem 详情里点「添加到工作区」，它会常驻左侧栏。",
-    historyLabel: "历史记录", historyEmpty: "暂无记录", turnUnit: "轮", historyOpenFailed: "无法打开该记录", flowTitle: "执行流程", briefLead: "本次问题落在以下 {n} 个审查范围，按顺序逐步执行：", briefBecause: "命中 ", briefStandard: "标准程序", briefNoStandard: "无对应标准程序", briefDesigned: "系统设计", flowEmpty: "提交一个问题后，这里显示分析路径的执行进度", flowNotRun: "该步骤尚未执行",
+    historyLabel: "历史记录", historyEmpty: "暂无记录", historyVolatile: "记录存在容器本地磁盘，重新部署会清空。挂载 Volume 到 data/runtime 可长期保留。", turnUnit: "轮", historyOpenFailed: "无法打开该记录", flowTitle: "执行流程", briefLead: "本次问题落在以下 {n} 个审查范围，按顺序逐步执行：", briefBecause: "命中 ", briefStandard: "标准程序", briefNoStandard: "无对应标准程序", briefDesigned: "系统设计", flowEmpty: "提交一个问题后，这里显示分析路径的执行进度", flowNotRun: "该步骤尚未执行",
     derivMatch_gem: "由所选 Gem 指定为主检查", derivMatch_always: "每次分析都执行", derivMatch_question_terms: "问题中的关键词",
     derivMatch_no_term_matched_all_lanes_run: "问题未命中任何关键词，三条检查全部执行",
     derivKind_official: "官方程序", derivKind_derived: "系统规划",
@@ -81,7 +81,7 @@ const i18n = {
     hfQuestion: "One question", hfAnswer: "One answer", startersLabel: "Start here", workspaceEmpty: "No gems in your workspace yet", gemBacking: "Data behind it",
     teachSlashTitle: "Press / in the composer", teachSlashBody: "Opens the full catalogue of {n} gems. Arrow keys select, Enter uses.",
     teachPinTitle: "Pin the ones you use", teachPinBody: "Add to workspace from a gem's details and it stays in the sidebar.",
-    historyLabel: "History", historyEmpty: "No cases yet", turnUnit: "turns", historyOpenFailed: "That case could not be opened", flowTitle: "Execution flow", briefLead: "This question falls into {n} review scopes, worked through in order:", briefBecause: "matched ", briefStandard: "Standard procedure", briefNoStandard: "No standard procedure", briefDesigned: "designed here", flowEmpty: "Ask a question and the analysis path\u2019s progress appears here", flowNotRun: "That step has not run yet",
+    historyLabel: "History", historyEmpty: "No cases yet", historyVolatile: "Cases sit on the container\u2019s own disk and are cleared by a redeploy. Mount a volume at data/runtime to keep them.", turnUnit: "turns", historyOpenFailed: "That case could not be opened", flowTitle: "Execution flow", briefLead: "This question falls into {n} review scopes, worked through in order:", briefBecause: "matched ", briefStandard: "Standard procedure", briefNoStandard: "No standard procedure", briefDesigned: "designed here", flowEmpty: "Ask a question and the analysis path\u2019s progress appears here", flowNotRun: "That step has not run yet",
     derivMatch_gem: "set as the lead check by the selected gem", derivMatch_always: "runs on every analysis", derivMatch_question_terms: "terms in the question",
     derivMatch_no_term_matched_all_lanes_run: "no term matched, so all three checks run",
     derivKind_official: "official", derivKind_derived: "system-planned",
@@ -172,6 +172,7 @@ const state = {
   sourceQuery: null,
   factsOpen: false,
   rail: localStorage.getItem("compliance-rail") === "1",
+  historyPersistent: true,
   evidenceCollapsed: false,
   panelTab: "flow",
   activeGem: null,
@@ -328,6 +329,15 @@ function renderCaseNav() {
         </span>
       </button></li>`).join("")
     : `<li class="case-empty">${esc(t("historyEmpty"))}</li>`;
+}
+
+// Said next to the list rather than in a toast, because it is a standing
+// property of this deployment, not an event.
+function renderHistoryDurability() {
+  const note = $("historyVolatile");
+  if (!note) return;
+  note.textContent = t("historyVolatile");
+  note.classList.toggle("hidden", state.historyPersistent);
 }
 
 async function loadCases() {
@@ -1879,6 +1889,10 @@ async function loadRuntimeCapabilities() {
     state.serverModel = capabilities.model || null;
     state.accessPasswordRequired = Boolean(capabilities.accessPasswordRequired);
     state.liveModelBlocked = Boolean(capabilities.liveModelBlocked);
+    // Only false says anything: null means the server could not tell, and a
+    // guess would be worse than silence.
+    state.historyPersistent = capabilities.historyPersistent !== false;
+    renderHistoryDurability();
     // Live mode is only pre-selected when it can actually run: a server key
     // behind a code the browser does not have yet still starts in rules mode.
     if (state.serverModelConfigured && !state.liveModelBlocked && liveModelReady()) state.rulesMode = false;
@@ -1903,6 +1917,7 @@ function renderScenarios() {
 function applyLocale(locale) {
   state.locale = locale;
   localStorage.setItem("compliance-locale", locale);
+  renderHistoryDurability();
   document.documentElement.lang = locale === "zh" ? "zh-CN" : "en";
   document.querySelectorAll("[data-i18n]").forEach((el) => { el.textContent = t(el.dataset.i18n); });
   document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => { el.placeholder = t(el.dataset.i18nPlaceholder); });

@@ -1412,3 +1412,5 @@ html[lang="en"] .step-needs li::before { content: "NEEDS"; font-size: 8px; }
 .path-step.answered .step-arrow { display: none; }
 .path-step.answered .step-ask { color: var(--text-3); font-weight: 400; font-size: 11px; }
 .path-step.answered .step-mark { animation: none; }
+/* A standing property of the deployment, stated beside the list it qualifies. */
+.case-volatile { margin: 8px 4px 0; font-size: 11px; line-height: 1.5; color: var(--text-3); }

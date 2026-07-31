@@ -10,7 +10,7 @@
 // unless a volume is mounted. That is a deployment choice, not something to
 // hide.
 
-import { mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, stat, unlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -93,6 +93,27 @@ export async function saveCase(result, question, locale, thread) {
   });
   writeQueue = operation;
   return operation;
+}
+
+// Whether history outlives the container it was written in.
+//
+// In an image the case directory sits on the same overlay filesystem as the
+// code, and the whole layer is replaced on every deploy. A mounted volume is a
+// different device, which is what this compares. Outside a container the
+// question does not arise: an ordinary disk keeps its files.
+export async function storageDurability() {
+  try {
+    await mkdir(CASE_DIR, { recursive: true });
+    const [cases, root] = await Promise.all([stat(CASE_DIR), stat(ROOT)]);
+    const containerized = await stat("/.dockerenv").then(() => true, () => false);
+    if (!containerized) return { persistent: true, reason: "host_filesystem" };
+    return cases.dev === root.dev
+      ? { persistent: false, reason: "container_overlay" }
+      : { persistent: true, reason: "mounted_volume" };
+  } catch {
+    // Unknown beats a confident guess in either direction.
+    return { persistent: null, reason: "unreadable" };
+  }
 }
 
 export async function listThreads(limit = 50) {
