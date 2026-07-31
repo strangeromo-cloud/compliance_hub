@@ -13,6 +13,25 @@ const copy = {
     lead: "一个输入框提问，Master Agent 自动路由到贸易、产品和第三方尽调 Agent，返回一份带证据链的统一答案——并且始终说明这份答案站在什么数据上。",
     scope: ["美国 · 中国", "仅出口管制", "{sources} 个已实现数据源", "{gems} 个 Gem"],
 
+    kindsLabel: "系统能做什么", kindsTitle: "四种工作，只有一种是审查",
+    kindsLead: "把每个问题都当成合规审查是错的。「这个料号的 ECCN 是多少」没有交易方、没有目的地、没有交易，跑一遍审查程序只会得到一段与提问无关的通用话。所以问题先分流，四条路各有各的产出和边界。",
+    kindsHeads: ["类型", "什么时候走这条", "产出", "不做什么"],
+    kinds: [
+      ["合规审查", "描述了一笔交易——有交易方、物项、目的地或最终用户", "按已公布程序逐步执行，每步带条文依据；缺资料就停在那一步问你；结论带风险等级与边界", "不放行交易。最后一步永远是人工复核"],
+      ["直接查询", "问一个已登记的值：料号的 ECCN、管制编码的含义、某主体是否在某份清单上", "单步检索，直接给值和来源；查不到时说明查了哪些记录、答案在谁那里", "不推断。未收录不等于不受管制"],
+      ["监管简报", "问一段时间内发布了什么变化", "按公告汇总：新增多少家、分别进了哪份清单、来自哪些国家，再逐份列出动作与公告号", "不判断这些变化是否影响某笔交易——那是审查"],
+      ["案件备忘录", "把本会话已完成的分析整理成文书", "记录既有结论与证据来源", "不产生新判断。会话为空时直接说没有可整理的内容"]
+    ],
+    kindsGemNote: "Gem 声明自己属于哪一类，所以选中 /reg-brief 不会触发受限方筛查。但描述了交易的问题始终走审查——不论选了哪个 Gem。",
+
+    autoLabel: "自动完成的部分", autoTitle: "不该让人手填的，就别问",
+    autoLead: "每问一次就要填一堆表格，是这类工具最劝退的地方。凡是公开数据能回答的，先查再问。",
+    autoItems: [
+      ["交易主体", "问题里写「客户 Aveox Technologies」就够了。系统在已同步名单里模糊匹配到登记名称，多个候选时取最相近的两个一并带入下一步。名称相似不等于同一主体，区分交给身份要素消歧。"],
+      ["股权穿透", "自动查 GLEIF 全球法人识别编码库，取直接母公司与最终母公司。GLEIF 的母公司指会计合并母公司，不含持股比例——所以命中名单时仍会要你提供合计持股。"],
+      ["物项分类", "NVIDIA 1,352 个料号、AMD 8,554 个料号的厂商公开分类表已接入，按 part number 直接查 ECCN、HTS、CCATS。厂商声明不是分类决定。"],
+      ["路径长度", "按已陈述的事实分流：无第三方则不启尽调通道，EAR99 则无国别矩阵可查。每次跳过都写明触发它的事实和条文，「不确定」永远不缩短路径。"]
+    ],
     lanesLabel: "覆盖范围", lanesTitle: "三条合规线",
     lanes: [
       ["Trade", "受限方筛查与身份消歧", "美国 CSL / OFAC / EAR 744；中国管控名单与不可靠实体清单；欧盟、台湾、日本、UFLPA、美国防部 1260H"],
@@ -63,7 +82,7 @@ const copy = {
     procGemHeads: ["Gem", "起步线", "起步程序", "可能追加"],
     procLaneNames: { trade: "Trade — 受限方与主体", product: "Product — 物项与许可", tpdd: "Ethics & TPDD — 第三方", review: "结案" },
     useLabel: "使用方法", useTitle: "在输入框键入 /",
-    useLead: "上下键选择 Gem，回车确认。每个 Gem 绑定四样东西：指令、数据源白名单、必填事实清单、输出模板。第三项是关键——它让系统在提交前就知道自己缺什么，而不是让模型悄悄猜。",
+    useLead: "上下键选择 Gem，回车确认。每个 Gem 绑定五样东西：产出类型、指令、数据源白名单、必填事实清单、输出模板。产出类型决定它走哪条路——/reg-brief 是简报，不会触发受限方筛查；必填事实清单则让系统在提交前就知道自己缺什么，而不是让模型悄悄猜。",
     gemsLabel: "可用 Gem", gemBound: "个来源", gemRecords: "条记录", gemUnsynced: "个未同步", gemNone: "不绑定外部来源",
     streamTitle: "一步一步，问完再分析",
     streamBody: "回答按顺序自上而下产生，遇到缺资料就停在那一步问你，不绕过缺口继续。",
@@ -107,6 +126,9 @@ const copy = {
     ],
     todoTitle: "尚未完成的部分",
     todos: [
+      "国别矩阵已解析出 203 行国别与管制理由，但「目的地与管制理由」一步目前只引用条文编号，尚未自动读取该矩阵。",
+      "中国侧没有公布编号决策树，因此物项线的步骤序列取自 EAR Part 732；中国问题走同一序列，检索的是中国清单与公告，步骤标题读起来是美国口径。",
+      "34 个数据源中有 14 个当前不被任何分析步骤读取——验证码限制、条文类、或编码口径不匹配。数据覆盖页逐个标注了是哪一种。",
       "韩国战略物资清单没有可自动获取的途径，只能人工查阅。",
       "官方的 ECCN ↔ 欧盟／瓦森纳对照表并不存在，跨制度比对只能按管制编号结构推导，属于参考而非查表。",
       "中国海关总署（HS 编码、税则）全线返回 412 反爬，单一窗口有验证码，均不在自动化范围内。",
@@ -122,6 +144,25 @@ const copy = {
     lead: "Ask through one composer. The Master Agent routes to the trade, product and third-party diligence agents and returns one answer with its evidence chain — and always states what that answer stands on.",
     scope: ["US · China", "Export control only", "{sources} sources implemented", "{gems} gems"],
 
+    kindsLabel: "What it does", kindsTitle: "Four kinds of work, one of them a review",
+    kindsLead: "Treating every question as a compliance review is wrong. \u201cWhat is this part\u2019s ECCN\u201d has no counterparty, no destination and no transaction; running it through a procedure returns a general paragraph unrelated to what was asked. So questions are routed first, and each path has its own output and its own limits.",
+    kindsHeads: ["Kind", "When it applies", "What it produces", "What it will not do"],
+    kinds: [
+      ["Compliance review", "A transaction is described \u2014 a party, an item, a destination or an end user", "The published procedure step by step, each step citing its provision; it stops at a step where evidence is missing; the conclusion carries a risk level and its limits", "Release a transaction. The last step is always human review"],
+      ["Direct lookup", "A published value is asked for: a part\u2019s ECCN, what a control code means, whether a party is on a named list", "One step: the value and its source. Where it is not held, which records were read and who would know", "Infer. Absent from this data is not absent from control"],
+      ["Regulatory briefing", "What was published over a period", "The period totalled \u2014 how many entities added, to which list, from where \u2014 then each notice with its action and number", "Judge whether any of it reaches a given transaction; that is a review"],
+      ["Case memo", "Write up analysis already performed in this session", "The conclusions and their evidence, recorded", "Produce new judgements. Over an empty session it says there is nothing to write up"]
+    ],
+    kindsGemNote: "A gem declares which kind it is, so selecting /reg-brief does not open a party screening. A question that describes a transaction still gets the review, whichever gem is selected.",
+
+    autoLabel: "Resolved automatically", autoTitle: "What should not have to be typed",
+    autoLead: "Filling in forms on every question is what makes tools like this unusable. Anything public data can answer is looked up before it is asked for.",
+    autoItems: [
+      ["The counterparty", "\u201cCustomer Aveox Technologies\u201d in the question is enough: the name is matched against the synced lists, and where more than one entity survives, the two closest go forward. A similar name is not the same entity \u2014 telling them apart is what identity resolution is for."],
+      ["Ownership", "The GLEIF register is queried for direct and ultimate parent. GLEIF\u2019s parent is the accounting consolidating parent and carries no percentages, so where a list matches, the aggregate holding is still asked for."],
+      ["Item classification", "NVIDIA\u2019s 1,352 parts and AMD\u2019s 8,554 are ingested \u2014 ECCN, HTS and CCATS by part number. A vendor\u2019s statement is not a classification decision."],
+      ["Path length", "Triage on stated facts: no third party means no diligence lane, EAR99 means no Country Chart cell to read. Every omission names the fact and the provision behind it, and uncertainty never shortens the path."]
+    ],
     lanesLabel: "Scope", lanesTitle: "Three compliance lanes",
     lanes: [
       ["Trade", "Restricted-party screening and identity resolution", "US CSL / OFAC / EAR 744; PRC control and unreliable-entity lists; EU, Taiwan, Japan, UFLPA, DoD 1260H"],
@@ -172,7 +213,7 @@ const copy = {
     procGemHeads: ["Gem", "Opening lane", "Opening procedure", "May add"],
     procLaneNames: { trade: "Trade — parties", product: "Product — item & licence", tpdd: "Ethics & TPDD", review: "Close" },
     useLabel: "How to use", useTitle: "Press / in the composer",
-    useLead: "Arrow keys select a gem, Enter confirms. A gem binds four things: instruction, bound-source whitelist, required facts and output template. The third is the point — it lets the system know what is missing before submitting, instead of letting the model quietly guess.",
+    useLead: "Arrow keys select a gem, Enter confirms. A gem binds five things: what it produces, the instruction, the bound-source whitelist, the facts it requires, and the output template. The first decides which path it takes \u2014 /reg-brief is a briefing and never opens a party screening \u2014 and the fourth is what makes a gem more than a saved prompt: the interface knows what is missing before anything is submitted.",
     gemsLabel: "Available gems", gemBound: "sources", gemRecords: "records", gemUnsynced: "not synced", gemNone: "no bound sources",
     streamTitle: "One step at a time",
     streamBody: "The answer is produced in one direction, top to bottom, and stops at the step that needs something from you rather than analysing around the gap.",
@@ -216,6 +257,9 @@ const copy = {
     ],
     todoTitle: "Not finished yet",
     todos: [
+      "The Country Chart is parsed to 203 country rows, but the destination step still cites the provision rather than reading the chart automatically.",
+      "China publishes no numbered decision tree, so the item lane takes its sequence from EAR Part 732. A PRC question runs that sequence against PRC lists, which means those step titles read in US terms.",
+      "Fourteen of the thirty-four sources are read by no analysis step \u2014 CAPTCHA-gated, provision text, or organised on a different code system. The coverage page says which for each.",
       "Korea's strategic goods list has no automatable route; it stays a manual lookup.",
       "No official ECCN-to-EU or ECCN-to-Wassenaar crosswalk exists. Cross-regime comparison is derived from the control-number structure and is advisory, not a lookup.",
       "China Customs (HS codes, tariff) answers non-browser clients with 412, and Single Window is CAPTCHA-gated. Both are out of scope rather than pending.",
@@ -343,6 +387,29 @@ function render() {
       <p class="guide-lead">${esc(t.lead)}</p>
       <div class="scope-row">${t.scope
         .map((s) => `<span>${esc(s.replace("{sources}", adapters).replace("{gems}", GEMS.length))}</span>`).join("")}</div>
+    </section>
+
+    <section class="guide-reg">
+      <div class="guide-gutter">${esc(t.kindsLabel)}</div>
+      <div class="guide-body">
+        <h2>${esc(t.kindsTitle)}</h2>
+        <p>${esc(t.kindsLead)}</p>
+        <div class="table-wrap"><table>
+          <thead><tr>${t.kindsHeads.map((head) => `<th>${esc(head)}</th>`).join("")}</tr></thead>
+          <tbody>${t.kinds.map((row) => `<tr>${row.map((cell, index) => `<td>${index === 0 ? `<b>${esc(cell)}</b>` : esc(cell)}</td>`).join("")}</tr>`).join("")}</tbody>
+        </table></div>
+        <p class="guide-note">${esc(t.kindsGemNote)}</p>
+      </div>
+    </section>
+
+    <section class="guide-reg">
+      <div class="guide-gutter">${esc(t.autoLabel)}</div>
+      <div class="guide-body">
+        <h2>${esc(t.autoTitle)}</h2>
+        <p>${esc(t.autoLead)}</p>
+        <ul class="guide-list auto-list">${t.autoItems.map(([name, detail]) => `
+          <li><b>${esc(name)}</b>${esc(detail)}</li>`).join("")}</ul>
+      </div>
     </section>
 
     <section class="guide-reg">
