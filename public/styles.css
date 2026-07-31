@@ -281,9 +281,11 @@ html[data-theme="light"] .moon-icon { display: block; }
 .answer-head .prose, .answer-head > div > p { grid-column: 1 / -1; }
 .risk-mark {
   grid-column: 1; grid-row: 1; align-self: center; display: grid; place-items: center;
-  min-width: 30px; height: 22px; padding: 0 8px;
-  font-size: 11.5px; font-weight: 700; letter-spacing: .02em;
-  border-radius: 6px; white-space: nowrap;
+  /* Sized to the title beside it, not to itself: a badge taller than the line it
+     labels reads as a separate element rather than a mark on that line. */
+  min-width: 26px; height: 17px; padding: 0 7px;
+  font-size: 10px; font-weight: 700; letter-spacing: .02em;
+  border-radius: 5px; white-space: nowrap;
   border: 1px solid currentColor; background: color-mix(in srgb, currentColor 11%, transparent);
 }
 .risk-high { color: var(--risk-high); } .risk-medium { color: var(--risk-medium); }
@@ -1056,6 +1058,12 @@ html[lang="en"] .step-needs li::before { content: "NEEDS"; font-size: 8px; }
 .si-note { font-size: 10.5px; color: var(--risk-medium); }
 .si-skipped { display: none; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 11.5px; color: var(--text-3); }
 .si-reopen { border: 0; background: none; padding: 0; font-size: 11.5px; color: var(--accent-text); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+/* A declared answer can be corrected: the form is there, folded behind a link,
+   carrying what was declared. Folded rather than open because the step is
+   answered — the link is an offer, not another question. */
+.step-redo { margin-top: 7px; }
+.si-redo { border: 0; background: none; padding: 0; font-size: 11.5px; color: var(--accent-text); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.step-inputs.si-collapsed { display: none; }
 .step-inputs.skipped { border-style: solid; background: none; padding: 7px 11px; }
 .step-inputs.skipped > .si-row, .step-inputs.skipped > .si-actions { display: none; }
 .step-inputs.skipped > .si-skipped { display: flex; }

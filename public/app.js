@@ -27,7 +27,7 @@ const i18n = {
     derivMatch_gem: "由所选 Gem 指定为主检查", derivMatch_always: "每次分析都执行", derivMatch_direct_lookup: "直接查询，不进入审查程序", derivMatch_gem_kind: "该 Gem 的产出类型，不进入审查程序", derivMatch_question_terms: "问题中的关键词",
     derivMatch_no_term_matched_all_lanes_run: "问题未命中任何关键词，三条检查全部执行",
     derivKind_official: "官方程序", derivKind_derived: "系统规划",
-    derivFromStandard: "{n} 来自规范", derivFromSystem: "{n} 步由系统规划", laneRunning: "正在分析", pathTemplated: "规则模式：待补项来自内置模板，不是对本问题的分析结果。切换到实时模型可得到针对性判断。", pathDerivedNote: "本步骤无对应官方条文，由系统按问题结构补充", stConfirmed: "已确认", stEvidence: "需更多证据", stNotReached: "未进行", status_confirmed: "已确认", status_evidence_needed: "需更多证据", status_not_reached: "待前序步骤", status_review_required: "需人工复核", status_pending: "待执行", stPending: "待执行", status_declared: "已声明，待核验", stDeclared: "已声明", declareSubmit: "提交并继续", declareSkip: "暂无此信息", declareSkipped: "已跳过 — 该步骤仍需证据，右侧执行流程中保留为待补", declareSkippedLabel: "暂无", declareReopen: "重新填写", declarePlaceholder: "填写后提交", declareNote: "填写的内容记为声明信息，不等于已核验证据", declareEmpty: "请先填写至少一项", declarePrefix: "补充信息 — ", declaredAdded: "已提交", declareContinuing: "正在继续分析…", resumeFailed: "继续分析失败，表单已恢复可编辑，可重新提交：", reasoningTrace: "比对明细", rsSearched: "已检索的名单来源", rsMatched: "名称命中", rsCompared: "身份要素比对", rsFacts: "已核验事实",
+    derivFromStandard: "{n} 来自规范", derivFromSystem: "{n} 步由系统规划", laneRunning: "正在分析", pathTemplated: "规则模式：待补项来自内置模板，不是对本问题的分析结果。切换到实时模型可得到针对性判断。", pathDerivedNote: "本步骤无对应官方条文，由系统按问题结构补充", stConfirmed: "已确认", stEvidence: "需更多证据", stNotReached: "未进行", status_confirmed: "已确认", status_evidence_needed: "需更多证据", status_not_reached: "待前序步骤", status_review_required: "需人工复核", status_pending: "待执行", stPending: "待执行", status_declared: "已声明，待核验", stDeclared: "已声明", declareSubmit: "提交并继续", declareSkip: "暂无此信息", declareSkipped: "已跳过 — 该步骤仍需证据，右侧执行流程中保留为待补", declareSkippedLabel: "暂无", declareReopen: "重新填写", declareRedo: "重新填写", declarePlaceholder: "填写后提交", declareNote: "填写的内容记为声明信息，不等于已核验证据", declareEmpty: "请先填写至少一项", declarePrefix: "补充信息 — ", declaredAdded: "已提交", declareContinuing: "正在继续分析…", resumeFailed: "继续分析失败，表单已恢复可编辑，可重新提交：", reasoningTrace: "比对明细", rsSearched: "已检索的名单来源", rsMatched: "名称命中", rsCompared: "身份要素比对", rsFacts: "已核验事实",
     rsScore: "相似度", rsOpen: "查看原文", rsUnsynced: "未同步、本次未检索",
     el_country: "国别", el_registration_number: "注册号", el_address: "地址",
     st_agree: "一致", st_conflict: "冲突", st_unavailable: "缺失",
@@ -85,7 +85,7 @@ const i18n = {
     derivMatch_gem: "set as the lead check by the selected gem", derivMatch_always: "runs on every analysis", derivMatch_direct_lookup: "a direct lookup; no review procedure applies", derivMatch_gem_kind: "what this gem produces; no review procedure applies", derivMatch_question_terms: "terms in the question",
     derivMatch_no_term_matched_all_lanes_run: "no term matched, so all three checks run",
     derivKind_official: "official", derivKind_derived: "system-planned",
-    derivFromStandard: "{n} from procedure", derivFromSystem: "{n} planned here", laneRunning: "analysing", pathTemplated: "Rules mode: the outstanding items come from built-in templates, not from analysing this question. Switch to the live model for a specific assessment.", pathDerivedNote: "No official provision for this step; added by the system", stConfirmed: "settled", stEvidence: "need evidence", stNotReached: "not reached", status_confirmed: "Settled", status_evidence_needed: "Evidence needed", status_not_reached: "Awaiting earlier step", status_review_required: "Human review", status_pending: "Planned", stPending: "planned", status_declared: "Declared, unverified", stDeclared: "declared", declareSubmit: "Submit and continue", declareSkip: "Not available", declareSkipped: "Skipped — this step still needs evidence and stays outstanding in the flow rail", declareSkippedLabel: "Not available", declareReopen: "Fill in", declarePlaceholder: "Fill in, then submit", declareNote: "What you enter is recorded as a declaration, not as verified evidence", declareEmpty: "Fill in at least one field first", declarePrefix: "Additional information — ", declaredAdded: "Submitted", declareContinuing: "continuing the analysis…", resumeFailed: "The continuation failed; the form is editable again so you can resubmit: ", reasoningTrace: "Comparison detail", rsSearched: "Lists searched", rsMatched: "Name matches", rsCompared: "Identity comparison", rsFacts: "Verified facts",
+    derivFromStandard: "{n} from procedure", derivFromSystem: "{n} planned here", laneRunning: "analysing", pathTemplated: "Rules mode: the outstanding items come from built-in templates, not from analysing this question. Switch to the live model for a specific assessment.", pathDerivedNote: "No official provision for this step; added by the system", stConfirmed: "settled", stEvidence: "need evidence", stNotReached: "not reached", status_confirmed: "Settled", status_evidence_needed: "Evidence needed", status_not_reached: "Awaiting earlier step", status_review_required: "Human review", status_pending: "Planned", stPending: "planned", status_declared: "Declared, unverified", stDeclared: "declared", declareSubmit: "Submit and continue", declareSkip: "Not available", declareSkipped: "Skipped — this step still needs evidence and stays outstanding in the flow rail", declareSkippedLabel: "Not available", declareReopen: "Fill in", declareRedo: "Change this answer", declarePlaceholder: "Fill in, then submit", declareNote: "What you enter is recorded as a declaration, not as verified evidence", declareEmpty: "Fill in at least one field first", declarePrefix: "Additional information — ", declaredAdded: "Submitted", declareContinuing: "continuing the analysis…", resumeFailed: "The continuation failed; the form is editable again so you can resubmit: ", reasoningTrace: "Comparison detail", rsSearched: "Lists searched", rsMatched: "Name matches", rsCompared: "Identity comparison", rsFacts: "Verified facts",
     rsScore: "Similarity", rsOpen: "Open source", rsUnsynced: "Not synced, therefore not searched",
     el_country: "Country", el_registration_number: "Registration no.", el_address: "Address",
     st_agree: "agree", st_conflict: "conflict", st_unavailable: "missing",
@@ -937,18 +937,25 @@ function comparisonTable(comparisons) {
 // A blocked step can be answered in place. What the user types is a declaration,
 // never verified evidence — the status it produces says so, and the action list
 // then asks for it to be verified.
-function stepInputsMarkup(item) {
+// A declaration can be corrected. What the reader typed is the one thing on the
+// page they are certain about — and it was the one thing they could not change:
+// once submitted, the form was replaced by the answer it produced, and a
+// mistyped registration number could only be fixed by asking the whole question
+// again. The form is re-offered carrying what was declared, so a correction is
+// an edit rather than a restart.
+function stepInputsMarkup(item, { values = null, collapsed = false } = {}) {
+  const filled = (field) => (values ? String(values[field] ?? "") : "");
   return `
-    <div class="step-inputs" data-step="${esc(item.id)}">
+    <div class="step-inputs${collapsed ? " si-collapsed" : ""}" data-step="${esc(item.id)}">
       ${item.inputs.map((input) => input.kind === "choice"
         ? `<div class="si-row">
              <span class="si-label">${esc(input.label)}</span>
              <div class="si-choices">${input.options.map((option) => `
-               <button type="button" class="si-choice" data-field="${esc(input.field)}" data-value="${esc(option)}">${esc(option)}</button>`).join("")}</div>
+               <button type="button" class="si-choice${filled(input.field) === option ? " on" : ""}" data-field="${esc(input.field)}" data-value="${esc(option)}">${esc(option)}</button>`).join("")}</div>
            </div>`
         : `<div class="si-row">
              <span class="si-label">${esc(input.label)}</span>
-             <input class="si-text" type="text" data-field="${esc(input.field)}" maxlength="300" placeholder="${esc(t("declarePlaceholder"))}">
+             <input class="si-text" type="text" data-field="${esc(input.field)}" maxlength="300" value="${esc(filled(input.field))}" placeholder="${esc(t("declarePlaceholder"))}">
            </div>`).join("")}
       <div class="si-actions">
         <button type="button" class="btn btn-primary si-submit">${esc(t("declareSubmit"))}</button>
@@ -1195,6 +1202,9 @@ function pathMarkup(path, grounding, options = {}) {
                   ${item.needs.length ? `<ul class="step-needs">${item.needs.map((line) => `<li>${formatInline(line)}</li>`).join("")}</ul>` : ""}
                   ${stepDetailMarkup(item, grounding)}
                   ${asking ? `<p class="step-ask"><span class="step-arrow" aria-hidden="true">➜</span>${esc(t("stepAsk"))}</p>${stepInputsMarkup(item)}` : ""}
+                  ${!asking && item.status === "declared" && item.inputs?.length ? `
+                    <p class="step-redo"><button type="button" class="si-redo">${esc(t("declareRedo"))}</button></p>
+                    ${stepInputsMarkup(item, { values: state.declaredFacts, collapsed: true })}` : ""}
                 </div>
               </div>
             </li>`;
@@ -2238,7 +2248,10 @@ $("threadInner").addEventListener("click", (event) => {
     const host = skip.closest(".step-inputs");
     host.classList.add("skipped");
     host.closest(".path-step")?.classList.add("answered");
-    host.querySelectorAll("input, button").forEach((control) => { control.disabled = true; });
+    // Every control except the way back. Disabling the whole form disabled the
+    // "fill in" link inside it too, so the one control whose entire purpose is to
+    // undo this state was the one that stopped responding to clicks.
+    host.querySelectorAll("input, button:not(.si-reopen)").forEach((control) => { control.disabled = true; });
     const fields = [...host.querySelectorAll("[data-field]")].map((node) => node.dataset.field);
     state.unavailableFacts = [...new Set([...state.unavailableFacts, ...fields])];
     const answer = host.closest(".msg-assistant");
@@ -2257,6 +2270,15 @@ $("threadInner").addEventListener("click", (event) => {
       tickUntilDetached(host.querySelector(".si-done .sis-elapsed"));
       return analyze(null, { continueIn: answer });
     }
+    return;
+  }
+  const redo = event.target.closest(".si-redo");
+  if (redo) {
+    const host = redo.closest(".step-detail-wrap")?.querySelector(".step-inputs.si-collapsed");
+    if (!host) return;
+    host.classList.remove("si-collapsed");
+    redo.closest(".step-redo").remove();
+    host.querySelector(".si-text")?.focus();
     return;
   }
   const reopen = event.target.closest(".si-reopen");
@@ -2286,7 +2308,7 @@ $("threadInner").addEventListener("click", (event) => {
     .map((row) => `${row.querySelector(".si-label").textContent}：${row.querySelector(".si-text")?.value.trim() || row.querySelector(".si-choice.on").dataset.value}`);
   host.classList.add("submitted");
   host.closest(".path-step")?.classList.add("answered");
-  host.querySelectorAll("input, button").forEach((control) => { control.disabled = true; });
+  host.querySelectorAll("input, button:not(.si-reopen)").forEach((control) => { control.disabled = true; });
   host.insertAdjacentHTML("beforeend", `
     <div class="si-done">
       <span class="sis-label">${esc(t("declaredAdded"))}</span>
