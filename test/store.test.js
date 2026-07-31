@@ -162,7 +162,12 @@ test("the documented boot-sync list matches the sources that can be snapshotted"
     .map((source) => source.sourceId);
 
   const readme = await readFile(new URL("../README.md", import.meta.url), "utf8");
-  const documented = readme.match(/bis-ear-732[^\n`]*/)?.[0].split(",") || [];
+  // Matched as "a line that is only comma-separated source ids", not by anchoring
+  // on one id: anchoring on bis-ear-732 silently dropped everything before it
+  // the first time the list was reordered, and the test then reported the
+  // README as missing an entry that was sitting right there.
+  const documented = readme.match(/^[a-z0-9-]+(?:,[a-z0-9-]+){10,}$/m)?.[0].split(",") || [];
+  assert.ok(documented.length, "the README should carry a SYNC_ON_BOOT value");
   const missing = expected.filter((id) => !documented.includes(id));
   const extra = documented.filter((id) => !expected.includes(id));
   assert.deepEqual(missing, [], `README's SYNC_ON_BOOT is missing: ${missing.join(", ")}`);
