@@ -94,7 +94,9 @@ export const DATA_SOURCE_REGISTRY = [
     automationStatus: "download_available", feasibility: "can_build_now", currentCoverage: "planned", priority: 1, authenticationRequired: false, captchaPresent: false,
     updateFrequency: "As published + delta archives", websiteUrl: "https://ofac.treasury.gov/sanctions-list-service", downloadUrl: "https://ofac.treasury.gov/sanctions-list-service",
     dataCaptured: [], targetData: ["SDN", "Non-SDN", "aliases", "addresses", "programs", "IDs", "vessels", "aircraft"],
-    webSearchUse: "not_for_screening", notes: "Structured files are suitable for automation. Ownership data is not sufficient for an automated 50 Percent Rule conclusion."
+    webSearchUse: "not_for_screening",
+    coveredBy: { sourceId: "trade-csl", note: "SDN 与全部非 SDN 清单已包含在美国综合筛查名单（trade-csl）中，共 19,665 条来自财政部。该来源同步失败不构成筛查缺口；但 OFAC 自有发布节奏，其更新可能早于 CSL。" },
+    notes: "Structured files are suitable for automation. Ownership data is not sufficient for an automated 50 Percent Rule conclusion."
   },
   {
     sourceId: "un-consolidated", sourceName: "UN Security Council Consolidated List", module: "trade", country: "Global", authority: "United Nations Security Council",

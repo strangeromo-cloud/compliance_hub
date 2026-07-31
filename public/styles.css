@@ -1456,3 +1456,8 @@ html[lang="en"] .step-needs li::before { content: "NEEDS"; font-size: 8px; }
    stray block of conclusions sitting above the closing step — which is where a
    reader looks for the case conclusion. The caption says whose they are. */
 .lane-findings-label { margin: 12px 0 0; font-size: 10.5px; letter-spacing: .02em; color: var(--text-3); }
+/* A source whose content another one already holds. Placed under the sync state,
+   because that is where a red "failed" would otherwise read as a coverage gap. */
+.source-covered { margin: 8px 0 0; font-size: 11px; line-height: 1.6; color: var(--text-3);
+  border-left: 2px solid color-mix(in srgb, var(--accent) 40%, transparent); padding-left: 8px; }
+.source-covered b { color: var(--text-2); font-weight: 600; }
