@@ -9,7 +9,7 @@ import { deleteThread, listThreads, readThread, saveCase, storageDurability } fr
 import { DECLARABLE_FIELDS, describeProcedures } from "./src/analysis-path.js";
 import { closeDb, DB_PATH, REQUIRED_NODE_MAJOR } from "./src/data-layer/db.js";
 import { importLegacyStore } from "./src/data-layer/import-legacy.js";
-import { readSnapshotMeta } from "./src/data-layer/storage.js";
+import { readSnapshotMeta, readSyncStatus } from "./src/data-layer/storage.js";
 
 const ROOT = fileURLToPath(new URL(".", import.meta.url));
 const PUBLIC_DIR = join(ROOT, "public");
@@ -234,7 +234,26 @@ const server = createServer(async (request, response) => {
       const body = await readJson(request);
       const sourceId = String(body.sourceId || "").trim();
       if (!sourceId) throw Object.assign(new Error("sourceId is required."), { status: 400 });
-      return sendJson(response, 200, { sourceId, sync: await syncSource(sourceId) });
+      try {
+        return sendJson(response, 200, { sourceId, sync: await syncSource(sourceId) });
+      } catch (error) {
+        // A sync failure is not an internal: it is a network or parse error
+        // about a public source, and it is exactly what the operator has to see.
+        // Without this the generic 5xx handler withheld it and the page showed
+        // "check the model configuration or public-source connectivity" for an
+        // ETIMEDOUT — advice instead of a cause, and unusable to anyone who
+        // cannot read the container log.
+        //
+        // The recorded status already carries the sanitized message, with any
+        // api_key redacted, so it is returned rather than rebuilt.
+        const recorded = (await readSyncStatus())[sourceId] || null;
+        return sendJson(response, error.status && error.status < 500 ? error.status : 502, {
+          sourceId,
+          error: recorded?.error || String(error.message || "Sync failed.").slice(0, 500),
+          code: "source_sync_failed",
+          sync: recorded
+        });
+      }
     }
 
     if (request.method === "POST" && url.pathname === "/api/data-sources/query") {
