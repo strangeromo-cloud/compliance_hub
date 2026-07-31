@@ -232,3 +232,44 @@ test("a resolved party carries its candidates into the step that disambiguates",
   assert.equal(resolution.status, "evidence_needed");
   assert.ok(resolution.basis.some((line) => line.includes("艾维奥克斯公司")));
 });
+
+test("a lookup is answered, not put through a review", async () => {
+  // "what is this part's ECCN" has no counterparty, no destination and no
+  // transaction, so there is nothing for a compliance procedure to work on.
+  // Running one produced three lanes and a paragraph about routes and end users
+  // instead of the value that was asked for.
+  const { assessScenario } = await import("../src/orchestrator.js");
+  const { lookupSubject } = await import("../src/lookup.js");
+
+  for (const question of ["100-000000009 这个AMD 的ECCN是什么？", "1C351 是什么", "4A090.a 是什么意思"]) {
+    assert.ok(lookupSubject(question), `${question} should be recognised as a lookup`);
+    const result = await assessScenario({ question, locale: "zh", mock: true });
+    assert.equal(result.intent, "data_lookup");
+    assert.deepEqual(result.analysisPath.lanes.map((lane) => lane.lane), ["lookup"],
+      "a lookup runs one lane and never reaches the closing step");
+    assert.equal(result.results.length, 0, "no specialist is spent on a stored value");
+    assert.equal(result.awaitingInput, null, "a lookup never stops to interrogate");
+    assert.ok(result.synthesis, "it answers");
+    // A completed search that found nothing is finished, not blocked.
+    assert.equal(result.analysisPath.lanes[0].steps[0].status, "confirmed");
+  }
+
+  // A question that names a transaction is not a lookup, whatever else it holds.
+  assert.equal(lookupSubject("我们把 100-000000009 出口到伊朗给某军事研究所，需要许可吗"), null);
+  assert.equal(lookupSubject("向德国客户直销一台服务器，无中间商"), null);
+});
+
+test("a lookup answers from the data and says what it searched", async () => {
+  const { resolveLookup } = await import("../src/lookup.js");
+
+  const missing = await resolveLookup("100-000000009 这个AMD 的ECCN是什么？");
+  assert.equal(missing.found.length, 0, "there is no AMD classification data ingested");
+  assert.ok(missing.searched.length, "it must say which records it read");
+  assert.match(missing.elsewhere, /厂商|BIS/, "and where the answer actually lives");
+
+  // Absent from this data and "no such classification" are different claims, and
+  // only the first is one this system can make.
+  const { assessScenario } = await import("../src/orchestrator.js");
+  const answer = await assessScenario({ question: "100-000000009 这个AMD 的ECCN是什么？", locale: "zh", mock: true });
+  assert.ok(answer.grounding.limitations.some((line) => /未收录不等于不受管制/.test(line)));
+});

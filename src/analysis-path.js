@@ -134,6 +134,12 @@ const LANE_PLANS = {
         { cite: "ECCP — Management of Relationships", note: "DOJ 明确要求覆盖整个合作关系存续期，而非仅准入时点" }]
     ]
   },
+  lookup: {
+    label: "查询",
+    methodology: "derived",
+    steps: [["data_lookup", "在已接入数据中检索", null,
+      { cite: "直接查询", methodology: "derived", note: "问题问的是一个已登记的值，不是一笔交易；没有交易就没有可审查的程序" }]]
+  },
   review: {
     label: "结案",
     methodology: "derived",
@@ -199,10 +205,60 @@ export const DECLARABLE_FIELDS = Object.freeze([...new Set(
     (inputs ? [].concat(inputs) : []).map((input) => input.field)))
 )]);
 
+// A single-lane plan, sharing the shape every other plan has so nothing
+// downstream needs to know which kind it is looking at.
+function laneOnly(lane) {
+  const plan = LANE_PLANS[lane];
+  const lanes = [{
+    lane,
+    label: plan.label,
+    leading: true,
+    methodology: plan.methodology,
+    steps: plan.steps.map(([id, title, inputs, source]) => ({
+      id, title, status: "pending", basis: [], needs: [],
+      inputs: inputs ? [].concat(inputs) : [],
+      cite: source?.cite || null,
+      citeNote: source?.note || null,
+      methodology: source?.methodology || plan.methodology
+    }))
+  }];
+  return {
+    lanes,
+    summary: summarize(lanes),
+    planned: true,
+    basis: [METHODOLOGIES[plan.methodology]].filter(Boolean),
+    followsOfficial: METHODOLOGIES[plan.methodology]?.kind === "official",
+    triage: [],
+    // The same row shape every other plan produces. Inventing a shorter one here
+    // meant the briefing read matchedTerms off an object that did not have it and
+    // took the whole answer down with it.
+    derivation: lanes.map((group) => {
+      const official = group.steps.filter((item) => METHODOLOGIES[item.methodology]?.kind === "official");
+      return {
+        lane: group.lane,
+        label: group.label,
+        leading: true,
+        matchedBy: "direct_lookup",
+        matchedTerms: [],
+        methodology: METHODOLOGIES[group.methodology] || null,
+        stepCount: group.steps.length,
+        officialStepCount: official.length,
+        plannedStepCount: group.steps.length - official.length,
+        plannedSteps: group.steps.filter((item) => METHODOLOGIES[item.methodology]?.kind !== "official").map((item) => item.title)
+      };
+    })
+  };
+}
+
 export function planAnalysisPath({ agents = [], gemId = null, routeReasons = {}, routeMatched = true, question = "", declaredFacts = {} } = {}) {
   // Triage before planning: a lane the procedure does not reach for is never put
   // on the board, rather than put there and then explained away.
   const gates = triage({ question, facts: declaredFacts });
+  // A lookup is its own lane and never runs alongside the review lanes: the
+  // question asks for a stored value, so there is no transaction to review and
+  // no closing decision to route to a person.
+  if (agents.length === 1 && agents[0] === "lookup") return laneOnly("lookup");
+
   const routed = ["trade", "product", "tpdd"].filter((lane) => agents.includes(lane));
   const kept = routed.filter((lane) => !gates.droppedLanes.includes(lane));
   // Triage narrows a review; it does not abolish one. If closing a gate would
@@ -299,6 +355,35 @@ function needsMatching(results, agent, pattern) {
     }
   }
   return [...seen].slice(0, 4);
+}
+
+// A lookup reports what was searched and what came back. When nothing came back
+// that is a finding, not a gap in the reader's information: they are told which
+// records were read and where the answer actually lives, rather than being asked
+// for something they came here to be told.
+function lookupSteps(grounding) {
+  const lookup = grounding.lookup;
+  if (!lookup) return [step("data_lookup", "在已接入数据中检索", "not_reached", {})];
+  const searched = lookup.searched.map((source) => `已检索 ${source.label}`);
+  if (lookup.found.length) {
+    return [step("data_lookup", "在已接入数据中检索", "confirmed", {
+      basis: [
+        ...lookup.found.map((item) => `${item.subject}：${item.field} ${item.value}${item.synthetic ? "（合成演示数据）" : ""}`),
+        ...searched
+      ]
+    })];
+  }
+  // Absent from the data is a finding, not an outstanding item. Reporting it as
+  // evidence_needed made a completed search read as an unfinished analysis with
+  // something for the reader to supply — there is nothing they can supply; the
+  // records simply do not contain it.
+  return [step("data_lookup", "在已接入数据中检索", "confirmed", {
+    basis: [
+      `${lookup.asked.join("、")} 不在已接入的数据中；未收录不等于不受管制`,
+      ...searched,
+      lookup.elsewhere
+    ]
+  })];
 }
 
 function tradeSteps(question, grounding, results) {
@@ -466,6 +551,7 @@ export function resolveAnalysisPath(plan, { question, grounding, results = [], d
     trade: () => tradeSteps(question, grounding, results),
     product: () => productSteps(question, grounding, results),
     tpdd: () => tpddSteps(question, grounding, results),
+    lookup: () => lookupSteps(grounding),
     review: () => [step("human_review", "Compliance / Legal 人工复核", "review_required",
       { needs: ["以上步骤的结论与证据需经人工确认；系统不做交易放行"] })]
   };

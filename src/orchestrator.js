@@ -3,6 +3,7 @@ import { sourcesForAgents } from "./sources.js";
 import { retrievePublicSources } from "./retrieval.js";
 import { callJsonModel, callJsonModelStream, readableProjection } from "./llm.js";
 import { assessClearance } from "./clearance.js";
+import { resolveLookup } from "./lookup.js";
 import { createMockAgentResult, createMockSynthesis } from "./mock.js";
 import { collectGrounding, groundingContext } from "./grounding.js";
 import { buildActionPlan, planAnalysisPath, resolveAnalysisPath } from "./analysis-path.js";
@@ -181,7 +182,70 @@ function openQuestion(path, { intent, unavailable = [] } = {}) {
   return null;
 }
 
+const disclaimerFor = (locale) => (locale === "en"
+  ? "Prototype output for research and triage only. It is not legal advice or an automated approval decision."
+  : "本结果仅用于 Prototype 信息研究与风险分流，不构成法律意见或自动审批决定。");
+
+async function answerLookup({ question, locale, lookup, mock, onEvent }) {
+  const id = `CASE-${Date.now().toString(36).toUpperCase()}`;
+  const isEn = locale === "en";
+  onEvent({ type: "routed", id, agents: ["lookup"], mode: mock ? "grounded-demo" : "live-model" });
+
+  const grounding = { intent: "data_lookup", lookup, facts: [], listMatches: [], internalParties: [], screening: null, limitations: [] };
+  const found = lookup.found;
+  if (!found.length) {
+    grounding.limitations.push(isEn
+      ? `${lookup.asked.join(", ")} is not in the ingested records. Absent from this data is not the same as not controlled.`
+      : `${lookup.asked.join("、")} 不在已接入的数据中。未收录不等于不受管制。`);
+  }
+  if (found.some((item) => item.synthetic)) {
+    grounding.limitations.push(isEn
+      ? "One of the values comes from synthetic demonstration master data and cannot be used as a real classification."
+      : "其中一个值来自合成演示主数据，不能作为实际分类依据。");
+  }
+  onEvent({ type: "grounding", intent: grounding.intent, grounding });
+
+  let path = planAnalysisPath({ agents: ["lookup"], question });
+  path = resolveAnalysisPath(path, { question, grounding, results: [], declaredFacts: {}, templated: mock, final: true });
+  onEvent({ type: "path", path });
+
+  const synthesis = found.length
+    ? {
+      overallRisk: "unknown",
+      headline: found.map((item) => `${item.subject}：${item.field} ${item.value}`).join("；").slice(0, 200),
+      executiveSummary: found.map((item) => `${item.subject} 的 ${item.field} 为 ${item.value}。${item.detail || ""}（来源：${item.sourceId}）`).join(" "),
+      nextStep: isEn
+        ? "Confirm against the publisher's own record before relying on it; a stored value is a starting point, not a classification decision."
+        : "依赖前请对照发布方自己的记录确认；已登记的值是起点，不是分类决定。"
+    }
+    : {
+      overallRisk: "unknown",
+      headline: isEn ? `${lookup.asked.join(", ")} is not in the ingested records` : `${lookup.asked.join("、")} 不在已接入的数据中`,
+      executiveSummary: `${isEn ? "Searched: " : "已检索："}${lookup.searched.map((source) => source.label).join("、")}。${lookup.elsewhere}`,
+      nextStep: lookup.elsewhere
+    };
+
+  const result = {
+    id, createdAt: new Date().toISOString(), analysisPath: path, awaitingInput: null,
+    unavailableFacts: [], actionPlan: [], declaredFacts: {},
+    mode: mock ? "grounded-demo" : "live-model",
+    intent: grounding.intent, grounding, agents: ["lookup"],
+    synthesis, results: [], sources: [],
+    disclaimer: disclaimerFor(locale)
+  };
+  onEvent({ type: "agent_delta", agent: "lookup", text: synthesis.executiveSummary });
+  return result;
+}
+
 export async function assessScenario({ question, locale = "zh", config = {}, mock = false, history = [], gemId = null, declaredFacts = {}, unavailableFacts = [], onEvent = () => {} }) {
+  // A question that asks for a stored value is answered, not reviewed. There is
+  // no counterparty, no destination and no transaction in "what is this part's
+  // ECCN", so there is nothing for a compliance procedure to work on — and
+  // running one produced three lanes and a paragraph about routes and end users
+  // instead of the number that was asked for.
+  const lookup = await resolveLookup(question).catch(() => null);
+  if (lookup) return await answerLookup({ question, locale, lookup, mock, onEvent });
+
   const directAgents = routeQuestion(question, false);
   const contextualQuestion = `${history.filter((item) => item.role === "user").map((item) => item.content).join("\n")}\n${question}`;
   const contextualAgents = routeQuestion(contextualQuestion, false);
@@ -363,8 +427,6 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
     synthesis,
     results,
     sources: publicSources,
-    disclaimer: locale === "en"
-      ? "Prototype output for research and triage only. It is not legal advice or an automated approval decision."
-      : "本结果仅用于 Prototype 信息研究与风险分流，不构成法律意见或自动审批决定。"
+    disclaimer: disclaimerFor(locale)
   };
 }
