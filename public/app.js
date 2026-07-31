@@ -1234,18 +1234,22 @@ function conclusionMarkup(data) {
     </section></section>`;
   }
 
-  // Where the analysis is waiting is where it says so and where it is answered.
-  // A prompt at the foot of the answer meant the thing to act on was the furthest
-  // thing from the thing it was about, and it read as the case being closed while
-  // eleven items were open. What is left here is a footnote, not an interaction.
+  // Where the analysis is waiting is where it says so and where it is answered:
+  // the prompt stays at the step, not here, because the thing to act on should
+  // not be the furthest thing from the thing it is about.
+  //
+  // But the judgement itself is shown. Collapsing it behind a summary line meant
+  // a long analysis ended in one grey sentence, with the specialists' actual
+  // conclusion, its risk level and its limits all hidden — and "not closed" is a
+  // qualification on a result, not a reason to withhold one. So the result is
+  // open and the qualification labels it.
   return `
-    <section class="conclusion"><details class="interim">
-      <summary>${esc(t("interimVerdict"))} · ${esc(t("notClosed").replace("{n}", outstanding.length))}</summary>
-      <div class="interim-body">${verdict}
-        ${suggestedBlock()}
-        ${limitsBlock}
-      </div>
-    </details></section>`;
+    <section class="conclusion"><section class="answer is-interim">
+      <p class="interim-flag">${esc(t("interimVerdict"))} · ${esc(t("notClosed").replace("{n}", outstanding.length))}</p>
+      ${verdict}
+      ${suggestedBlock()}
+      ${limitsBlock}
+    </section></section>`;
 }
 
 function answerMarkup(data) {

@@ -572,13 +572,18 @@ dialog::backdrop { background: rgba(0,0,0,.55); }
 
 .coverage-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 16px; }
 .coverage-summary article { background: var(--surface); padding: 12px 14px; display: flex; align-items: center; gap: 10px; }
-.summary-icon { width: 24px; height: 24px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 5px; font: 700 11px/1 var(--mono); }
+.summary-icon { width: 28px; height: 28px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 6px; }
+.summary-icon svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .summary-icon.live { color: var(--accent-text); background: var(--accent-soft); }
 .summary-icon.ready { color: var(--accent-text); background: var(--accent-soft); }
 .summary-icon.limited { color: var(--risk-medium); background: rgba(217,154,61,.13); }
 .summary-icon.manual { color: var(--text-3); background: var(--surface-3); }
 .coverage-summary strong { display: block; font: 600 18px/1.1 var(--mono); font-variant-numeric: tabular-nums; }
-.coverage-summary span { display: block; font-size: 10.5px; color: var(--text-3); margin-top: 2px; }
+/* The label, not the icon. Written as `.coverage-summary span` this also matched
+   the icon box — and being the more specific selector it won, turning the grid
+   into a block and dropping its centring. That is why the mark sat in the
+   top-left corner rather than in the middle. */
+.coverage-summary div span { display: block; font-size: 10.5px; color: var(--text-3); margin-top: 2px; }
 
 .coverage-disclosure { display: flex; gap: 10px; padding: 11px 13px; border: 1px solid var(--border); border-left: 2px solid var(--risk-medium); border-radius: 0 var(--radius) var(--radius) 0; background: var(--surface); margin-bottom: 20px; }
 .coverage-disclosure svg { width: 15px; height: 15px; flex: 0 0 auto; margin-top: 2px; color: var(--risk-medium); }
@@ -1253,10 +1258,18 @@ html[lang="en"] .step-needs li::before { content: "NEEDS"; font-size: 8px; }
 .open-head h3 { font-size: 15px; margin: 0 0 4px; }
 .open-lead { margin: 0 0 10px; font-size: 12px; color: var(--text-2); line-height: 1.7; }
 .open-head .btn { height: 28px; }
-.interim { margin-top: 12px; border-top: 1px dashed var(--border); padding-top: 8px; }
-.interim > summary { font-size: 11.5px; color: var(--text-3); cursor: pointer; }
-.interim-body { padding-top: 8px; }
-.interim-body .answer-head h3 { font-size: 14px; }
+/* An interim judgement is shown, not hidden. What marks it is the band across
+   the top and the warning-toned edge — a reader should be able to see the
+   conclusion and see that it is not final in the same glance. */
+.answer.is-interim { border-color: color-mix(in srgb, var(--risk-medium) 34%, var(--border)); }
+.interim-flag {
+  margin: 0 0 10px; padding: 5px 9px; border-radius: var(--radius);
+  font-size: 11px; line-height: 1.5; font-weight: 500;
+  color: var(--risk-medium);
+  background: color-mix(in srgb, var(--risk-medium) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--risk-medium) 26%, transparent);
+}
+.is-interim .answer-head h3 { font-size: 14px; }
 
 /* ---- the path is the body of the answer, not a collapsible aside ---- */
 .analysis-path { border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); padding: 14px 16px; margin-bottom: 14px; }
@@ -1272,8 +1285,7 @@ html[lang="en"] .step-needs li::before { content: "NEEDS"; font-size: 8px; }
 .live-elapsed { margin-left: auto; font: 400 10.5px/1 var(--mono); color: var(--text-3); }
 /* The waiting step is the focal point of an open analysis. */
 .step-ask { margin: 8px 0 6px; font-size: 12px; font-weight: 500; color: var(--accent-text); }
-.interim { margin-top: 4px; }
-.interim > summary { padding: 6px 0; }
+.interim-flag { margin-bottom: 8px; }
 
 /* ---- streamed reasoning: one component, wherever it appears ----
    Sits clear of the content above it, never grows past a readable height, and
@@ -1330,7 +1342,7 @@ html[lang="en"] .step-needs li::before { content: "NEEDS"; font-size: 8px; }
 .answer-extra li::before { content: ""; position: absolute; left: 0; top: 8px; width: 5px; height: 5px; border-radius: 1px; background: var(--border-strong); }
 .answer-extra.is-limits li::before { background: var(--risk-medium); }
 /* Inside the collapsed interim there is no frame, so it aligns with its text. */
-.interim-body .answer-extra { padding-left: 0; padding-right: 0; }
+.is-interim .answer-extra { padding-left: 0; padding-right: 0; }
 .fl-step.na .fl-node { border-style: dotted; color: var(--text-3); }
 .fl-step.na .fl-text { color: var(--text-3); text-decoration: line-through; text-decoration-color: var(--border-strong); }
 /* What triage removed, stated with the rule that allowed it. */
