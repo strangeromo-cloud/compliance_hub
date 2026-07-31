@@ -193,7 +193,10 @@ async function answerLookup({ question, locale, lookup, mock, onEvent }) {
 
   const grounding = { intent: "data_lookup", lookup, facts: [], listMatches: [], internalParties: [], screening: null, limitations: [] };
   const found = lookup.found;
-  if (!found.length) {
+  // A search that could not run is not a search that found nothing, and the
+  // difference decides whether "not listed" may be said at all.
+  if (lookup.unsearchable) grounding.limitations.push(lookup.unsearchable);
+  if (!found.length && !lookup.unsearchable) {
     grounding.limitations.push(isEn
       ? `${lookup.asked.join(", ")} is not in the ingested records. Absent from this data is not the same as not controlled.`
       : `${lookup.asked.join("、")} 不在已接入的数据中。未收录不等于不受管制。`);
@@ -218,12 +221,19 @@ async function answerLookup({ question, locale, lookup, mock, onEvent }) {
         ? "Confirm against the publisher's own record before relying on it; a stored value is a starting point, not a classification decision."
         : "依赖前请对照发布方自己的记录确认；已登记的值是起点，不是分类决定。"
     }
-    : {
-      overallRisk: "unknown",
-      headline: isEn ? `${lookup.asked.join(", ")} is not in the ingested records` : `${lookup.asked.join("、")} 不在已接入的数据中`,
-      executiveSummary: `${isEn ? "Searched: " : "已检索："}${lookup.searched.map((source) => source.label).join("、")}。${lookup.elsewhere}`,
-      nextStep: lookup.elsewhere
-    };
+    : lookup.unsearchable
+      ? {
+        overallRisk: "unknown",
+        headline: isEn ? "This lookup could not be performed" : "本次检索无法完成",
+        executiveSummary: lookup.unsearchable,
+        nextStep: isEn ? "Retry with the entity's English legal name." : "请改用该主体的英文法定名称重试。"
+      }
+      : {
+        overallRisk: "unknown",
+        headline: isEn ? `${lookup.asked.join(", ")} is not in the ingested records` : `${lookup.asked.join("、")} 不在已接入的数据中`,
+        executiveSummary: `${isEn ? "Searched: " : "已检索："}${lookup.searched.map((source) => source.label).join("、")}。${lookup.elsewhere}`,
+        nextStep: lookup.elsewhere
+      };
 
   const result = {
     id, createdAt: new Date().toISOString(), analysisPath: path, awaitingInput: null,

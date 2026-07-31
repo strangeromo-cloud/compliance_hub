@@ -173,3 +173,52 @@ test("the documented boot-sync list matches the sources that can be snapshotted"
   assert.deepEqual(missing, [], `README's SYNC_ON_BOOT is missing: ${missing.join(", ")}`);
   assert.deepEqual(extra, [], `README's SYNC_ON_BOOT lists sources that cannot be snapshotted: ${extra.join(", ")}`);
 });
+
+test("the vendor classification parsers read their real published shapes", async () => {
+  const { parseNvidiaParts, parseAmdParts } = await import("../src/data-layer/adapters-vendor.js");
+
+  // NVIDIA writes the string "NULL" for an absent value. Storing it would put
+  // the word NULL in front of a reviewer as though it were a classification.
+  const nvidia = parseNvidiaParts([
+    { id: 1, part_number: "900-21010-0000-000", part_description: "H100 PCIe", part_type: "NULL", tpp: "12224", nv_hts: "8473.30", nveccn: "4A090.a", state: "PRODUCTION" }
+  ]);
+  assert.equal(nvidia.length, 1);
+  assert.equal(nvidia[0].eccn, "4A090.a");
+  assert.equal(nvidia[0].partType, null, '"NULL" is not a value');
+  assert.equal(nvidia[0].tppPerGpu, "12224");
+
+  // AMD's PDF extracts one table cell per line, so a row is assembled by
+  // counting from the part number. A hyphenated token that is not a row start
+  // must not take the next four lines with it.
+  const amd = parseAmdParts([
+    "Product Number", "US ECCN", "US HS", "CCATS", "Meets 3A090.a.1",
+    "100-000000009", "5A992.c", "8542310045", "G177385", "N",
+    "100-000000010", "EAR99", "8542310045", "G177386", "N",
+    "some-heading-text", "not an eccn", "not an hs", "x", "y"
+  ].join("\n"), "June 30th, 2026");
+  assert.equal(amd.length, 2, "only real rows are assembled");
+  assert.equal(amd[0].partNumber, "100-000000009");
+  assert.equal(amd[0].eccn, "5A992.c");
+  assert.equal(amd[0].ccats, "G177385");
+  assert.equal(amd[0].meets3A090a1, "N");
+  // "AMD says 5A992.c" means little without "as of when".
+  assert.equal(amd[0].classificationDate, "June 30th, 2026");
+});
+
+test("no source file carries a control character where an escape was meant", async () => {
+  // A \b written into a source file through a non-raw string becomes a literal
+  // backspace, and the regex it was part of then silently matches nothing —
+  // which is how a list tag stopped recognising "SDN" without any error.
+  const { readFile } = await import("node:fs/promises");
+  const { execFileSync } = await import("node:child_process");
+  const files = execFileSync("git", ["ls-files", "*.js", "*.mjs", "*.css", "*.html", "*.json"], {
+    cwd: new URL("..", import.meta.url).pathname, encoding: "utf8"
+  }).split("\n").filter(Boolean);
+
+  const bad = [];
+  for (const name of files) {
+    const text = await readFile(new URL(`../${name}`, import.meta.url), "utf8");
+    if (/[\x07\x08\x0b\x0c]/.test(text)) bad.push(name);
+  }
+  assert.deepEqual(bad, [], `control characters found in: ${bad.join(", ")}`);
+});
