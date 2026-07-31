@@ -145,6 +145,7 @@ bis-ear-732,bis-ear-734,bis-ear,bis-ear-740,bis-ear-744,bis-ccl,bis-country-char
 | 声明位置 | 内容 |
 |---|---|
 | `Dockerfile` | `FROM node:24-alpine` |
+| `.node-version` / `.nvmrc` | `24` — zbpack 先看这两个文件，再看 `package.json`，优先级最高 |
 | `package.json` | `"engines": { "node": "24.x" }` |
 | `zbpack.json` | `{"dockerfile": {"path": "Dockerfile"}}` — 键是嵌套的，写成 `dockerfile_path` 是无效键，会被忽略 |
 
