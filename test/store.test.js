@@ -142,3 +142,29 @@ test("every China source ships a fallback, and every fallback says it is one", a
     assert.match(snapshot.note, /re-sync|point-in-time/i, `${name} must state its limits`);
   }
 });
+
+test("the documented boot-sync list matches the sources that can be snapshotted", async () => {
+  // This list is copied into a deployment's environment by hand, so it drifts
+  // silently: three snapshot sources were added after it was written and a
+  // deployment configured from it simply never fetched them.
+  const { readFile } = await import("node:fs/promises");
+  const { DATA_SOURCE_REGISTRY } = await import("../src/data-source-registry.js");
+  const { ADAPTERS } = await import("../src/data-layer/adapters.js");
+
+  // Tens-of-megabytes downloads belong on demand, not on every cold start.
+  const HEAVY = new Set(["trade-csl", "ofac-sls", "un-consolidated", "uk-sanctions"]);
+  // gleif-lei stores only a sample and answers live queries, so a boot sync of
+  // it would suggest a corpus that is not there.
+  const SAMPLE_ONLY = new Set(["gleif-lei"]);
+
+  const expected = DATA_SOURCE_REGISTRY
+    .filter((source) => ADAPTERS[source.sourceId]?.sync && !HEAVY.has(source.sourceId) && !SAMPLE_ONLY.has(source.sourceId))
+    .map((source) => source.sourceId);
+
+  const readme = await readFile(new URL("../README.md", import.meta.url), "utf8");
+  const documented = readme.match(/bis-ear-732[^\n`]*/)?.[0].split(",") || [];
+  const missing = expected.filter((id) => !documented.includes(id));
+  const extra = documented.filter((id) => !expected.includes(id));
+  assert.deepEqual(missing, [], `README's SYNC_ON_BOOT is missing: ${missing.join(", ")}`);
+  assert.deepEqual(extra, [], `README's SYNC_ON_BOOT lists sources that cannot be snapshotted: ${extra.join(", ")}`);
+});
