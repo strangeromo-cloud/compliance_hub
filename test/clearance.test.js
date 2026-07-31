@@ -262,15 +262,20 @@ test("a lookup is answered, not put through a review", async () => {
 test("a lookup answers from the data and says what it searched", async () => {
   const { resolveLookup } = await import("../src/lookup.js");
 
-  const missing = await resolveLookup("100-000000009 这个AMD 的ECCN是什么？");
-  assert.equal(missing.found.length, 0, "there is no AMD classification data ingested");
-  assert.ok(missing.searched.length, "it must say which records it read");
+  const known = await resolveLookup("100-000000009 这个AMD 的ECCN是什么？");
+  assert.equal(known.found[0]?.value, "5A992.c", "AMD's own table answers its own part number");
+  assert.ok(known.searched.length, "it must say which records it read");
+
+  // A part number nobody publishes is where the honest answer matters: absent
+  // from this data and "no such classification" are different claims, and only
+  // the first is one this system can make.
+  const missing = await resolveLookup("ZZ-999999999 的 ECCN 是什么");
+  assert.equal(missing.found.length, 0);
+  assert.ok(missing.searched.length, "it must still say which records it read");
   assert.match(missing.elsewhere, /厂商|BIS/, "and where the answer actually lives");
 
-  // Absent from this data and "no such classification" are different claims, and
-  // only the first is one this system can make.
   const { assessScenario } = await import("../src/orchestrator.js");
-  const answer = await assessScenario({ question: "100-000000009 这个AMD 的ECCN是什么？", locale: "zh", mock: true });
+  const answer = await assessScenario({ question: "ZZ-999999999 的 ECCN 是什么", locale: "zh", mock: true });
   assert.ok(answer.grounding.limitations.some((line) => /未收录不等于不受管制/.test(line)));
 });
 
@@ -296,11 +301,17 @@ test("a source that could not be searched is named, not omitted", async () => {
 
     const { resolveLookup } = await import(`../src/lookup.js?no-amd`);
     const lookup = await resolveLookup("100-000000009 这个AMD 的ECCN是什么？");
-    assert.equal(lookup.found.length, 0);
-    assert.ok(lookup.unavailable.some((source) => source.sourceId === "amd-export"),
-      "the table that was not read must be named");
-    assert.ok(lookup.searched.some((source) => source.sourceId === "nvidia-export"),
-      "and the ones that were read must still be listed");
+    // AMD ships a bundled copy, so the table is never simply absent — but an
+    // answer taken from a point-in-time copy has to say that it is one.
+    assert.ok(lookup.found.length, "the bundled copy answers when the live table is unsynced");
+    assert.ok(lookup.found.every((item) => item.fallback), "every value must carry the tag");
+    assert.ok(lookup.searched.some((source) => source.sourceId === "amd-export" && source.fallback),
+      "and the source line must say it is a committed copy");
+
+    const { assessScenario } = await import(`../src/orchestrator.js?no-amd`);
+    const answer = await assessScenario({ question: "100-000000009 这个AMD 的ECCN是什么？", locale: "zh", mock: true });
+    assert.ok(answer.grounding.limitations.some((line) => /时点副本/.test(line)),
+      "a point-in-time copy must never answer as though it were the current table");
   } finally {
     if (previous === undefined) delete process.env.HUB_DB_PATH;
     else process.env.HUB_DB_PATH = previous;

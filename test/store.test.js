@@ -127,10 +127,13 @@ test("every China source ships a fallback, and every fallback says it is one", a
 
   const { DATA_SOURCE_REGISTRY } = await import("../src/data-source-registry.js");
   const { ADAPTERS } = await import("../src/data-layer/adapters.js");
-  const reachablePrc = DATA_SOURCE_REGISTRY
-    .filter((source) => source.country === "CN" && ADAPTERS[source.sourceId]?.sync)
+  // The vendor tables are here for the same reason: a host that cannot reach
+  // amd.com has no other way to answer an AMD part number.
+  const needsFallback = DATA_SOURCE_REGISTRY
+    .filter((source) => (source.country === "CN" || ["nvidia-export", "amd-export"].includes(source.sourceId))
+      && ADAPTERS[source.sourceId]?.sync)
     .map((source) => source.sourceId);
-  for (const sourceId of reachablePrc) {
+  for (const sourceId of needsFallback) {
     assert.ok(names.includes(`${sourceId}.json`), `${sourceId} has a sync adapter but no bundled fallback`);
   }
 

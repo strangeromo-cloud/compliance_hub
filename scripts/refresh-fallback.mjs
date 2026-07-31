@@ -41,9 +41,16 @@ async function existing(sourceId) {
   catch { return null; }
 }
 
+// The vendor classification tables belong here for the same reason the PRC
+// sources do: a host that cannot reach the publisher would otherwise have
+// nothing at all, and for a part number the vendor's table is the only source
+// that can answer. They are small enough to commit — half a megabyte and two
+// and a half — and they carry their own capture date like every other fallback.
+const VENDOR_FALLBACKS = ["nvidia-export", "amd-export"];
+
 const requested = process.argv.slice(2).filter((argument) => !argument.startsWith("-"));
 const targets = DATA_SOURCE_REGISTRY
-  .filter((source) => source.country === "CN" && ADAPTERS[source.sourceId]?.sync)
+  .filter((source) => (source.country === "CN" || VENDOR_FALLBACKS.includes(source.sourceId)) && ADAPTERS[source.sourceId]?.sync)
   .map((source) => source.sourceId)
   .filter((sourceId) => !requested.length || requested.includes(sourceId));
 
@@ -52,7 +59,7 @@ if (!targets.length) {
   process.exit(1);
 }
 
-console.log(`Refreshing ${targets.length} bundled PRC snapshot(s) from this host.\n`);
+console.log(`Refreshing ${targets.length} bundled snapshot(s) from this host.\n`);
 
 const outcomes = [];
 for (const sourceId of targets) {

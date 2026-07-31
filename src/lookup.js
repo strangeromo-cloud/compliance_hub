@@ -106,7 +106,8 @@ async function classificationOfPart(parts) {
     }
     searched.push({
       sourceId: table.sourceId,
-      label: `${table.label}（${snapshot.records.length} 条${snapshot.capturedAt ? `，采集于 ${String(snapshot.capturedAt).slice(0, 10)}` : ""}）`
+      fallback: Boolean(snapshot.isFallback),
+      label: `${table.label}（${snapshot.records.length} 条${snapshot.capturedAt ? `，采集于 ${String(snapshot.capturedAt).slice(0, 10)}` : ""}${snapshot.isFallback ? "，随仓库提交的时点副本" : ""}）`
     });
     for (const record of snapshot.records) {
       const number = String(record.partNumber || "").toUpperCase();
@@ -126,6 +127,10 @@ async function classificationOfPart(parts) {
         ].filter(Boolean).join("；"),
         sourceId: table.sourceId,
         sourceUrl: record.sourceUrl,
+        // A point-in-time copy answering as though it were the current table is
+        // the one mistake this tool must not make, so the tag travels with the
+        // value rather than being inferred from the source id.
+        fallback: Boolean(snapshot.isFallback),
         humanReviewRequired: true
       });
       if (found.length >= 6) break;

@@ -206,6 +206,12 @@ async function answerLookup({ question, locale, lookup, mock, onEvent }) {
       ? `${lookup.asked.join(", ")} is not in the ingested records. Absent from this data is not the same as not controlled.`
       : `${lookup.asked.join("、")} 不在已接入的数据中。未收录不等于不受管制。`);
   }
+  const fromFallback = [...new Set(found.filter((item) => item.fallback).map((item) => item.sourceId))];
+  if (fromFallback.length) {
+    grounding.limitations.push(isEn
+      ? `Answered from a committed point-in-time copy of ${fromFallback.join(", ")} because the publisher could not be reached from this host. Re-sync before relying on it.`
+      : `以下来源本机未同步，本次使用随仓库提交的时点副本：${fromFallback.join("、")}。厂商此后发布的分类变更不在其中，依赖结论前必须重新同步。`);
+  }
   if (found.some((item) => item.synthetic)) {
     grounding.limitations.push(isEn
       ? "One of the values comes from synthetic demonstration master data and cannot be used as a real classification."
