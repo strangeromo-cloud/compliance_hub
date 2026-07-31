@@ -2,6 +2,7 @@ import { AGENT_META, routeQuestion, routeReasons } from "./router.js";
 import { sourcesForAgents } from "./sources.js";
 import { retrievePublicSources } from "./retrieval.js";
 import { callJsonModel, callJsonModelStream, readableProjection } from "./llm.js";
+import { assessClearance } from "./clearance.js";
 import { createMockAgentResult, createMockSynthesis } from "./mock.js";
 import { collectGrounding, groundingContext } from "./grounding.js";
 import { buildActionPlan, planAnalysisPath, resolveAnalysisPath } from "./analysis-path.js";
@@ -119,12 +120,24 @@ async function runAgent(agent, question, locale, sources, config, history, groun
   return applyIntentScope(normalizeAgentResult(result, agent), grounding.intent, question, locale);
 }
 
+// The rules engine and the live model must not disagree about whether a file is
+// clean, so the same conditions decide both. The model is given the finding, not
+// asked to re-derive it, and is still told it may not invent a conclusion the
+// specialists did not support.
+function clearanceBrief(clearance) {
+  if (!clearance) return "";
+  if (clearance.cleared) {
+    return `Every clearance condition was met on the stated facts: ${clearance.checks.map((check) => `${check.because} (${check.cite})`).join("; ")}. Where the specialists agree, an overallRisk of "low" is correct here. State the conclusion as "no licence requirement arises on these facts", never as an approval or a release. `;
+  }
+  return `Clearance conditions NOT met: ${clearance.unmet.map((check) => check.because).join("; ")}. overallRisk must not be "low". `;
+}
+
 async function synthesize(question, locale, results, config, history, grounding, onDelta) {
   const language = locale === "en" ? "English" : "Simplified Chinese";
   const result = await callJsonModelStream(config, [
     {
       role: "system",
-      content: `You are the Compliance Hub Master Agent. Synthesize specialist findings without overruling them or inventing facts. Respond in ${language}. The headline and executiveSummary must answer the current question directly and specifically. Never replace a requested policy explanation or factual value with a generic human-review statement. ${intentScope(grounding.intent)} Distinguish controlled status, license requirement and prohibition only when those issues are actually in scope. Return JSON only: {"overallRisk":"low|medium|high|unknown","headline":"...","executiveSummary":"...","nextStep":"..."}. Missing critical information must not become a low-risk result. This is not legal advice.`
+      content: `${clearanceBrief(grounding.clearance)}You are the Compliance Hub Master Agent. Synthesize specialist findings without overruling them or inventing facts. Respond in ${language}. The headline and executiveSummary must answer the current question directly and specifically. Never replace a requested policy explanation or factual value with a generic human-review statement. ${intentScope(grounding.intent)} Distinguish controlled status, license requirement and prohibition only when those issues are actually in scope. Return JSON only: {"overallRisk":"low|medium|high|unknown","headline":"...","executiveSummary":"...","nextStep":"..."}. Missing critical information must not become a low-risk result. This is not legal advice.`
     },
     { role: "user", content: `Recent conversation:\n${conversationContext(history)}\n\nCurrent question:\n${question}\n\nQuestion intent: ${grounding.intent}\n\nSpecialist outputs:\n${JSON.stringify(results)}` }
   ], (text) => onDelta?.(text));
@@ -233,8 +246,23 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
     question: contextualQuestion, grounding: groundingSummary, results, declaredFacts, templated: mock, final: true
   });
 
+  // Whether the stated facts support a clear outcome, worked out once against
+  // the resolution the reader will see. It is computed before the lanes run so a
+  // clean file is reported as clean by each lane, rather than each lane
+  // reporting the template for a file that has problems.
   const laneOrder = analysisPath.lanes.map((group) => group.lane).filter((lane) => agents.includes(lane));
   const results = [];
+  const clearance = assessClearance({
+    question: contextualQuestion,
+    facts: declaredFacts,
+    grounding: groundingSummary,
+    path: askablePath()
+  });
+  grounding.clearance = clearance;
+  // A clear conclusion has to carry its own conditions, or it reads as an
+  // approval. They go in the limitations block the page already renders, next to
+  // the conclusion rather than at the end of a document nobody scrolls to.
+  if (clearance.cleared) groundingSummary.limitations = [...groundingSummary.limitations, ...clearance.conditions];
   let synthesis = null;
   let awaiting = null;
 

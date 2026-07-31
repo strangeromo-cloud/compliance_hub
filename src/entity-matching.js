@@ -128,6 +128,26 @@ export function matchParty(query, records, { limit = 10, threshold = 0.55 } = {}
 // Finds designated names that literally appear in a free-text question, so the
 // hub can screen whoever the user actually mentioned without a hardcoded alias
 // table. Short names are skipped because they generate noise, not signal.
+// A short Latin alias has to appear as a word, not as a run of letters inside
+// one. Without this, "IFIC" matched inside "classification" and reported Iran
+// Foreign Investment Company for any English question that used the word, and
+// "NADA" matched inside "Canada". Both were real screening hits on the page.
+//
+// CJK names are exempt: written without spaces, they have no word boundary to
+// test, and the minimum length already keeps them from matching fragments.
+const LATIN_ONLY = /^[\x20-\x7e]+$/;
+const boundary = (character) => character === undefined || !/[a-z0-9]/i.test(character);
+
+function mentionsAsWord(haystack, needle) {
+  if (!LATIN_ONLY.test(needle)) return haystack.includes(needle);
+  for (let from = 0; ; from += 1) {
+    const at = haystack.indexOf(needle, from);
+    if (at < 0) return false;
+    if (boundary(haystack[at - 1]) && boundary(haystack[at + needle.length])) return true;
+    from = at;
+  }
+}
+
 export function findNamesMentioned(text, records, { limit = 12, minLength = 4 } = {}) {
   const haystack = ` ${normalizeEntityName(text)} `;
   const rawHaystack = String(text).toLowerCase();
@@ -138,7 +158,7 @@ export function findNamesMentioned(text, records, { limit = 12, minLength = 4 } 
       if (normalized.length < minLength) continue;
       const mentioned = haystack.includes(` ${normalized} `) || haystack.includes(`${normalized} `) && normalized.length >= 6
         ? true
-        : rawHaystack.includes(name.toLowerCase()) && name.length >= minLength;
+        : name.length >= minLength && mentionsAsWord(rawHaystack, name.toLowerCase());
       if (!mentioned) continue;
       hits.push({ record, matchedName: name });
       break;

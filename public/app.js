@@ -122,6 +122,12 @@ const i18n = {
 
 const scenarios = {
   zh: [
+    { id: "C01", category: "trade", title: "德国长期客户直销办公笔记本（可结案）", meta: "EAR99 · 直销 · 逐条满足", question: "客户 Rhein Systeme GmbH，注册号 HRB 214553，德国杜塞尔多夫 Kölner Str. 12。我们直销一批 TX-1140 办公笔记本电脑给该公司，无中间商、无代理商。厂商分类为 EAR99，最终目的地德国，最终用户为该公司自身办公使用。请判断是否需要出口许可。",
+      facts: { legalName: "Rhein Systeme GmbH", registrationNumber: "HRB 214553", country: "DE", address: "Kölner Str. 12, 40211 Düsseldorf, Germany", ownership: "创始人 Anna Reinhardt 个人持股 100%，无被列名主体直接或间接持股", partNumber: "TX-1140", usContent: "> 25%", eccn: "EAR99", destination: "德国", endUse: "该公司自身办公使用，无转售、无军事或核相关用途" } },
+    { id: "C02", category: "product", title: "低于 de minimis 的境外制造件出口日本（可结案）", meta: "§ 734.4 · 不受 EAR 管辖", question: "我们从马来西亚工厂直接发运一批 MP-820 机架导轨组件给日本客户 Sakura Kikai K.K.（法人番号 0104-01-089221，东京都港区），无中间商。该组件受控美国原产内容占比低于 10%，最终用户为该公司产线自用。请判断是否受 EAR 管辖以及是否需要许可。",
+      facts: { legalName: "Sakura Kikai K.K.", registrationNumber: "0104-01-089221", country: "JP", address: "东京都港区芝 3-14-2", ownership: "上市公司，前十大股东均为日本机构投资者，无被列名主体持股", partNumber: "MP-820", usContent: "< 10%", eccn: "", destination: "日本", endUse: "该公司自有产线自用，非转售、非军事用途" } },
+    { id: "C03", category: "trade", title: "同名但身份要素全部对不上的加拿大客户（可结案）", meta: "误报排除 · 直销", question: "客户 Northbridge Instruments Ltd.，注册号 BC1029384，加拿大温哥华 W Hastings St 550。名称与名单条目相似，但注册国、地址均不一致。我们直销一台 EAR99 校准仪给该公司，无中间商，最终用户为其自有实验室。请完成误报排除并判断许可要求。",
+      facts: { legalName: "Northbridge Instruments Ltd.", registrationNumber: "BC1029384", country: "CA", address: "550 W Hastings St, Vancouver, BC", ownership: "两名加拿大籍自然人各持股 50%，无被列名主体持股", partNumber: "CAL-330", usContent: "> 25%", eccn: "EAR99", destination: "加拿大", endUse: "其自有实验室校准使用，无转售" } },
     { id: "T01", category: "trade", title: "受限方品牌名与具体签约实体", meta: "实体识别 · 限制范围", question: "我们计划与华为体系内一家公司签订远程技术支持合同。请说明如何确认具体签约实体、该实体可能适用的清单限制，以及纯服务、软件更新和技术访问应分别核查什么。" },
     { id: "T02", category: "trade", title: "非名单客户的受限所有权风险", meta: "OFAC 50% Rule · UBO", question: "客户 Meridian Data Systems Pte. Ltd. 本身没有出现在制裁名单上，但两家受制裁公司分别持有其 30% 和 25% 股权。我们能否交易？还需要取得哪些 UBO 及所有权资料？" },
     { id: "T03", category: "trade", title: "同名名单命中的误报处理", meta: "身份要素比对", question: "客户 Aveox Technologies (Shenzhen) Co., Ltd.，注册号 91440300778812XKA，中国深圳，直销客户。系统提示与管控名单中的名称相似，请判断是真实命中还是误报，并说明保留哪些证据。" },
@@ -137,6 +143,12 @@ const scenarios = {
     { id: "X03", category: "cross", title: "新供应商、敏感 BOM 与异常付款", meta: "BOM · 供应商 · 交易", question: "采购拟从新供应商 Copperfield Industrial 购买含美国加密芯片和中国两用物项部件的设备，供应商要求付款到香港关联公司账户。请整合产品分类、交易方筛查和第三方尽调问题。" }
   ],
   en: [
+    { id: "C01", category: "trade", title: "Direct sale of office laptops to a German customer (clears)", meta: "EAR99 · direct · every condition met", question: "Customer Rhein Systeme GmbH, registration HRB 214553, Kölner Str. 12, Düsseldorf, Germany. We are selling TX-1140 office laptops to them directly, with no intermediary and no agent. The manufacturer classification is EAR99, the destination is Germany, and the end user is the company itself for office use. Is an export licence required?",
+      facts: { legalName: "Rhein Systeme GmbH", registrationNumber: "HRB 214553", country: "DE", address: "Kölner Str. 12, 40211 Düsseldorf, Germany", ownership: "Founder Anna Reinhardt holds 100%; no designated party holds any direct or indirect interest", partNumber: "TX-1140", usContent: "> 25%", eccn: "EAR99", destination: "Germany", endUse: "The company's own office use; no resale, no military or nuclear application" } },
+    { id: "C02", category: "product", title: "Below de minimis, foreign-made, shipped to Japan (clears)", meta: "§ 734.4 · not subject to the EAR", question: "We ship MP-820 rack rail assemblies from our Malaysian plant directly to Japanese customer Sakura Kikai K.K. (corporate number 0104-01-089221, Minato-ku, Tokyo), with no intermediary. Controlled US-origin content is below 10%. The end user is the company's own production line. Is the item subject to the EAR, and is a licence required?",
+      facts: { legalName: "Sakura Kikai K.K.", registrationNumber: "0104-01-089221", country: "JP", address: "3-14-2 Shiba, Minato-ku, Tokyo", ownership: "Listed company; top ten holders are Japanese institutional investors, none designated", partNumber: "MP-820", usContent: "< 10%", eccn: "", destination: "Japan", endUse: "The company's own production line; not for resale, not a military application" } },
+    { id: "C03", category: "trade", title: "Similar name, every identity element conflicts, Canada (clears)", meta: "false positive cleared · direct", question: "Customer Northbridge Instruments Ltd., registration BC1029384, 550 W Hastings St, Vancouver, Canada. The name resembles a list entry but the country and address both conflict. We are selling one EAR99 calibrator to them directly, with no intermediary, for their own laboratory. Resolve the false positive and determine the licence requirement.",
+      facts: { legalName: "Northbridge Instruments Ltd.", registrationNumber: "BC1029384", country: "CA", address: "550 W Hastings St, Vancouver, BC", ownership: "Two Canadian individuals hold 50% each; no designated party holds an interest", partNumber: "CAL-330", usContent: "> 25%", eccn: "EAR99", destination: "Canada", endUse: "Their own laboratory calibration; no resale" } },
     { id: "T01", category: "trade", title: "Restricted brand vs contracting entity", meta: "Entity identity · Restriction scope", question: "We plan to sign a remote technical-support contract with a company in the Huawei group. Explain how to identify the contracting entity, which list restrictions may apply, and what to check separately for pure services, software updates and technology access." },
     { id: "T02", category: "trade", title: "Blocked ownership of an unlisted customer", meta: "OFAC 50% Rule · UBO", question: "Customer Meridian Data Systems Pte. Ltd. is not itself listed, but two blocked companies own 30% and 25%. Can we transact, and what UBO and ownership evidence is required?" },
     { id: "T03", category: "trade", title: "Resolving a name-match false positive", meta: "Identity elements", question: "Customer Aveox Technologies (Shenzhen) Co., Ltd., registration 91440300778812XKA, Shenzhen China, direct customer. Screening flags a name similar to a control-list entry. Is this a real hit or a false positive, and what evidence should be retained?" },
@@ -2266,6 +2278,11 @@ $("scenarioDialog").addEventListener("click", (event) => {
   const scenario = scenarios[state.locale].find((item) => item.id === pick.dataset.scenario);
   if (!scenario) return;
   $("questionInput").value = scenario.question;
+  // Some scenarios are a prepared file, not just a question: they carry the
+  // declarations a reviewer would already have to hand. Those go into the
+  // declared facts, where they stay visible and editable — never asserted by
+  // the analysis on their own.
+  if (scenario.facts) state.declaredFacts = { ...state.declaredFacts, ...scenario.facts };
   $("scenarioDialog").close();
   updateRouteHint();
   if (state.activeGem) renderActiveGem();

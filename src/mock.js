@@ -194,7 +194,45 @@ function productRestrictionResult(locale, question) {
   };
 }
 
+// A lane that found nothing to raise says that, with the provisions it checked.
+// Returning the canned "requires review" text over a clean file is what made
+// every conclusion read the same.
+function clearedResult(agent, locale, clearance) {
+  const isEn = locale === "en";
+  const met = clearance.checks.filter((check) => check.met);
+  const lane = {
+    trade: {
+      zh: "已完成名单筛查，未发现命中，亦未出现需要穿透的所有权结构。",
+      en: "List screening completed with no hits, and no ownership structure requiring aggregation."
+    },
+    product: {
+      zh: "分类与目的地均已确定，在所述事实下不产生许可要求。",
+      en: "Classification and destination are established; no licence requirement arises on the stated facts."
+    },
+    tpdd: {
+      zh: "交易为直接交易，未涉及第三方，本次无第三方尽调对象。",
+      en: "A direct transaction with no third party, so there is nothing for third-party diligence to cover."
+    }
+  }[agent] || { zh: "本条线未发现需要升级的问题。", en: "This lane found nothing to escalate." };
+
+  return {
+    agent,
+    riskLevel: "low",
+    summary: isEn ? lane.en : lane.zh,
+    findings: met.map((check) => ({
+      title: isEn ? "Condition met" : "已满足的条件",
+      detail: `${check.because}${check.cite ? `（依据：${check.cite}）` : ""}`,
+      evidenceSourceIds: []
+    })),
+    missingInfo: [],
+    recommendedActions: isEn
+      ? ["Keep the stated facts on file as the basis of this conclusion", "Retain export records for five years under § 762", "Re-run if any stated fact changes"]
+      : ["将本次陈述的事实归档，作为该结论的依据", "按 § 762 保存出口记录五年", "任一陈述事实发生变化时重新判断"]
+  };
+}
+
 export function createMockAgentResult(agent, locale, question = "", context = {}) {
+  if (context.clearance?.cleared) return clearedResult(agent, locale, context.clearance);
   const intent = context.intent || classifyQuestionIntent(question);
   if (agent === "product" && intent === "product_metric" && /h100/i.test(question)) return h100MetricResult(locale, question);
   if (agent === "product" && isChinaDualUseQuestion(question) && intent === "policy_lookup") return chinaDualUsePolicyResult(locale, context);
@@ -214,6 +252,24 @@ export function createMockAgentResult(agent, locale, question = "", context = {}
 }
 
 export function createMockSynthesis(results, locale, question = "", context = {}) {
+  // Ahead of every canned branch: a file that meets each condition is not
+  // answered with the template for a file that does not.
+  if (context.clearance?.cleared) {
+    const isEn = locale === "en";
+    const basis = context.clearance.checks.filter((check) => check.met)
+      .map((check) => `${check.because}${check.cite ? `（${check.cite}）` : ""}`);
+    return {
+      overallRisk: "low",
+      headline: isEn ? "No licence requirement arises on the stated facts" : "在所述事实下不产生许可要求",
+      executiveSummary: isEn
+        ? `Each condition was met: ${basis.join("; ")}. This is a conclusion about licence requirements, not a release of the transaction.`
+        : `逐项条件均已满足：${basis.join("；")}。本结论针对的是许可要求，不构成对该交易的放行。`,
+      nextStep: isEn
+        ? "Route to Compliance as a record filing rather than an escalation, and re-run if any stated fact changes."
+        : "以备案而非升级的方式交 Compliance 归档；任一陈述事实发生变化时重新判断。"
+    };
+  }
+
   if (/h100/i.test(question) && /\beccn\b/i.test(question)) {
     return {
       overallRisk: "unknown",

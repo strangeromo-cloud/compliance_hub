@@ -78,7 +78,7 @@ const copy = {
     otherTitle: "其他入口",
     otherPoints: [
       "左侧栏点击 Gem 直接使用，再点一次查看它的完整规格。",
-      "「测试场景」提供 13 个预置情景，只填入输入框。",
+      "「测试场景」提供 16 个预置情景。多数只填入输入框；C 开头的三个是完整卷宗，会同时把已声明事实填好，因此能一次跑到结论——它们是用来看「条件逐项满足时系统怎么说」的。",
       "左下角数据状态可进入数据覆盖页，查看每个来源的同步状态、记录数与校验和。",
       "左上角可在规则模式（无需 API Key）与实时模型之间切换。"
     ],
@@ -187,7 +187,7 @@ const copy = {
     otherTitle: "Other entry points",
     otherPoints: [
       "Click a gem in the sidebar to use it; click again to see its full specification.",
-      "Test scenarios offers 13 preset situations that only fill the composer.",
+      "Test scenarios offers 16 presets. Most only fill the composer; the three beginning with C are complete files that also fill in the declared facts, so they run through to a conclusion — they are there to show what the system says when every condition is met.",
       "The data status at the bottom left opens the coverage page: sync state, record counts and checksums per source.",
       "The top bar switches between rules mode (no API key) and the live model."
     ],
