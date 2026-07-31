@@ -32,6 +32,7 @@ const TERMS = {
   "身份要素消歧": "Identity resolution",
   "所有权穿透（50% 聚合）": "Ownership aggregation (50 Percent Rule)",
   "所有权穿透（OFAC 50% 聚合）": "Ownership aggregation (OFAC 50 Percent Rule)",
+  "母公司名单筛查": "Screen the parent company",
 
   // Product steps
   "确定物项（准确型号或 part number）": "Identify the item (exact model or part number)",

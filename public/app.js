@@ -44,7 +44,7 @@ const i18n = {
     runtimeRules: "规则模式", runtimeReady: "实时模型", runtimeMissing: "未配置模型",
     modeHint: "点击切换规则模式与实时模型",
     routeLabel: "路由", routedTo: "已路由至",
-    overallAssessment: "总体判断", nextStep: "下一步", missingInfo: "仍需信息", actions: "建议行动", planSuggested: "专业 Agent 的其他建议", planSuggestedNote: "这些建议未对应分析路径上的某一步，供人工复核时参考", notClosed: "尚有 {n} 项未补齐", stepAsk: "请补充以下信息，分析将从这里继续", naCount: "{n} 项本次不适用或已跳过", flowFolded: "另有 {n} 项不适用或已跳过", laneFindings: "本条线的分析发现（专业 Agent 输出，非全案结论）", interimVerdict: "阶段性判断（基于现有信息，未结案）", noItems: "暂无", limitations: "结论边界与限制",
+    overallAssessment: "总体判断", nextStep: "下一步", missingInfo: "仍需信息", actions: "建议行动", planSuggested: "专业 Agent 的其他建议", planSuggestedNote: "这些建议未对应分析路径上的某一步，供人工复核时参考", notClosed: "尚有 {n} 项未补齐", stepAsk: "请补充以下信息，分析将从这里继续", naCount: "{n} 项本次不适用或已跳过", stepTriggered: "由前一步的发现触发", flowFolded: "另有 {n} 项不适用或已跳过", laneFindings: "本条线的分析发现（专业 Agent 输出，非全案结论）", interimVerdict: "阶段性判断（基于现有信息，未结案）", noItems: "暂无", limitations: "结论边界与限制",
     sourceLive: "实时获取", sourceMetadata: "元数据", sourceUnavailable: "获取失败", sourceNotFetched: "未获取", sourceArchived: "已采集副本", sourceCitationOnly: "仅引用", sourceCached: "缓存", noQueryableSource: "暂无可直查的来源（需先同步）", sourceQueryHint: "@ 直查数据源", sourceQueryPlaceholder: "输入实体名、公告号或条文关键词（按相关性排序；留空则浏览全部）…",
     queryEmpty: "请输入查询内容", queryHits: "{total} 条命中", browseCount: "共 {total} 条", browseAll: "浏览全部", pagePrev: "上一页", pageNext: "下一页", relMatched: "命中", relMissed: "未命中", relPartial: "另有 {n} 条仅命中部分检索词，未列出", queryNoHit: "该来源中未找到匹配记录", queryTruncated: "显示前 {shown} 条，共 {total} 条",
     queryEscalate: "以此发起完整筛查 →", escalatePrefix: "请对 {q} 做完整合规筛查",
@@ -102,7 +102,7 @@ const i18n = {
     runtimeRules: "Rules mode", runtimeReady: "Live model", runtimeMissing: "No model configured",
     modeHint: "Toggle between rules mode and the live model",
     routeLabel: "Route", routedTo: "Routed to",
-    overallAssessment: "Overall assessment", nextStep: "Next step", missingInfo: "Missing information", actions: "Recommended actions", planSuggested: "Other suggestions from the specialists", planSuggestedNote: "These do not map onto a step in the analysis path; they are for the reviewer to weigh", notClosed: "{n} items still open", stepAsk: "Add these and the analysis continues from here", naCount: "{n} not applicable or skipped", flowFolded: "{n} more not applicable or skipped", laneFindings: "What this lane found (specialist output, not the case conclusion)", interimVerdict: "Interim assessment (on incomplete facts, not a conclusion)", noItems: "None", limitations: "Limits on this conclusion",
+    overallAssessment: "Overall assessment", nextStep: "Next step", missingInfo: "Missing information", actions: "Recommended actions", planSuggested: "Other suggestions from the specialists", planSuggestedNote: "These do not map onto a step in the analysis path; they are for the reviewer to weigh", notClosed: "{n} items still open", stepAsk: "Add these and the analysis continues from here", naCount: "{n} not applicable or skipped", stepTriggered: "triggered by an earlier finding", flowFolded: "{n} more not applicable or skipped", laneFindings: "What this lane found (specialist output, not the case conclusion)", interimVerdict: "Interim assessment (on incomplete facts, not a conclusion)", noItems: "None", limitations: "Limits on this conclusion",
     sourceLive: "Live", sourceMetadata: "Metadata", sourceUnavailable: "Unavailable", sourceNotFetched: "Not fetched", sourceArchived: "Archived copy", sourceCitationOnly: "Cited only", sourceCached: "Cached", noQueryableSource: "No queryable source yet (sync one first)", sourceQueryHint: "@ query a source", sourceQueryPlaceholder: "Entity name, notice number or keyword — ranked by relevance; leave empty to browse all…",
     queryEmpty: "Enter something to look up", queryHits: "{total} matches", browseCount: "{total} records", browseAll: "Browse all", pagePrev: "Previous", pageNext: "Next", relMatched: "matched", relMissed: "not matched", relPartial: "{n} more records matched only part of the query and are not listed", queryNoHit: "No matching record in this source", queryTruncated: "Showing {shown} of {total}",
     queryEscalate: "Run a full screening on this →", escalatePrefix: "Run a full compliance screening on {q}",
@@ -1108,6 +1108,15 @@ function pathMarkup(path, grounding, options = {}) {
   // the reader and the page must move on to the next one. Getting that wrong
   // stalled the run twice with no question on the page and no conclusion.
   const askable = isAskable;
+  // A step that is on the board because an earlier finding put it there. Shown
+  // on the step itself: a check that appears mid-review reads as arbitrary
+  // unless it says what required it.
+  const triggers = new Map((path.triggered || []).map((edge) => [edge.to?.step, edge]));
+  const triggerFor = (id) => {
+    const edge = triggers.get(id);
+    if (!edge) return null;
+    return { note: `${state.locale === "en" ? edge.en : edge.zh}${edge.because ? `（${edge.because}）` : ""}${edge.cite ? ` — ${edge.cite}` : ""}` };
+  };
   const laneQuestion = (lane) => {
     if (blocked && lane.steps.some((item) => item.id === blocked)) return blocked;
     return lane.steps.find(askable)?.id || null;
@@ -1170,13 +1179,18 @@ function pathMarkup(path, grounding, options = {}) {
                 <button type="button" class="step-head" data-step-toggle aria-expanded="true">
                   <strong>${esc(item.title)}</strong>
                   <span class="step-status">${esc(label(STEP_STATUS_VOCAB, item.status, state.locale))}</span>
+                  ${triggerFor(item.id) ? `<span class="step-trigger" title="${esc(triggerFor(item.id).note)}">${esc(t("stepTriggered"))}</span>` : ""}
                   ${item.cite ? `<span class="step-cite ${item.methodology === "derived" ? "derived" : ""}" title="${esc(item.citeNote || "")}">${esc(item.cite)}</span>` : ""}
                 </button>
                 <div class="step-detail-wrap">
                   ${item.basis.length ? `<ul class="step-basis">${item.basis.map((line) => {
                     const sourceRef = String(line).match(/^([a-z0-9-]{4,32})[：:]/);
                     const known = sourceRef && (state.coverage?.sources || []).some((source) => source.sourceId === sourceRef[1]);
-                    return `<li>${formatInline(line)}${known ? ` <button type="button" class="jump-source" data-jump-source="${esc(sourceRef[1])}" title="${esc(t("jumpSource"))}">⛁</button>` : ""}</li>`;
+                    // Text and button in one cell. The list item is a two-column
+                    // grid — a label and the line — so a button left as a sibling
+                    // of the text became a third grid item and dropped to its own
+                    // row, a database icon sitting alone under every source line.
+                    return `<li><span class="basis-line">${formatInline(line)}${known ? `<button type="button" class="jump-source" data-jump-source="${esc(sourceRef[1])}" title="${esc(t("jumpSource"))}">⛁</button>` : ""}</span></li>`;
                   }).join("")}</ul>` : ""}
                   ${item.needs.length ? `<ul class="step-needs">${item.needs.map((line) => `<li>${formatInline(line)}</li>`).join("")}</ul>` : ""}
                   ${stepDetailMarkup(item, grounding)}

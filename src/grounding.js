@@ -248,6 +248,28 @@ export async function collectGrounding(question, agents = [], declaredFacts = {}
     // counterparty outranks this system's guess at it.
     const subject = String(declaredFacts.legalName || "").trim() || grounding.partyCandidates[0]?.entityName || null;
     if (subject) grounding.ownership = await resolveOwnership(subject).catch(() => null);
+
+    // The parent, screened in its own right. This is the whole point of
+    // resolving the chain: a company owned in aggregate by designated parties is
+    // restricted even when its own name is clean, and until now the parent was
+    // found and then never looked up.
+    const chain = grounding.ownership;
+    const parents = [chain?.directParent, chain?.ultimateParent]
+      .filter((parent) => parent?.name)
+      .filter((parent, index, all) => all.findIndex((other) => other.name === parent.name) === index);
+    if (parents.length && screening.sources?.length) {
+      grounding.parentScreening = parents.map((parent) => {
+        const hits = screening.sources.flatMap((source) =>
+          fuzzyPartyCandidates(parent.name, source.records, { limit: 2 })
+            .map((hit) => ({ ...hit, sourceId: source.sourceId, sourceLabel: source.label })));
+        return { parent, hits, screened: screening.sources.map((source) => source.sourceId) };
+      });
+      if (grounding.parentScreening.some((entry) => entry.hits.length)) {
+        grounding.limitations.push(bi(
+          "母公司在受限方名单中出现潜在命中：合计持股达到 50% 时，子公司同样受限，必须完成穿透计算。",
+          "A parent company drew a potential match on a restricted-party list. Where aggregate ownership reaches 50%, the subsidiary is restricted too, and the aggregation has to be completed."));
+      }
+    }
     if (screening.unsyncedSources.length) {
       grounding.limitations.push(bi(
         `以下名单来源尚未同步，本次未筛查：${screening.unsyncedSources.join("、")}。来源缺失不等于无风险。`,

@@ -1533,3 +1533,13 @@ html[lang="en"] .step-needs li::before { content: "NEEDS"; font-size: 8px; }
   border-left: 2px solid var(--border-strong); padding-left: 8px; }
 .source-optional.on { border-left-color: var(--accent); color: var(--text-2); }
 .source-optional b { color: var(--text-2); font-weight: 600; }
+/* A step put on the board by an earlier finding. Marked, because a check that
+   appears part-way through a review reads as arbitrary unless it says what
+   required it. */
+.step-trigger { font-size: 10px; padding: 1px 6px; border-radius: 999px; white-space: nowrap;
+  color: var(--accent-text); background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); cursor: help; }
+/* The line and its jump button share one grid cell, so the button sits at the
+   end of the text rather than on a row of its own. */
+.basis-line { display: inline; }
+.basis-line .jump-source { vertical-align: baseline; }

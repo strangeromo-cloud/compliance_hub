@@ -22,6 +22,7 @@
 
 import { triage } from "./triage.js";
 import { bi } from "./path-i18n.js";
+import { triggeredDependencies } from "./lane-dependencies.js";
 
 // Published methodologies the path follows.
 //
@@ -610,6 +611,29 @@ function tradeSteps(question, grounding, results) {
     }));
   }
 
+  // A step that exists because an earlier one found something. Placed after
+  // ownership, because that is what produced the name it screens.
+  const parentScreening = grounding.parentScreening || [];
+  if (parentScreening.length) {
+    const hits = parentScreening.flatMap((entry) => entry.hits.map((hit) => ({ ...hit, parent: entry.parent })));
+    const sourceCount = parentScreening[0]?.screened?.length || 0;
+    steps.push(step("parent_screening", "母公司名单筛查",
+      hits.length ? "evidence_needed" : "confirmed",
+      hits.length
+        ? {
+          basis: hits.map((hit) => bi(
+            `${hit.parent.name} 在 ${hit.sourceId} 中潜在命中「${hit.entityName}」（相似度 ${hit.matchScore}）`,
+            `${hit.parent.name} draws a potential match on "${hit.entityName}" in ${hit.sourceId} (score ${hit.matchScore})`)),
+          needs: [bi("需按 OFAC 50% 规则计算该母公司对本交易方的直接与间接合计持股",
+            "The parent's direct and indirect holding in this counterparty has to be aggregated under the 50 Percent Rule")]
+        }
+        : {
+          basis: parentScreening.map((entry) => bi(
+            `${entry.parent.name}：在 ${sourceCount} 个已同步名单中未发现命中`,
+            `${entry.parent.name}: no match across ${sourceCount} synced lists`))
+        }));
+  }
+
   return steps;
 }
 
@@ -708,13 +732,19 @@ export function resolveAnalysisPath(plan, { question, grounding, results = [], d
     const resolved = new Map(resolvers[group.lane]().map((item) => [item.id, item]));
     return {
       ...group,
-      steps: group.steps.map((planned) => {
+      // A resolver may add a step the plan did not have: a dependency fired and
+      // put it there. Those are appended rather than dropped for not matching a
+      // planned id.
+      steps: [...group.steps.map((planned) => {
         const item = resolved.get(planned.id);
         if (!item) return planned;
         // Provenance belongs to the plan. Resolution decides status only, so the
         // citation must survive it rather than being rebuilt by each resolver.
-        const keep = { inputs: planned.inputs, cite: planned.cite, citeNote: planned.citeNote, methodology: planned.methodology };
-        const answered = planned.inputs.filter((input) => String(declaredFacts[input.field] || "").trim());
+        const keep = { inputs: planned.inputs || [], cite: planned.cite, citeNote: planned.citeNote, methodology: planned.methodology };
+        // A step appended by a dependency has no inputs, and the path is resolved
+        // more than once — so on the second pass that step arrives here as a
+        // planned one. Nothing may assume the plan's shape.
+        const answered = (planned.inputs || []).filter((input) => String(declaredFacts[input.field] || "").trim());
         // A declaration moves a blocked step forward but never to settled: the
         // value came from the person asking, and nobody has checked it.
         if (item.status === "evidence_needed" && answered.length) {
@@ -732,11 +762,17 @@ export function resolveAnalysisPath(plan, { question, grounding, results = [], d
             basis: [`${gated.because}（依据 ${gated.cite}）`] };
         }
         return { ...item, ...keep };
-      })
+      }), ...[...resolved.values()]
+        .filter((item) => !group.steps.some((planned) => planned.id === item.id))
+        .map((item) => ({ inputs: [], ...item }))]
     };
   });
 
-  return { ...plan, lanes, summary: summarize(lanes), planned: false, templated, final };
+  // Why a triggered step is on the board. Held on the path so the interface can
+  // say "this is here because ownership found a parent" instead of presenting it
+  // as though it had always been part of the procedure.
+  const triggered = triggeredDependencies(grounding);
+  return { ...plan, lanes, summary: summarize(lanes), planned: false, templated, final, triggered };
 }
 
 // One action list, ordered by the path's own dependencies.

@@ -558,3 +558,63 @@ test("the English answer runs an English procedure", async () => {
       `an English line still carries Chinese wording of its own: ${line}`);
   }
 });
+
+test("a finding in one lane obliges a check in another", async () => {
+  // The three lanes ran side by side and never spoke, which is wrong about the
+  // subject: ownership resolution found a parent company and nothing screened
+  // it. A company owned 50% or more in aggregate by designated parties is
+  // restricted even when its own name is clean.
+  const { LANE_DEPENDENCIES, triggeredDependencies } = await import("../src/lane-dependencies.js");
+
+  // Every edge cites the rule that makes the check obligatory. A trigger with no
+  // provision behind it is this system's opinion about what is prudent.
+  for (const edge of LANE_DEPENDENCIES) {
+    assert.ok(edge.cite, `${edge.id} must name the provision that requires it`);
+    assert.ok(edge.zh && edge.en, `${edge.id} needs both languages`);
+    assert.ok(edge.from?.step && edge.to?.step);
+  }
+
+  assert.deepEqual(triggeredDependencies({}), [], "nothing fires on nothing");
+
+  const chain = { subject: { name: "Acme GmbH" }, ultimateParent: { name: "Acme Holding AG", lei: "L1" } };
+  const fired = triggeredDependencies({ ownership: chain, listMatches: [] });
+  assert.equal(fired.length, 1);
+  assert.equal(fired[0].id, "parent_screening");
+  assert.equal(fired[0].because, "Acme Holding AG", "the step says which finding put it there");
+
+  const both = triggeredDependencies({ ownership: chain, listMatches: [{ entityName: "Designated Co" }] });
+  assert.deepEqual(both.map((edge) => edge.id).sort(), ["listed_party_blocks_exceptions", "parent_screening"]);
+});
+
+test("the resolved parent is actually screened, not just named", async () => {
+  const { planAnalysisPath, resolveAnalysisPath } = await import("../src/analysis-path.js");
+  const { localizeLines } = await import("../src/path-i18n.js");
+  const question = "请对交易方 Acme GmbH 做受限方筛查";
+  const grounding = {
+    screening: { screenedSources: [{ sourceId: "trade-csl", recordCount: 3, capturedAt: "2026-07-31" }], unsyncedSources: [] },
+    listMatches: [], internalParties: [], limitations: [], partyCandidates: [],
+    ownership: { subject: { name: "Acme GmbH", lei: "L0" }, ultimateParent: { name: "Acme Holding AG", lei: "L1" }, meaning: "不含持股比例" },
+    parentScreening: [{ parent: { name: "Acme Holding AG" }, hits: [], screened: ["trade-csl", "eu-fsf"] }]
+  };
+
+  const path = resolveAnalysisPath(planAnalysisPath({ agents: ["trade"], question }),
+    { question, grounding, declaredFacts: {}, final: true });
+  const steps = path.lanes.flatMap((lane) => lane.steps);
+  const screened = steps.find((item) => item.id === "parent_screening");
+  assert.ok(screened, "the triggered step is added to the lane, not merely recorded");
+  assert.equal(screened.status, "confirmed");
+  assert.ok(localizeLines(screened.basis, "zh").some((line) => /Acme Holding AG/.test(line)));
+
+  // A hit on the parent reopens the aggregation question.
+  const withHit = resolveAnalysisPath(planAnalysisPath({ agents: ["trade"], question }), {
+    question,
+    grounding: { ...grounding, parentScreening: [{ parent: { name: "Acme Holding AG" }, hits: [{ entityName: "ACME HOLDING", matchScore: 0.9, sourceId: "trade-csl" }], screened: ["trade-csl"] }] },
+    declaredFacts: {}, final: true
+  });
+  const blocked = withHit.lanes.flatMap((lane) => lane.steps).find((item) => item.id === "parent_screening");
+  assert.equal(blocked.status, "evidence_needed");
+  assert.ok(localizeLines(blocked.needs, "zh").some((line) => /50%/.test(line)));
+
+  // And the path records why the step is there at all.
+  assert.ok(path.triggered.some((edge) => edge.to.step === "parent_screening"));
+});

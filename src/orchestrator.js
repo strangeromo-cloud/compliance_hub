@@ -490,6 +490,7 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
     // had already been found.
     partyCandidates: grounding.partyCandidates || [],
     ownership: grounding.ownership || null,
+    parentScreening: grounding.parentScreening || null,
     limitations: localizeLines(grounding.limitations, locale)
   };
   onEvent({ type: "grounding", intent: grounding.intent, grounding: groundingSummary });
