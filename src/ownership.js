@@ -21,7 +21,7 @@
 // user still has to.
 
 import { fetchPublicFile } from "./data-layer/http.js";
-import { scoreNameMatch } from "./entity-matching.js";
+import { nameVariants, scoreNameMatch } from "./entity-matching.js";
 
 // The registry entry this resolver is the implementation of, so the coverage
 // page's claim that the ownership step reads it can be checked against code.
@@ -43,6 +43,11 @@ const describe = (record) => {
     country: address.country || null,
     city: address.city || null,
     status: entity.status || null,
+    // The register's own verdict on the record. Two LEIs carry the legal name
+    // VOLKSWAGEN AKTIENGESELLSCHAFT and GLEIF marks one of them DUPLICATE — so
+    // which to use is published, not something to guess at or to surface as an
+    // ambiguity for the reader to resolve.
+    registrationStatus: record?.attributes?.registration?.status || null,
     // The register's own page, so a reviewer can check the claim rather than
     // take this system's word for the chain.
     sourceUrl: record?.id ? `https://search.gleif.org/#/record/${record.id}` : null
@@ -73,14 +78,30 @@ export async function resolveOwnership(name) {
   const legalName = String(name || "").trim();
   if (legalName.length < 3) return null;
 
-  let payload;
-  try {
-    payload = await gleif(`${API}?filter%5Bentity.legalName%5D=${encodeURIComponent(legalName)}&page%5Bsize%5D=3`);
-  } catch (error) {
-    return { queried: legalName, unavailable: String(error.message).slice(0, 160), candidates: [] };
+  // Ask the register the way it records, not the way people write.
+  //
+  // Volkswagen AG is registered as VOLKSWAGEN AKTIENGESELLSCHAFT, and asking for
+  // the abbreviation returned six subsidiaries without the company among them —
+  // the lookup was failing on the query, not on the matching. Both forms are
+  // asked for, and twenty-five rows rather than three, because the one wanted is
+  // not reliably in the first few.
+  const returned = [];
+  const seenLei = new Set();
+  for (const variant of nameVariants(legalName)) {
+    let payload;
+    try {
+      payload = await gleif(`${API}?filter%5Bentity.legalName%5D=${encodeURIComponent(variant)}&page%5Bsize%5D=25`);
+    } catch (error) {
+      if (!returned.length) return { queried: legalName, unavailable: String(error.message).slice(0, 160), candidates: [] };
+      continue;
+    }
+    for (const record of payload?.data || []) {
+      const item = describe(record);
+      if (!item.lei || seenLei.has(item.lei)) continue;
+      seenLei.add(item.lei);
+      returned.push(item);
+    }
   }
-
-  const returned = (payload?.data || []).map(describe).filter((item) => item.lei);
   if (!returned.length) return { queried: legalName, candidates: [], notInRegister: true };
 
   // The register's name filter is not an exact match. Searching for
@@ -98,9 +119,15 @@ export async function resolveOwnership(name) {
   // loose is a wrong owner presented as a looked-up fact. Those are not
   // comparable.
   const scored = returned.map((item) => ({ ...item, match: scoreNameMatch(legalName, item.name) }));
+  // Records the register has retired, merged or annulled are not candidates: it
+  // has already said they are not the entity to use.
+  const RETIRED = new Set(["DUPLICATE", "ANNULLED", "MERGED", "RETIRED", "TRANSFERRED"]);
   const candidates = scored
     .filter((item) => item.match.basis === "normalized_name_identical")
-    .map((item) => ({ ...item, matchScore: item.match.score }));
+    .filter((item) => !RETIRED.has(String(item.registrationStatus || "").toUpperCase()))
+    .map((item) => ({ ...item, matchScore: item.match.score }))
+    // An active entity outranks a lapsed one where both survive.
+    .sort((left, right) => (right.status === "ACTIVE" ? 1 : 0) - (left.status === "ACTIVE" ? 1 : 0));
 
   if (!candidates.length) {
     return {

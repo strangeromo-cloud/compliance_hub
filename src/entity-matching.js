@@ -13,8 +13,38 @@ const LEGAL_SUFFIXES = [
 
 const CHINESE_SUFFIXES = ["有限公司", "股份有限公司", "有限责任公司", "集团有限公司", "集团", "公司", "株式会社"];
 
+// A register records the statutory form; people write the abbreviation.
+//
+// Volkswagen AG is registered with GLEIF as VOLKSWAGEN AKTIENGESELLSCHAFT, so
+// asking for "Volkswagen AG" found the subsidiaries and not the company — and
+// the comparison then scored it as "one name contains the other" rather than
+// identical, which is the difference between resolving an entity and refusing to.
+//
+// Written as an equivalence rather than as more words to strip: mapping the long
+// form onto the short one and then removing the short one keeps the stripping
+// list exact. Adding "gesellschaft" to the list of things to delete would also
+// eat it out of "Gesellschaft für Nuklear-Service", where it is part of a name.
+const LEGAL_FORM_ALIASES = [
+  [/\bgesellschaft mit beschr[aä]nkter haftung\b/g, "gmbh"],
+  [/\bkommanditgesellschaft auf aktien\b/g, "kgaa"],
+  [/\baktiengesellschaft\b/g, "ag"],
+  [/\bkommanditgesellschaft\b/g, "kg"],
+  [/\bsoci[ée]t[ée] par actions simplifi[ée]e\b/g, "sas"],
+  [/\bsoci[ée]t[ée] anonyme\b/g, "sa"],
+  [/\bsoci[ée]t[ée] [aà] responsabilit[ée] limit[ée]e\b/g, "sarl"],
+  [/\bsociedad an[oó]nima\b/g, "sa"],
+  [/\bpublic limited company\b/g, "plc"],
+  [/\bproprietary limited\b/g, "pty ltd"],
+  [/\bnaamloze vennootschap\b/g, "nv"],
+  [/\bbesloten vennootschap\b/g, "bv"],
+  [/\baktiebolag\b/g, "ab"],
+  [/\bkabushiki kaisha\b/g, "kk"]
+];
+
 export function normalizeEntityName(name = "") {
   let value = String(name).toLowerCase().normalize("NFKC");
+  // Long form to abbreviation first, so the existing suffix list removes both.
+  for (const [pattern, short] of LEGAL_FORM_ALIASES) value = value.replace(pattern, short);
   for (const suffix of CHINESE_SUFFIXES) value = value.replaceAll(suffix, " ");
   value = value
     .replace(/[.,'"`’‘“”()（）\[\]{}<>&/\\|:;!?*#+]/g, " ")
@@ -23,6 +53,25 @@ export function normalizeEntityName(name = "") {
     .trim();
   const tokens = value.split(" ").filter((token) => token && !LEGAL_SUFFIXES.includes(token));
   return (tokens.length ? tokens : value.split(" ").filter(Boolean)).join(" ").trim();
+}
+
+// The same table read the other way: what a register might have recorded when
+// the user typed the abbreviation. Used to ask a register for both.
+const EXPANSIONS = {
+  ag: "Aktiengesellschaft", gmbh: "Gesellschaft mit beschränkter Haftung",
+  kg: "Kommanditgesellschaft", ab: "Aktiebolag", nv: "Naamloze Vennootschap",
+  bv: "Besloten Vennootschap", sa: "Société Anonyme", plc: "Public Limited Company",
+  kk: "Kabushiki Kaisha", ltd: "Limited", inc: "Incorporated", corp: "Corporation"
+};
+
+export function nameVariants(name = "") {
+  const text = String(name).trim();
+  if (!text) return [];
+  const variants = new Set([text]);
+  const match = text.match(/\s([A-Za-z.]+)\s*$/);
+  const tail = match?.[1]?.toLowerCase().replace(/\./g, "");
+  if (tail && EXPANSIONS[tail]) variants.add(text.replace(/\s[A-Za-z.]+\s*$/, ` ${EXPANSIONS[tail]}`));
+  return [...variants];
 }
 
 export function nameTokens(name = "") {

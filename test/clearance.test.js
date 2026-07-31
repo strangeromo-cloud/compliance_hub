@@ -323,12 +323,13 @@ test("the ownership chain is taken from the register, never guessed at", async (
   const { resolveOwnership } = await import("../src/ownership.js");
 
   // GLEIF's name filter is not an exact match, and attributing another company's
-  // parent to this counterparty is the worst thing this lookup could do.
-  // "Volkswagen AG" returns Volkswagen Autoversicherung AG — whose parent is
-  // Allianz SE. A containment score accepted it; identity is required.
-  const loose = await resolveOwnership("Volkswagen AG");
+  // parent to this counterparty is the worst thing this lookup could do. Asking
+  // for "Volkswagen Financial AG" returns Volkswagen Financial Services AG and
+  // its Swiss and overseas siblings — a containment score would accept any of
+  // them; identity is required.
+  const loose = await resolveOwnership("Volkswagen Financial AG");
   assert.ok(loose.noConfidentMatch, "a near name must not be used to attribute ownership");
-  assert.ok(loose.rejected.some((item) => /Autoversicherung|Financial|Truck/.test(item.name)),
+  assert.ok(loose.rejected.some((item) => /Financial Services/.test(item.name)),
     "and what was rejected is named, so the reader sees a decision rather than an empty search");
 
   const exact = await resolveOwnership("Siemens Energy Global GmbH & Co. KG");
@@ -454,4 +455,44 @@ test("a briefing says what changed, not which files exist", async () => {
   assert.equal(numbers.length, new Set(numbers).size, "a notice must appear once");
   const multi = brief.items.filter((item) => item.sourceLabels?.length > 1);
   assert.ok(multi.length, "and the registers that carry it are still recorded");
+});
+
+test("a register is asked the way it records, not the way people write", async () => {
+  // Volkswagen AG is registered with GLEIF as VOLKSWAGEN AKTIENGESELLSCHAFT.
+  // Asking for the abbreviation returned six subsidiaries without the company
+  // among them — the lookup was failing on the query, not on the matching.
+  const { nameVariants, scoreNameMatch } = await import("../src/entity-matching.js");
+
+  assert.deepEqual(nameVariants("Volkswagen AG"), ["Volkswagen AG", "Volkswagen Aktiengesellschaft"]);
+  assert.deepEqual(nameVariants("Sakura KK"), ["Sakura KK", "Sakura Kabushiki Kaisha"]);
+  assert.deepEqual(nameVariants("某某公司"), ["某某公司"], "nothing to expand is not an error");
+
+  // And the two forms compare as the same entity, which they are.
+  for (const [written, registered] of [
+    ["Volkswagen AG", "VOLKSWAGEN AKTIENGESELLSCHAFT"],
+    ["Siemens AG", "Siemens Aktiengesellschaft"],
+    ["Acme BV", "Acme Besloten Vennootschap"],
+    ["Acme Ltd", "Acme Limited"]
+  ]) {
+    assert.equal(scoreNameMatch(written, registered).basis, "normalized_name_identical", `${written} / ${registered}`);
+  }
+
+  // The expansion must not eat a word that is part of a name rather than a form.
+  const real = "Gesellschaft für Nuklear-Service mbH";
+  assert.ok(scoreNameMatch(real, real).basis === "normalized_name_identical");
+  assert.notEqual(scoreNameMatch(real, "Nuklear-Service mbH").basis, "normalized_name_identical",
+    "stripping a form must not turn two different names into one");
+});
+
+test("a record the register has retired is not a candidate", async () => {
+  // Two LEIs carry the legal name VOLKSWAGEN AKTIENGESELLSCHAFT; GLEIF marks one
+  // DUPLICATE. Which to use is published, so it is read rather than guessed at
+  // or handed to the reader as an ambiguity.
+  const { resolveOwnership } = await import("../src/ownership.js");
+  const found = await resolveOwnership("Volkswagen AG");
+  assert.ok(found.subject, "the abbreviation now reaches the register entry");
+  assert.equal(found.subject.registrationStatus, "ISSUED");
+  assert.equal(found.subject.status, "ACTIVE");
+  assert.ok(!found.otherCandidates.some((item) => /DUPLICATE/i.test(item.registrationStatus || "")),
+    "a duplicate registration must not be offered as an alternative either");
 });
