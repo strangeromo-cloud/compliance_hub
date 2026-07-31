@@ -1389,3 +1389,21 @@ html[lang="en"] .step-needs li::before { content: "NEEDS"; font-size: 8px; }
 /* While the analysis is running on that step the whole row says so. */
 .flow-panel .fl-step.current.is-running .fl-text::after { content: "…"; margin-left: 4px; color: var(--accent-text); }
 @media (prefers-reduced-motion: reduce) { .fl-step.current .fl-node { animation: none; } }
+
+/* ---- what does not apply, folded away ---- */
+.lane-na { margin: 6px 0 0 18px; }
+.lane-na > summary { font-size: 11px; color: var(--text-3); cursor: pointer; list-style: none; }
+.lane-na > summary::before { content: "▸ "; font-size: 9px; }
+.lane-na[open] > summary::before { content: "▾ "; }
+.lane-na ul { list-style: none; margin: 5px 0 0; padding: 0 0 0 12px; display: grid; gap: 4px; font-size: 11px; color: var(--text-3); }
+.lane-na b { font-weight: 500; color: var(--text-2); text-decoration: line-through; text-decoration-color: var(--border-strong); }
+
+/* ---- the arrow that says "here" ----
+   Inside the step, on the line that states it is waiting. Absolutely positioned
+   outside it, it was at the mercy of every ancestor's overflow. */
+.step-arrow { display: inline-block; margin-right: 6px; color: var(--accent); animation: point-here 1.4s ease-in-out infinite; }
+@keyframes point-here {
+  0%, 100% { transform: translateX(-3px); opacity: .5; }
+  50% { transform: translateX(2px); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) { .step-arrow { animation: none; opacity: .9; } }

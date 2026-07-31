@@ -44,7 +44,7 @@ const i18n = {
     runtimeRules: "规则模式", runtimeReady: "实时模型", runtimeMissing: "未配置模型",
     modeHint: "点击切换规则模式与实时模型",
     routeLabel: "路由", routedTo: "已路由至",
-    overallAssessment: "总体判断", nextStep: "下一步", missingInfo: "仍需信息", actions: "建议行动", planSuggested: "专业 Agent 的其他建议", planSuggestedNote: "这些建议未对应分析路径上的某一步，供人工复核时参考", notClosed: "尚有 {n} 项未补齐", stepAsk: "分析在这里停下，需要你补充以下信息后继续", interimVerdict: "阶段性判断（基于现有信息，未结案）", noItems: "暂无", limitations: "结论边界与限制",
+    overallAssessment: "总体判断", nextStep: "下一步", missingInfo: "仍需信息", actions: "建议行动", planSuggested: "专业 Agent 的其他建议", planSuggestedNote: "这些建议未对应分析路径上的某一步，供人工复核时参考", notClosed: "尚有 {n} 项未补齐", stepAsk: "分析在这里停下，需要你补充以下信息后继续", naCount: "{n} 项本次不适用", interimVerdict: "阶段性判断（基于现有信息，未结案）", noItems: "暂无", limitations: "结论边界与限制",
     sourceLive: "实时获取", sourceMetadata: "元数据", sourceUnavailable: "获取失败", sourceNotFetched: "未获取", sourceArchived: "已采集副本", sourceCitationOnly: "仅引用", sourceCached: "缓存", noQueryableSource: "暂无可直查的来源（需先同步）", sourceQueryHint: "@ 直查数据源", sourceQueryPlaceholder: "输入实体名、公告号或条文关键词（按相关性排序；留空则浏览全部）…",
     queryEmpty: "请输入查询内容", queryHits: "{total} 条命中", browseCount: "共 {total} 条", browseAll: "浏览全部", pagePrev: "上一页", pageNext: "下一页", relMatched: "命中", relMissed: "未命中", relPartial: "另有 {n} 条仅命中部分检索词，未列出", queryNoHit: "该来源中未找到匹配记录", queryTruncated: "显示前 {shown} 条，共 {total} 条",
     queryEscalate: "以此发起完整筛查 →", escalatePrefix: "请对 {q} 做完整合规筛查",
@@ -102,7 +102,7 @@ const i18n = {
     runtimeRules: "Rules mode", runtimeReady: "Live model", runtimeMissing: "No model configured",
     modeHint: "Toggle between rules mode and the live model",
     routeLabel: "Route", routedTo: "Routed to",
-    overallAssessment: "Overall assessment", nextStep: "Next step", missingInfo: "Missing information", actions: "Recommended actions", planSuggested: "Other suggestions from the specialists", planSuggestedNote: "These do not map onto a step in the analysis path; they are for the reviewer to weigh", notClosed: "{n} items still open", stepAsk: "The analysis stops here and needs these to continue", interimVerdict: "Interim assessment (on incomplete facts, not a conclusion)", noItems: "None", limitations: "Limits on this conclusion",
+    overallAssessment: "Overall assessment", nextStep: "Next step", missingInfo: "Missing information", actions: "Recommended actions", planSuggested: "Other suggestions from the specialists", planSuggestedNote: "These do not map onto a step in the analysis path; they are for the reviewer to weigh", notClosed: "{n} items still open", stepAsk: "The analysis stops here and needs these to continue", naCount: "{n} not applicable to this case", interimVerdict: "Interim assessment (on incomplete facts, not a conclusion)", noItems: "None", limitations: "Limits on this conclusion",
     sourceLive: "Live", sourceMetadata: "Metadata", sourceUnavailable: "Unavailable", sourceNotFetched: "Not fetched", sourceArchived: "Archived copy", sourceCitationOnly: "Cited only", sourceCached: "Cached", noQueryableSource: "No queryable source yet (sync one first)", sourceQueryHint: "@ query a source", sourceQueryPlaceholder: "Entity name, notice number or keyword — ranked by relevance; leave empty to browse all…",
     queryEmpty: "Enter something to look up", queryHits: "{total} matches", browseCount: "{total} records", browseAll: "Browse all", pagePrev: "Previous", pageNext: "Next", relMatched: "matched", relMissed: "not matched", relPartial: "{n} more records matched only part of the query and are not listed", queryNoHit: "No matching record in this source", queryTruncated: "Showing {shown} of {total}",
     queryEscalate: "Run a full screening on this →", escalatePrefix: "Run a full compliance screening on {q}",
@@ -1040,7 +1040,13 @@ function pathMarkup(path, grounding, options = {}) {
   const lanes = ordered
     .map((lane) => {
       const question = laneQuestion(lane);
-      const steps = lane.steps.filter((item) => settled(item) || item.id === question);
+      const visible = lane.steps.filter((item) => settled(item) || item.id === question);
+      // A step whose conditions never arose is finished business: it needs no
+      // reading and no action. Kept, because why it did not arise is part of the
+      // record, but folded into one line so it does not sit at full height among
+      // the steps that did happen.
+      const notApplicable = visible.filter((item) => item.status === "not_applicable");
+      const steps = visible.filter((item) => item.status !== "not_applicable");
       const result = results.find((item) => item.agent === lane.lane);
       const running = lane.lane === activeLane;
       if (!steps.length && !result && !running) return "";
@@ -1077,11 +1083,15 @@ function pathMarkup(path, grounding, options = {}) {
                   }).join("")}</ul>` : ""}
                   ${item.needs.length ? `<ul class="step-needs">${item.needs.map((line) => `<li>${formatInline(line)}</li>`).join("")}</ul>` : ""}
                   ${stepDetailMarkup(item, grounding)}
-                  ${asking ? `<p class="step-ask">${esc(t("stepAsk"))}</p>${stepInputsMarkup(item)}` : ""}
+                  ${asking ? `<p class="step-ask"><span class="step-arrow" aria-hidden="true">➜</span>${esc(t("stepAsk"))}</p>${stepInputsMarkup(item)}` : ""}
                 </div>
               </div>
             </li>`;
           }).join("")}</ol>
+          ${notApplicable.length ? `<details class="lane-na">
+            <summary>${esc(t("naCount").replace("{n}", notApplicable.length))}</summary>
+            <ul>${notApplicable.map((item) => `<li><b>${esc(item.title)}</b>${item.basis?.[0] ? ` — ${formatInline(item.basis[0])}` : ""}</li>`).join("")}</ul>
+          </details>` : ""}
           ${result?.findings?.length ? `<ul class="lane-findings">${result.findings.map((finding) => `
             <li><b>${esc(finding.title)}</b> ${formatInline(finding.detail)}${(finding.evidenceSourceIds || []).length
               ? `<span class="cite">${finding.evidenceSourceIds.map((id) => `<span>${esc(id)}</span>`).join("")}</span>` : ""}</li>`).join("")}</ul>` : ""}
@@ -1709,14 +1719,32 @@ async function analyze(event, options = {}) {
     const shift = live.getBoundingClientRect().top - before;
     if (resuming && Math.abs(shift) > 1) thread.scrollTop += shift;
     hydrateBars(live);
+    // Cleared before the rail is drawn, or the rail keeps marking the step the
+    // finished run started from as still running.
+    state.resumingStep = null;
     renderFlowPanel(finished.analysisPath);
     live.classList.remove("resuming");
     state.resumingStep = null;
     renderEvidence(finished.sources || []);
-    // Deliberately no scroll on completion. Output arrives in one direction and
-    // the reader is already at the end of it; jumping to the top of the answer, or
-    // to a step further up, is the "content moving around" that made the sequence
-    // impossible to follow.
+    // One deliberate scroll, and only one: to the step that is waiting for the
+    // reader. Everything else stays where it was — jumping to the top of a
+    // finished answer is what made the sequence impossible to follow — but a
+    // question nobody can see is a question nobody answers, so if it is off
+    // screen the page goes to it.
+    // setTimeout rather than requestAnimationFrame: rAF does not fire while the
+    // tab is hidden, so a run finished in a background tab would never move to
+    // its question and never focus it — the reader returns to a page that is
+    // waiting for them somewhere below the fold with no sign of it.
+    setTimeout(() => {
+      const waiting = live.querySelector(".path-step.asking");
+      if (!waiting) return;
+      const box = waiting.getBoundingClientRect();
+      const view = $("thread").getBoundingClientRect();
+      if (box.top < view.top + 40 || box.bottom > view.bottom - 40) {
+        waiting.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      waiting.querySelector(".si-text")?.focus({ preventScroll: true });
+    });
     loadCases();
   } catch (error) {
     // A failure part-way through a continuation must not discard the answer the
