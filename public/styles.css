@@ -268,17 +268,27 @@ html[data-theme="light"] .moon-icon { display: block; }
 .msg-meta .sep { color: var(--border-strong); }
 
 .answer { border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); overflow: hidden; }
-.answer-head { display: grid; grid-template-columns: auto 1fr; gap: 13px; padding: 15px 16px; }
+/* The badge sits on the headline's line, and the summary starts at the left
+   edge underneath both. It used to occupy a column of its own for the full
+   height of the block, so every line of the conclusion was indented past a
+   34px chip that only labelled the first one — a wide empty margin down the
+   side of the paragraph a reader is actually there to read.
+   `display: contents` on the wrapper lets the headline and the prose become
+   grid items in their own right without changing the markup. */
+.answer-head { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; padding: 15px 16px; align-items: baseline; }
+.answer-head > div { display: contents; }
+.answer-head h3 { grid-column: 2; }
+.answer-head .prose, .answer-head > div > p { grid-column: 1 / -1; }
 .risk-mark {
-  align-self: start; display: grid; place-items: center;
-  min-width: 34px; height: 34px; padding: 0 8px;
-  font-size: 12px; font-weight: 700; letter-spacing: .02em;
-  border-radius: 7px; white-space: nowrap;
+  grid-column: 1; grid-row: 1; align-self: center; display: grid; place-items: center;
+  min-width: 30px; height: 22px; padding: 0 8px;
+  font-size: 11.5px; font-weight: 700; letter-spacing: .02em;
+  border-radius: 6px; white-space: nowrap;
   border: 1px solid currentColor; background: color-mix(in srgb, currentColor 11%, transparent);
 }
 .risk-high { color: var(--risk-high); } .risk-medium { color: var(--risk-medium); }
 .risk-low { color: var(--risk-low); } .risk-unknown { color: var(--risk-unknown); }
-.answer-head h3 { font-size: 15.5px; font-weight: 600; line-height: 1.4; margin-bottom: 6px; letter-spacing: -.01em; }
+.answer-head h3 { font-size: 15.5px; font-weight: 600; line-height: 1.4; margin: 0; letter-spacing: -.01em; }
 .answer-head p { font-size: 13px; color: var(--text-2); }
 
 /* The gaps that block a conclusion and the actions that close them. These are
