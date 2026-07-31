@@ -1,0 +1,29 @@
+# The gate that makes "release is the stable one" mean something.
+#
+# Until this existed, nothing ran the suite except a person remembering to. The
+# runner is also the only place the tests are guaranteed to run without any
+# synced data lying around — which is how a test that depended on a developer's
+# local trade-csl snapshot passed for a week and failed in a fresh checkout.
+name: test
+
+on:
+  push:
+    branches: [main, release]
+  pull_request:
+    branches: [main, release]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          # Read from .node-version so the floor is stated in one place;
+          # node:sqlite is why it is 24.
+          node-version-file: .node-version
+      # No runtime dependencies, but the lockfile is installed anyway so a drift
+      # between it and package.json fails here rather than in a deployment.
+      - run: npm ci
+      - run: node --version
+      - run: npm test

@@ -1,8 +1,40 @@
 import { strict as assert } from "node:assert";
 import { readFile } from "node:fs/promises";
-import test from "node:test";
-import { assessClearance } from "../src/clearance.js";
-import { findNamesMentioned } from "../src/entity-matching.js";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import test, { after, before } from "node:test";
+
+// A database of this test's own, seeded with what a clear outcome requires.
+//
+// The scenario test below used to run against whatever the developer happened
+// to have synced, so it passed here and failed in a clean clone: clearance
+// needs trade-csl screened, and a fresh checkout has screened nothing. A test
+// that depends on ambient local data cannot gate anything.
+const DIR = mkdtempSync(join(tmpdir(), "hub-clearance-"));
+process.env.HUB_DB_PATH = join(DIR, "test.db");
+
+const { assessClearance } = await import("../src/clearance.js");
+const { findNamesMentioned } = await import("../src/entity-matching.js");
+const { saveSourceData } = await import("../src/data-layer/storage.js");
+const { closeDb } = await import("../src/data-layer/db.js");
+
+// Two parties neither scenario names, so screening runs and finds nothing —
+// which is the state a clear outcome has to be reachable from.
+before(async () => {
+  await saveSourceData({
+    sourceId: "trade-csl",
+    extension: "json",
+    bytes: Buffer.from("[]"),
+    records: [
+      { recordId: "T1", entityName: "Kestrel Machine Works LLC", sourceList: "Entity List (EL) - Bureau of Industry and Security", country: "RU" },
+      { recordId: "T2", entityName: "Orion Marine Holdings", sourceList: "Specially Designated Nationals (SDN) - Treasury Department", country: "IR" }
+    ],
+    metadata: { syncScope: "test_fixture" }
+  });
+});
+
+after(() => { closeDb(); rmSync(DIR, { recursive: true, force: true }); });
 
 // A screening pass that found nothing, over lists that were actually screened.
 const CLEAN = { screening: { screenedSources: [{ sourceId: "trade-csl" }], unsyncedSources: [] }, listMatches: [] };
