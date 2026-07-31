@@ -138,7 +138,24 @@ bis-ear-732,bis-ear-734,bis-ear,bis-ear-740,bis-ear-744,bis-ccl,bis-country-char
 
 ### 部署后必须注意
 
-- **容器文件系统是临时的**：每次重新部署 `data/runtime/` 都会清空，靠 `SYNC_ON_BOOT` 重新拉取。手动同步过的大名单（`trade-csl` 约 33 MB、`ofac-sls`、`un-consolidated`、`uk-sanctions`）不在 `SYNC_ON_BOOT` 里，重新部署后会回到「未同步」，需要重新点一次。要让它们活过重新部署，在 Zeabur 给服务挂一个 Volume，挂载路径填 `data/runtime`。
+### 挂 Volume，否则每次重新部署都从零开始
+
+容器文件系统是临时的。`data/runtime/` 在每次重新部署时清空，而这个目录里放着**两样都会丢**的东西：
+
+| 丢的东西 | 位置 | 后果 |
+|---|---|---|
+| 已同步的数据源快照 | `data/runtime/normalized/`、`raw/`、`sync-status.json` | `SYNC_ON_BOOT` 里的会自动重拉；**不在里面的不会**——手动同步过的 `trade-csl`（约 33 MB）、`ofac-sls`、`un-consolidated`、`uk-sanctions` 会回到「未同步」，得重新点一次 |
+| 会话历史记录 | `data/runtime/cases/` | 全部消失，左栏历史记录清空，无法找回 |
+
+在 Zeabur 给服务加一个 Volume，挂载路径填：
+
+```
+data/runtime
+```
+
+挂上之后两者都能活过重新部署，boot sync 也不必每次把十几个源重跑一遍。
+
+**这不只是省事的问题。** 合规审查的价值有相当一部分在于可追溯——某个判断当时基于哪份名单的哪个版本、比对了什么、谁补充了什么声明。历史记录一清空，这条链就断了。原型阶段可以接受，但任何要留痕的用法都必须先挂上 Volume。
 - **每次部署后会有一段 502，通常十几到几十秒**。这不是配置错误：网关在旧容器停止、新容器就绪之间无处可路由，返回的就是 502。判断方法是隔一会儿再打一次 `/health`——恢复 200 就是切换窗口；持续 502 才需要看日志。进程在 boot sync 完成之前就已经开始服务（同步在后台跑），所以就绪时间取决于镜像拉取和容器启动，不取决于同步。
 - **服务器侧配置 `OPENAI_API_KEY` 时，Base URL 和 Model 也一律取环境变量，客户端传入的配置被完全忽略。** 否则浏览器可以把 `baseUrl` 指向任意主机，服务器会把自己的 Key 放在 Authorization 头里发过去——这是把密钥交出去，不只是配置被覆盖。此模式下页面不再显示 Base URL / Model / API Key 字段，只显示访问口令。
 - **服务器侧配置 `OPENAI_API_KEY` 时必须同时配置 `ACCESS_PASSWORD`，否则实时模型直接停用。** 公开 URL 上任何人都能调用 `/api/assess`，没有口令的话服务器侧的 Key 等于把模型额度对公网开放。因此这种组合下 `/api/assess`、`/api/assess/stream`、`/api/test-connection` 一律返回 `503 access_code_unset`，页面自动留在规则模式并在“访问设置”里说明原因——把额度敞开比停用更糟。
@@ -176,7 +193,7 @@ DELETE /api/threads/{id}     删除（需访问口令）
 
 每一轮保存的是完整快照：问题、结论、比对明细、引用来源和时间。左侧栏点开会话即恢复全部轮次，并**继续在同一会话里追问**。
 
-存储在 `data/runtime/cases/`，因此托管容器重新部署会清空——需要保留就挂 Volume 到 `data/runtime`。上限 100 个会话、每会话 30 轮，超出的最早记录会被清理。
+存储在 `data/runtime/cases/`。**托管容器重新部署会清空**，除非挂了 Volume（见部署章节的「挂 Volume」一节）。上限 100 个会话、每会话 30 轮，超出的最早记录会被清理。
 
 ## 数据同步与查询 API
 
