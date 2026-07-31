@@ -42,6 +42,26 @@ const copy = {
       ["获取失败", "既抓不到也没有采集副本", "crit"]
     ],
 
+    procLabel: "审查程序", procTitle: "一共五套程序，四套是别人定的",
+    procLead: "步骤序列不是这个产品编的。美国出口管制有官方的编号决策程序，所有权穿透有 OFAC 的公开口径，第三方尽调有 DOJ 明列的考察因素——照着走并且逐条引用，才是「为什么是这些步骤」这个问题的答案。下表由代码里的流程定义直接生成，不是另抄一份。",
+    procHeads: ["程序", "发布方", "本系统步骤", "决定什么"],
+    procPurpose: {
+      ear732: "物项和交易到底受不受管、归到哪个编码、去哪个目的地要不要许可。系统里最长的一条，贸易线和产品线都从它取步骤。",
+      ofac50: "名单检索解决不了的那部分：间接持股和合并持股。被列名主体合计持有 50% 以上的公司，即使自己不在名单上也同样受限。",
+      eccp: "第三方该不该用、用之前查什么、合作期间怎么持续看着。DOJ 用它评价一家公司的合规体系是否名副其实。",
+      prcDualUse: "中国两用物项的管制依据与许可申请材料要求。",
+      derived: "官方程序没有对应步骤、但不做就没法继续的环节。系统自己加的都标在这里，不混进官方引用里。"
+    },
+    procDerivedTag: "非官方",
+    procDerivedNote: "「系统按问题结构生成」不是官方程序，所以它在开场说明和右侧流程里都单独标注。把自己设计的步骤说成官方要求，是这份文档最不该出现的东西。",
+    procPrcNote: "两用物项出口管制条例目前只作为**数据来源**被引用，没有自己的步骤序列：中国出口问题走的是「物项与许可」这条线的步骤（结构取自 EAR Part 732），检索的是中国的管制清单、许可证目录和商务部公告。中国侧没有公布编号决策树，所以这里不硬造一个对称结构——但这也意味着这条线的步骤标题读起来是美国口径。",
+    procStepsTitle: "每条线的步骤",
+    procStepHeads: ["#", "步骤", "依据", "需要你提供"],
+    procAsksNone: "—",
+    procGemTitle: "每个 Gem 从哪条线起步",
+    procGemLead: "Gem 决定分析从哪条线开始，不决定只走哪条线——路由会根据问题本身追加其他线。下表是起步位置和它对应的程序。",
+    procGemHeads: ["Gem", "起步线", "起步程序", "可能追加"],
+    procLaneNames: { trade: "Trade — 受限方与主体", product: "Product — 物项与许可", tpdd: "Ethics & TPDD — 第三方", review: "结案" },
     useLabel: "使用方法", useTitle: "在输入框键入 /",
     useLead: "上下键选择 Gem，回车确认。每个 Gem 绑定四样东西：指令、数据源白名单、必填事实清单、输出模板。第三项是关键——它让系统在提交前就知道自己缺什么，而不是让模型悄悄猜。",
     gemsLabel: "可用 Gem", gemBound: "个来源", gemRecords: "条记录", gemUnsynced: "个未同步", gemNone: "不绑定外部来源",
@@ -131,6 +151,26 @@ const copy = {
       ["Unavailable", "Neither reachable nor previously captured", "crit"]
     ],
 
+    procLabel: "Procedures", procTitle: "Five procedures, four of them somebody else's",
+    procLead: "The step sequences are not this product's invention. US export control has an official numbered decision procedure, ownership aggregation has OFAC's published position, and third-party diligence has the factors DOJ sets out — following them and citing each step is what answers \u201cwhy these steps\u201d. The table below is generated from the procedure definitions in the code, not transcribed alongside them.",
+    procHeads: ["Procedure", "Published by", "Steps here", "What it decides"],
+    procPurpose: {
+      ear732: "Whether an item and a transaction are subject to the rules at all, what it classifies as, and whether that destination needs a licence. The longest one here; both the trade and product lanes take steps from it.",
+      ofac50: "The part list screening cannot settle: indirect and aggregated ownership. A company owned 50% or more in total by designated parties is restricted even when it is not itself listed.",
+      eccp: "Whether to engage a third party, what to check first, and how to keep watching for the life of the relationship. DOJ uses it to judge whether a compliance programme is real.",
+      prcDualUse: "The PRC basis for dual-use control and what a licence application must contain.",
+      derived: "Steps the official procedures have no equivalent for but which nothing can proceed without. Anything this system added is marked here rather than folded into an official citation."
+    },
+    procDerivedTag: "not official",
+    procDerivedNote: "\u201cDesigned here\u201d is not an official procedure, so it is labelled separately in the opening briefing and in the execution rail. Presenting a step we designed as something a regulator requires is the one thing this page must not do.",
+    procPrcNote: "The PRC dual-use regulation is currently cited as a **source** only; it has no step sequence of its own. A China export question runs the Item & licence lane, whose structure comes from EAR Part 732, while searching the PRC control list, licence catalogue and MOFCOM notices. China publishes no numbered decision tree, so no symmetrical one is invented here — but it does mean those step titles read in US terms.",
+    procStepsTitle: "The steps in each lane",
+    procStepHeads: ["#", "Step", "Basis", "What it asks you for"],
+    procAsksNone: "\u2014",
+    procGemTitle: "Where each gem starts",
+    procGemLead: "A gem decides which lane the analysis opens with, not which lanes run — routing adds the others from the question itself. Below is the starting point and the procedure it belongs to.",
+    procGemHeads: ["Gem", "Opening lane", "Opening procedure", "May add"],
+    procLaneNames: { trade: "Trade — parties", product: "Product — item & licence", tpdd: "Ethics & TPDD", review: "Close" },
     useLabel: "How to use", useTitle: "Press / in the composer",
     useLead: "Arrow keys select a gem, Enter confirms. A gem binds four things: instruction, bound-source whitelist, required facts and output template. The third is the point — it lets the system know what is missing before submitting, instead of letting the model quietly guess.",
     gemsLabel: "Available gems", gemBound: "sources", gemRecords: "records", gemUnsynced: "not synced", gemNone: "no bound sources",
@@ -186,7 +226,7 @@ const copy = {
   }
 };
 
-const state = { locale: localStorage.getItem("compliance-locale") || "zh", coverage: null };
+const state = { locale: localStorage.getItem("compliance-locale") || "zh", coverage: null, procedures: null };
 const $ = (id) => document.getElementById(id);
 const esc = (value = "") => String(value).replace(/[&<>'"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[c]);
 const c = () => copy[state.locale];
@@ -221,6 +261,75 @@ function gemBacking(gem) {
     records: usable.reduce((n, s) => n + (s.sync.recordCount || 0), 0),
     missing: known.length - usable.length
   };
+}
+
+// Rendered only when the endpoint answered. A procedures section that guesses
+// at the procedures would be worse than one that is absent.
+function proceduresSection() {
+  const t = c();
+  const data = state.procedures;
+  if (!data) return "";
+  const laneName = (lane) => t.procLaneNames[lane] || lane;
+  const byId = Object.fromEntries(data.methodologies.map((item) => [item.id, item]));
+  // A bold run in the copy carries the sentence's actual claim, so it is kept
+  // rather than escaped away with the rest.
+  const strong = (text) => esc(text).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+
+  return `
+    <section class="guide-reg">
+      <div class="guide-gutter">${esc(t.procLabel)}</div>
+      <div class="guide-body">
+        <h2>${esc(t.procTitle)}</h2>
+        <p>${esc(t.procLead)}</p>
+
+        <div class="table-wrap"><table>
+          <thead><tr>${t.procHeads.map((head) => `<th>${esc(head)}</th>`).join("")}</tr></thead>
+          <tbody>${data.methodologies.map((item) => `<tr>
+            <td>${item.url ? `<a href="${esc(item.url)}" target="_blank" rel="noreferrer noopener">${esc(item.label)}</a>` : esc(item.label)}
+              ${item.kind === "derived" ? `<span class="proc-tag">${esc(t.procDerivedTag)}</span>` : ""}</td>
+            <td>${esc(item.authority || "—")}</td>
+            <td class="proc-count">${item.stepCount ? `${item.stepCount}` : "0"}${item.lanes.length ? `<span>${item.lanes.map(laneName).map((name) => name.split(" — ")[0]).join(" · ")}</span>` : ""}</td>
+            <td>${esc(t.procPurpose[item.id] || "")}</td>
+          </tr>`).join("")}</tbody>
+        </table></div>
+        <p class="guide-note">${strong(t.procPrcNote)}</p>
+        <p class="guide-note">${esc(t.procDerivedNote)}</p>
+
+        <h3>${esc(t.procStepsTitle)}</h3>
+        ${data.lanes.map((lane) => `
+          <div class="proc-lane">
+            <h4>${esc(laneName(lane.lane))} <span>${esc(byId[lane.methodology]?.label || lane.methodology)}</span></h4>
+            <div class="table-wrap"><table>
+              <thead><tr>${t.procStepHeads.map((head) => `<th>${esc(head)}</th>`).join("")}</tr></thead>
+              <tbody>${lane.steps.map((step, index) => `<tr>
+                <td class="proc-n">${index + 1}</td>
+                <td>${esc(step.title)}</td>
+                <td><code>${esc(step.cite || "—")}</code>${step.methodology !== lane.methodology ? `<span class="proc-tag">${esc(byId[step.methodology]?.label || step.methodology)}</span>` : ""}${step.note ? `<span class="proc-note">${esc(step.note)}</span>` : ""}</td>
+                <td>${step.asks.length ? step.asks.map((ask) => esc(ask)).join("<br>") : esc(t.procAsksNone)}</td>
+              </tr>`).join("")}</tbody>
+            </table></div>
+          </div>`).join("")}
+
+        <h3>${esc(t.procGemTitle)}</h3>
+        <p>${esc(t.procGemLead)}</p>
+        <div class="table-wrap"><table>
+          <thead><tr>${t.procGemHeads.map((head) => `<th>${esc(head)}</th>`).join("")}</tr></thead>
+          <tbody>${GEMS.map((gem) => {
+            const lead = data.gemLeadLane[gem.id] || "trade";
+            const leadPlan = data.lanes.find((lane) => lane.lane === lead);
+            const others = data.lanes
+              .filter((lane) => lane.lane !== lead && lane.lane !== "review" && lane.methodology !== leadPlan?.methodology)
+              .map((lane) => byId[lane.methodology]?.label || lane.methodology);
+            return `<tr>
+              <td><code>${esc(gem.command)}</code><span class="proc-note">${esc(localized(gem.name))}</span></td>
+              <td>${esc(laneName(lead))}</td>
+              <td>${esc(byId[leadPlan?.methodology]?.label || "—")}</td>
+              <td>${[...new Set(others)].map((label) => esc(label)).join(" · ")}</td>
+            </tr>`;
+          }).join("")}</tbody>
+        </table></div>
+      </div>
+    </section>`;
 }
 
 function render() {
@@ -300,6 +409,8 @@ function render() {
       </div>
     </section>
 
+    ${proceduresSection()}
+
     <section class="guide-reg">
       <div class="guide-gutter">${esc(t.demoLabel)}</div>
       <div class="guide-body">
@@ -349,6 +460,11 @@ $("guideTheme").addEventListener("click", () => setTheme(document.documentElemen
 
 setTheme(localStorage.getItem("compliance-theme") || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark"));
 applyLocale(state.locale);
+
+fetch("/api/procedures")
+  .then((response) => (response.ok ? response.json() : null))
+  .then((data) => { if (data) { state.procedures = data; render(); } })
+  .catch(() => { /* the section simply does not render */ });
 
 fetch("/api/data-sources")
   .then((response) => (response.ok ? response.json() : null))

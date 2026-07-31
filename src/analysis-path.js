@@ -144,7 +144,7 @@ const LANE_PLANS = {
 
 // A gem states which lane its question is really about, so the plan leads with
 // it instead of always presenting the lanes in a fixed order.
-const GEM_LEAD_LANE = {
+export const GEM_LEAD_LANE = {
   "screen-party": "trade",
   eccn: "product",
   "cn-dual-use": "product",
@@ -154,6 +154,37 @@ const GEM_LEAD_LANE = {
   "reg-brief": "trade",
   "case-memo": "review"
 };
+
+// What the guide page renders. Written out from the plans rather than
+// transcribed into the page, because a documented procedure that has drifted
+// from the executed one is worse than no page at all: it describes a review
+// nobody performs.
+export function describeProcedures() {
+  const lanes = Object.entries(LANE_PLANS).map(([lane, plan]) => ({
+    lane,
+    label: plan.label,
+    methodology: plan.methodology,
+    steps: plan.steps.map(([id, title, inputs, source]) => ({
+      id,
+      title,
+      cite: source?.cite || null,
+      note: source?.note || null,
+      methodology: source?.methodology || plan.methodology,
+      asks: (inputs ? [].concat(inputs) : []).map((input) => input.label)
+    }))
+  }));
+  const steps = lanes.flatMap((item) => item.steps);
+  return {
+    methodologies: Object.values(METHODOLOGIES).map((methodology) => ({
+      ...methodology,
+      stepCount: steps.filter((step) => step.methodology === methodology.id).length,
+      lanes: lanes.filter((item) => item.steps.some((step) => step.methodology === methodology.id)).map((item) => item.lane)
+    })),
+    lanes,
+    gemLeadLane: GEM_LEAD_LANE,
+    stepCount: steps.length
+  };
+}
 
 // Every field the path can ask a user for, derived from the plans themselves.
 //

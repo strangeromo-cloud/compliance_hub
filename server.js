@@ -6,7 +6,7 @@ import { assessScenario } from "./src/orchestrator.js";
 import { classifyModelError, testModelConnection } from "./src/llm.js";
 import { getDataSourceCoverage, queryDataSource, syncSource } from "./src/data-layer/service.js";
 import { deleteThread, listThreads, readThread, saveCase, storageDurability } from "./src/case-store.js";
-import { DECLARABLE_FIELDS } from "./src/analysis-path.js";
+import { DECLARABLE_FIELDS, describeProcedures } from "./src/analysis-path.js";
 import { closeDb, DB_PATH } from "./src/data-layer/db.js";
 import { importLegacyStore } from "./src/data-layer/import-legacy.js";
 import { readSnapshotMeta } from "./src/data-layer/storage.js";
@@ -203,6 +203,13 @@ const server = createServer(async (request, response) => {
         demoMode: "grounded_rules",
         demoLimitation: "Grounded rules cover the built-in compliance domains; an LLM is required for open-ended synthesis."
       });
+    }
+
+    // The guide describes the review procedures from this rather than from a
+    // transcription of them, so the page cannot document a sequence the system
+    // has stopped executing.
+    if (request.method === "GET" && url.pathname === "/api/procedures") {
+      return sendJson(response, 200, describeProcedures());
     }
 
     if (request.method === "GET" && url.pathname === "/api/data-sources") {
