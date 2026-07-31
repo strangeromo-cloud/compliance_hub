@@ -108,10 +108,12 @@ npm run start:env
 
 3. Networking 里绑定域名。
 
+顺序是有意排的，boot sync 是顺序执行的：**可达的排在必然超时的前面**，所以一次中国来源的超时不会推迟任何本来能成功的源；可达的里面，分析路径逐步引用的条文最先，其次分类与目的地，再次受限方名单，各组内小的先——服务启动后越早可用越好。
+
 `SYNC_ON_BOOT` 的推荐完整值——覆盖分析路径引用的全部官方流程条文，以及中国侧四个源：
 
 ```
-bis-ear-732,bis-ear-734,bis-ear,bis-ear-740,bis-ear-744,bis-ccl,bis-country-chart,tw-shtc,us-uflpa,us-dod-1260h,jp-meti-eul,jp-export-control,eu-fsf,china-control-list,china-export-licence-goods,china-dual-use,china-control-entities,china-unreliable-entity,china-licence-catalogue
+bis-ear,bis-ear-732,bis-ear-734,bis-ear-740,bis-ear-744,bis-country-chart,bis-ccl,us-uflpa,us-dod-1260h,jp-meti-eul,tw-shtc,eu-fsf,jp-export-control,china-licence-catalogue,china-unreliable-entity,china-dual-use,china-control-entities,china-export-licence-goods,china-control-list
 ```
 
 **id 是 `bis-ear`，不是 `bis-ear-736`**——Part 736（十项一般禁令）在注册表里的 id 就叫 `bis-ear`，写成 `bis-ear-736` 会得到 `Unknown data source.`，那一条根本不会同步。
