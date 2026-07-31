@@ -1342,7 +1342,10 @@ html[lang="en"] .step-needs li::before { content: "NEEDS"; font-size: 8px; }
 .answer-extra li::before { content: ""; position: absolute; left: 0; top: 8px; width: 5px; height: 5px; border-radius: 1px; background: var(--border-strong); }
 .answer-extra.is-limits li::before { background: var(--risk-medium); }
 /* Inside the collapsed interim there is no frame, so it aligns with its text. */
-.is-interim .answer-extra { padding-left: 0; padding-right: 0; }
+/* Removed: this stripped the horizontal padding from the extras. It was written
+   for the collapsed interim block, which supplied its own inset; once the
+   interim became an ordinary answer box the rule left "other suggestions" and
+   "limits on this conclusion" flush against the frame. */
 .fl-step.na .fl-node { border-style: dotted; color: var(--text-3); }
 .fl-step.na .fl-text { color: var(--text-3); text-decoration: line-through; text-decoration-color: var(--border-strong); }
 /* What triage removed, stated with the rule that allowed it. */
@@ -1496,3 +1499,8 @@ html[lang="en"] .step-needs li::before { content: "NEEDS"; font-size: 8px; }
 .source-usedin code { font: 500 10px/1.6 var(--mono); padding: 0 5px; border-radius: 3px;
   background: var(--surface-2); border: 1px solid var(--border); color: var(--text-2); }
 .source-usedin.unused { font-style: normal; opacity: .85; }
+/* A step the reader declined. Folded rather than hidden: it is still outstanding
+   and the record of having passed it over is part of the file. */
+.fl-step.skipped .fl-node { border-style: dashed; color: var(--text-3); }
+.fl-step.skipped .fl-text { color: var(--text-3); }
+.fl-folded { margin: 4px 0 0 2px; font-size: 10.5px; color: var(--text-3); }

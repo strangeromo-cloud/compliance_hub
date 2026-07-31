@@ -44,7 +44,7 @@ const i18n = {
     runtimeRules: "规则模式", runtimeReady: "实时模型", runtimeMissing: "未配置模型",
     modeHint: "点击切换规则模式与实时模型",
     routeLabel: "路由", routedTo: "已路由至",
-    overallAssessment: "总体判断", nextStep: "下一步", missingInfo: "仍需信息", actions: "建议行动", planSuggested: "专业 Agent 的其他建议", planSuggestedNote: "这些建议未对应分析路径上的某一步，供人工复核时参考", notClosed: "尚有 {n} 项未补齐", stepAsk: "请补充以下信息，分析将从这里继续", naCount: "{n} 项本次不适用", laneFindings: "本条线的分析发现（专业 Agent 输出，非全案结论）", interimVerdict: "阶段性判断（基于现有信息，未结案）", noItems: "暂无", limitations: "结论边界与限制",
+    overallAssessment: "总体判断", nextStep: "下一步", missingInfo: "仍需信息", actions: "建议行动", planSuggested: "专业 Agent 的其他建议", planSuggestedNote: "这些建议未对应分析路径上的某一步，供人工复核时参考", notClosed: "尚有 {n} 项未补齐", stepAsk: "请补充以下信息，分析将从这里继续", naCount: "{n} 项本次不适用或已跳过", flowFolded: "另有 {n} 项不适用或已跳过", laneFindings: "本条线的分析发现（专业 Agent 输出，非全案结论）", interimVerdict: "阶段性判断（基于现有信息，未结案）", noItems: "暂无", limitations: "结论边界与限制",
     sourceLive: "实时获取", sourceMetadata: "元数据", sourceUnavailable: "获取失败", sourceNotFetched: "未获取", sourceArchived: "已采集副本", sourceCitationOnly: "仅引用", sourceCached: "缓存", noQueryableSource: "暂无可直查的来源（需先同步）", sourceQueryHint: "@ 直查数据源", sourceQueryPlaceholder: "输入实体名、公告号或条文关键词（按相关性排序；留空则浏览全部）…",
     queryEmpty: "请输入查询内容", queryHits: "{total} 条命中", browseCount: "共 {total} 条", browseAll: "浏览全部", pagePrev: "上一页", pageNext: "下一页", relMatched: "命中", relMissed: "未命中", relPartial: "另有 {n} 条仅命中部分检索词，未列出", queryNoHit: "该来源中未找到匹配记录", queryTruncated: "显示前 {shown} 条，共 {total} 条",
     queryEscalate: "以此发起完整筛查 →", escalatePrefix: "请对 {q} 做完整合规筛查",
@@ -102,7 +102,7 @@ const i18n = {
     runtimeRules: "Rules mode", runtimeReady: "Live model", runtimeMissing: "No model configured",
     modeHint: "Toggle between rules mode and the live model",
     routeLabel: "Route", routedTo: "Routed to",
-    overallAssessment: "Overall assessment", nextStep: "Next step", missingInfo: "Missing information", actions: "Recommended actions", planSuggested: "Other suggestions from the specialists", planSuggestedNote: "These do not map onto a step in the analysis path; they are for the reviewer to weigh", notClosed: "{n} items still open", stepAsk: "Add these and the analysis continues from here", naCount: "{n} not applicable to this case", laneFindings: "What this lane found (specialist output, not the case conclusion)", interimVerdict: "Interim assessment (on incomplete facts, not a conclusion)", noItems: "None", limitations: "Limits on this conclusion",
+    overallAssessment: "Overall assessment", nextStep: "Next step", missingInfo: "Missing information", actions: "Recommended actions", planSuggested: "Other suggestions from the specialists", planSuggestedNote: "These do not map onto a step in the analysis path; they are for the reviewer to weigh", notClosed: "{n} items still open", stepAsk: "Add these and the analysis continues from here", naCount: "{n} not applicable or skipped", flowFolded: "{n} more not applicable or skipped", laneFindings: "What this lane found (specialist output, not the case conclusion)", interimVerdict: "Interim assessment (on incomplete facts, not a conclusion)", noItems: "None", limitations: "Limits on this conclusion",
     sourceLive: "Live", sourceMetadata: "Metadata", sourceUnavailable: "Unavailable", sourceNotFetched: "Not fetched", sourceArchived: "Archived copy", sourceCitationOnly: "Cited only", sourceCached: "Cached", noQueryableSource: "No queryable source yet (sync one first)", sourceQueryHint: "@ query a source", sourceQueryPlaceholder: "Entity name, notice number or keyword — ranked by relevance; leave empty to browse all…",
     queryEmpty: "Enter something to look up", queryHits: "{total} matches", browseCount: "{total} records", browseAll: "Browse all", pagePrev: "Previous", pageNext: "Next", relMatched: "matched", relMissed: "not matched", relPartial: "{n} more records matched only part of the query and are not listed", queryNoHit: "No matching record in this source", queryTruncated: "Showing {shown} of {total}",
     queryEscalate: "Run a full screening on this →", escalatePrefix: "Run a full compliance screening on {q}",
@@ -769,7 +769,39 @@ function setPanelTab(tab) {
 // to a human. Reached-but-blocked is not progress.
 const SETTLED_STATUS = new Set(["confirmed", "declared", "review_required", "not_applicable"]);
 
+// What a step is, right now, in one place.
+//
+// The rail and the body each worked this out for themselves, and each got it
+// wrong in a different way: the rail did not know a step had been declined, it
+// counted an inapplicable step as the one being worked on, and it drew declined
+// steps the body had hidden entirely. Three symptoms, one cause — "which step is
+// current" meant three things and was coordinated by hand.
+//
+//   done      settled, nothing outstanding
+//   declared  answered by the reader, unverified
+//   asking    the step the reader is being asked to answer now
+//   skipped   the reader declined it; outstanding, but not a question any more
+//   na        the procedure does not reach for it
+//   review    only a person can close it
+//   pending   not reached yet
+export function stepState(item) {
+  if (!item) return "pending";
+  if (item.status === "evidence_needed" && item.inputs?.length) {
+    return isAskable(item) ? "asking" : "skipped";
+  }
+  return {
+    confirmed: "done", declared: "declared", not_applicable: "na",
+    review_required: "review", evidence_needed: "asking",
+    not_reached: "pending", pending: "pending"
+  }[item.status] || "pending";
+}
+
+// Shown at full height, folded into a summary line, or not drawn at all. Both
+// sides use this so a step cannot be visible on one and absent on the other.
+const FOLDED = new Set(["na", "skipped"]);
+
 const FLOW_STATE = {
+  skipped: { cls: "skipped", mark: "–" },
   confirmed: { cls: "done", mark: "✓" },
   not_applicable: { cls: "na", mark: "–" },
   declared: { cls: "declared", mark: "◐" },
@@ -838,6 +870,7 @@ function flowMarkup(path, options = {}) {
     ${path.lanes.map((lane) => {
       const laneSteps = lane.steps;
       const laneDone = laneSteps.filter((item) => SETTLED_STATUS.has(item.status)).length;
+      const laneFolded = laneSteps.filter((item) => FOLDED.has(stepState(item)));
       const running = options.activeLane === lane.lane;
       return `
       <section class="flow-lane ${running ? "running" : ""}">
@@ -845,8 +878,9 @@ function flowMarkup(path, options = {}) {
           <span class="fl-label">${esc(lane.label)}</span>
           <span class="fl-progress">${laneDone}/${laneSteps.length}</span>
         </div>
-        <ol class="fl-steps">${laneSteps.map((item) => {
-          const shape = FLOW_STATE[item.status] || FLOW_STATE.pending;
+        <ol class="fl-steps">${laneSteps.filter((item) => !FOLDED.has(stepState(item))).map((item) => {
+          const view = stepState(item);
+          const shape = FLOW_STATE[view] || FLOW_STATE[item.status] || FLOW_STATE.pending;
           const current = item.id === asking;
           return `
           <li class="fl-step ${shape.cls} ${current ? "current" : ""} ${current && options.currentStep ? "is-running" : ""}">
@@ -856,6 +890,7 @@ function flowMarkup(path, options = {}) {
             </button>
           </li>`;
         }).join("")}</ol>
+        ${laneFolded.length ? `<p class="fl-folded">${esc(t("flowFolded").replace("{n}", laneFolded.length))}</p>` : ""}
       </section>`;
     }).join("")}
     <div class="flow-legend">
@@ -1102,13 +1137,13 @@ function pathMarkup(path, grounding, options = {}) {
   const lanes = ordered
     .map((lane) => {
       const question = laneQuestion(lane);
-      const visible = lane.steps.filter((item) => settled(item) || item.id === question);
+      const visible = lane.steps.filter((item) => settled(item) || item.id === question || stepState(item) === "skipped");
       // A step whose conditions never arose is finished business: it needs no
       // reading and no action. Kept, because why it did not arise is part of the
       // record, but folded into one line so it does not sit at full height among
       // the steps that did happen.
-      const notApplicable = visible.filter((item) => item.status === "not_applicable");
-      const steps = visible.filter((item) => item.status !== "not_applicable");
+      const notApplicable = visible.filter((item) => FOLDED.has(stepState(item)));
+      const steps = visible.filter((item) => !FOLDED.has(stepState(item)));
       const result = results.find((item) => item.agent === lane.lane);
       const running = lane.lane === activeLane;
       if (!steps.length && !result && !running) return "";
