@@ -2,6 +2,7 @@ import { readNormalized } from "./data-layer/storage.js";
 import { classifyQuestionIntent, isChinaDualUseQuestion } from "./question-intent.js";
 import { findNamesMentioned, fuzzyPartyCandidates, matchParty } from "./entity-matching.js";
 import { findBom, findInternalParties, findProducts, manufacturerFactsFor } from "./internal-data.js";
+import { resolveOwnership } from "./ownership.js";
 
 // Every synchronized restricted-party source is screened, so adding an adapter
 // widens screening coverage without touching this file.
@@ -199,6 +200,11 @@ export async function collectGrounding(question, agents = [], declaredFacts = {}
     grounding.listMatches = screening.matches;
     grounding.screening = { screenedSources: screening.screenedSources, fallbackSources: screening.fallbackSources, unsyncedSources: screening.unsyncedSources };
     grounding.partyCandidates = await resolveCounterparties(question, screening.sources || []);
+    // The corporate chain for whoever the party step settled on. A declared legal
+    // name is preferred over a matched candidate: the user naming their own
+    // counterparty outranks this system's guess at it.
+    const subject = String(declaredFacts.legalName || "").trim() || grounding.partyCandidates[0]?.entityName || null;
+    if (subject) grounding.ownership = await resolveOwnership(subject).catch(() => null);
     if (screening.unsyncedSources.length) {
       grounding.limitations.push(`以下名单来源尚未同步，本次未筛查：${screening.unsyncedSources.join("、")}。来源缺失不等于无风险。`);
     }

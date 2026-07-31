@@ -318,3 +318,53 @@ test("a source that could not be searched is named, not omitted", async () => {
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("the ownership chain is taken from the register, never guessed at", async () => {
+  const { resolveOwnership } = await import("../src/ownership.js");
+
+  // GLEIF's name filter is not an exact match, and attributing another company's
+  // parent to this counterparty is the worst thing this lookup could do.
+  // "Volkswagen AG" returns Volkswagen Autoversicherung AG — whose parent is
+  // Allianz SE. A containment score accepted it; identity is required.
+  const loose = await resolveOwnership("Volkswagen AG");
+  assert.ok(loose.noConfidentMatch, "a near name must not be used to attribute ownership");
+  assert.ok(loose.rejected.some((item) => /Autoversicherung|Financial|Truck/.test(item.name)),
+    "and what was rejected is named, so the reader sees a decision rather than an empty search");
+
+  const exact = await resolveOwnership("Siemens Energy Global GmbH & Co. KG");
+  assert.equal(exact.subject.name, "Siemens Energy Global GmbH & Co. KG");
+  assert.ok(exact.directParent?.lei, "the register publishes the chain, so it is not asked for");
+  // The distinction the whole thing rests on.
+  assert.match(exact.meaning, /不含持股比例/);
+});
+
+test("a resolved chain does not become a 50 Percent Rule conclusion", async () => {
+  const { planAnalysisPath, resolveAnalysisPath } = await import("../src/analysis-path.js");
+  const question = "请对交易方 Acme GmbH 做受限方筛查";
+  const chain = {
+    subject: { name: "Acme GmbH", lei: "LEI0000000000000001", country: "DE" },
+    directParent: { name: "Acme Holding AG", lei: "LEI0000000000000002" },
+    ultimateParent: { name: "Acme Holding AG", lei: "LEI0000000000000002" },
+    meaning: "GLEIF 的母公司关系指会计合并母公司，不含持股比例"
+  };
+  const base = {
+    screening: { screenedSources: [{ sourceId: "trade-csl", recordCount: 2, capturedAt: "2026-07-31" }], unsyncedSources: [] },
+    internalParties: [], limitations: [], partyCandidates: [], ownership: chain
+  };
+
+  const clean = resolveAnalysisPath(planAnalysisPath({ agents: ["trade"], question }),
+    { question, grounding: { ...base, listMatches: [] }, declaredFacts: {}, final: true });
+  const settled = clean.lanes.flatMap((lane) => lane.steps).find((item) => item.id === "ownership");
+  assert.equal(settled.status, "confirmed", "a chain plus no designated name leaves nothing to compute");
+  assert.ok(settled.basis.some((line) => /不含持股比例/.test(line)),
+    "what the register does not publish must be said where the chain is shown");
+
+  // The moment a designated name is in play, the percentage is the question and
+  // the register cannot answer it.
+  const hit = resolveAnalysisPath(planAnalysisPath({ agents: ["trade"], question }),
+    { question, grounding: { ...base, listMatches: [{ entityName: "Acme Holding AG", matchScore: 0.9 }] }, declaredFacts: {}, final: true });
+  const open = hit.lanes.flatMap((lane) => lane.steps).find((item) => item.id === "ownership");
+  assert.equal(open.status, "evidence_needed");
+  assert.ok(open.basis.some((line) => /直接母公司/.test(line)), "the chain is still shown");
+  assert.ok(open.needs.some((line) => /50%/.test(line)), "and the aggregate is still asked for");
+});

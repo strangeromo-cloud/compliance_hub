@@ -478,8 +478,44 @@ function tradeSteps(question, grounding, results) {
 
   // Ownership is never settled from a name list. Saying so explicitly is the
   // point: a clean name check is routinely mistaken for a clean party.
-  steps.push(step("ownership", "所有权穿透（OFAC 50% 聚合）", "evidence_needed",
-    { needs: ["完整股权结构与受益所有权证据；名单检索不解决间接或合计持股", ...needsMatching(results, null, /ubo|受益所有|股权|所有权|持股/i)] }));
+  //
+  // The register does answer half of it. GLEIF publishes the accounting
+  // consolidating parent of every LEI that declared one, so "who sits above this
+  // company" no longer has to be typed — but it publishes no percentages, and
+  // the 50 Percent Rule is about percentages. So the chain is reported as what
+  // it is, and where a designated name is in play the aggregate still has to be
+  // established by someone.
+  const chain = grounding.ownership;
+  const chainFound = chain?.subject && (chain.directParent || chain.ultimateParent);
+  const chainLines = chainFound
+    ? [
+      `GLEIF 登记主体：${chain.subject.name}（LEI ${chain.subject.lei}${chain.subject.country ? `，${chain.subject.country}` : ""}）`,
+      chain.directParent ? `直接母公司：${chain.directParent.name}（LEI ${chain.directParent.lei}）` : "该实体未申报直接母公司",
+      chain.ultimateParent ? `最终母公司：${chain.ultimateParent.name}（LEI ${chain.ultimateParent.lei}）` : "该实体未申报最终母公司",
+      chain.meaning
+    ]
+    : [];
+
+  if (chainFound && !matches.length) {
+    // A chain from the register, and no designated name anywhere in the case.
+    // Nothing here is decided by a percentage nobody has, so the step reports the
+    // chain and says what it does not establish rather than demanding a
+    // structure the user would be copying out of the same register.
+    steps.push(step("ownership", "所有权穿透（OFAC 50% 聚合）", "confirmed",
+      { basis: [...chainLines, "本次未命中任何受限方名单，因此不存在需要计算合计持股的被列名主体"] }));
+  } else {
+    steps.push(step("ownership", "所有权穿透（OFAC 50% 聚合）", "evidence_needed", {
+      basis: chainLines,
+      needs: [
+        chainFound
+          ? "名单存在潜在命中，需按 OFAC 50% 规则计算被列名主体的直接与间接合计持股；GLEIF 不公布持股比例"
+          : "完整股权结构与受益所有权证据；名单检索不解决间接或合计持股",
+        ...(chain?.noConfidentMatch ? [`GLEIF 中未找到与该名称完全一致的登记实体（返回但未采信：${chain.rejected.map((item) => item.name).slice(0, 2).join("、")}）`] : []),
+        ...(chain?.notInRegister ? ["该名称在 GLEIF 中无登记记录；未持有 LEI 的实体需另行取得股权证据"] : []),
+        ...needsMatching(results, null, /ubo|受益所有|股权|所有权|持股/i)
+      ]
+    }));
+  }
 
   return steps;
 }

@@ -310,6 +310,7 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
     // then dropped here, which is why the step went on asking for a name that
     // had already been found.
     partyCandidates: grounding.partyCandidates || [],
+    ownership: grounding.ownership || null,
     limitations: grounding.limitations
   };
   onEvent({ type: "grounding", intent: grounding.intent, grounding: groundingSummary });
