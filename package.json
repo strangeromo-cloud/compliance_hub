@@ -10,7 +10,8 @@
     "dev": "node --watch server.js",
     "seed": "node scripts/generate-seed.mjs",
     "test": "node --test",
-    "refresh-fallback": "node scripts/refresh-fallback.mjs"
+    "refresh-fallback": "node scripts/refresh-fallback.mjs",
+    "check-model": "node scripts/check-model.mjs"
   },
   "engines": {
     "node": "24.x"

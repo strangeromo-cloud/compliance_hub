@@ -232,6 +232,13 @@ async function streamCompletion(config, messages, dropped, onText, onMeta) {
   return extractJson(content);
 }
 
+// What had to be given up for this provider, for the preflight script to report.
+// The app degrades silently by design — one failed request instead of one per
+// call — but an operator choosing a provider should be able to see it.
+export function droppedFor(config) {
+  return [...(droppedParams.get(modelKey(config)) || [])];
+}
+
 export async function callJsonModelStream(config, messages, onText, onMeta) {
   const key = modelKey(config);
   const dropped = new Set(droppedParams.get(key) || []);

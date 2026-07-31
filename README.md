@@ -138,6 +138,36 @@ bis-ear-732,bis-ear-734,bis-ear,bis-ear-740,bis-ear-744,bis-ccl,bis-country-char
 
 同理，启动命令不要写成 `HOST=0.0.0.0 node server.js`。这种内联赋值依赖 shell 展开，一旦被 exec-form 直接执行就是 `ENOENT`。
 
+### 换模型供应商（香港区域必须这么做）
+
+Zeabur 香港区域连不上大多数 AI 模型服务（OpenAI、Anthropic、Gemini），但**能连中国大陆的官方来源**——这正好和当前区域相反。要两头都通，就得把模型换成香港可达的 OpenAI 兼容端点。
+
+应用本身不绑定任何供应商：它只调 `${baseUrl}/chat/completions`，标准 Chat Completions 协议。改三个环境变量即可，**代码不用动**：
+
+```
+OPENAI_BASE_URL=https://<网关>/v1
+OPENAI_MODEL=<模型名>
+OPENAI_API_KEY=<该网关签发的令牌>
+```
+
+**最后一行是安全要点，不是措辞问题。** 服务器会把 `OPENAI_API_KEY` 放在 `Authorization` 头里发给 `OPENAI_BASE_URL` 指向的主机。所以这个 key 必须是**那个主机自己签发的**——把 OpenAI 的 key 配上、同时把 base URL 指向第三方网关，等于主动把 OpenAI 的 key 交给那个网关。（正因如此，服务器侧配置了 key 时会**完全忽略**客户端传来的 baseUrl，否则任何浏览器都能把服务器的 key 送到任意主机。）
+
+另外要清楚：**提交的合规问题正文会经过这个网关**——公司名、交易结构、最终用户都在里面。选网关时按处理这类内容的标准来判断。
+
+上线前先验证，别让部署去发现问题：
+
+```bash
+OPENAI_API_KEY=... npm run check-model -- --base https://<网关>/v1 --model <模型名>
+```
+
+它走的是应用真实的两条调用路径（普通 JSON 调用 + 流式调用），并报告：
+
+- 认证是否通过，401 会直接说明「这个 key 不是该主机签发的」
+- 流式是真流式，还是供应商用普通响应体应付了 `stream: true`（后者不算坏——`llm.js` 会按普通响应读——但回答会一次性整块出现，演示前值得知道）
+- 供应商拒绝了哪些参数。`response_format: json_object` 被拒时会警告：此后只能靠提示词要求 JSON，话多的模型失败率会上升，优先选支持它的
+
+密钥只从环境变量读，不接受命令行参数——那会写进 shell 历史和进程列表。
+
 ### 构建必须用 Node 24
 
 `node:sqlite` 是 Node 24 才有的内置模块。三处都声明了这件事，**任何一处被绕过都会导致启动即崩溃**：
