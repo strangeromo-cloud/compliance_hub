@@ -138,6 +138,14 @@ function cleanDeclaredFacts(input) {
   return { facts, ignored };
 }
 
+// Fields the user has said they cannot supply. Same allowlist as a declaration,
+// because it names the same things — the difference is that this is a refusal,
+// not an answer.
+function cleanUnavailable(input) {
+  if (!Array.isArray(input)) return [];
+  return [...new Set(input.map((field) => String(field || "").trim()).filter((field) => DECLARABLE.has(field)))].slice(0, 20);
+}
+
 function cleanHistory(input) {
   if (!Array.isArray(input)) return [];
   return input.slice(-6).map((item) => ({
@@ -219,7 +227,7 @@ const server = createServer(async (request, response) => {
       if (!mock && !config.apiKey) throw Object.assign(new Error("API key is required for live-model mode."), { status: 400 });
       const locale = body.locale === "en" ? "en" : "zh";
       const declared = cleanDeclaredFacts(body.declaredFacts);
-      const result = await assessScenario({ question, locale, config, mock, gemId: body.gemId, declaredFacts: declared.facts, history: cleanHistory(body.history) });
+      const result = await assessScenario({ question, locale, config, mock, gemId: body.gemId, declaredFacts: declared.facts, unavailableFacts: cleanUnavailable(body.unavailableFacts), history: cleanHistory(body.history) });
       await saveCase(result, question, locale, body.threadId).catch(() => null);
       return sendJson(response, 200, { ...result, ignoredDeclaredFacts: declared.ignored });
     }
@@ -249,7 +257,7 @@ const server = createServer(async (request, response) => {
       try {
         const locale = body.locale === "en" ? "en" : "zh";
         const declared = cleanDeclaredFacts(body.declaredFacts);
-        const result = await assessScenario({ question, locale, config, mock, gemId: body.gemId, declaredFacts: declared.facts, history: cleanHistory(body.history), onEvent: send });
+        const result = await assessScenario({ question, locale, config, mock, gemId: body.gemId, declaredFacts: declared.facts, unavailableFacts: cleanUnavailable(body.unavailableFacts), history: cleanHistory(body.history), onEvent: send });
         result.ignoredDeclaredFacts = declared.ignored;
         // Persist before announcing completion, but a storage failure must not
         // discard an answer the user is already looking at.

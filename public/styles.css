@@ -1331,3 +1331,30 @@ html[lang="en"] .step-needs li::before { content: "NEEDS"; font-size: 8px; }
 @media (max-width: 720px) { .bt-cite { display: none; } }
 .composer-note.attribution { margin-top: 3px; opacity: .62; }
 .source-attribution { margin: 6px 0 0; font-size: 10.5px; line-height: 1.6; color: var(--text-3); }
+
+/* ---- the step being asked, made unmistakable ----
+   It is the only thing on the page the reader can act on, and a status chip was
+   not enough to say so. */
+.path-step.asking > .step-body {
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 38%, transparent);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  margin: 4px 0 2px;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 8%, transparent);
+}
+.path-step.asking .step-head strong { font-size: 13.5px; color: var(--text); }
+.path-step.asking .step-mark {
+  border-color: var(--accent); color: #fff; background: var(--accent);
+  animation: asking-pulse 1.8s ease-in-out infinite;
+}
+@keyframes asking-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent); }
+  50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 0%, transparent); }
+}
+@media (prefers-reduced-motion: reduce) { .path-step.asking .step-mark { animation: none; } }
+/* And the same step in the rail, so the two panels point at one place. */
+.fl-step.current .fl-node { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent); border-color: var(--accent); background: var(--accent); color: #fff; }
+.fl-step.current { position: relative; }
+.fl-step.current::after { content: ""; position: absolute; left: -8px; top: 4px; bottom: 4px; width: 2px; border-radius: 2px; background: var(--accent); }
+.fl-step.current .fl-text { color: var(--text); font-weight: 600; }

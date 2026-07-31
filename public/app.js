@@ -27,7 +27,7 @@ const i18n = {
     derivMatch_gem: "由所选 Gem 指定为主检查", derivMatch_always: "每次分析都执行", derivMatch_question_terms: "问题中的关键词",
     derivMatch_no_term_matched_all_lanes_run: "问题未命中任何关键词，三条检查全部执行",
     derivKind_official: "官方程序", derivKind_derived: "系统规划",
-    derivFromStandard: "{n} 来自规范", derivFromSystem: "{n} 步由系统规划", laneRunning: "正在分析", pathTemplated: "规则模式：待补项来自内置模板，不是对本问题的分析结果。切换到实时模型可得到针对性判断。", pathDerivedNote: "本步骤无对应官方条文，由系统按问题结构补充", stConfirmed: "已确认", stEvidence: "需更多证据", stNotReached: "未进行", status_confirmed: "已确认", status_evidence_needed: "需更多证据", status_not_reached: "待前序步骤", status_review_required: "需人工复核", status_pending: "待执行", stPending: "待执行", status_declared: "已声明，待核验", stDeclared: "已声明", declareSubmit: "提交并继续", declareSkip: "暂无此信息", declareSkipped: "已跳过 — 该步骤仍需证据，右侧执行流程中保留为待补", declareReopen: "重新填写", declarePlaceholder: "填写后提交", declareNote: "填写的内容记为声明信息，不等于已核验证据", declareEmpty: "请先填写至少一项", declarePrefix: "补充信息 — ", declaredAdded: "已提交", declareContinuing: "正在继续分析…", reasoningTrace: "比对明细", rsSearched: "已检索的名单来源", rsMatched: "名称命中", rsCompared: "身份要素比对", rsFacts: "已核验事实",
+    derivFromStandard: "{n} 来自规范", derivFromSystem: "{n} 步由系统规划", laneRunning: "正在分析", pathTemplated: "规则模式：待补项来自内置模板，不是对本问题的分析结果。切换到实时模型可得到针对性判断。", pathDerivedNote: "本步骤无对应官方条文，由系统按问题结构补充", stConfirmed: "已确认", stEvidence: "需更多证据", stNotReached: "未进行", status_confirmed: "已确认", status_evidence_needed: "需更多证据", status_not_reached: "待前序步骤", status_review_required: "需人工复核", status_pending: "待执行", stPending: "待执行", status_declared: "已声明，待核验", stDeclared: "已声明", declareSubmit: "提交并继续", declareSkip: "暂无此信息", declareSkipped: "已跳过 — 该步骤仍需证据，右侧执行流程中保留为待补", declareSkippedLabel: "暂无", declareReopen: "重新填写", declarePlaceholder: "填写后提交", declareNote: "填写的内容记为声明信息，不等于已核验证据", declareEmpty: "请先填写至少一项", declarePrefix: "补充信息 — ", declaredAdded: "已提交", declareContinuing: "正在继续分析…", reasoningTrace: "比对明细", rsSearched: "已检索的名单来源", rsMatched: "名称命中", rsCompared: "身份要素比对", rsFacts: "已核验事实",
     rsScore: "相似度", rsOpen: "查看原文", rsUnsynced: "未同步、本次未检索",
     el_country: "国别", el_registration_number: "注册号", el_address: "地址",
     st_agree: "一致", st_conflict: "冲突", st_unavailable: "缺失",
@@ -85,7 +85,7 @@ const i18n = {
     derivMatch_gem: "set as the lead check by the selected gem", derivMatch_always: "runs on every analysis", derivMatch_question_terms: "terms in the question",
     derivMatch_no_term_matched_all_lanes_run: "no term matched, so all three checks run",
     derivKind_official: "official", derivKind_derived: "system-planned",
-    derivFromStandard: "{n} from procedure", derivFromSystem: "{n} planned here", laneRunning: "analysing", pathTemplated: "Rules mode: the outstanding items come from built-in templates, not from analysing this question. Switch to the live model for a specific assessment.", pathDerivedNote: "No official provision for this step; added by the system", stConfirmed: "settled", stEvidence: "need evidence", stNotReached: "not reached", status_confirmed: "Settled", status_evidence_needed: "Evidence needed", status_not_reached: "Awaiting earlier step", status_review_required: "Human review", status_pending: "Planned", stPending: "planned", status_declared: "Declared, unverified", stDeclared: "declared", declareSubmit: "Submit and continue", declareSkip: "Not available", declareSkipped: "Skipped — this step still needs evidence and stays outstanding in the flow rail", declareReopen: "Fill in", declarePlaceholder: "Fill in, then submit", declareNote: "What you enter is recorded as a declaration, not as verified evidence", declareEmpty: "Fill in at least one field first", declarePrefix: "Additional information — ", declaredAdded: "Submitted", declareContinuing: "continuing the analysis…", reasoningTrace: "Comparison detail", rsSearched: "Lists searched", rsMatched: "Name matches", rsCompared: "Identity comparison", rsFacts: "Verified facts",
+    derivFromStandard: "{n} from procedure", derivFromSystem: "{n} planned here", laneRunning: "analysing", pathTemplated: "Rules mode: the outstanding items come from built-in templates, not from analysing this question. Switch to the live model for a specific assessment.", pathDerivedNote: "No official provision for this step; added by the system", stConfirmed: "settled", stEvidence: "need evidence", stNotReached: "not reached", status_confirmed: "Settled", status_evidence_needed: "Evidence needed", status_not_reached: "Awaiting earlier step", status_review_required: "Human review", status_pending: "Planned", stPending: "planned", status_declared: "Declared, unverified", stDeclared: "declared", declareSubmit: "Submit and continue", declareSkip: "Not available", declareSkipped: "Skipped — this step still needs evidence and stays outstanding in the flow rail", declareSkippedLabel: "Not available", declareReopen: "Fill in", declarePlaceholder: "Fill in, then submit", declareNote: "What you enter is recorded as a declaration, not as verified evidence", declareEmpty: "Fill in at least one field first", declarePrefix: "Additional information — ", declaredAdded: "Submitted", declareContinuing: "continuing the analysis…", reasoningTrace: "Comparison detail", rsSearched: "Lists searched", rsMatched: "Name matches", rsCompared: "Identity comparison", rsFacts: "Verified facts",
     rsScore: "Similarity", rsOpen: "Open source", rsUnsynced: "Not synced, therefore not searched",
     el_country: "Country", el_registration_number: "Registration no.", el_address: "Address",
     st_agree: "agree", st_conflict: "conflict", st_unavailable: "missing",
@@ -167,6 +167,7 @@ const state = {
   cases: [],
   threadId: null,
   declaredFacts: {},
+  unavailableFacts: [],
   sourceQuery: null,
   factsOpen: false,
   rail: localStorage.getItem("compliance-rail") === "1",
@@ -872,7 +873,14 @@ function stepInputsMarkup(item) {
 // user is open, what has not been reached is a collapsed line. Only the first
 // step that needs input carries a form — six forms at once is not a sequence, and
 // the request was to answer one thing and continue.
+// Which step is being asked is the server's answer, not the client's guess. They
+// were computed independently and drifted the moment a user declined a question:
+// the run moved past it, the page recomputed the same step from the path and asked
+// again, and declining did nothing for ever. The path carries the run's own answer
+// now, and this only fills in for a path that predates it.
 function firstBlockedStep(path) {
+  if (path?.awaitingInput?.step) return path.awaitingInput.step;
+  if (path?.awaitingInput === null && path?.final) return null;
   for (const lane of path?.lanes || []) {
     for (const item of lane.steps) {
       if (item.status === "evidence_needed" && item.inputs?.length) return item.id;
@@ -980,20 +988,44 @@ function pathMarkup(path, grounding, options = {}) {
   // verdict and findings, because their reached steps were all blocked and only
   // the first blocked step in the whole path was being shown — two thirds of a
   // finished analysis simply disappeared.
-  const laneQuestion = (lane) => lane.steps.find((item) => item.status === "evidence_needed")?.id || null;
+  // One definition of "still being asked", used everywhere.
+  //
+  // This was decided independently in three places — which lane to draw, which
+  // step in it is the question, and where to stop drawing — and they disagreed the
+  // moment a reader declined something. A declined step stays outstanding but is
+  // no longer a question, so a lane holding only declined steps is finished with
+  // the reader and the page must move on to the next one. Getting that wrong
+  // stalled the run twice with no question on the page and no conclusion.
+  const declined = new Set(state.unavailableFacts);
+  const askable = (item) => item.status === "evidence_needed" && item.inputs?.length
+    && !item.inputs.every((input) => declined.has(input.field));
+  const laneQuestion = (lane) => {
+    if (blocked && lane.steps.some((item) => item.id === blocked)) return blocked;
+    return lane.steps.find(askable)?.id || null;
+  };
   const analysed = new Set(results.map((item) => item.agent));
 
-  const lanes = path.lanes
-    .filter((lane) => {
+  // Strictly one check at a time. Lanes are drawn in order and drawing stops at
+  // the first one still waiting on the reader — so while Trade has a question
+  // open, Product is not on the page at all, however much of it retrieval happened
+  // to settle. How much is left overall is the flow rail's job, which is why the
+  // rail always shows every lane.
+  const laneOpen = (lane) => lane.steps.some(askable);
+  const ordered = [];
+  for (const lane of path.lanes) {
+    if (lane.lane === "review") {
       // The closing step is only drawn once there is something to close.
-      if (lane.lane === "review") return !blocked && options.allowInput !== false;
-      // The lane holding the question must be drawn even if nothing in it has run
-      // yet. Questions are now asked before their lane is analysed, so gating on
-      // "has this lane produced something" hid the question outright: the run
-      // stopped to ask, and the page showed no question and no conclusion.
-      return analysed.has(lane.lane) || lane.lane === activeLane
-        || lane.steps.some(settled) || lane.steps.some((item) => item.id === blocked);
-    })
+      if (!blocked && options.allowInput !== false) ordered.push(lane);
+      continue;
+    }
+    // The lane holding the question must be drawn even if nothing in it has run
+    // yet — questions are asked before their lane is analysed.
+    if (analysed.has(lane.lane) || lane.lane === activeLane
+      || lane.steps.some(settled) || lane.steps.some((item) => item.id === blocked)) ordered.push(lane);
+    if (laneOpen(lane)) break;
+  }
+
+  const lanes = ordered
     .map((lane) => {
       const question = laneQuestion(lane);
       const steps = lane.steps.filter((item) => settled(item) || item.id === question);
@@ -1605,7 +1637,7 @@ async function analyze(event, options = {}) {
   try {
     const response = await fetch("/api/assess/stream", {
       method: "POST", headers: { "Content-Type": "application/json", ...accessHeaders() },
-      body: JSON.stringify({ question, locale: state.locale, mock, config, history: priorHistory, threadId: ensureThreadId(), gemId: gem?.id || null, declaredFacts: state.declaredFacts })
+      body: JSON.stringify({ question, locale: state.locale, mock, config, history: priorHistory, threadId: ensureThreadId(), gemId: gem?.id || null, declaredFacts: state.declaredFacts, unavailableFacts: state.unavailableFacts })
     });
     if (response.status === 401) { toast(t("accessRequired")); openSettings(); throw new Error(t("accessRequired")); }
     // The server refuses live calls when it has a key but no code to check it
@@ -1700,6 +1732,7 @@ function newConversation() {
   state.conversation = [];
   state.threadId = null;
   state.declaredFacts = {};
+  state.unavailableFacts = [];
   $("threadInner").innerHTML = "";
   $("startPanel").classList.remove("hidden");
   $("questionInput").value = "";
@@ -1984,13 +2017,40 @@ $("threadInner").addEventListener("click", (event) => {
     group.querySelectorAll(".si-choice").forEach((button) => button.classList.toggle("on", button === choice));
     return;
   }
-  // Skipping is a UI action only: nothing was supplied, so there is nothing to
-  // re-analyse. The step keeps its "evidence needed" status and stays in the
-  // action list; the form just stops demanding an answer the user does not have.
+  // Declining has to move the analysis on. The run now stops at the question it
+  // is waiting for, so collapsing the form and doing nothing else left the whole
+  // thing wedged: the only way forward was to type something the user had just
+  // said they did not have.
+  //
+  // The step stays outstanding — a declined question is not an answered one — but
+  // the fields are recorded so the run continues past it instead of stopping
+  // there again.
   const skip = event.target.closest(".si-skip");
-  if (skip) return skip.closest(".step-inputs").classList.add("skipped");
+  if (skip) {
+    const host = skip.closest(".step-inputs");
+    host.classList.add("skipped");
+    host.querySelectorAll("input, button").forEach((control) => { control.disabled = true; });
+    const fields = [...host.querySelectorAll("[data-field]")].map((node) => node.dataset.field);
+    state.unavailableFacts = [...new Set([...state.unavailableFacts, ...fields])];
+    const answer = host.closest(".msg-assistant");
+    if (answer?.dataset.question) {
+      host.insertAdjacentHTML("beforeend", `<div class="si-done">
+        <span class="sis-label">${esc(t("declareSkippedLabel"))}</span>
+        <span class="sis-state">${esc(t("declareContinuing"))}</span>
+      </div>${streamBoxMarkup("data-resume-stream")}`);
+      return analyze(null, { continueIn: answer });
+    }
+    return;
+  }
   const reopen = event.target.closest(".si-reopen");
-  if (reopen) return reopen.closest(".step-inputs").classList.remove("skipped");
+  if (reopen) {
+    const host = reopen.closest(".step-inputs");
+    host.classList.remove("skipped");
+    host.querySelectorAll("input, button").forEach((control) => { control.disabled = false; });
+    const fields = new Set([...host.querySelectorAll("[data-field]")].map((node) => node.dataset.field));
+    state.unavailableFacts = state.unavailableFacts.filter((field) => !fields.has(field));
+    return;
+  }
   const submit = event.target.closest(".si-submit");
   if (!submit) return;
   const host = submit.closest(".step-inputs");

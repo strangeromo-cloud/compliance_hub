@@ -113,3 +113,71 @@ test("triage never leaves a question with nothing to analyse", async () => {
   const analysisLanes = path.lanes.filter((lane) => lane.lane !== "review");
   assert.ok(analysisLanes.length, "a narrowed review is still a review");
 });
+
+// A conversation, driven the way a user drives one: answer or decline whatever is
+// asked, and require that it always ends. These pin the four ways the flow broke.
+async function walk(question, { mode = "answer", cap = 20 } = {}) {
+  const { assessScenario } = await import("../src/orchestrator.js");
+  const declaredFacts = {};
+  const unavailableFacts = [];
+  const asked = [];
+  for (let round = 0; round < cap; round += 1) {
+    const result = await assessScenario({ question, locale: "zh", mock: true, declaredFacts, unavailableFacts });
+    if (!result.awaitingInput) return { asked, concluded: Boolean(result.synthesis), result };
+    const steps = result.analysisPath.lanes.flatMap((lane) => lane.steps.map((step) => ({ step, lane: lane.lane })));
+    const found = steps.find((item) => item.step.id === result.awaitingInput.step);
+    // The step being asked about must be one the page can draw, or the run has
+    // stopped on a question that is nowhere on screen.
+    assert.ok(found, `${result.awaitingInput.step} is not in the path it was asked from`);
+    assert.equal(found.step.status, "evidence_needed", `${found.step.title} is asked but not drawable`);
+    assert.ok(found.step.inputs.length, `${found.step.title} is asked but has nothing to fill in`);
+    asked.push(found.lane);
+    if (mode === "skip") unavailableFacts.push(...found.step.inputs.map((input) => input.field));
+    else for (const input of found.step.inputs) declaredFacts[input.field] = "已提供";
+  }
+  throw new Error(`did not converge in ${cap} rounds; asked ${asked.join(" → ")}`);
+}
+
+const LANE_ORDER = ["trade", "product", "tpdd", "review"];
+const TRANSACTION = "我们通过新加坡代理商向中国最终用户出口高性能计算服务器，由咨询公司代为付款";
+
+test("a conversation converges whether questions are answered or declined", async () => {
+  for (const mode of ["answer", "skip"]) {
+    const { concluded } = await walk(TRANSACTION, { mode });
+    assert.ok(concluded, `${mode}: the run must reach a conclusion`);
+  }
+});
+
+test("declining a question moves the run on instead of asking it again", async () => {
+  // The break this pins: declining collapsed the form and did nothing else, so
+  // the only way forward was to type something the user had just said they
+  // did not have.
+  const { asked } = await walk(TRANSACTION, { mode: "skip" });
+  assert.ok(asked.length, "something should have been asked");
+});
+
+test("questions are asked one lane at a time, in path order", async () => {
+  const { asked } = await walk(TRANSACTION);
+  const seen = [...new Set(asked)];
+  assert.deepEqual(seen, [...seen].sort((left, right) => LANE_ORDER.indexOf(left) - LANE_ORDER.indexOf(right)),
+    `lanes were asked out of order: ${seen.join(" → ")}`);
+  // And a lane's questions are finished before the next lane is reached.
+  const firstOf = seen.map((lane) => asked.indexOf(lane));
+  const lastOf = seen.map((lane) => asked.lastIndexOf(lane));
+  seen.forEach((lane, index) => {
+    if (index === 0) return;
+    assert.ok(firstOf[index] > lastOf[index - 1],
+      `${lane} was asked before ${seen[index - 1]} was finished`);
+  });
+});
+
+test("an informational question is answered rather than interrogated", async () => {
+  // Stopping these to demand a part number made them unanswerable: the run halted
+  // on a question that had nothing to do with what was asked.
+  for (const question of ["中国两用物项出口管制的法规依据是什么？", "H100 的 ECCN 是多少？"]) {
+    const { assessScenario } = await import("../src/orchestrator.js");
+    const result = await assessScenario({ question, locale: "zh", mock: true });
+    assert.equal(result.awaitingInput, null, `${question} should not stop to ask`);
+    assert.ok(result.synthesis, `${question} should reach a conclusion`);
+  }
+});

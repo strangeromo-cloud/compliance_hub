@@ -140,18 +140,35 @@ async function synthesize(question, locale, results, config, history, grounding,
 // Stages report as they land instead of the caller waiting on the whole run.
 // The specialists take the longest, so each one is emitted the moment it
 // resolves rather than after Promise.all settles.
+// Which questions stop the run.
+//
+// Only a transaction has facts the user can be asked for. "What is the legal
+// basis for the PRC dual-use regime" and "what is the ECCN for an H100" are
+// answered from the sources, and stopping them to demand a part number made them
+// unanswerable — the run halted on a question that had nothing to do with what was
+// asked, and never reached a conclusion. Those questions run straight through;
+// their path still reports what a full assessment would additionally need.
+const INFORMATIONAL = new Set(["policy_lookup", "product_metric"]);
+
 // A step the user can actually answer. A step that is merely blocked by an
-// earlier one is not a question — nobody can do anything about it yet.
-function openQuestion(path) {
+// earlier one is not a question — nobody can do anything about it yet, and one
+// the user has already said they cannot supply is not a question either.
+function openQuestion(path, { intent, unavailable = [] } = {}) {
+  if (INFORMATIONAL.has(intent)) return null;
+  const skipped = new Set(unavailable);
   for (const lane of path?.lanes || []) {
     for (const step of lane.steps) {
-      if (step.status === "evidence_needed" && step.inputs?.length) return step;
+      if (step.status !== "evidence_needed" || !step.inputs?.length) continue;
+      // Asking again for something already declined would stop the run at the
+      // same step for ever.
+      if (step.inputs.every((input) => skipped.has(input.field))) continue;
+      return step;
     }
   }
   return null;
 }
 
-export async function assessScenario({ question, locale = "zh", config = {}, mock = false, history = [], gemId = null, declaredFacts = {}, onEvent = () => {} }) {
+export async function assessScenario({ question, locale = "zh", config = {}, mock = false, history = [], gemId = null, declaredFacts = {}, unavailableFacts = [], onEvent = () => {} }) {
   const directAgents = routeQuestion(question, false);
   const contextualQuestion = `${history.filter((item) => item.role === "user").map((item) => item.content).join("\n")}\n${question}`;
   const contextualAgents = routeQuestion(contextualQuestion, false);
@@ -207,6 +224,15 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
   // review is read as a sequence — this was checked, therefore that was checked.
   // The cost is real: a live run now takes about as long as its three calls
   // added together instead of the slowest one.
+  // A question is only worth asking if it survives the resolution the reader will
+  // actually see. The interim resolution leaves steps open that the final one
+  // closes — asking against it stopped the run on a step that the finished path
+  // then reported as never reached, so the page had a question the body could not
+  // draw and the run could not move past.
+  const askablePath = () => resolveAnalysisPath(analysisPath, {
+    question: contextualQuestion, grounding: groundingSummary, results, declaredFacts, templated: mock, final: true
+  });
+
   const laneOrder = analysisPath.lanes.map((group) => group.lane).filter((lane) => agents.includes(lane));
   const results = [];
   let synthesis = null;
@@ -217,7 +243,7 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
     // path itself once retrieval has landed — they are not findings a specialist
     // produced — so running one to arrive at a question that was already known
     // spends a minute of model time to learn nothing.
-    const asked = openQuestion(analysisPath);
+    const asked = openQuestion(askablePath(), { intent: grounding.intent, unavailable: unavailableFacts });
     if (asked) {
       awaiting = asked;
       onEvent({ type: "awaiting_input", step: asked.id, title: asked.title });
@@ -248,7 +274,7 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
     // Carrying on to the next specialist would be analysing around a gap that has
     // just been identified, and it would present the whole structure at once when
     // what was asked for is one thing at a time: analyse, ask, wait, continue.
-    const pending = openQuestion(analysisPath);
+    const pending = openQuestion(askablePath(), { intent: grounding.intent, unavailable: unavailableFacts });
     if (pending) {
       awaiting = pending;
       onEvent({ type: "awaiting_input", step: pending.id, title: pending.title });
@@ -271,10 +297,16 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
       (text) => onEvent({ type: "synthesis_delta", text }));
   }
 
-  analysisPath = resolveAnalysisPath(analysisPath, { question: contextualQuestion, grounding: groundingSummary, results, declaredFacts, templated: mock, final: !awaiting });
+  // Resolved the same way the question was chosen, always. Returning a less
+  // resolved path than the one the ask came from meant the step being asked about
+  // could arrive as "pending" — which the page cannot draw, so the run stopped on
+  // a question that was nowhere on screen. The run having stopped is carried by
+  // awaitingInput, not by withholding the resolution.
+  analysisPath = resolveAnalysisPath(analysisPath, { question: contextualQuestion, grounding: groundingSummary, results, declaredFacts, templated: mock, final: true });
   // Flagged so the client knows the sequence has finished and a step may now ask
   // the user for input; a form offered mid-run would be answered against a path
   // that is still moving.
+  analysisPath = { ...analysisPath, awaitingInput: awaiting ? { step: awaiting.id, title: awaiting.title } : null };
   onEvent({ type: "path", path: analysisPath, final: true });
 
   return {
@@ -285,6 +317,10 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
     // conclusion, the case record, the thread summary — has to be able to tell
     // "not answered yet" from "answered".
     awaitingInput: awaiting ? { step: awaiting.id, title: awaiting.title } : null,
+    // What the user said they could not supply. The steps stay outstanding — a
+    // declined question is not an answered one — but the run does not stop there
+    // again.
+    unavailableFacts,
     actionPlan: buildActionPlan(analysisPath, results),
     declaredFacts,
     mode: mock ? "grounded-demo" : "live-model",
