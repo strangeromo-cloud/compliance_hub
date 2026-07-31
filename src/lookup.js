@@ -90,11 +90,20 @@ const VENDOR_TABLES = [
 async function classificationOfPart(parts) {
   const found = [];
   const searched = [];
+  const unavailable = [];
   const wanted = parts.map((part) => part.toUpperCase());
 
   for (const table of VENDOR_TABLES) {
     const snapshot = await readNormalized(table.sourceId);
-    if (!snapshot?.records?.length) continue;
+    // A table that holds no data was not searched, and saying nothing about it
+    // lets "not in the ingested data" stand for two different things: the part
+    // is absent from a table that was read, or the table that would answer was
+    // never fetched. For an AMD part number with AMD's own master unsynced, the
+    // second is the entire answer.
+    if (!snapshot?.records?.length) {
+      unavailable.push({ sourceId: table.sourceId, label: table.label });
+      continue;
+    }
     searched.push({
       sourceId: table.sourceId,
       label: `${table.label}（${snapshot.records.length} 条${snapshot.capturedAt ? `，采集于 ${String(snapshot.capturedAt).slice(0, 10)}` : ""}）`
@@ -151,7 +160,7 @@ async function classificationOfPart(parts) {
     });
   }
 
-  return { found, searched };
+  return { found, searched, unavailable };
 }
 
 async function meaningOfCode(codes) {
@@ -296,7 +305,7 @@ export async function resolveLookup(question) {
   const subject = lookupSubject(question);
   if (!subject) return null;
 
-  const { found, searched, unsearchable } = subject.kind === "classification_of_part"
+  const { found, searched, unsearchable, unavailable = [] } = subject.kind === "classification_of_part"
     ? await classificationOfPart(subject.parts)
     : subject.kind === "list_membership"
       ? await listMembership(question, subject.tags)
@@ -304,6 +313,10 @@ export async function resolveLookup(question) {
 
   return {
     unsearchable: unsearchable || null,
+    // Sources that would have been searched and could not be. Named, because the
+    // difference between "read and absent" and "never read" is the whole answer
+    // when the missing one is the vendor's own table.
+    unavailable,
     kind: subject.kind,
     asked: subject.kind === "classification_of_part" ? subject.parts
       : subject.kind === "list_membership" ? [String(question).slice(0, 60)]

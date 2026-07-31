@@ -364,7 +364,10 @@ function needsMatching(results, agent, pattern) {
 function lookupSteps(grounding) {
   const lookup = grounding.lookup;
   if (!lookup) return [step("data_lookup", "在已接入数据中检索", "not_reached", {})];
-  const searched = lookup.searched.map((source) => `已检索 ${source.label}`);
+  const searched = [
+    ...lookup.searched.map((source) => `已检索 ${source.label}`),
+    ...(lookup.unavailable || []).map((source) => `未检索 ${source.label}（该来源未同步）`)
+  ];
   if (lookup.found.length) {
     return [step("data_lookup", "在已接入数据中检索", "confirmed", {
       basis: [

@@ -196,6 +196,11 @@ async function answerLookup({ question, locale, lookup, mock, onEvent }) {
   // A search that could not run is not a search that found nothing, and the
   // difference decides whether "not listed" may be said at all.
   if (lookup.unsearchable) grounding.limitations.push(lookup.unsearchable);
+  if (lookup.unavailable?.length) {
+    grounding.limitations.push(isEn
+      ? `Not searched because they are not synced: ${lookup.unavailable.map((source) => source.label).join(", ")}. A part absent from the tables that were read is not the same as an unclassified part.`
+      : `以下来源未同步，本次未检索：${lookup.unavailable.map((source) => source.label).join("、")}。在读过的表里没有，不等于该料号没有分类。`);
+  }
   if (!found.length && !lookup.unsearchable) {
     grounding.limitations.push(isEn
       ? `${lookup.asked.join(", ")} is not in the ingested records. Absent from this data is not the same as not controlled.`

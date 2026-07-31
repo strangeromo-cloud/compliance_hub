@@ -273,3 +273,37 @@ test("a lookup answers from the data and says what it searched", async () => {
   const answer = await assessScenario({ question: "100-000000009 这个AMD 的ECCN是什么？", locale: "zh", mock: true });
   assert.ok(answer.grounding.limitations.some((line) => /未收录不等于不受管制/.test(line)));
 });
+
+test("a source that could not be searched is named, not omitted", async () => {
+  // The report this pins: an AMD part number answered "not in the ingested data"
+  // while AMD's own product master was unsynced and therefore never read. Both
+  // read-and-absent and never-read produced the same sentence, and for a vendor
+  // part number the second is the entire answer.
+  const { mkdtempSync, rmSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  const dir = mkdtempSync(join(tmpdir(), "hub-lookup-"));
+  const previous = process.env.HUB_DB_PATH;
+  process.env.HUB_DB_PATH = join(dir, "test.db");
+
+  try {
+    // A fresh module graph, so the database path above is the one it opens.
+    const storage = await import(`../src/data-layer/storage.js?no-amd`);
+    await storage.saveSourceData({
+      sourceId: "nvidia-export", extension: "json", bytes: Buffer.from("[]"),
+      records: [{ partNumber: "900-21010-0000-000", eccn: "4A090.a", vendor: "NVIDIA" }], metadata: {}
+    });
+
+    const { resolveLookup } = await import(`../src/lookup.js?no-amd`);
+    const lookup = await resolveLookup("100-000000009 这个AMD 的ECCN是什么？");
+    assert.equal(lookup.found.length, 0);
+    assert.ok(lookup.unavailable.some((source) => source.sourceId === "amd-export"),
+      "the table that was not read must be named");
+    assert.ok(lookup.searched.some((source) => source.sourceId === "nvidia-export"),
+      "and the ones that were read must still be listed");
+  } finally {
+    if (previous === undefined) delete process.env.HUB_DB_PATH;
+    else process.env.HUB_DB_PATH = previous;
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
