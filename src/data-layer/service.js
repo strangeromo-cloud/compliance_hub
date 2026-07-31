@@ -71,7 +71,12 @@ export async function getDataSourceCoverage() {
     const purpose = SOURCE_PURPOSE[source.sourceId] || null;
     return {
       ...source,
-      purpose: purpose ? { zh: purpose.zh, en: purpose.en, usedIn: purpose.usedIn } : null,
+      purpose: purpose ? {
+        zh: purpose.zh, en: purpose.en, usedIn: purpose.usedIn,
+        optionalApi: purpose.optionalApi
+          ? { ...purpose.optionalApi, configured: Boolean(process.env[purpose.optionalApi.credential]) }
+          : null
+      } : null,
       currentCoverage: hasSnapshot ? (snapshotIsSample ? "sample_snapshot" : "structured_snapshot") : source.currentCoverage,
       dataCaptured: hasSnapshot ? [
         "official raw snapshot",

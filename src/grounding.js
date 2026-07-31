@@ -3,6 +3,7 @@ import { classifyQuestionIntent, isChinaDualUseQuestion } from "./question-inten
 import { findNamesMentioned, fuzzyPartyCandidates, matchParty } from "./entity-matching.js";
 import { findBom, findInternalParties, findProducts, manufacturerFactsFor } from "./internal-data.js";
 import { resolveOwnership } from "./ownership.js";
+import { isConfigured as cslApiConfigured, searchName } from "./data-layer/csl-search.js";
 
 // Every synchronized restricted-party source is screened, so adding an adapter
 // widens screening coverage without touching this file.
@@ -61,6 +62,35 @@ async function resolveCounterparties(question, sources) {
   }));
 }
 
+// The publisher's own matcher, for the names the question actually mentions.
+//
+// It answers only for trade-csl and only when a key is configured. Its hits are
+// kept apart from the local comparison's, because "the ITA's matcher says these
+// are the same name" and "our token overlap says so" are different claims and a
+// reviewer is entitled to know which one they are reading.
+async function officialScreening(question, sources) {
+  if (!cslApiConfigured()) return null;
+  const csl = sources.find((source) => source.sourceId === "trade-csl");
+  if (!csl) return null;
+
+  // The names to put to it are the ones already found in the question, so the
+  // API is asked about parties the user wrote rather than about the whole text.
+  const names = [...new Set(findNamesMentioned(question, csl.records, { limit: 4 }).map((hit) => hit.matchedName))];
+  if (!names.length) return null;
+
+  const searched = [];
+  for (const name of names.slice(0, 3)) {
+    const result = await searchName(name);
+    if (result) searched.push(result);
+  }
+  if (!searched.length) return null;
+  return {
+    queries: searched.map((item) => item.query),
+    unavailable: searched.filter((item) => item.unavailable).map((item) => item.unavailable),
+    hits: searched.flatMap((item) => item.hits)
+  };
+}
+
 async function screenQuestionParties(question) {
   const sources = await loadListRecords();
   if (!sources.length) return { matches: [], screenedSources: [], unsyncedSources: PARTY_LIST_SOURCES.map((source) => source.sourceId) };
@@ -75,9 +105,12 @@ async function screenQuestionParties(question) {
     }
   }
 
+  const official = await officialScreening(question, sources).catch(() => null);
+
   const screenedIds = new Set(sources.map((source) => source.sourceId));
   return {
     matches: matches.slice(0, 12),
+    official,
     // The loaded records themselves, so counterparty resolution can run over the
     // same corpus that was screened rather than loading it a second time.
     sources,
@@ -198,7 +231,16 @@ export async function collectGrounding(question, agents = [], declaredFacts = {}
   if (agents.includes("trade") || agents.includes("tpdd")) {
     const screening = await screenQuestionParties(question);
     grounding.listMatches = screening.matches;
-    grounding.screening = { screenedSources: screening.screenedSources, fallbackSources: screening.fallbackSources, unsyncedSources: screening.unsyncedSources };
+    grounding.screening = { screenedSources: screening.screenedSources, fallbackSources: screening.fallbackSources, unsyncedSources: screening.unsyncedSources, official: screening.official || null };
+    if (screening.official?.hits?.length) {
+      grounding.limitations.push(
+        `以下名称经 ITA 官方检索接口（Consolidated Screening List，fuzzy_name）比对：${screening.official.queries.join("、")}；`
+        + "该结果为发布方自身的匹配判定，与本机快照的比对分开呈现。"
+      );
+    }
+    if (screening.official?.unavailable?.length) {
+      grounding.limitations.push(`ITA 官方检索接口本次不可用（${screening.official.unavailable[0]}），已回落到本机快照比对。`);
+    }
     grounding.partyCandidates = await resolveCounterparties(question, screening.sources || []);
     // The corporate chain for whoever the party step settled on. A declared legal
     // name is preferred over a matched candidate: the user naming their own

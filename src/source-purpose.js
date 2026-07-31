@@ -16,7 +16,15 @@ export const SOURCE_PURPOSE = {
   "trade-csl": {
     zh: "受限方筛查的主名单。它是聚合体：25,921 条里含 OFAC SDN、BIS 实体清单、被拒绝人员清单、未核实清单、军事最终用户清单、国务院 ITAR 除名等十余份。判定「可结案」时唯一必须已同步的美国名单。",
     en: "The main list for party screening, and an aggregate: OFAC's SDN plus BIS's Entity, Denied Persons, Unverified and Military End User lists and more. The one US list that must be synced before a case can clear.",
-    usedIn: ["search_lists", "name_match", "identity_resolution", "clearance"]
+    usedIn: ["search_lists", "name_match", "identity_resolution", "clearance"],
+    // Not a separate source: the same list, matched by its publisher instead of
+    // by us. Stated here so the page can say the option exists and whether it is
+    // switched on.
+    optionalApi: {
+      credential: "TRADE_GOV_API_KEY",
+      zh: "ITA 还提供官方检索接口，对同一份名单做发布方自己的模糊匹配。配置 TRADE_GOV_API_KEY 后，名称比对由发布方判定并与本机比对分开呈现；未配置时功能不减，筛查照常用本机快照。申请地址 developer.trade.gov（免费；该站 2026-07-28 起证书过期，暂时无法访问）。",
+      en: "The ITA also offers a search API — the publisher's own fuzzy matching over this same list. With TRADE_GOV_API_KEY set, name comparison is answered by the publisher and shown separately from ours; without it nothing is lost and screening runs on the local snapshot. Free at developer.trade.gov, whose certificate expired on 2026-07-28 and is currently unreachable."
+    }
   },
   "ofac-sls": {
     zh: "OFAC 自有发布口径的制裁名单。内容已被 trade-csl 覆盖，保留它是因为 OFAC 按自己的节奏发布，可能比聚合的 CSL 更新。",

@@ -10,7 +10,7 @@ const copy = {
     automationLabels: { api_available: "API 可用", download_available: "文件下载可用", scraping_available: "网页采集可用", manual_only: "仅人工", blocked: "受阻", not_started: "未开始" },
     webLabels: { good_for_discovery: "适合政策发现", supplement_only: "仅作辅助线索", not_for_screening: "不能替代正式查询" },
     syncLabels: { not_synced: "尚未同步", syncing: "同步中", success: "同步成功", failed: "同步失败", refresh_failed: "快照可用，刷新失败", fallback_snapshot: "兜底快照", configuration_required: "等待配置" },
-    coveredByLabel: "内容已被其他来源覆盖：", usedInLabel: "用于步骤：", notUsedLabel: "当前没有分析步骤读取该来源；可在数据源直查中检索", adapterReady: "Adapter 已实现", queryReady: "支持实时查询", sync: "立即同步", retry: "重新同步", records: "条记录", lastSync: "最后同步", sourceVersion: "来源版本", syncScope: "同步范围", configKey: "需配置", syncFailed: "同步失败，请查看状态详情。", syncNeedsCode: "需要访问口令：请回到首页「访问设置」填写口令后重试。"
+    coveredByLabel: "内容已被其他来源覆盖：", usedInLabel: "用于步骤：", apiOn: "官方检索接口已启用：", apiOff: "可选的官方检索接口（未配置）：", notUsedLabel: "当前没有分析步骤读取该来源；可在数据源直查中检索", adapterReady: "Adapter 已实现", queryReady: "支持实时查询", sync: "立即同步", retry: "重新同步", records: "条记录", lastSync: "最后同步", sourceVersion: "来源版本", syncScope: "同步范围", configKey: "需配置", syncFailed: "同步失败，请查看状态详情。", syncNeedsCode: "需要访问口令：请回到首页「访问设置」填写口令后重试。"
   },
   en: {
     brandSub: "Compliance intelligence", back: "Back to chat", title: "Public data coverage & integration status", lead: "What each source currently reads, what its licence permits, and which sources stay manual because of a CAPTCHA or an anti-bot wall.",
@@ -23,7 +23,7 @@ const copy = {
     automationLabels: { api_available: "API available", download_available: "Download available", scraping_available: "Web collection available", manual_only: "Manual only", blocked: "Blocked", not_started: "Not started" },
     webLabels: { good_for_discovery: "Good for policy discovery", supplement_only: "Supporting leads only", not_for_screening: "Not a screening substitute" },
     syncLabels: { not_synced: "Not synced", syncing: "Syncing", success: "Synced", failed: "Sync failed", refresh_failed: "Snapshot kept, refresh failed", fallback_snapshot: "Bundled copy", configuration_required: "Configuration required" },
-    coveredByLabel: "Already held by another source: ", usedInLabel: "Read by: ", notUsedLabel: "No analysis step reads this source; it is searchable directly", adapterReady: "Adapter implemented", queryReady: "Live query ready", sync: "Sync now", retry: "Sync again", records: "records", lastSync: "Last sync", sourceVersion: "Source version", syncScope: "Sync scope", configKey: "Configure", syncFailed: "Sync failed. Open the status details for the recorded error.", syncNeedsCode: "Access code required: enter it under Access on the home page, then retry."
+    coveredByLabel: "Already held by another source: ", usedInLabel: "Read by: ", apiOn: "Publisher\u2019s search API enabled: ", apiOff: "Optional publisher search API (not configured): ", notUsedLabel: "No analysis step reads this source; it is searchable directly", adapterReady: "Adapter implemented", queryReady: "Live query ready", sync: "Sync now", retry: "Sync again", records: "records", lastSync: "Last sync", sourceVersion: "Source version", syncScope: "Sync scope", configKey: "Configure", syncFailed: "Sync failed. Open the status details for the recorded error.", syncNeedsCode: "Access code required: enter it under Access on the home page, then retry."
   }
 };
 
@@ -79,6 +79,8 @@ function renderCard(source) {
       ${source.purpose.usedIn?.length
         ? `<p class="source-usedin"><b>${esc(c.usedInLabel)}</b>${source.purpose.usedIn.map((step) => `<code>${esc(step)}</code>`).join("")}</p>`
         : `<p class="source-usedin unused">${esc(c.notUsedLabel)}</p>`}` : ""}
+    ${source.purpose?.optionalApi ? `<p class="source-optional ${source.purpose.optionalApi.configured ? "on" : ""}">
+      <b>${esc(source.purpose.optionalApi.configured ? c.apiOn : c.apiOff)}</b>${esc(state.locale === "zh" ? source.purpose.optionalApi.zh : source.purpose.optionalApi.en)}</p>` : ""}
     ${source.coveredBy ? `<p class="source-covered"><b>${esc(c.coveredByLabel)}</b>${esc(source.coveredBy.note)}</p>` : ""}
     ${source.attribution ? `<p class="source-attribution">${esc(source.attribution)}</p>` : ""}
     ${["success", "failed", "refresh_failed", "configuration_required"].includes(sync.status) ? `<details class="sync-details"><summary>${state.locale === "zh" ? "查看同步状态" : "View sync status"}</summary><div class="registry-details"><dl><div><dt>${c.lastSync}</dt><dd>${esc(completedAt)}</dd></div>${sync.sourceUpdatedAt ? `<div><dt>${c.sourceVersion}</dt><dd>${esc(sync.sourceUpdatedAt)}</dd></div>` : ""}${sync.syncScope ? `<div><dt>${c.syncScope}</dt><dd>${esc(sync.syncScope)}</dd></div>` : ""}${adapter.credential && !adapter.credentialConfigured ? `<div><dt>${c.configKey}</dt><dd>${esc(adapter.credential)}</dd></div>` : ""}</dl>${sync.error ? `<p class="sync-error">${esc(sync.error)}</p>` : ""}</div></details>` : ""}

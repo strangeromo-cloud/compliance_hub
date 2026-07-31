@@ -258,3 +258,33 @@ test("every registered source says what it is for", async () => {
     .map(([id]) => id);
   assert.deepEqual(claimedButAbsent, [], `claimed as read but not referenced in the analysis: ${claimedButAbsent.join(", ")}`);
 });
+
+test("the official screening API is optional and degrades to the local snapshot", async () => {
+  // A screening tool must not silently depend on a service it may not reach —
+  // and developer.trade.gov has served an expired certificate since 2026-07-28,
+  // so nobody can obtain a key at the moment. Without one, nothing changes.
+  const { isConfigured, searchName, CREDENTIAL } = await import("../src/data-layer/csl-search.js");
+  const previous = process.env[CREDENTIAL];
+  delete process.env[CREDENTIAL];
+
+  try {
+    assert.equal(isConfigured(), false);
+    assert.equal(await searchName("Huawei Technologies"), null,
+      "with no key it does not call out, and does not pretend to have looked");
+
+    // Screening still works, from the local snapshot, exactly as before.
+    const { assessScenario } = await import("../src/orchestrator.js");
+    const result = await assessScenario({ question: "请对交易方 Huawei Technologies 做受限方筛查", locale: "zh", mock: true });
+    assert.ok(result.grounding.screening?.screenedSources?.length, "the local screening is unaffected");
+    assert.equal(result.grounding.screening.official, null);
+  } finally {
+    if (previous === undefined) delete process.env[CREDENTIAL];
+    else process.env[CREDENTIAL] = previous;
+  }
+
+  // And the page can say the option exists without it being switched on.
+  const { SOURCE_PURPOSE } = await import("../src/source-purpose.js");
+  const optional = SOURCE_PURPOSE["trade-csl"].optionalApi;
+  assert.equal(optional.credential, CREDENTIAL);
+  assert.match(optional.zh, /未配置时功能不减/);
+});
