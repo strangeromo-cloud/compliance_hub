@@ -1394,7 +1394,11 @@ html[lang="en"] .step-needs li::before { content: "NEEDS"; font-size: 8px; }
      is the one that looks misaligned. */
   padding: 3px 6px 3px 8px; }
 .fl-step.current::after { left: -6px; top: 3px; bottom: 3px; width: 3px; }
-.fl-step.current .fl-node { transform: scale(1.15); transform-origin: left center; animation: asking-pulse 1.8s ease-in-out infinite; }
+/* Scaled about its own centre, so the centre stays on the column with the rest.
+   Pinning the left edge instead — which is what an earlier measurement of
+   getBoundingClientRect().left led to — keeps the edges flush and pushes the
+   circle visibly right, because a row of circles reads as aligned by centre. */
+.fl-step.current .fl-node { transform: scale(1.15); animation: asking-pulse 1.8s ease-in-out infinite; }
 .fl-step.current .fl-text { color: var(--text); font-weight: 600; }
 /* While the analysis is running on that step the whole row says so. */
 .flow-panel .fl-step.current.is-running .fl-text::after { content: "…"; margin-left: 4px; color: var(--accent-text); }
@@ -1440,3 +1444,7 @@ html[lang="en"] .step-needs li::before { content: "NEEDS"; font-size: 8px; }
 .proc-note { display: block; margin-top: 4px; font-size: 11px; line-height: 1.5; color: var(--text-3); }
 .proc-tag { display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 999px; font-size: 10px;
   color: var(--text-3); border: 1px solid color-mix(in srgb, var(--text-3) 40%, transparent); }
+/* A failed continuation says so where it failed, not only in a toast that has
+   already gone. */
+.si-error { margin: 8px 0 0; font-size: 11.5px; line-height: 1.55; color: var(--risk-high); }
+.sis-elapsed { font: 500 10.5px/1 var(--mono); color: var(--text-3); font-variant-numeric: tabular-nums; }

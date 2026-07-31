@@ -27,7 +27,7 @@ const i18n = {
     derivMatch_gem: "由所选 Gem 指定为主检查", derivMatch_always: "每次分析都执行", derivMatch_question_terms: "问题中的关键词",
     derivMatch_no_term_matched_all_lanes_run: "问题未命中任何关键词，三条检查全部执行",
     derivKind_official: "官方程序", derivKind_derived: "系统规划",
-    derivFromStandard: "{n} 来自规范", derivFromSystem: "{n} 步由系统规划", laneRunning: "正在分析", pathTemplated: "规则模式：待补项来自内置模板，不是对本问题的分析结果。切换到实时模型可得到针对性判断。", pathDerivedNote: "本步骤无对应官方条文，由系统按问题结构补充", stConfirmed: "已确认", stEvidence: "需更多证据", stNotReached: "未进行", status_confirmed: "已确认", status_evidence_needed: "需更多证据", status_not_reached: "待前序步骤", status_review_required: "需人工复核", status_pending: "待执行", stPending: "待执行", status_declared: "已声明，待核验", stDeclared: "已声明", declareSubmit: "提交并继续", declareSkip: "暂无此信息", declareSkipped: "已跳过 — 该步骤仍需证据，右侧执行流程中保留为待补", declareSkippedLabel: "暂无", declareReopen: "重新填写", declarePlaceholder: "填写后提交", declareNote: "填写的内容记为声明信息，不等于已核验证据", declareEmpty: "请先填写至少一项", declarePrefix: "补充信息 — ", declaredAdded: "已提交", declareContinuing: "正在继续分析…", reasoningTrace: "比对明细", rsSearched: "已检索的名单来源", rsMatched: "名称命中", rsCompared: "身份要素比对", rsFacts: "已核验事实",
+    derivFromStandard: "{n} 来自规范", derivFromSystem: "{n} 步由系统规划", laneRunning: "正在分析", pathTemplated: "规则模式：待补项来自内置模板，不是对本问题的分析结果。切换到实时模型可得到针对性判断。", pathDerivedNote: "本步骤无对应官方条文，由系统按问题结构补充", stConfirmed: "已确认", stEvidence: "需更多证据", stNotReached: "未进行", status_confirmed: "已确认", status_evidence_needed: "需更多证据", status_not_reached: "待前序步骤", status_review_required: "需人工复核", status_pending: "待执行", stPending: "待执行", status_declared: "已声明，待核验", stDeclared: "已声明", declareSubmit: "提交并继续", declareSkip: "暂无此信息", declareSkipped: "已跳过 — 该步骤仍需证据，右侧执行流程中保留为待补", declareSkippedLabel: "暂无", declareReopen: "重新填写", declarePlaceholder: "填写后提交", declareNote: "填写的内容记为声明信息，不等于已核验证据", declareEmpty: "请先填写至少一项", declarePrefix: "补充信息 — ", declaredAdded: "已提交", declareContinuing: "正在继续分析…", resumeFailed: "继续分析失败，表单已恢复可编辑，可重新提交：", reasoningTrace: "比对明细", rsSearched: "已检索的名单来源", rsMatched: "名称命中", rsCompared: "身份要素比对", rsFacts: "已核验事实",
     rsScore: "相似度", rsOpen: "查看原文", rsUnsynced: "未同步、本次未检索",
     el_country: "国别", el_registration_number: "注册号", el_address: "地址",
     st_agree: "一致", st_conflict: "冲突", st_unavailable: "缺失",
@@ -85,7 +85,7 @@ const i18n = {
     derivMatch_gem: "set as the lead check by the selected gem", derivMatch_always: "runs on every analysis", derivMatch_question_terms: "terms in the question",
     derivMatch_no_term_matched_all_lanes_run: "no term matched, so all three checks run",
     derivKind_official: "official", derivKind_derived: "system-planned",
-    derivFromStandard: "{n} from procedure", derivFromSystem: "{n} planned here", laneRunning: "analysing", pathTemplated: "Rules mode: the outstanding items come from built-in templates, not from analysing this question. Switch to the live model for a specific assessment.", pathDerivedNote: "No official provision for this step; added by the system", stConfirmed: "settled", stEvidence: "need evidence", stNotReached: "not reached", status_confirmed: "Settled", status_evidence_needed: "Evidence needed", status_not_reached: "Awaiting earlier step", status_review_required: "Human review", status_pending: "Planned", stPending: "planned", status_declared: "Declared, unverified", stDeclared: "declared", declareSubmit: "Submit and continue", declareSkip: "Not available", declareSkipped: "Skipped — this step still needs evidence and stays outstanding in the flow rail", declareSkippedLabel: "Not available", declareReopen: "Fill in", declarePlaceholder: "Fill in, then submit", declareNote: "What you enter is recorded as a declaration, not as verified evidence", declareEmpty: "Fill in at least one field first", declarePrefix: "Additional information — ", declaredAdded: "Submitted", declareContinuing: "continuing the analysis…", reasoningTrace: "Comparison detail", rsSearched: "Lists searched", rsMatched: "Name matches", rsCompared: "Identity comparison", rsFacts: "Verified facts",
+    derivFromStandard: "{n} from procedure", derivFromSystem: "{n} planned here", laneRunning: "analysing", pathTemplated: "Rules mode: the outstanding items come from built-in templates, not from analysing this question. Switch to the live model for a specific assessment.", pathDerivedNote: "No official provision for this step; added by the system", stConfirmed: "settled", stEvidence: "need evidence", stNotReached: "not reached", status_confirmed: "Settled", status_evidence_needed: "Evidence needed", status_not_reached: "Awaiting earlier step", status_review_required: "Human review", status_pending: "Planned", stPending: "planned", status_declared: "Declared, unverified", stDeclared: "declared", declareSubmit: "Submit and continue", declareSkip: "Not available", declareSkipped: "Skipped — this step still needs evidence and stays outstanding in the flow rail", declareSkippedLabel: "Not available", declareReopen: "Fill in", declarePlaceholder: "Fill in, then submit", declareNote: "What you enter is recorded as a declaration, not as verified evidence", declareEmpty: "Fill in at least one field first", declarePrefix: "Additional information — ", declaredAdded: "Submitted", declareContinuing: "continuing the analysis…", resumeFailed: "The continuation failed; the form is editable again so you can resubmit: ", reasoningTrace: "Comparison detail", rsSearched: "Lists searched", rsMatched: "Name matches", rsCompared: "Identity comparison", rsFacts: "Verified facts",
     rsScore: "Similarity", rsOpen: "Open source", rsUnsynced: "Not synced, therefore not searched",
     el_country: "Country", el_registration_number: "Registration no.", el_address: "Address",
     st_agree: "agree", st_conflict: "conflict", st_unavailable: "missing",
@@ -1303,6 +1303,24 @@ function renderSteps(node, done, current, detail = "") {
 
 // A specialist takes the better part of a minute. Without a clock the wait is
 // indistinguishable from a hang — which is exactly how it was reported.
+// Ticks until its node leaves the document, so it needs no teardown: the
+// continuation's line is replaced when the run finishes and removed when it
+// fails, and the clock stops either way.
+//
+// It exists because a slow run and a stuck one look identical. Retrieval and the
+// first specialist call can take a while before anything streams, and with a
+// bare pulsing dot there is nothing to tell a reader which of the two they are
+// watching.
+function tickUntilDetached(node) {
+  if (!node) return;
+  const started = Date.now();
+  const id = setInterval(() => {
+    if (!node.isConnected) return clearInterval(id);
+    node.textContent = `${Math.round((Date.now() - started) / 1000)}s`;
+  }, 1000);
+  node.textContent = "0s";
+}
+
 function startElapsed(node) {
   const started = Date.now();
   const tick = () => {
@@ -1784,7 +1802,20 @@ async function analyze(event, options = {}) {
     // reader already has; the submitted values are re-offered instead.
     if (resuming) {
       live.classList.remove("resuming");
-      live.querySelectorAll(".step-inputs.submitted").forEach((host) => host.classList.remove("submitted"));
+      // A failed continuation used to leave everything it had put up still
+      // running: the "continuing the analysis" line with its pulsing dot, the
+      // empty stream box, and the inputs still disabled from the submit. The
+      // reader was left watching a spinner that would never stop, on a form
+      // they could no longer touch — which is what "it just loads forever"
+      // was. The toast had already come and gone.
+      live.querySelectorAll("[data-resume-stream], .si-done").forEach((node) => node.remove());
+      live.querySelectorAll(".step-inputs.submitted, .step-inputs.skipped").forEach((host) => {
+        host.classList.remove("submitted", "skipped");
+        host.closest(".path-step")?.classList.remove("answered");
+        host.querySelectorAll("input, button").forEach((control) => { control.disabled = false; });
+        host.insertAdjacentHTML("beforeend",
+          `<p class="si-error">${esc(t("resumeFailed"))}${esc(error.message)}</p>`);
+      });
     } else {
       live.innerHTML = `
         <span class="avatar" aria-hidden="true">CH</span>
@@ -2158,8 +2189,10 @@ $("threadInner").addEventListener("click", (event) => {
       <span class="sis-values">${labels.map(esc).join("；")}</span>
       <span class="thinking-dot" aria-hidden="true"></span>
       <span class="sis-state">${esc(t("declareContinuing"))}</span>
+      <span class="sis-elapsed"></span>
     </div>
     ${streamBoxMarkup("data-resume-stream")}`);
+  tickUntilDetached(host.querySelector(".si-done .sis-elapsed"));
 
   // The same analysis carries on with one more fact, inside the answer already on
   // screen — not a new question producing a second answer below it.
