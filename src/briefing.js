@@ -17,10 +17,13 @@
 import { readNormalized } from "./data-layer/storage.js";
 
 const NOTICE_SOURCES = [
-  { sourceId: "china-dual-use", label: "商务部两用物项管制公告" },
-  { sourceId: "china-control-entities", label: "中国出口管制管控名单" },
-  { sourceId: "china-unreliable-entity", label: "中国不可靠实体清单" },
-  { sourceId: "china-licence-catalogue", label: "中国出口许可证管理目录" }
+  { sourceId: "china-dual-use", label: "商务部两用物项管制公告", labelEn: "MOFCOM dual-use control notices", side: "CN" },
+  { sourceId: "china-control-entities", label: "中国出口管制管控名单", labelEn: "PRC export control list", side: "CN" },
+  { sourceId: "china-unreliable-entity", label: "中国不可靠实体清单", labelEn: "PRC unreliable entity list", side: "CN" },
+  { sourceId: "china-licence-catalogue", label: "中国出口许可证管理目录", labelEn: "PRC export licence catalogue", side: "CN" },
+  // The US side. Without it, "what changed in the last six months" returned an
+  // answer about one jurisdiction — a worse answer than saying so.
+  { sourceId: "us-federal-register", label: "美国联邦公报（BIS / OFAC）", labelEn: "US Federal Register (BIS / OFAC)", side: "US" }
 ];
 
 // How far back, taken from the question rather than assumed. "最近 6 个月" and
@@ -90,6 +93,33 @@ export function classifyNotice(title = "", fallbackCount = 0) {
   };
 }
 
+// A Federal Register document states its own type and action line, so the
+// classification is read off those rather than pattern-matched out of a title
+// the way the PRC notices have to be.
+const US_ACTIONS = {
+  entity_list_addition: { zh: "列入实体清单", en: "added to the Entity List" },
+  entity_list_removal: { zh: "移出实体清单", en: "removed from the Entity List" },
+  rule_final: { zh: "最终规则", en: "final rule" },
+  rule_interim: { zh: "临时最终规则", en: "interim final rule" },
+  rule_proposed: { zh: "规则草案", en: "proposed rule" },
+  notice: { zh: "公告", en: "notice" },
+  other: { zh: "其他文件", en: "document" }
+};
+
+export function classifyUsDocument(item) {
+  const kind = US_ACTIONS[item.changeType] || US_ACTIONS.other;
+  return {
+    action: item.changeType,
+    actionZh: kind.zh,
+    actionEn: kind.en,
+    list: null,
+    listZh: item.authorities?.[0] || null,
+    listEn: item.authorities?.[0] || null,
+    entityCount: 0,
+    subjectCountry: null
+  };
+}
+
 export async function buildBriefing(question, now = Date.now()) {
   const window = windowFor(question, now);
   let items = [];
@@ -119,6 +149,10 @@ export async function buildBriefing(question, now = Date.now()) {
       const entry = byNotice.get(key) || {
         sourceId: source.sourceId,
         sourceLabel: source.label,
+        sourceLabelEn: source.labelEn || source.label,
+        side: source.side || "CN",
+        changeType: record.changeType || null,
+        documentType: record.documentType || null,
         noticeNumber: record.noticeNumber || null,
         title: record.noticeTitle || null,
         date,
@@ -159,16 +193,36 @@ export async function buildBriefing(question, now = Date.now()) {
   items = [...merged.values()];
   items.sort((left, right) => String(right.date).localeCompare(String(left.date)));
 
+  const today = new Date(now).toISOString().slice(0, 10);
   for (const item of items) {
-    item.change = classifyNotice(item.title || "", item.entities.length);
+    item.change = item.side === "US"
+      ? classifyUsDocument(item)
+      : classifyNotice(item.title || "", item.entities.length);
+    // A rule published in July to take effect in November is a change worth
+    // knowing about and has not happened yet. Listing it above what already took
+    // effect, with nothing to say so, reads as the most recent event.
+    item.pending = Boolean(item.date && item.date > today);
   }
 
   // What the period amounts to, not just what is in it. A reader asking what
   // changed over six months wants the aggregate first and the notices as the
   // supporting detail.
-  const rollup = { added: 0, removed: 0, suspended: 0, repealed: 0, adjusted: 0, entities: 0, byList: {}, byCountry: {} };
+  const rollup = {
+    added: 0, removed: 0, suspended: 0, repealed: 0, adjusted: 0, entities: 0,
+    byList: {}, byCountry: {},
+    // Both jurisdictions counted separately: one total mixing MOFCOM notices
+    // with Federal Register documents answers neither "what did China do" nor
+    // "what did the US do".
+    bySide: { CN: 0, US: 0 }, usRules: 0, usNotices: 0, pending: 0
+  };
   for (const item of items) {
     const change = item.change;
+    rollup.bySide[item.side] = (rollup.bySide[item.side] || 0) + 1;
+    if (item.pending) rollup.pending += 1;
+    if (item.side === "US") {
+      if (/^rule_/.test(change.action)) rollup.usRules += 1;
+      else rollup.usNotices += 1;
+    }
     if (rollup[change.action] !== undefined) rollup[change.action] += 1;
     if (change.action === "added" && change.entityCount) {
       rollup.entities += change.entityCount;

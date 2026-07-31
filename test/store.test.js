@@ -288,3 +288,42 @@ test("the official screening API is optional and degrades to the local snapshot"
   assert.equal(optional.credential, CREDENTIAL);
   assert.match(optional.zh, /未配置时功能不减/);
 });
+
+test("the briefing covers both jurisdictions and flags what has not taken effect", async () => {
+  // It could only answer for China: MOFCOM notices were ingested and nothing on
+  // the US side was. The Entity List does not change by itself — every addition
+  // is published in the Federal Register first, with an effective date, and the
+  // Consolidated Screening List reflects it afterwards.
+  const { parseFederalRegister, classifyDocument } = await import("../src/data-layer/adapters-fedreg.js");
+
+  const parsed = parseFederalRegister([{
+    agency: { label: "BIS", en: "Bureau of Industry and Security" },
+    results: [
+      { document_number: "2026-14942", title: "Implementation of EAR Export Controls", publication_date: "2026-07-23", effective_on: "2026-11-20", type: "Rule", action: "Interim final rule.", html_url: "https://example.gov/a" },
+      { document_number: "2026-14132", title: "Enhanced Favorable Treatment", publication_date: "2026-07-14", effective_on: "2026-07-10", type: "Rule", action: "Final rule.", html_url: "https://example.gov/b" }
+    ]
+  }]);
+  assert.equal(parsed.length, 2);
+  // The effective date is what a transaction is judged against, not the date it
+  // was printed.
+  assert.equal(parsed[0].effectiveFrom, "2026-11-20");
+  assert.equal(parsed[0].changeType, "rule_interim");
+  assert.equal(parsed[1].changeType, "rule_final");
+  assert.equal(classifyDocument({ type: "Notice", action: "" }), "notice");
+
+  // This file runs on its own database, so the US side has to be put there
+  // rather than relying on whatever the developer happens to have synced.
+  await storage.saveSourceData({
+    sourceId: "us-federal-register", extension: "json", bytes: Buffer.from("[]"),
+    records: parsed, metadata: { syncScope: "test_fixture" }
+  });
+
+  const { buildBriefing } = await import("../src/briefing.js");
+  const brief = await buildBriefing("汇总最近 6 个月的变化", Date.parse("2026-07-31T00:00:00Z"));
+  assert.ok(brief.rollup.bySide.CN > 0 && brief.rollup.bySide.US > 0,
+    "one total mixing both jurisdictions answers neither question");
+  // A rule published in July to take effect in November has not happened yet.
+  const future = brief.items.filter((item) => item.pending);
+  assert.ok(future.every((item) => item.date > "2026-07-31"));
+  assert.equal(brief.rollup.pending, future.length);
+});

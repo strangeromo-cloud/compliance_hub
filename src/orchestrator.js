@@ -243,13 +243,18 @@ async function answerBriefing({ question, locale, mock, onEvent }) {
   // notice numbers is the supporting detail, not the answer.
   const roll = briefing.rollup;
   const totals = [
-    roll.added ? `${roll.added} 份公告新增列名，共 ${roll.entities} 家主体` : null,
+    roll.bySide?.CN || roll.bySide?.US
+      ? `中国 ${roll.bySide.CN || 0} 份、美国 ${roll.bySide.US || 0} 份`
+      : null,
+    roll.added ? `中国侧 ${roll.added} 份公告新增列名，共 ${roll.entities} 家主体` : null,
     ...Object.entries(roll.byList).map(([list, count]) => `其中${list} ${count} 家`),
     Object.keys(roll.byCountry).length
       ? `按对象：${Object.entries(roll.byCountry).sort((a, b) => b[1] - a[1]).map(([country, count]) => `${country} ${count} 家`).join("、")}`
       : null,
     roll.adjusted ? `${roll.adjusted} 份为制度或程序性调整` : null,
     roll.removed ? `${roll.removed} 份为移出` : null,
+    roll.usRules ? `美国侧 ${roll.usRules} 份规则修改、${roll.usNotices} 份公告（BIS / OFAC）` : null,
+    roll.pending ? `其中 ${roll.pending} 份尚未生效，生效日在今日之后` : null,
     roll.suspended || roll.repealed ? `${roll.suspended + roll.repealed} 份为暂停或废止` : null
   ].filter(Boolean).map((line) => `- ${line}`);
 
@@ -258,15 +263,22 @@ async function answerBriefing({ question, locale, mock, onEvent }) {
   // that and keeps the number for anyone who needs the original.
   const lines = briefing.items.slice(0, 20).map((item) => {
     const change = item.change;
-    const what = change.actionZh
-      ? `${change.actionZh}${change.listZh ? change.listZh : ""}${change.entityCount ? ` ${change.entityCount} 家` : ""}${change.subjectCountry ? `${change.subjectCountry}实体` : ""}`
-      : (item.title ? String(item.title).replace(/^.*?号\s*/, "").slice(0, 40) : "内容见原文");
+    // A US document's own title says more than its action word, and its agency is
+    // already in front of it — repeating the agency inside the action produced
+    // "BIS 最终规则BIS".
+    const what = item.side === "US"
+      ? `${change.actionZh}：${String(item.title || "").slice(0, 60)}`
+      : change.actionZh
+        ? `${change.actionZh}${change.listZh || ""}${change.entityCount ? ` ${change.entityCount} 家` : ""}${change.subjectCountry ? `${change.subjectCountry}实体` : ""}`
+        : (item.title ? String(item.title).replace(/^.*?号\s*/, "").slice(0, 40) : "内容见原文");
     const detail = [
       item.supersedes?.length ? `涉及此前公告 ${item.supersedes.join("、")}` : null,
       item.controlCodes.length ? `${item.controlCodes.length} 个管制编码` : null,
       item.sourceLabels?.length > 1 ? `见于 ${item.sourceLabels.length} 个来源` : null
     ].filter(Boolean).join("；");
-    return `- ${item.date} · ${what}（${item.noticeNumber || item.sourceLabel}${detail ? `；${detail}` : ""}）`;
+    const flag = item.pending ? "（尚未生效）" : "";
+    const where = item.side === "US" ? `${item.change.listZh || "US"} · ` : "";
+    return `- ${item.date}${flag} · ${where}${what}（${item.noticeNumber || item.sourceLabel}${detail ? `；${detail}` : ""}）`;
   });
 
   const synthesis = {

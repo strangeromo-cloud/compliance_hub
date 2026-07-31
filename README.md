@@ -113,7 +113,7 @@ npm run start:env
 `SYNC_ON_BOOT` 的推荐完整值——覆盖分析路径引用的全部官方流程条文，以及中国侧四个源：
 
 ```
-bis-ear,bis-ear-732,bis-ear-734,bis-ear-740,bis-ear-744,bis-country-chart,bis-ccl,nvidia-export,amd-export,us-uflpa,us-dod-1260h,jp-meti-eul,tw-shtc,eu-fsf,jp-export-control,china-licence-catalogue,china-unreliable-entity,china-dual-use,china-control-entities,china-export-licence-goods,china-control-list
+bis-ear,bis-ear-732,bis-ear-734,bis-ear-740,bis-ear-744,bis-country-chart,bis-ccl,nvidia-export,amd-export,us-federal-register,us-uflpa,us-dod-1260h,jp-meti-eul,tw-shtc,eu-fsf,jp-export-control,china-licence-catalogue,china-unreliable-entity,china-dual-use,china-control-entities,china-export-licence-goods,china-control-list
 ```
 
 **id 是 `bis-ear`，不是 `bis-ear-736`**——Part 736（十项一般禁令）在注册表里的 id 就叫 `bis-ear`，写成 `bis-ear-736` 会得到 `Unknown data source.`，那一条根本不会同步。

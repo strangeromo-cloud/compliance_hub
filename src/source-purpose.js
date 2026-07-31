@@ -66,6 +66,11 @@ export const SOURCE_PURPOSE = {
     en: "The DoD's Section 1260H list of Chinese military companies. Not itself a trade prohibition, but an investment restriction and a strong end-user risk signal.",
     usedIn: ["search_lists", "name_match"]
   },
+  "us-federal-register": {
+    zh: "美国联邦公报中 BIS 与 OFAC 发布的文件。实体清单的增删、EAR 规则修改、制裁项目调整都先在这里公布并载明生效日，综合筛查名单是之后才反映的——所以它是两者中更早的信号。「监管变化简报」的美国侧来源。",
+    en: "BIS and OFAC documents in the Federal Register. Entity List additions and removals, EAR rule changes and sanctions programme changes are published here first, with their effective dates, and reach the Consolidated Screening List afterwards — the earlier of the two signals. The US side of the regulatory briefing.",
+    usedIn: ["briefing"]
+  },
   "china-control-entities": {
     zh: "中国出口管制管控名单与关注名单公告。既用于筛查，也是「监管变化简报」的公告来源之一，并作为中英文名互查的桥梁。",
     en: "PRC control-list and watch-list notices. Used for screening, as a source for the regulatory briefing, and as the bridge between Chinese and English names.",

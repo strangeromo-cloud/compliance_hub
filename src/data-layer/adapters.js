@@ -5,6 +5,7 @@ import { OS_ADAPTERS } from "./adapters-os.js";
 import { CN_LIST_ADAPTERS } from "./adapters-cn-lists.js";
 import { JP_ADAPTERS } from "./adapters-jp.js";
 import { VENDOR_ADAPTERS } from "./adapters-vendor.js";
+import { FEDREG_ADAPTERS } from "./adapters-fedreg.js";
 
 const CSL_URL = "https://data.trade.gov/downloadable_consolidated_screening_list/v1/consolidated.json";
 const UK_URL = "https://sanctionslist.fcdo.gov.uk/docs/UK-Sanctions-List.csv";
@@ -337,7 +338,8 @@ export const ADAPTERS = {
   ...OS_ADAPTERS,
   ...CN_LIST_ADAPTERS,
   ...JP_ADAPTERS,
-  ...VENDOR_ADAPTERS
+  ...VENDOR_ADAPTERS,
+  ...FEDREG_ADAPTERS
 };
 
 export async function queryRemoteSource(sourceId, query) {
