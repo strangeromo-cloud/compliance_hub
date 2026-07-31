@@ -4,7 +4,7 @@
 # all, which is undiagnosable: nothing indicates whether the process started,
 # what it bound, or why it stopped. Everything here is stated outright, so a
 # failure now has to show up in the logs.
-FROM node:20-alpine
+FROM node:24-alpine
 
 WORKDIR /app
 

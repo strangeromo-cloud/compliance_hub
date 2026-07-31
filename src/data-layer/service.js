@@ -1,6 +1,6 @@
 import { DATA_SOURCE_REGISTRY, dataSourceCoverage } from "../data-source-registry.js";
 import { ADAPTERS, queryRemoteSource } from "./adapters.js";
-import { readFallbackMeta, readNormalized, readSyncStatus, saveSourceData, updateSyncStatus } from "./storage.js";
+import { readFallbackMeta, readNormalized, readRecordsPage, readSnapshotMeta, readSyncStatus, saveSourceData, updateSyncStatus } from "./storage.js";
 
 const activeSyncs = new Map();
 
@@ -229,6 +229,20 @@ export async function queryDataSource(sourceId, query, limit = 20, offset = 0) {
     // A remote API answers a query; there is no local corpus to page through.
     if (!cleanQuery) throw Object.assign(new Error("This source answers live queries, so it needs search terms."), { status: 400, code: "query_required" });
     return { sourceId, mode: "live", records: await queryRemoteSource(sourceId, cleanQuery) };
+  }
+
+  // Browsing a synced source is answered from the index rather than by reading
+  // it: eleven thousand rows should not have to be materialised to show twenty.
+  // A search still scans, and a bundled fallback still comes from its file.
+  if (!cleanQuery) {
+    const meta = await readSnapshotMeta(sourceId);
+    if (meta) {
+      return {
+        sourceId, mode: "local_snapshot", provenance: "live_sync", capturedAt: meta.capturedAt, kind: "browse",
+        totalRecords: meta.recordCount, offset: from, limit: size,
+        records: await readRecordsPage(sourceId, from, size)
+      };
+    }
   }
 
   const normalized = await readNormalized(sourceId);

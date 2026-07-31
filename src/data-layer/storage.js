@@ -1,55 +1,69 @@
+// Synced source data, read and written through the database.
+//
+// The exported shape is unchanged from when this wrote JSON files, so grounding
+// and the data-layer service did not have to learn anything about storage. What
+// changed underneath: a source's records are rows rather than one document, so
+// paging through a list no longer means parsing eight megabytes to show twenty
+// rows, and a sync replaces one source's rows inside a transaction instead of
+// rewriting a file that another read might be halfway through.
+
 import { createHash } from "node:crypto";
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
-import { join, relative } from "node:path";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { db, fromJson, toJson, transact } from "./db.js";
 
 const ROOT = fileURLToPath(new URL("../..", import.meta.url));
-const RUNTIME_DIR = join(ROOT, "data", "runtime");
 const FALLBACK_DIR = join(ROOT, "data", "fallback");
-const STATUS_PATH = join(RUNTIME_DIR, "sync-status.json");
-let statusWriteQueue = Promise.resolve();
-
-async function ensureRuntime() {
-  await mkdir(join(RUNTIME_DIR, "raw"), { recursive: true });
-  await mkdir(join(RUNTIME_DIR, "normalized"), { recursive: true });
-}
-
-async function atomicWrite(path, contents) {
-  const tempPath = `${path}.${process.pid}.tmp`;
-  await writeFile(tempPath, contents);
-  await rename(tempPath, path);
-}
 
 export async function readSyncStatus() {
-  try { return JSON.parse(await readFile(STATUS_PATH, "utf8")); }
-  catch { return {}; }
+  const rows = db().prepare("SELECT source_id, state FROM sync_status").all();
+  return Object.fromEntries(rows.map((row) => [row.source_id, fromJson(row.state, {})]));
 }
 
 export async function updateSyncStatus(sourceId, status) {
-  const operation = statusWriteQueue.catch(() => {}).then(async () => {
-    await ensureRuntime();
-    const all = await readSyncStatus();
-    all[sourceId] = { ...(all[sourceId] || {}), ...status };
-    await atomicWrite(STATUS_PATH, JSON.stringify(all, null, 2));
-    return all[sourceId];
+  return transact((database) => {
+    const row = database.prepare("SELECT state FROM sync_status WHERE source_id = ?").get(sourceId);
+    const merged = { ...fromJson(row?.state, {}), ...status };
+    database.prepare("INSERT INTO sync_status (source_id, state) VALUES (?, ?) ON CONFLICT (source_id) DO UPDATE SET state = excluded.state")
+      .run(sourceId, toJson(merged));
+    return merged;
   });
-  statusWriteQueue = operation;
-  return operation;
 }
 
 export async function saveSourceData({ sourceId, extension, bytes, records, metadata = {} }) {
-  await ensureRuntime();
-  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-  const rawDir = join(RUNTIME_DIR, "raw", sourceId);
-  await mkdir(rawDir, { recursive: true });
-  const rawPath = join(rawDir, `${stamp}.${extension}`);
-  const normalizedPath = join(RUNTIME_DIR, "normalized", `${sourceId}.json`);
-  await atomicWrite(rawPath, bytes);
-  await atomicWrite(normalizedPath, JSON.stringify({ sourceId, capturedAt: new Date().toISOString(), metadata, records }, null, 2));
+  const capturedAt = new Date().toISOString();
+  const checksum = createHash("sha256").update(bytes).digest("hex");
+  const list = records || [];
+
+  transact((database) => {
+    // Replacing a source's rows inside the transaction is what makes a failed
+    // sync leave the previous snapshot intact rather than half of a new one.
+    database.prepare("DELETE FROM records WHERE source_id = ?").run(sourceId);
+    const insert = database.prepare("INSERT INTO records (source_id, ordinal, record_id, payload) VALUES (?, ?, ?, ?)");
+    list.forEach((record, ordinal) => {
+      insert.run(sourceId, ordinal, record?.recordId == null ? null : String(record.recordId), toJson(record));
+    });
+    database.prepare(`
+      INSERT INTO snapshots (source_id, captured_at, metadata, record_count, checksum_sha256, raw_extension, raw_bytes, raw_byte_count)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT (source_id) DO UPDATE SET
+        captured_at = excluded.captured_at, metadata = excluded.metadata, record_count = excluded.record_count,
+        checksum_sha256 = excluded.checksum_sha256, raw_extension = excluded.raw_extension,
+        raw_bytes = excluded.raw_bytes, raw_byte_count = excluded.raw_byte_count`)
+      .run(sourceId, capturedAt, toJson(metadata), list.length, checksum, extension || null, bytes, bytes.length);
+    // Only the current snapshot keeps its bytes. The log keeps every capture's
+    // checksum, which is what tells you whether a list actually changed — and
+    // it does so without the raw directory growing without limit, which is what
+    // the file store did.
+    database.prepare("INSERT INTO snapshot_log (source_id, captured_at, checksum_sha256, record_count, raw_byte_count) VALUES (?, ?, ?, ?, ?)")
+      .run(sourceId, capturedAt, checksum, list.length, bytes.length);
+  });
+
   return {
-    snapshotPath: relative(ROOT, rawPath),
-    normalizedPath: relative(ROOT, normalizedPath),
-    checksumSha256: createHash("sha256").update(bytes).digest("hex"),
+    snapshotPath: `hub.db:snapshots/${sourceId}`,
+    normalizedPath: `hub.db:records/${sourceId}`,
+    checksumSha256: checksum,
     bytes: bytes.length
   };
 }
@@ -60,15 +74,64 @@ export async function saveSourceData({ sourceId, extension, bytes, records, meta
 // It is returned tagged, never silently, because presenting a point-in-time
 // list copy as the current list is the worst failure this tool could have.
 export async function readNormalized(sourceId) {
-  const livePath = join(RUNTIME_DIR, "normalized", `${sourceId}.json`);
-  try { return { ...JSON.parse(await readFile(livePath, "utf8")), provenance: "live_sync" }; }
-  catch { /* fall through to the bundled copy */ }
+  const snapshot = db().prepare("SELECT captured_at, metadata, record_count FROM snapshots WHERE source_id = ?").get(sourceId);
+  if (snapshot) {
+    const rows = db().prepare("SELECT payload FROM records WHERE source_id = ? ORDER BY ordinal").all(sourceId);
+    return {
+      sourceId,
+      capturedAt: snapshot.captured_at,
+      metadata: fromJson(snapshot.metadata, {}),
+      records: rows.map((row) => fromJson(row.payload, null)).filter(Boolean),
+      provenance: "live_sync"
+    };
+  }
 
-  const fallbackPath = join(FALLBACK_DIR, `${sourceId}.json`);
   try {
-    const snapshot = JSON.parse(await readFile(fallbackPath, "utf8"));
-    return { ...snapshot, provenance: "bundled_fallback_snapshot", isFallback: true };
+    const bundled = JSON.parse(await readFile(join(FALLBACK_DIR, `${sourceId}.json`), "utf8"));
+    return { ...bundled, provenance: "bundled_fallback_snapshot", isFallback: true };
   } catch { return null; }
+}
+
+// What a snapshot is, without materialising it. Browsing a source and deciding
+// whether it needs re-syncing both only need this much.
+export async function readSnapshotMeta(sourceId) {
+  const row = db().prepare("SELECT captured_at, metadata, record_count, checksum_sha256, raw_byte_count FROM snapshots WHERE source_id = ?").get(sourceId);
+  if (!row) return null;
+  return {
+    sourceId,
+    capturedAt: row.captured_at,
+    metadata: fromJson(row.metadata, {}),
+    recordCount: row.record_count,
+    checksumSha256: row.checksum_sha256,
+    rawByteCount: row.raw_byte_count
+  };
+}
+
+// The point of a database, made use of: twenty rows out of eleven thousand cost
+// twenty rows of work.
+export async function readRecordsPage(sourceId, offset = 0, limit = 20) {
+  const rows = db().prepare("SELECT payload FROM records WHERE source_id = ? ORDER BY ordinal LIMIT ? OFFSET ?")
+    .all(sourceId, Number(limit) || 20, Number(offset) || 0);
+  return rows.map((row) => fromJson(row.payload, null)).filter(Boolean);
+}
+
+export async function readSnapshotHistory(sourceId, limit = 10) {
+  return db().prepare("SELECT captured_at, checksum_sha256, record_count, raw_byte_count FROM snapshot_log WHERE source_id = ? ORDER BY captured_at DESC LIMIT ?")
+    .all(sourceId, Number(limit) || 10)
+    .map((row) => ({ capturedAt: row.captured_at, checksumSha256: row.checksum_sha256, recordCount: row.record_count, rawByteCount: row.raw_byte_count }));
+}
+
+// The bytes that were actually downloaded, kept so a parse can be checked
+// against its input rather than trusted.
+export async function readRawSnapshot(sourceId) {
+  const row = db().prepare("SELECT raw_extension, raw_bytes, checksum_sha256, captured_at FROM snapshots WHERE source_id = ?").get(sourceId);
+  if (!row?.raw_bytes) return null;
+  return {
+    bytes: Buffer.from(row.raw_bytes),
+    extension: row.raw_extension,
+    checksumSha256: row.checksum_sha256,
+    capturedAt: row.captured_at
+  };
 }
 
 export async function readFallbackMeta(sourceId) {

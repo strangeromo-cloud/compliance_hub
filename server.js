@@ -7,6 +7,9 @@ import { classifyModelError, testModelConnection } from "./src/llm.js";
 import { getDataSourceCoverage, queryDataSource, syncSource } from "./src/data-layer/service.js";
 import { deleteThread, listThreads, readThread, saveCase, storageDurability } from "./src/case-store.js";
 import { DECLARABLE_FIELDS } from "./src/analysis-path.js";
+import { closeDb, DB_PATH } from "./src/data-layer/db.js";
+import { importLegacyStore } from "./src/data-layer/import-legacy.js";
+import { readSnapshotMeta } from "./src/data-layer/storage.js";
 
 const ROOT = fileURLToPath(new URL(".", import.meta.url));
 const PUBLIC_DIR = join(ROOT, "public");
@@ -356,12 +359,37 @@ function noteSaveFailure(error) {
 // list data until someone pressed sync. SYNC_ON_BOOT fills it in the background:
 // the server still answers immediately, and a failed source stays failed without
 // taking down the process.
+// How old a stored snapshot may be before boot re-fetches it. Official lists
+// move on the order of weeks, so a week is a compromise between re-downloading
+// what has not changed and serving something that has. SYNC_MAX_AGE_HOURS=0
+// forces every source through, which is what a manual sync already does.
+const SYNC_MAX_AGE_MS = (() => {
+  const raw = Number(process.env.SYNC_MAX_AGE_HOURS);
+  return (Number.isFinite(raw) && raw >= 0 ? raw : 168) * 3_600_000;
+})();
+
+async function isStoredAndFresh(sourceId) {
+  if (SYNC_MAX_AGE_MS === 0) return null;
+  const meta = await readSnapshotMeta(sourceId).catch(() => null);
+  if (!meta?.recordCount) return null;
+  const age = Date.now() - Date.parse(meta.capturedAt);
+  if (!Number.isFinite(age) || age > SYNC_MAX_AGE_MS) return null;
+  return { ...meta, ageHours: Math.round(age / 3_600_000) };
+}
+
 async function syncOnBoot() {
   const requested = String(process.env.SYNC_ON_BOOT || "").split(",").map((id) => id.trim()).filter(Boolean);
   if (!requested.length) return;
   console.log(`Boot sync requested for: ${requested.join(", ")}`);
   for (const sourceId of requested) {
     if (shuttingDown) return console.log("Boot sync abandoned: shutting down.");
+    // The whole point of storing snapshots: a restart on a mounted volume finds
+    // its data already there and downloads nothing.
+    const stored = await isStoredAndFresh(sourceId);
+    if (stored) {
+      console.log(`Boot sync ${sourceId}: skipped - stored ${stored.ageHours}h ago (${stored.recordCount} records)`);
+      continue;
+    }
     try {
       const result = await syncSource(sourceId);
       console.log(`Boot sync ${sourceId}: ${result.status} (${result.recordCount ?? 0} records)`);
@@ -378,12 +406,13 @@ function shutdown(signal) {
   if (shuttingDown) return;
   shuttingDown = true;
   console.log(`Received ${signal}; shutting down.`);
-  server.close(() => process.exit(0));
+  server.close(() => { closeDb(); process.exit(0); });
   server.closeIdleConnections?.();
   // A keep-alive socket or an in-flight source download must not be able to
   // hold the container open past the platform's stop window.
   setTimeout(() => {
     console.log("Forcing exit after the shutdown grace period.");
+    closeDb();
     process.exit(0);
   }, 5000).unref();
 }
@@ -402,9 +431,25 @@ server.on("error", (error) => {
   process.exit(1);
 });
 
-server.listen(...(HOST ? [PORT, HOST] : [PORT]), () => {
+// Everything durable is in one file now, so where that file is decides whether
+// anything survives a redeploy. Saying it at boot means the log answers the
+// question without anyone having to ask it.
+async function openStore() {
+  const moved = await importLegacyStore().catch((error) => {
+    console.error("Legacy import failed; the database stays as it was:", error.message);
+    return null;
+  });
+  if (moved) {
+    console.log(`Imported the previous file store: ${moved.sources} sources, ${moved.records} records, ${moved.threads} threads, ${moved.turns} cases.`);
+  }
+  const durability = await storageDurability();
+  console.log(`Store: ${DB_PATH} (${durability.reason}${durability.persistent === false ? " — CLEARED ON REDEPLOY, mount a volume at data/runtime" : ""})`);
+}
+
+server.listen(...(HOST ? [PORT, HOST] : [PORT]), async () => {
   const bound = server.address();
   console.log(`Compliance Hub listening on ${bound.address}:${bound.port} (family ${bound.family})`);
+  await openStore();
   // Deferred so the platform's first health check lands on an idle process
   // rather than competing with several source downloads.
   setTimeout(syncOnBoot, 3000).unref();
