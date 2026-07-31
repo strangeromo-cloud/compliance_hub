@@ -1,6 +1,6 @@
 {
   "sourceId": "china-licence-catalogue",
-  "capturedAt": "2026-07-28T12:37:47.511Z",
+  "capturedAt": "2026-07-31T06:44:57.480Z",
   "metadata": {
     "sourceUpdatedAt": "2025-12-31",
     "finalUrl": "https://exportcontrol.mofcom.gov.cn/edi_ecms_web_front/front/column/getColumnList",
@@ -146,6 +146,6 @@
     }
   ],
   "provenance": "bundled_fallback_snapshot",
-  "bundledAt": "2026-07-28T12:37:47.511Z",
-  "note": "Committed fallback used only when the official source cannot be reached from the host. It is a point-in-time copy and may be superseded by later notices."
+  "bundledAt": "2026-07-31T06:44:57.480Z",
+  "note": "Committed fallback used only when the official source cannot be reached from the host. It is a point-in-time copy and may be superseded by later notices; re-sync before relying on it."
 }

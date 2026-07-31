@@ -1,6 +1,6 @@
 {
   "sourceId": "china-control-entities",
-  "capturedAt": "2026-07-28T12:37:36.126Z",
+  "capturedAt": "2026-07-31T06:45:11.755Z",
   "metadata": {
     "sourceUpdatedAt": "2026-07-24",
     "finalUrl": "https://aqygzj.mofcom.gov.cn/api-gateway/jpaas-publish-server/front/page/build/unit?parseType=bulidstatic&webId=b28941ad4e064442856787562c9a4961&tplSetId=DDBav9QvwJVbs9iznQVmO&pageType=column&tagId=%E4%BF%A1%E6%81%AF%E5%88%97%E8%A1%A8&editType=null&pageId=79d6d2c4e44d458180d37dd4f0996645&paramJson=%7B%22pageNo%22%3A2%2C%22pageSize%22%3A15%7D",
@@ -5456,6 +5456,6 @@
     }
   ],
   "provenance": "bundled_fallback_snapshot",
-  "bundledAt": "2026-07-28T12:37:36.126Z",
-  "note": "Committed fallback used only when the official source cannot be reached from the host. It is a point-in-time copy and may be superseded by later notices."
+  "bundledAt": "2026-07-31T06:45:11.755Z",
+  "note": "Committed fallback used only when the official source cannot be reached from the host. It is a point-in-time copy and may be superseded by later notices; re-sync before relying on it."
 }

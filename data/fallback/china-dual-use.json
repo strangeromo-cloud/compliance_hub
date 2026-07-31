@@ -1,6 +1,6 @@
 {
   "sourceId": "china-dual-use",
-  "capturedAt": "2026-07-29T11:34:55.270Z",
+  "capturedAt": "2026-07-31T06:45:04.162Z",
   "metadata": {
     "sourceUpdatedAt": "2026-07-03",
     "finalUrl": "https://exportcontrol.mofcom.gov.cn/edi_ecms_web_front/front/column/getColumnList",
@@ -1633,6 +1633,6 @@
     }
   ],
   "provenance": "bundled_fallback_snapshot",
-  "bundledAt": "2026-07-29T11:34:55.270Z",
-  "note": "Committed fallback used only when the official source cannot be reached from the host. It is a point-in-time copy and may be superseded by later notices."
+  "bundledAt": "2026-07-31T06:45:04.162Z",
+  "note": "Committed fallback used only when the official source cannot be reached from the host. It is a point-in-time copy and may be superseded by later notices; re-sync before relying on it."
 }

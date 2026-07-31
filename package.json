@@ -9,7 +9,8 @@
     "start:env": "node --env-file-if-exists=.env server.js",
     "dev": "node --watch server.js",
     "seed": "node scripts/generate-seed.mjs",
-    "test": "node --test"
+    "test": "node --test",
+    "refresh-fallback": "node scripts/refresh-fallback.mjs"
   },
   "engines": {
     "node": "24.x"

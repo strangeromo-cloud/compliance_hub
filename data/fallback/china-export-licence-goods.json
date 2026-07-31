@@ -1,6 +1,6 @@
 {
   "sourceId": "china-export-licence-goods",
-  "capturedAt": "2026-07-30T19:06:53.798Z",
+  "capturedAt": "2026-07-31T06:44:55.227Z",
   "metadata": {
     "sourceUpdatedAt": null,
     "finalUrl": "https://xkzj.mofcom.gov.cn/cms_files/filemanager/639568735/attach/202511/ce754db5684646068d5d0806bbd246bf.pdf?fileName=%E5%87%BA%E5%8F%A3%E8%AE%B8%E5%8F%AF%E8%AF%81%E7%AE%A1%E7%90%86%E8%B4%A7%E7%89%A9%E7%9B%AE%E5%BD%95%EF%BC%882026%E5%B9%B4%EF%BC%89.pdf",
@@ -11600,6 +11600,6 @@
     }
   ],
   "provenance": "bundled_fallback_snapshot",
-  "bundledAt": "2026-07-30T19:06:53.798Z",
+  "bundledAt": "2026-07-31T06:44:55.227Z",
   "note": "Committed fallback used only when the official source cannot be reached from the host. It is a point-in-time copy and may be superseded by later notices; re-sync before relying on it."
 }
