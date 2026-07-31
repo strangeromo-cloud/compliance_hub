@@ -2150,11 +2150,18 @@ $("threadInner").addEventListener("click", (event) => {
     state.unavailableFacts = [...new Set([...state.unavailableFacts, ...fields])];
     const answer = host.closest(".msg-assistant");
     if (answer?.dataset.question) {
-      state.resumingStep = host.closest(".path-step")?.dataset.stepId || null;
+      // Deliberately not resumingStep. That marks the step the rail should hold
+      // on while a continuation runs, which is right for a submitted answer —
+      // that step is being worked on. A declined one is the opposite: it has
+      // been passed over, and holding the rail there left it pointing at a step
+      // the body had already moved past and marking it as running.
+      state.resumingStep = null;
       host.insertAdjacentHTML("beforeend", `<div class="si-done">
         <span class="sis-label">${esc(t("declareSkippedLabel"))}</span>
         <span class="sis-state">${esc(t("declareContinuing"))}</span>
+        <span class="sis-elapsed"></span>
       </div>${streamBoxMarkup("data-resume-stream")}`);
+      tickUntilDetached(host.querySelector(".si-done .sis-elapsed"));
       return analyze(null, { continueIn: answer });
     }
     return;
