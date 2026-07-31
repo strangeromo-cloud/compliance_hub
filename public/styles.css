@@ -843,8 +843,12 @@ details.trace.reasoning > summary { color: var(--text); font-weight: 600; }
 
 .hero-figure {
   position: relative; overflow: hidden;
-  display: grid; grid-template-columns: auto 30px 1fr 30px auto;
-  align-items: center; gap: 0 4px;
+  /* Every column sizes to its own content and the whole figure is centred, so
+     the three lanes stay the width of their labels. Giving the middle column
+     1fr made it absorb the panel: on a wide screen the boxes stretched into
+     flat bars and the diagram stopped reading as three parallel things. */
+  display: grid; grid-template-columns: auto 30px auto 30px auto;
+  justify-content: center; align-items: center; gap: 0 4px;
   border: 1px solid var(--border); border-radius: var(--radius-lg);
   background:
     radial-gradient(120% 140% at 8% 50%, var(--accent-soft), transparent 46%),
@@ -1448,3 +1452,7 @@ html[lang="en"] .step-needs li::before { content: "NEEDS"; font-size: 8px; }
    already gone. */
 .si-error { margin: 8px 0 0; font-size: 11.5px; line-height: 1.55; color: var(--risk-high); }
 .sis-elapsed { font: 500 10.5px/1 var(--mono); color: var(--text-3); font-variant-numeric: tabular-nums; }
+/* The specialist's findings belong to their lane, but unlabelled they read as a
+   stray block of conclusions sitting above the closing step — which is where a
+   reader looks for the case conclusion. The caption says whose they are. */
+.lane-findings-label { margin: 12px 0 0; font-size: 10.5px; letter-spacing: .02em; color: var(--text-3); }
