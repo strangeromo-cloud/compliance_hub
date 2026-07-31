@@ -858,20 +858,26 @@ details.trace.reasoning > summary { color: var(--text); font-weight: 600; }
   border: 1px solid var(--border-strong); border-radius: 5px;
   padding: 6px 9px; background: var(--surface-2); color: var(--text-2);
 }
-.hf-agents { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
-.hf-agent { display: flex; align-items: center; gap: 7px; justify-content: center; }
+.hf-agents { grid-template-columns: 1fr; gap: 6px; }
+.hf-agent { display: flex; align-items: center; gap: 7px; justify-content: flex-start; }
 .hf-agent em { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); flex: 0 0 auto; }
 .lane-product em { background: #6aa9e0; }
 .lane-tpdd em { background: #b48ce0; }
 .hf-answer { color: var(--text); border-color: color-mix(in srgb, var(--accent) 48%, var(--border-strong)); background: var(--accent-soft); }
 
 /* Hairline fan-out and fan-in, so the three lanes read as one route. */
-.hf-fan { position: relative; height: 42px; }
-.hf-fan i { position: absolute; left: 0; right: 0; height: 1px; background: var(--border-strong); }
-.hf-fan i:nth-child(1) { top: 6px; }
-.hf-fan i:nth-child(2) { top: 50%; }
-.hf-fan i:nth-child(3) { bottom: 6px; }
-.hf-fan::before { content: ""; position: absolute; left: 0; top: 6px; bottom: 6px; width: 1px; background: var(--border-strong); }
+.hf-fan {
+  position: relative; align-self: stretch; height: auto;
+  display: grid; grid-template-rows: repeat(3, 1fr); gap: 6px;
+}
+.hf-fan i { align-self: center; height: 1px; background: var(--border-strong); }
+/* The spine runs between the first and last line, not the full height: the two
+   6px gaps are the only fixed measurements, so a row centre is exactly one
+   sixth of what is left. */
+.hf-fan::before {
+  content: ""; position: absolute; left: 0; width: 1px; background: var(--border-strong);
+  top: calc((100% - 12px) / 6); bottom: calc((100% - 12px) / 6);
+}
 .hf-fan-in::before { left: auto; right: 0; }
 
 /* Real control codes, not lorem — the vernacular of the subject, set faint. */
@@ -1382,9 +1388,13 @@ html[lang="en"] .step-needs li::before { content: "NEEDS"; font-size: 8px; }
 
 /* ---- the rail's current step, made as loud as the body's ----
    A ring on a 15px dot is not enough to find at a glance in a list of seventeen. */
-.fl-step.current { background: color-mix(in srgb, var(--accent) 12%, transparent); border-radius: var(--radius); margin: 2px -6px; padding: 3px 6px 3px 0; }
+.fl-step.current { background: color-mix(in srgb, var(--accent) 12%, transparent); border-radius: var(--radius); margin: 2px -6px;
+  /* The band extends 6px into the gutter, so the left padding has to give that
+     6px back plus the 2px every other step has — otherwise the highlighted step
+     is the one that looks misaligned. */
+  padding: 3px 6px 3px 8px; }
 .fl-step.current::after { left: -6px; top: 3px; bottom: 3px; width: 3px; }
-.fl-step.current .fl-node { transform: scale(1.15); animation: asking-pulse 1.8s ease-in-out infinite; }
+.fl-step.current .fl-node { transform: scale(1.15); transform-origin: left center; animation: asking-pulse 1.8s ease-in-out infinite; }
 .fl-step.current .fl-text { color: var(--text); font-weight: 600; }
 /* While the analysis is running on that step the whole row says so. */
 .flow-panel .fl-step.current.is-running .fl-text::after { content: "…"; margin-left: 4px; color: var(--accent-text); }

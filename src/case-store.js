@@ -81,7 +81,14 @@ export async function storageDurability() {
   try {
     db();
     const [store, root] = await Promise.all([stat(DB_PATH), stat(ROOT)]);
-    const containerized = await stat("/.dockerenv").then(() => true, () => false);
+    // /.dockerenv exists under Docker and not under Kubernetes, which is what
+    // Zeabur runs — so on the actual deployment this reported "host filesystem"
+    // and the page promised durability it had no basis for. Being PID 1 is the
+    // general signal; the rest are the specific ones this platform sets.
+    const containerized = process.pid === 1
+      || Boolean(process.env.KUBERNETES_SERVICE_HOST)
+      || Boolean(process.env.ZEABUR_SERVICE_ID)
+      || await stat("/.dockerenv").then(() => true, () => false);
     if (!containerized) return { persistent: true, reason: "host_filesystem" };
     return store.dev === root.dev
       ? { persistent: false, reason: "container_overlay" }
