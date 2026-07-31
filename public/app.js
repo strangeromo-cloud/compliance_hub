@@ -794,7 +794,12 @@ function flowMarkup(path, options = {}) {
   const runningLane = options.activeLane ? path.lanes.find((lane) => lane.lane === options.activeLane) : null;
   const asking = options.currentStep
     || (runningLane
-      ? runningLane.steps.find((item) => item.status !== "confirmed" && item.status !== "declared")?.id || null
+      // Settled means settled, and a step the procedure does not reach for is
+      // settled — the body folds it into "N not applicable". Hand-rolling the
+      // test as "not confirmed and not declared" let the rail pick an
+      // inapplicable step and mark it as running while the body had folded it
+      // out of sight: on the left it was gone, on the right it was in progress.
+      ? runningLane.steps.find((item) => !SETTLED_STATUS.has(item.status))?.id || null
       : firstBlockedStep(path));
   const percent = Math.round((executed / steps.length) * 100);
 
