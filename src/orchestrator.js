@@ -236,16 +236,35 @@ async function answerBriefing({ question, locale, mock, onEvent }) {
   path = resolveAnalysisPath(path, { question, grounding, results: [], declaredFacts: {}, templated: mock, final: true });
   onEvent({ type: "path", path });
 
+  // What the period amounts to, before the notices that make it up. A reader
+  // asking what changed over six months wants the aggregate first; the list of
+  // notice numbers is the supporting detail, not the answer.
+  const roll = briefing.rollup;
+  const totals = [
+    roll.added ? `${roll.added} 份公告新增列名，共 ${roll.entities} 家主体` : null,
+    ...Object.entries(roll.byList).map(([list, count]) => `其中${list} ${count} 家`),
+    Object.keys(roll.byCountry).length
+      ? `按对象：${Object.entries(roll.byCountry).sort((a, b) => b[1] - a[1]).map(([country, count]) => `${country} ${count} 家`).join("、")}`
+      : null,
+    roll.adjusted ? `${roll.adjusted} 份为制度或程序性调整` : null,
+    roll.removed ? `${roll.removed} 份为移出` : null,
+    roll.suspended || roll.repealed ? `${roll.suspended + roll.repealed} 份为暂停或废止` : null
+  ].filter(Boolean).map((line) => `- ${line}`);
+
+  // Each notice as what it did, not as its file name. The title states the
+  // action, the list, the count and whose entities they are, so the line says
+  // that and keeps the number for anyone who needs the original.
   const lines = briefing.items.slice(0, 20).map((item) => {
-    const parts = [item.date, item.noticeNumber, item.sourceLabel].filter(Boolean);
+    const change = item.change;
+    const what = change.actionZh
+      ? `${change.actionZh}${change.listZh ? change.listZh : ""}${change.entityCount ? ` ${change.entityCount} 家` : ""}${change.subjectCountry ? `${change.subjectCountry}实体` : ""}`
+      : (item.title ? String(item.title).replace(/^.*?号\s*/, "").slice(0, 40) : "内容见原文");
     const detail = [
-      item.entities.length ? `${item.entities.length} 个主体` : null,
+      item.supersedes?.length ? `涉及此前公告 ${item.supersedes.join("、")}` : null,
       item.controlCodes.length ? `${item.controlCodes.length} 个管制编码` : null,
-      item.supersedes?.length ? `涉及此前公告 ${item.supersedes.join("、")}` : null
+      item.sourceLabels?.length > 1 ? `见于 ${item.sourceLabels.length} 个来源` : null
     ].filter(Boolean).join("；");
-    // Marked as list items so the existing renderer builds a list. Thirteen
-    // dated notices as thirteen paragraphs is a wall; it is a list.
-    return `- ${parts.join(" · ")}${detail ? `（${detail}）` : ""}`;
+    return `- ${item.date} · ${what}（${item.noticeNumber || item.sourceLabel}${detail ? `；${detail}` : ""}）`;
   });
 
   const synthesis = {
@@ -253,7 +272,9 @@ async function answerBriefing({ question, locale, mock, onEvent }) {
     headline: briefing.items.length
       ? (isEn ? `${briefing.items.length} published changes since ${briefing.window.since}` : `自 ${briefing.window.since} 起共 ${briefing.items.length} 项已发布变化`)
       : (isEn ? `No ingested notices since ${briefing.window.since}` : `自 ${briefing.window.since} 起，已同步来源中没有公告`),
-    executiveSummary: lines.length ? lines.join("\n") : (isEn ? "Nothing in the ingested sources falls in this window." : "已同步来源在该窗口内没有记录。"),
+    executiveSummary: lines.length
+      ? ["**这段时间的变化**", ...totals, "", "**逐份公告**", ...lines].join("\n")
+      : (isEn ? "Nothing in the ingested sources falls in this window." : "已同步来源在该窗口内没有记录。"),
     nextStep: isEn
       ? "Open a notice to read it in full, or submit a transaction to have these applied to it."
       : "需要看原文的公告可在数据源直查页按公告号打开；要判断某笔交易是否受影响，请提交该情景做审查。"

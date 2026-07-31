@@ -48,9 +48,51 @@ export function windowFor(question, now = Date.now()) {
 
 const dateOf = (record) => record.effectiveFrom || record.publishedAt || null;
 
+// What a notice did, taken from its own title.
+//
+// The titles state the change outright — "将20家日本实体列入出口管制管控名单",
+// "暂停对…的出口管制措施" — so classifying them is reading, not inferring. The
+// previous version listed the notice numbers and dropped this, which is the part
+// a reader actually wants: a list of file names is not a summary of changes.
+const ACTIONS = [
+  { key: "added", match: /列入|新增|增列/, zh: "列入", en: "added to" },
+  { key: "removed", match: /移出|删除|解除|移除/, zh: "移出", en: "removed from" },
+  { key: "suspended", match: /暂停|中止/, zh: "暂停", en: "suspended" },
+  { key: "repealed", match: /废止|终止/, zh: "废止", en: "repealed" },
+  { key: "adjusted", match: /调整|修订|完善|修改/, zh: "调整", en: "adjusted" },
+  { key: "licensing", match: /许可|审批|申报/, zh: "许可事项", en: "licensing" }
+];
+
+const LISTS = [
+  { key: "control", match: /出口管制管控名单/, zh: "出口管制管控名单", en: "export control list" },
+  { key: "watch", match: /关注名单/, zh: "关注名单", en: "watch list" },
+  { key: "unreliable", match: /不可靠实体清单/, zh: "不可靠实体清单", en: "unreliable entity list" },
+  { key: "controlList", match: /管制清单|管制物项|管制编码/, zh: "两用物项管制清单", en: "dual-use control list" }
+];
+
+// "20家日本实体" — the count and whose it is, both stated in the title.
+const COUNT = /(\d+)\s*家([\u4e00-\u9fff]{2,4})?实体/;
+
+export function classifyNotice(title = "", fallbackCount = 0) {
+  const text = String(title);
+  const action = ACTIONS.find((item) => item.match.test(text)) || null;
+  const list = LISTS.find((item) => item.match.test(text)) || null;
+  const counted = text.match(COUNT);
+  return {
+    action: action?.key || "other",
+    actionZh: action?.zh || null,
+    actionEn: action?.en || null,
+    list: list?.key || null,
+    listZh: list?.zh || null,
+    listEn: list?.en || null,
+    entityCount: counted ? Number(counted[1]) : (fallbackCount || 0),
+    subjectCountry: counted?.[2] || null
+  };
+}
+
 export async function buildBriefing(question, now = Date.now()) {
   const window = windowFor(question, now);
-  const items = [];
+  let items = [];
   const searched = [];
   const unavailable = [];
 
@@ -96,6 +138,44 @@ export async function buildBriefing(question, now = Date.now()) {
     items.push(...byNotice.values());
   }
 
+  // One notice is one change, whichever sources carry it. 商务部公告2026年第27号
+  // appears in both the dual-use notices and the control-list notices, and
+  // counting it once per source turned "20 Japanese entities" into eighty. The
+  // sources it came from are kept, because which registers carry it is itself
+  // information.
+  const merged = new Map();
+  for (const item of items) {
+    const key = item.noticeNumber || `${item.sourceId}:${item.date}:${item.title}`;
+    const existing = merged.get(key);
+    if (!existing) { merged.set(key, { ...item, sourceLabels: [item.sourceLabel] }); continue; }
+    if (!existing.sourceLabels.includes(item.sourceLabel)) existing.sourceLabels.push(item.sourceLabel);
+    // Keep the fullest record: a title where there was none, the earlier date,
+    // and the union of the entities each source listed under it.
+    if (!existing.title && item.title) existing.title = item.title;
+    if (item.date < existing.date) existing.date = item.date;
+    existing.entities = [...new Set([...existing.entities, ...item.entities])];
+    existing.controlCodes = [...new Set([...existing.controlCodes, ...item.controlCodes])];
+  }
+  items = [...merged.values()];
   items.sort((left, right) => String(right.date).localeCompare(String(left.date)));
-  return { window, items, searched, unavailable };
+
+  for (const item of items) {
+    item.change = classifyNotice(item.title || "", item.entities.length);
+  }
+
+  // What the period amounts to, not just what is in it. A reader asking what
+  // changed over six months wants the aggregate first and the notices as the
+  // supporting detail.
+  const rollup = { added: 0, removed: 0, suspended: 0, repealed: 0, adjusted: 0, entities: 0, byList: {}, byCountry: {} };
+  for (const item of items) {
+    const change = item.change;
+    if (rollup[change.action] !== undefined) rollup[change.action] += 1;
+    if (change.action === "added" && change.entityCount) {
+      rollup.entities += change.entityCount;
+      if (change.listZh) rollup.byList[change.listZh] = (rollup.byList[change.listZh] || 0) + change.entityCount;
+      if (change.subjectCountry) rollup.byCountry[change.subjectCountry] = (rollup.byCountry[change.subjectCountry] || 0) + change.entityCount;
+    }
+  }
+
+  return { window, items, searched, unavailable, rollup };
 }

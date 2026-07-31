@@ -425,3 +425,33 @@ test("a briefing states its window and what it could not read", async () => {
   assert.ok(brief.items.every((item) => item.noticeNumber || item.sourceUrl),
     "a regulatory summary whose items cannot be traced back to a notice is worth nothing");
 });
+
+test("a briefing says what changed, not which files exist", async () => {
+  // The first version listed notice numbers and dates. A list of file names is
+  // not a summary of changes — and the titles state the change outright, so
+  // classifying them is reading rather than inferring.
+  const { classifyNotice, buildBriefing } = await import("../src/briefing.js");
+
+  const added = classifyNotice("商务部公告2026年第27号 公布将20家日本实体列入出口管制管控名单");
+  assert.equal(added.action, "added");
+  assert.equal(added.list, "control");
+  assert.equal(added.entityCount, 20);
+  assert.equal(added.subjectCountry, "日本");
+
+  assert.equal(classifyNotice("公布将某实体移出不可靠实体清单").action, "removed");
+  assert.equal(classifyNotice("关于暂停实施出口管制措施的公告").action, "suspended");
+  assert.equal(classifyNotice("关于进一步完善举报处理工作有关事项").action, "adjusted");
+
+  const brief = await buildBriefing("汇总最近 6 个月的公告变化", Date.parse("2026-07-31T00:00:00Z"));
+  assert.ok(brief.rollup, "the period has to add up to something");
+  assert.equal(brief.rollup.added + brief.rollup.adjusted + brief.rollup.removed
+    + brief.rollup.suspended + brief.rollup.repealed <= brief.items.length, true);
+
+  // One notice is one change, whichever registers carry it. 第27号 appears in
+  // both the dual-use notices and the control-list notices, and counting it once
+  // per source turned twenty Japanese entities into eighty.
+  const numbers = brief.items.map((item) => item.noticeNumber).filter(Boolean);
+  assert.equal(numbers.length, new Set(numbers).size, "a notice must appear once");
+  const multi = brief.items.filter((item) => item.sourceLabels?.length > 1);
+  assert.ok(multi.length, "and the registers that carry it are still recorded");
+});
