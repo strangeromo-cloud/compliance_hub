@@ -168,6 +168,7 @@ const state = {
   threadId: null,
   declaredFacts: {},
   unavailableFacts: [],
+  resumingStep: null,
   sourceQuery: null,
   factsOpen: false,
   rail: localStorage.getItem("compliance-rail") === "1",
@@ -732,7 +733,17 @@ const FLOW_STATE = {
   pending: { cls: "todo", mark: "" }
 };
 
+// The last path the rail drew, so a redraw triggered by an interaction rather than
+// by a stream event still has something to draw.
+let lastFlowPath = null;
+const collectedPath = () => lastFlowPath;
+
 function renderFlowPanel(path, options = {}) {
+  if (path) lastFlowPath = path;
+  else path = lastFlowPath;
+  // Set while a continuation is running so the rail marks the step it started
+  // from rather than recomputing one from a path that has not caught up.
+  if (state.resumingStep) options = { ...options, currentStep: state.resumingStep };
   const panel = $("flowPanel");
   const markup = flowMarkup(path, options);
   const steps = (path?.lanes || []).flatMap((lane) => lane.steps);
@@ -753,15 +764,16 @@ function flowMarkup(path, options = {}) {
   // row moved the number not at all — the one place a reader looks to see that
   // their answers are getting somewhere.
   const executed = steps.filter((item) => SETTLED_STATUS.has(item.status)).length;
-  // Two different meanings of "current", and showing the wrong one made the rail
-  // contradict the body: while a specialist is running, "current" is where the
-  // work is; only once the run has stopped to ask does it become the question
-  // waiting on the user. Marking the pending question during a run left the rail
-  // pointing at Trade while Ethics & TPDD was visibly streaming.
+  // Three meanings of "current" and the rail kept picking the wrong one. While a
+  // continuation is in flight it is the step the reader just submitted — the one
+  // showing "continuing the analysis" — and computing a fresh guess put the rail
+  // on a later step the body was not working on. While a specialist is running it
+  // is that lane. Otherwise it is the question waiting on the reader.
   const runningLane = options.activeLane ? path.lanes.find((lane) => lane.lane === options.activeLane) : null;
-  const asking = runningLane
-    ? runningLane.steps.find((item) => item.status !== "confirmed" && item.status !== "declared")?.id || null
-    : firstBlockedStep(path);
+  const asking = options.currentStep
+    || (runningLane
+      ? runningLane.steps.find((item) => item.status !== "confirmed" && item.status !== "declared")?.id || null
+      : firstBlockedStep(path));
   const percent = Math.round((executed / steps.length) * 100);
 
   return `
@@ -786,7 +798,7 @@ function flowMarkup(path, options = {}) {
           const shape = FLOW_STATE[item.status] || FLOW_STATE.pending;
           const current = item.id === asking;
           return `
-          <li class="fl-step ${shape.cls} ${current ? "current" : ""}">
+          <li class="fl-step ${shape.cls} ${current ? "current" : ""} ${current && options.currentStep ? "is-running" : ""}">
             <button type="button" data-flow-step="${esc(item.id)}" title="${esc([label(STEP_STATUS_VOCAB, item.status, state.locale), item.needs?.[0] || item.basis?.[0] || ""].filter(Boolean).join(" — "))}">
               <span class="fl-node" aria-hidden="true">${shape.mark}</span>
               <span class="fl-text">${esc(item.title)}</span>
@@ -1699,6 +1711,7 @@ async function analyze(event, options = {}) {
     hydrateBars(live);
     renderFlowPanel(finished.analysisPath);
     live.classList.remove("resuming");
+    state.resumingStep = null;
     renderEvidence(finished.sources || []);
     // Deliberately no scroll on completion. Output arrives in one direction and
     // the reader is already at the end of it; jumping to the top of the answer, or
@@ -1722,6 +1735,7 @@ async function analyze(event, options = {}) {
     toast(`${t("error")}: ${error.message}`);
   } finally {
     clearInterval(progress.clock);
+    state.resumingStep = null;
     state.busy = false;
     $("submitBtn").disabled = false;
   }
@@ -2034,6 +2048,7 @@ $("threadInner").addEventListener("click", (event) => {
     state.unavailableFacts = [...new Set([...state.unavailableFacts, ...fields])];
     const answer = host.closest(".msg-assistant");
     if (answer?.dataset.question) {
+      state.resumingStep = host.closest(".path-step")?.dataset.stepId || null;
       host.insertAdjacentHTML("beforeend", `<div class="si-done">
         <span class="sis-label">${esc(t("declareSkippedLabel"))}</span>
         <span class="sis-state">${esc(t("declareContinuing"))}</span>
@@ -2080,7 +2095,11 @@ $("threadInner").addEventListener("click", (event) => {
   // The same analysis carries on with one more fact, inside the answer already on
   // screen — not a new question producing a second answer below it.
   const answer = host.closest(".msg-assistant");
-  if (answer?.dataset.question) return analyze(null, { continueIn: answer });
+  if (answer?.dataset.question) {
+    state.resumingStep = host.closest(".path-step")?.dataset.stepId || null;
+    renderFlowPanel(null, {});
+    return analyze(null, { continueIn: answer });
+  }
   $("questionInput").value = `${t("declarePrefix")}${labels.join("；")}`;
   $("questionForm").requestSubmit();
 });

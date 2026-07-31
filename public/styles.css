@@ -1358,3 +1358,34 @@ html[lang="en"] .step-needs li::before { content: "NEEDS"; font-size: 8px; }
 .fl-step.current { position: relative; }
 .fl-step.current::after { content: ""; position: absolute; left: -8px; top: 4px; bottom: 4px; width: 2px; border-radius: 2px; background: var(--accent); }
 .fl-step.current .fl-text { color: var(--text); font-weight: 600; }
+
+/* ---- a submitted step is one block, not four ----
+   It had become the accent panel of the asking step, inside it the dashed input
+   box, inside that the submitted-values row, inside that the streaming box: four
+   frames around one short paragraph. The step's panel is the only frame that
+   earns its place; everything inside it is now plain content. */
+.step-inputs.submitted {
+  border: 0; background: none; padding: 0; margin-top: 8px;
+  border-top: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
+  padding-top: 8px; border-radius: 0;
+}
+/* The fields themselves have served their purpose once submitted; the values are
+   restated in one line below, so showing both is repetition. */
+.step-inputs.submitted > .si-row, .step-inputs.submitted > .si-actions { display: none; }
+.step-inputs.submitted .si-done { padding: 0; }
+.step-inputs.submitted .stream-box {
+  border: 0; background: none; border-radius: 0;
+  margin: 6px 0 0; padding: 0 0 0 11px;
+  border-left: 2px solid color-mix(in srgb, var(--accent) 30%, transparent);
+}
+.step-inputs.skipped { border: 0; background: none; padding: 0; margin-top: 8px; border-top: 1px solid var(--border); padding-top: 8px; border-radius: 0; }
+
+/* ---- the rail's current step, made as loud as the body's ----
+   A ring on a 15px dot is not enough to find at a glance in a list of seventeen. */
+.fl-step.current { background: color-mix(in srgb, var(--accent) 12%, transparent); border-radius: var(--radius); margin: 2px -6px; padding: 3px 6px 3px 0; }
+.fl-step.current::after { left: -6px; top: 3px; bottom: 3px; width: 3px; }
+.fl-step.current .fl-node { transform: scale(1.15); animation: asking-pulse 1.8s ease-in-out infinite; }
+.fl-step.current .fl-text { color: var(--text); font-weight: 600; }
+/* While the analysis is running on that step the whole row says so. */
+.flow-panel .fl-step.current.is-running .fl-text::after { content: "…"; margin-left: 4px; color: var(--accent-text); }
+@media (prefers-reduced-motion: reduce) { .fl-step.current .fl-node { animation: none; } }
