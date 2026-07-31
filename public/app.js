@@ -44,7 +44,7 @@ const i18n = {
     runtimeRules: "规则模式", runtimeReady: "实时模型", runtimeMissing: "未配置模型",
     modeHint: "点击切换规则模式与实时模型",
     routeLabel: "路由", routedTo: "已路由至",
-    overallAssessment: "总体判断", nextStep: "下一步", missingInfo: "仍需信息", actions: "建议行动", planSuggested: "专业 Agent 的其他建议", planSuggestedNote: "这些建议未对应分析路径上的某一步，供人工复核时参考", notClosed: "尚有 {n} 项未补齐", stepAsk: "分析在这里停下，需要你补充以下信息后继续", naCount: "{n} 项本次不适用", interimVerdict: "阶段性判断（基于现有信息，未结案）", noItems: "暂无", limitations: "结论边界与限制",
+    overallAssessment: "总体判断", nextStep: "下一步", missingInfo: "仍需信息", actions: "建议行动", planSuggested: "专业 Agent 的其他建议", planSuggestedNote: "这些建议未对应分析路径上的某一步，供人工复核时参考", notClosed: "尚有 {n} 项未补齐", stepAsk: "请补充以下信息，分析将从这里继续", naCount: "{n} 项本次不适用", interimVerdict: "阶段性判断（基于现有信息，未结案）", noItems: "暂无", limitations: "结论边界与限制",
     sourceLive: "实时获取", sourceMetadata: "元数据", sourceUnavailable: "获取失败", sourceNotFetched: "未获取", sourceArchived: "已采集副本", sourceCitationOnly: "仅引用", sourceCached: "缓存", noQueryableSource: "暂无可直查的来源（需先同步）", sourceQueryHint: "@ 直查数据源", sourceQueryPlaceholder: "输入实体名、公告号或条文关键词（按相关性排序；留空则浏览全部）…",
     queryEmpty: "请输入查询内容", queryHits: "{total} 条命中", browseCount: "共 {total} 条", browseAll: "浏览全部", pagePrev: "上一页", pageNext: "下一页", relMatched: "命中", relMissed: "未命中", relPartial: "另有 {n} 条仅命中部分检索词，未列出", queryNoHit: "该来源中未找到匹配记录", queryTruncated: "显示前 {shown} 条，共 {total} 条",
     queryEscalate: "以此发起完整筛查 →", escalatePrefix: "请对 {q} 做完整合规筛查",
@@ -102,7 +102,7 @@ const i18n = {
     runtimeRules: "Rules mode", runtimeReady: "Live model", runtimeMissing: "No model configured",
     modeHint: "Toggle between rules mode and the live model",
     routeLabel: "Route", routedTo: "Routed to",
-    overallAssessment: "Overall assessment", nextStep: "Next step", missingInfo: "Missing information", actions: "Recommended actions", planSuggested: "Other suggestions from the specialists", planSuggestedNote: "These do not map onto a step in the analysis path; they are for the reviewer to weigh", notClosed: "{n} items still open", stepAsk: "The analysis stops here and needs these to continue", naCount: "{n} not applicable to this case", interimVerdict: "Interim assessment (on incomplete facts, not a conclusion)", noItems: "None", limitations: "Limits on this conclusion",
+    overallAssessment: "Overall assessment", nextStep: "Next step", missingInfo: "Missing information", actions: "Recommended actions", planSuggested: "Other suggestions from the specialists", planSuggestedNote: "These do not map onto a step in the analysis path; they are for the reviewer to weigh", notClosed: "{n} items still open", stepAsk: "Add these and the analysis continues from here", naCount: "{n} not applicable to this case", interimVerdict: "Interim assessment (on incomplete facts, not a conclusion)", noItems: "None", limitations: "Limits on this conclusion",
     sourceLive: "Live", sourceMetadata: "Metadata", sourceUnavailable: "Unavailable", sourceNotFetched: "Not fetched", sourceArchived: "Archived copy", sourceCitationOnly: "Cited only", sourceCached: "Cached", noQueryableSource: "No queryable source yet (sync one first)", sourceQueryHint: "@ query a source", sourceQueryPlaceholder: "Entity name, notice number or keyword — ranked by relevance; leave empty to browse all…",
     queryEmpty: "Enter something to look up", queryHits: "{total} matches", browseCount: "{total} records", browseAll: "Browse all", pagePrev: "Previous", pageNext: "Next", relMatched: "matched", relMissed: "not matched", relPartial: "{n} more records matched only part of the query and are not listed", queryNoHit: "No matching record in this source", queryTruncated: "Showing {shown} of {total}",
     queryEscalate: "Run a full screening on this →", escalatePrefix: "Run a full compliance screening on {q}",
@@ -2071,6 +2071,7 @@ $("threadInner").addEventListener("click", (event) => {
   if (skip) {
     const host = skip.closest(".step-inputs");
     host.classList.add("skipped");
+    host.closest(".path-step")?.classList.add("answered");
     host.querySelectorAll("input, button").forEach((control) => { control.disabled = true; });
     const fields = [...host.querySelectorAll("[data-field]")].map((node) => node.dataset.field);
     state.unavailableFacts = [...new Set([...state.unavailableFacts, ...fields])];
@@ -2089,6 +2090,7 @@ $("threadInner").addEventListener("click", (event) => {
   if (reopen) {
     const host = reopen.closest(".step-inputs");
     host.classList.remove("skipped");
+    host.closest(".path-step")?.classList.remove("answered");
     host.querySelectorAll("input, button").forEach((control) => { control.disabled = false; });
     const fields = new Set([...host.querySelectorAll("[data-field]")].map((node) => node.dataset.field));
     state.unavailableFacts = state.unavailableFacts.filter((field) => !fields.has(field));
@@ -2110,6 +2112,7 @@ $("threadInner").addEventListener("click", (event) => {
     .filter((row) => row.querySelector(".si-text")?.value.trim() || row.querySelector(".si-choice.on"))
     .map((row) => `${row.querySelector(".si-label").textContent}：${row.querySelector(".si-text")?.value.trim() || row.querySelector(".si-choice.on").dataset.value}`);
   host.classList.add("submitted");
+  host.closest(".path-step")?.classList.add("answered");
   host.querySelectorAll("input, button").forEach((control) => { control.disabled = true; });
   host.insertAdjacentHTML("beforeend", `
     <div class="si-done">
