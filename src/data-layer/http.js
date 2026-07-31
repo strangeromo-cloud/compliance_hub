@@ -56,7 +56,12 @@ export async function fetchPublicFile(url, options = {}) {
       if (error.status === 429 && maxAttempts < 3) maxAttempts = 3;
       const retryable = !error.status || RETRYABLE_STATUS.has(error.status);
       if (!retryable || attempt >= maxAttempts) break;
-      await wait(error.retryAfterMs || (error.status === 429 ? 2000 * attempt : 350 * attempt));
+      // A transfer that dies mid-stream — read ETIMEDOUT rather than connect —
+      // reached the host and then stalled. Retrying immediately hits the same
+      // stalled path, so a caller that knows it is pulling something large can
+      // ask for a longer wait between tries.
+      const base = options.retryBaseMs || 350;
+      await wait(error.retryAfterMs || (error.status === 429 ? 2000 * attempt : base * attempt));
     } finally {
       clearTimeout(timeout);
     }

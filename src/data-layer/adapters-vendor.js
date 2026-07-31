@@ -122,11 +122,16 @@ export function parseAmdParts(text, classificationDate) {
 }
 
 export async function syncAmdExport() {
+  // Nearly five megabytes over a link that has been observed to stall partway —
+  // the Hong Kong deployment fails with read ETIMEDOUT, having connected fine.
+  // More tries, spaced further apart, because the path recovers more often than
+  // it stays broken; when it does not, the committed copy answers instead.
   const file = await fetchPublicFile(AMD_PDF, {
     accept: "application/pdf",
     headers: { Referer: AMD_PAGE },
     maxBytes: 40 * 1024 * 1024,
-    attempts: 2
+    attempts: 4,
+    retryBaseMs: 2000
   });
   const text = extractPdfText(file.bytes);
   // The document dates itself; that date belongs on every row, because "AMD says
