@@ -38,7 +38,7 @@ const i18n = {
     disp_weak_potential_match_requires_identity_review: "弱潜在命中 —— 需人工核对",
     disp_likely_false_positive_identity_elements_conflict: "身份要素冲突 —— 判定为疑似误报（仍需人工用注册证据确认）",
     disp_below_review_threshold: "低于复核阈值",
-    noStreamNotice: "当前模型未返回流式响应，分析文本会在每个 Agent 完成后一次性显示。", step_routed: "选择 Agent", step_sources: "检索官方来源", step_grounding: "名单筛查与结构化事实", step_agents: "专业 Agent 分析", step_synthesizing: "综合结论",
+    noStreamNotice: "当前模型未返回流式响应，分析文本会在每个 Agent 完成后一次性显示。", step_routed: "选择 Agent", step_sources: "检索官方来源", step_grounding: "名单筛查与结构化事实", step_agents: "专业 Agent 分析", step_synthesizing: "综合结论", step_briefing: "汇总已发布公告", step_memo: "整理本会话的分析", step_lookup: "在已接入数据中检索",
     groundingNote: "已筛查 {screened} 个名单来源 · {matches} 条潜在命中 · {internal} 条内部主数据关联",
     filterAll: "全部", filterTrade: "Trade", filterProduct: "Product", filterTpdd: "TPDD", filterCross: "跨域",
     runtimeRules: "规则模式", runtimeReady: "实时模型", runtimeMissing: "未配置模型",
@@ -96,7 +96,7 @@ const i18n = {
     disp_weak_potential_match_requires_identity_review: "Weak potential match — needs review",
     disp_likely_false_positive_identity_elements_conflict: "Identity elements conflict — likely false positive (still requires confirmation against registration evidence)",
     disp_below_review_threshold: "Below review threshold",
-    noStreamNotice: "This model does not return a streamed response; each specialist\u2019s text appears once it finishes.", step_routed: "Select agents", step_sources: "Retrieve official sources", step_grounding: "Screening and structured facts", step_agents: "Specialist analysis", step_synthesizing: "Synthesis",
+    noStreamNotice: "This model does not return a streamed response; each specialist\u2019s text appears once it finishes.", step_routed: "Select agents", step_sources: "Retrieve official sources", step_grounding: "Screening and structured facts", step_agents: "Specialist analysis", step_synthesizing: "Synthesis", step_briefing: "Summarising published notices", step_memo: "Assembling this session\u2019s analysis", step_lookup: "Searching the ingested data",
     groundingNote: "{screened} list sources screened · {matches} potential matches · {internal} internal records touched",
     filterAll: "All", filterTrade: "Trade", filterProduct: "Product", filterTpdd: "TPDD", filterCross: "Cross-domain",
     runtimeRules: "Rules mode", runtimeReady: "Live model", runtimeMissing: "No model configured",
@@ -209,6 +209,20 @@ function formatInline(value = "") {
 
 const LIST_ITEM = /^\s*(?:[-*•·]|\d+[.)]|[（(]\d+[）)])\s+(.*)$/;
 
+// A section heading, in the three forms a model actually writes them:
+// a markdown heading, a line that is nothing but bold text, and a short label
+// followed by a colon and nothing else.
+const HEADING = /^\s{0,3}#{1,4}\s+(.+?)\s*#*$/;
+const BOLD_LINE = /^\s*\*\*(.+?)\*\*[：:]?\s*$/;
+// Short, because "结论：" is a heading and a whole sentence ending in a colon is
+// not. Colons are ordinary punctuation in this material.
+const LABEL_LINE = /^\s*([^\s：:][^：:]{0,11})[：:]\s*$/;
+
+// A label with its content on the same line — 事实：…… — which is how a
+// compliance summary is usually written. Rendering it as an undifferentiated
+// paragraph loses the one piece of structure the writer supplied.
+const LABELLED = /^\s*([^\s：:][^：:]{0,11})[：:]\s*(\S.*)$/;
+
 // Turns a model's prose into paragraphs and lists. An ordered source list stays
 // ordered, because in compliance guidance the sequence usually carries meaning.
 function formatBlock(value = "") {
@@ -226,7 +240,17 @@ function formatBlock(value = "") {
       continue;
     }
     closeList();
-    if (line.trim()) out.push(`<p>${formatInline(line)}</p>`);
+    if (!line.trim()) continue;
+
+    const heading = line.match(HEADING) || line.match(BOLD_LINE) || line.match(LABEL_LINE);
+    if (heading) { out.push(`<h4 class="prose-head">${formatInline(heading[1])}</h4>`); continue; }
+
+    const labelled = line.match(LABELLED);
+    if (labelled) {
+      out.push(`<p class="prose-labelled"><b>${formatInline(labelled[1])}</b>${formatInline(labelled[2])}</p>`);
+      continue;
+    }
+    out.push(`<p>${formatInline(line)}</p>`);
   }
   closeList();
   return out.join("") || `<p>${formatInline(value)}</p>`;
@@ -1668,6 +1692,17 @@ async function analyze(event, options = {}) {
       collected.path = event.path;
       drawPath();
       renderFlowPanel(event.path, { activeLane: progress.activeLane });
+    }
+    // A path with no specialists — a lookup, a briefing, a memo — used to sit on
+    // "retrieving official sources" for the whole of its work, with no clock and
+    // no label of its own. Reading four notice sources takes long enough for the
+    // page to look like nothing is happening.
+    if (event.type === "stage") {
+      done.add("routed");
+      clearInterval(progress.clock);
+      renderSteps(live, done, event.key);
+      progress.clock = startElapsed(live);
+      return;
     }
     if (event.type === "agent_start") {
       // The lane becomes the active one, so the reasoning about to stream lands

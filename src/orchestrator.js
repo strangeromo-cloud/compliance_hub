@@ -192,6 +192,9 @@ async function answerBriefing({ question, locale, mock, onEvent }) {
   const id = `CASE-${Date.now().toString(36).toUpperCase()}`;
   const isEn = locale === "en";
   onEvent({ type: "routed", id, agents: ["briefing"], mode: mock ? "grounded-demo" : "live-model" });
+  // Reading four notice sources is the slow part, and without a stage of its own
+  // the page shows "retrieving official sources" and no clock for the whole of it.
+  onEvent({ type: "stage", key: "briefing" });
 
   const briefing = await buildBriefing(question);
   const grounding = { intent: "regulatory_briefing", briefing, facts: [], listMatches: [], internalParties: [], screening: null, limitations: [] };
@@ -259,6 +262,7 @@ async function answerMemo({ question, locale, history, mock, onEvent }) {
   const id = `CASE-${Date.now().toString(36).toUpperCase()}`;
   const isEn = locale === "en";
   onEvent({ type: "routed", id, agents: ["memo"], mode: mock ? "grounded-demo" : "live-model" });
+  onEvent({ type: "stage", key: "memo" });
 
   const priorTurns = (history || []).filter((item) => item.role === "assistant");
   const grounding = {
@@ -304,6 +308,7 @@ async function answerLookup({ question, locale, lookup, mock, onEvent }) {
   const id = `CASE-${Date.now().toString(36).toUpperCase()}`;
   const isEn = locale === "en";
   onEvent({ type: "routed", id, agents: ["lookup"], mode: mock ? "grounded-demo" : "live-model" });
+  onEvent({ type: "stage", key: "lookup" });
 
   const grounding = { intent: "data_lookup", lookup, facts: [], listMatches: [], internalParties: [], screening: null, limitations: [] };
   const found = lookup.found;

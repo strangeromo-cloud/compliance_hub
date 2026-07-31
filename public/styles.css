@@ -1476,3 +1476,14 @@ html[lang="en"] .step-needs li::before { content: "NEEDS"; font-size: 8px; }
 /* When a state was recorded. A failure that survived a redeploy is still shown
    in red; the age says whether anything has tried since. */
 .sync-age { font-size: 10.5px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+/* Sections inside a conclusion. A model writes "事实：…", "依据：…", "待办：…"
+   and the structure was being flattened into identical paragraphs — the one
+   piece of organisation the writer supplied, discarded on the way to the page. */
+.prose-head { margin: 14px 0 4px; font-size: 12px; font-weight: 600; color: var(--text);
+  letter-spacing: .01em; }
+.prose-head:first-child { margin-top: 0; }
+.prose-labelled { margin: 4px 0; }
+.prose-labelled > b { display: inline-block; min-width: 4.5em; margin-right: 6px; font-weight: 600; color: var(--text-2); }
+.prose > p + p { margin-top: 6px; }
+.prose ul, .prose ol { margin: 6px 0; padding-left: 18px; }
+.prose li { margin: 3px 0; line-height: 1.7; }

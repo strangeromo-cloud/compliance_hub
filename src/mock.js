@@ -258,12 +258,25 @@ export function createMockSynthesis(results, locale, question = "", context = {}
     const isEn = locale === "en";
     const basis = context.clearance.checks.filter((check) => check.met)
       .map((check) => `${check.because}${check.cite ? `（${check.cite}）` : ""}`);
+    // Sectioned rather than run together. Five conditions and their provisions in
+    // one sentence is a paragraph nobody reads to the end of, and the reader has
+    // to be able to find the one condition they want to check.
+    const conditions = context.clearance.checks.filter((check) => check.met)
+      .map((check) => `- ${check.because}${check.cite ? `（${check.cite}）` : ""}`);
     return {
       overallRisk: "low",
       headline: isEn ? "No licence requirement arises on the stated facts" : "在所述事实下不产生许可要求",
       executiveSummary: isEn
-        ? `Each condition was met: ${basis.join("; ")}. This is a conclusion about licence requirements, not a release of the transaction.`
-        : `逐项条件均已满足：${basis.join("；")}。本结论针对的是许可要求，不构成对该交易的放行。`,
+        ? [
+          "**Conditions met**", ...conditions,
+          "", "**What this is not**",
+          "A conclusion about licence requirements, not a release of the transaction."
+        ].join("\n")
+        : [
+          "**逐项满足的条件**", ...conditions,
+          "", "**这不是什么**",
+          "本结论针对的是许可要求，不构成对该交易的放行。"
+        ].join("\n"),
       nextStep: isEn
         ? "Route to Compliance as a record filing rather than an escalation, and re-run if any stated fact changes."
         : "以备案而非升级的方式交 Compliance 归档；任一陈述事实发生变化时重新判断。"
