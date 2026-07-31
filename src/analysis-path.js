@@ -140,6 +140,18 @@ const LANE_PLANS = {
     steps: [["data_lookup", "在已接入数据中检索", null,
       { cite: "直接查询", methodology: "derived", note: "问题问的是一个已登记的值，不是一笔交易；没有交易就没有可审查的程序" }]]
   },
+  briefing: {
+    label: "监管变化简报",
+    methodology: "derived",
+    steps: [["notice_timeline", "按时间顺序汇总已发布公告", null,
+      { cite: "直接汇总", methodology: "derived", note: "问题问的是一段时间内发布了什么，不是一笔交易；没有交易就没有可审查的程序" }]]
+  },
+  memo: {
+    label: "案件备忘录",
+    methodology: "derived",
+    steps: [["case_writeup", "整理本会话已产出的结论与证据", null,
+      { cite: "文书产出", methodology: "derived", note: "备忘录记录既有分析，不产生新的判断" }]]
+  },
   review: {
     label: "结案",
     methodology: "derived",
@@ -238,7 +250,7 @@ function laneOnly(lane) {
         lane: group.lane,
         label: group.label,
         leading: true,
-        matchedBy: "direct_lookup",
+        matchedBy: group.lane === "lookup" ? "direct_lookup" : "gem_kind",
         matchedTerms: [],
         methodology: METHODOLOGIES[group.methodology] || null,
         stepCount: group.steps.length,
@@ -257,7 +269,7 @@ export function planAnalysisPath({ agents = [], gemId = null, routeReasons = {},
   // A lookup is its own lane and never runs alongside the review lanes: the
   // question asks for a stored value, so there is no transaction to review and
   // no closing decision to route to a person.
-  if (agents.length === 1 && agents[0] === "lookup") return laneOnly("lookup");
+  if (agents.length === 1 && ["lookup", "briefing", "memo"].includes(agents[0])) return laneOnly(agents[0]);
 
   const routed = ["trade", "product", "tpdd"].filter((lane) => agents.includes(lane));
   const kept = routed.filter((lane) => !gates.droppedLanes.includes(lane));
@@ -387,6 +399,37 @@ function lookupSteps(grounding) {
       lookup.elsewhere
     ]
   })];
+}
+
+// A briefing reports what it read and over what window, because a summary whose
+// window is unstated cannot be checked and a summary of sources that were not
+// synced is a summary of nothing.
+function briefingSteps(grounding) {
+  const brief = grounding.briefing;
+  if (!brief) return [step("notice_timeline", "按时间顺序汇总已发布公告", "not_reached", {})];
+  const basis = [
+    `窗口：${brief.window.since} 起至今（${brief.window.days} 天，${brief.window.stated ? "取自问题" : "默认，问题未指定"}）`,
+    ...brief.searched.map((source) => `已检索 ${source.label}（${source.recordCount} 条${source.fallback ? "，时点副本" : ""}）`),
+    ...brief.unavailable.map((source) => `未检索 ${source.label}（该来源未同步）`)
+  ];
+  if (!brief.items.length) {
+    return [step("notice_timeline", "按时间顺序汇总已发布公告", "confirmed",
+      { basis: [...basis, "该窗口内没有已收录的公告；这不代表期间没有发布，只代表已同步的来源里没有"] })];
+  }
+  return [step("notice_timeline", "按时间顺序汇总已发布公告", "confirmed",
+    { basis: [`共 ${brief.items.length} 项变化`, ...basis] })];
+}
+
+// A memo does not analyse; it writes up what was analysed. With nothing to write
+// up it says so rather than producing an empty document.
+function memoSteps(grounding) {
+  const turns = grounding.memo?.turns || 0;
+  if (!turns) {
+    return [step("case_writeup", "整理本会话已产出的结论与证据", "evidence_needed",
+      { needs: ["本会话尚无已完成的分析可供整理；请先提交一个情景完成审查，再生成备忘录"] })];
+  }
+  return [step("case_writeup", "整理本会话已产出的结论与证据", "confirmed",
+    { basis: [`已整理本会话 ${turns} 轮分析`, "备忘录记录既有结论与证据，不产生新的判断"] })];
 }
 
 function tradeSteps(question, grounding, results) {
@@ -591,6 +634,8 @@ export function resolveAnalysisPath(plan, { question, grounding, results = [], d
     product: () => productSteps(question, grounding, results),
     tpdd: () => tpddSteps(question, grounding, results),
     lookup: () => lookupSteps(grounding),
+    briefing: () => briefingSteps(grounding),
+    memo: () => memoSteps(grounding),
     review: () => [step("human_review", "Compliance / Legal 人工复核", "review_required",
       { needs: ["以上步骤的结论与证据需经人工确认；系统不做交易放行"] })]
   };

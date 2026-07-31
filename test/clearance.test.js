@@ -368,3 +368,60 @@ test("a resolved chain does not become a 50 Percent Rule conclusion", async () =
   assert.ok(open.basis.some((line) => /直接母公司/.test(line)), "the chain is still shown");
   assert.ok(open.needs.some((line) => /50%/.test(line)), "and the aggregate is still asked for");
 });
+
+test("a gem's kind decides whether a review procedure applies at all", async () => {
+  // /reg-brief names no counterparty, no item and no destination. Running it
+  // through the review procedure produced a party-screening step for a question
+  // with no party in it: the gem said which lane to open with, and nothing said
+  // whether to open any.
+  const { assessScenario } = await import("../src/orchestrator.js");
+  const { GEM_KINDS } = await import("../src/gem-kinds.js");
+  const { GEMS } = await import("../public/gems.js");
+
+  // Every gem declares one, so a new gem cannot be added without deciding.
+  for (const gem of GEMS) {
+    assert.ok(["review", "lookup", "briefing", "memo"].includes(gem.kind), `${gem.id} has no usable kind`);
+    assert.equal(GEM_KINDS[gem.id], gem.kind, "the server reads the same catalogue the page does");
+  }
+
+  const brief = await assessScenario({
+    question: "汇总最近 6 个月中国出口管制管控名单和两用物项公告的变化",
+    locale: "zh", mock: true, gemId: "reg-brief"
+  });
+  assert.deepEqual(brief.analysisPath.lanes.map((lane) => lane.lane), ["briefing"]);
+  assert.equal(brief.awaitingInput, null, "a summary of published notices asks nobody anything");
+  assert.equal(brief.results.length, 0);
+  assert.ok(brief.grounding.limitations.some((line) => /属于审查而非汇总/.test(line)),
+    "listing what was published is not the same as saying it applies");
+
+  const memo = await assessScenario({ question: "生成案件备忘录", locale: "zh", mock: true, gemId: "case-memo", history: [] });
+  assert.deepEqual(memo.analysisPath.lanes.map((lane) => lane.lane), ["memo"]);
+  assert.match(memo.synthesis.headline, /尚无可整理/, "a memo over nothing says so rather than inventing a document");
+
+  // A review gem still gets the procedure.
+  const review = await assessScenario({
+    question: "我们通过新加坡代理商向中国最终用户出口服务器", locale: "zh", mock: true, gemId: "screen-party"
+  });
+  assert.ok(review.analysisPath.lanes.some((lane) => lane.lane === "trade"));
+});
+
+test("a briefing states its window and what it could not read", async () => {
+  const { buildBriefing, windowFor } = await import("../src/briefing.js");
+  const now = Date.parse("2026-07-31T00:00:00Z");
+
+  // The period comes from the question. Answering "past two years" with a fixed
+  // six-month window would silently ignore what was asked.
+  assert.equal(windowFor("最近 6 个月有什么变化", now).days, 180);
+  assert.equal(windowFor("过去 2 年的变化", now).days, 730);
+  const defaulted = windowFor("有什么新公告", now);
+  assert.equal(defaulted.stated, false, "an unstated window is reported as chosen, not as asked for");
+
+  const brief = await buildBriefing("汇总最近 6 个月的公告变化", now);
+  assert.ok(brief.searched.length, "it must say which sources it read");
+  assert.ok(brief.items.every((item) => item.date >= brief.window.since), "nothing outside the window");
+  // Ordered newest first, and every line traceable to a notice.
+  const dates = brief.items.map((item) => item.date);
+  assert.deepEqual(dates, [...dates].sort().reverse());
+  assert.ok(brief.items.every((item) => item.noticeNumber || item.sourceUrl),
+    "a regulatory summary whose items cannot be traced back to a notice is worth nothing");
+});

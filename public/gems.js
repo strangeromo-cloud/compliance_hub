@@ -1,5 +1,15 @@
 // Gem catalog.
 //
+// A gem's kind says what it produces, which decides whether a review procedure
+// applies at all:
+//
+//   review    a transaction to examine — the full procedure
+//   lookup    a value that is published somewhere — answered, not reviewed,
+//             when the question is one (a question that describes a transaction
+//             still gets the procedure, whichever gem is selected)
+//   briefing  what changed over a window — read the notices, order them
+//   memo      write up a case that has already been analysed
+//
 // A gem is four things bound together:
 //   instruction     what the specialist agents are told to produce
 //   boundSources    the sourceIds this gem is allowed to reason from
@@ -20,6 +30,7 @@ export const GEM_GROUPS = {
 export const GEMS = [
   {
     id: "screen-party",
+    kind: "review",
     command: "/screen-party",
     icon: "SP",
     group: "screening",
@@ -44,6 +55,7 @@ export const GEMS = [
   },
   {
     id: "eccn",
+    kind: "lookup",
     command: "/eccn",
     icon: "EC",
     group: "classification",
@@ -67,6 +79,7 @@ export const GEMS = [
   },
   {
     id: "cn-dual-use",
+    kind: "lookup",
     command: "/cn-dual-use",
     icon: "CN",
     group: "classification",
@@ -91,6 +104,7 @@ export const GEMS = [
   },
   {
     id: "de-minimis",
+    kind: "review",
     command: "/de-minimis",
     icon: "DM",
     group: "classification",
@@ -115,6 +129,7 @@ export const GEMS = [
   },
   {
     id: "licence",
+    kind: "review",
     command: "/licence",
     icon: "LP",
     group: "classification",
@@ -139,6 +154,7 @@ export const GEMS = [
   },
   {
     id: "tpdd",
+    kind: "review",
     command: "/tpdd",
     icon: "DD",
     group: "diligence",
@@ -164,6 +180,7 @@ export const GEMS = [
   },
   {
     id: "reg-brief",
+    kind: "briefing",
     command: "/reg-brief",
     icon: "RB",
     group: "data",
@@ -185,6 +202,7 @@ export const GEMS = [
   },
   {
     id: "case-memo",
+    kind: "memo",
     command: "/case-memo",
     icon: "MM",
     group: "data",

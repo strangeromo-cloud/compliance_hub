@@ -4,6 +4,8 @@ import { retrievePublicSources } from "./retrieval.js";
 import { callJsonModel, callJsonModelStream, readableProjection } from "./llm.js";
 import { assessClearance } from "./clearance.js";
 import { resolveLookup } from "./lookup.js";
+import { buildBriefing } from "./briefing.js";
+import { GEM_KINDS } from "./gem-kinds.js";
 import { createMockAgentResult, createMockSynthesis } from "./mock.js";
 import { collectGrounding, groundingContext } from "./grounding.js";
 import { buildActionPlan, planAnalysisPath, resolveAnalysisPath } from "./analysis-path.js";
@@ -186,6 +188,118 @@ const disclaimerFor = (locale) => (locale === "en"
   ? "Prototype output for research and triage only. It is not legal advice or an automated approval decision."
   : "本结果仅用于 Prototype 信息研究与风险分流，不构成法律意见或自动审批决定。");
 
+async function answerBriefing({ question, locale, mock, onEvent }) {
+  const id = `CASE-${Date.now().toString(36).toUpperCase()}`;
+  const isEn = locale === "en";
+  onEvent({ type: "routed", id, agents: ["briefing"], mode: mock ? "grounded-demo" : "live-model" });
+
+  const briefing = await buildBriefing(question);
+  const grounding = { intent: "regulatory_briefing", briefing, facts: [], listMatches: [], internalParties: [], screening: null, limitations: [] };
+  if (!briefing.window.stated) {
+    grounding.limitations.push(isEn
+      ? `No period was stated, so the last ${briefing.window.days} days were summarised.`
+      : `问题未指定时间范围，本次按最近 ${briefing.window.days} 天汇总。`);
+  }
+  if (briefing.unavailable.length) {
+    grounding.limitations.push(isEn
+      ? `Not read because they are not synced: ${briefing.unavailable.map((source) => source.label).join(", ")}.`
+      : `以下来源未同步，本次未纳入：${briefing.unavailable.map((source) => source.label).join("、")}。`);
+  }
+  if (briefing.searched.some((source) => source.fallback)) {
+    grounding.limitations.push(isEn
+      ? "Some sources were read from a committed point-in-time copy; notices published since are not included."
+      : "部分来源读取的是随仓库提交的时点副本，其后发布的公告不在其中。");
+  }
+  grounding.limitations.push(isEn
+    ? "This lists what was published. Whether any of it applies to a given transaction is a review, not a summary."
+    : "本简报列出的是已发布的内容；其中哪些适用于某笔具体交易，属于审查而非汇总。");
+  onEvent({ type: "grounding", intent: grounding.intent, grounding });
+
+  let path = planAnalysisPath({ agents: ["briefing"], question });
+  path = resolveAnalysisPath(path, { question, grounding, results: [], declaredFacts: {}, templated: mock, final: true });
+  onEvent({ type: "path", path });
+
+  const lines = briefing.items.slice(0, 20).map((item) => {
+    const parts = [item.date, item.noticeNumber, item.sourceLabel].filter(Boolean);
+    const detail = [
+      item.entities.length ? `${item.entities.length} 个主体` : null,
+      item.controlCodes.length ? `${item.controlCodes.length} 个管制编码` : null,
+      item.supersedes?.length ? `涉及此前公告 ${item.supersedes.join("、")}` : null
+    ].filter(Boolean).join("；");
+    // Marked as list items so the existing renderer builds a list. Thirteen
+    // dated notices as thirteen paragraphs is a wall; it is a list.
+    return `- ${parts.join(" · ")}${detail ? `（${detail}）` : ""}`;
+  });
+
+  const synthesis = {
+    overallRisk: "unknown",
+    headline: briefing.items.length
+      ? (isEn ? `${briefing.items.length} published changes since ${briefing.window.since}` : `自 ${briefing.window.since} 起共 ${briefing.items.length} 项已发布变化`)
+      : (isEn ? `No ingested notices since ${briefing.window.since}` : `自 ${briefing.window.since} 起，已同步来源中没有公告`),
+    executiveSummary: lines.length ? lines.join("\n") : (isEn ? "Nothing in the ingested sources falls in this window." : "已同步来源在该窗口内没有记录。"),
+    nextStep: isEn
+      ? "Open a notice to read it in full, or submit a transaction to have these applied to it."
+      : "需要看原文的公告可在数据源直查页按公告号打开；要判断某笔交易是否受影响，请提交该情景做审查。"
+  };
+
+  onEvent({ type: "agent_delta", agent: "briefing", text: synthesis.executiveSummary });
+  return {
+    id, createdAt: new Date().toISOString(), analysisPath: path, awaitingInput: null,
+    unavailableFacts: [], actionPlan: [], declaredFacts: {},
+    mode: mock ? "grounded-demo" : "live-model",
+    intent: grounding.intent, grounding, agents: ["briefing"],
+    synthesis, results: [], sources: [], disclaimer: disclaimerFor(locale)
+  };
+}
+
+// A memo records what was already decided. It is deliberately not a new
+// analysis: producing fresh judgements under the name "memo" would put
+// conclusions in a document that nothing on the path ever supported.
+async function answerMemo({ question, locale, history, mock, onEvent }) {
+  const id = `CASE-${Date.now().toString(36).toUpperCase()}`;
+  const isEn = locale === "en";
+  onEvent({ type: "routed", id, agents: ["memo"], mode: mock ? "grounded-demo" : "live-model" });
+
+  const priorTurns = (history || []).filter((item) => item.role === "assistant");
+  const grounding = {
+    intent: "case_memo", memo: { turns: priorTurns.length },
+    facts: [], listMatches: [], internalParties: [], screening: null, limitations: []
+  };
+  grounding.limitations.push(isEn
+    ? "A memo records the analysis already performed in this session; it introduces no new conclusion."
+    : "备忘录记录本会话已完成的分析，不引入新的结论。");
+  onEvent({ type: "grounding", intent: grounding.intent, grounding });
+
+  let path = planAnalysisPath({ agents: ["memo"], question });
+  path = resolveAnalysisPath(path, { question, grounding, results: [], declaredFacts: {}, templated: mock, final: true });
+  onEvent({ type: "path", path });
+
+  const synthesis = priorTurns.length
+    ? {
+      overallRisk: "unknown",
+      headline: isEn ? `Case memo from ${priorTurns.length} prior turns` : `基于本会话 ${priorTurns.length} 轮分析的案件备忘录`,
+      executiveSummary: priorTurns.map((turn, index) => `${index + 1}. ${String(turn.content).replace(/\s+/g, " ").slice(0, 300)}`).join("\n"),
+      nextStep: isEn ? "Check each item against the step it came from before circulating it." : "对外传阅前，请逐条对照其来源步骤复核。"
+    }
+    : {
+      overallRisk: "unknown",
+      headline: isEn ? "Nothing to write up yet" : "本会话尚无可整理的分析",
+      executiveSummary: isEn
+        ? "A memo summarises analysis already performed. Submit a scenario first, then ask for the memo."
+        : "备忘录整理的是已完成的分析。请先提交一个情景完成审查，再生成备忘录。",
+      nextStep: isEn ? "Submit a scenario." : "先提交一个情景。"
+    };
+
+  onEvent({ type: "agent_delta", agent: "memo", text: synthesis.executiveSummary });
+  return {
+    id, createdAt: new Date().toISOString(), analysisPath: path, awaitingInput: null,
+    unavailableFacts: [], actionPlan: [], declaredFacts: {},
+    mode: mock ? "grounded-demo" : "live-model",
+    intent: grounding.intent, grounding, agents: ["memo"],
+    synthesis, results: [], sources: [], disclaimer: disclaimerFor(locale)
+  };
+}
+
 async function answerLookup({ question, locale, lookup, mock, onEvent }) {
   const id = `CASE-${Date.now().toString(36).toUpperCase()}`;
   const isEn = locale === "en";
@@ -264,6 +378,15 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
   // ECCN", so there is nothing for a compliance procedure to work on — and
   // running one produced three lanes and a paragraph about routes and end users
   // instead of the number that was asked for.
+  // What the selected gem produces decides whether a review procedure applies at
+  // all. A regulatory briefing names no counterparty and no item, so running it
+  // through one produced a party-screening step for a question with no party in
+  // it — the gem said which lane to open with and nothing said whether to open
+  // any.
+  const kind = GEM_KINDS[gemId] || null;
+  if (kind === "briefing") return await answerBriefing({ question, locale, mock, onEvent });
+  if (kind === "memo") return await answerMemo({ question, locale, history, mock, onEvent });
+
   const lookup = await resolveLookup(question).catch(() => null);
   if (lookup) return await answerLookup({ question, locale, lookup, mock, onEvent });
 
