@@ -98,7 +98,9 @@ test("live H100 ECCN query removes route analysis from specialist trace", async 
   assert.deepEqual(result.agents, ["product"]);
   assert.equal(result.intent, "product_metric");
   assert.equal(result.results[0].riskLevel, "unknown");
-  assert.equal(result.synthesis.overallRisk, "unknown");
+  // A question asking what a value is has no risk level at all. "unknown" would
+  // say an assessment was attempted and came back inconclusive; none was.
+  assert.equal(result.synthesis.overallRisk, null);
   assert.doesNotMatch(JSON.stringify(result.results[0]), /Shipping route|transit|destination|TPP|route and license/i);
   assert.match(result.results[0].findings[0].detail, /4A090\.a/);
   assert.doesNotMatch(result.results[0].findings[0].detail, /4A090\. a/);

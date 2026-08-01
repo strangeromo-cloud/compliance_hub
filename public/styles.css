@@ -279,6 +279,10 @@ html[data-theme="light"] .moon-icon { display: block; }
 .answer-head > div { display: contents; }
 .answer-head h3 { grid-column: 2; }
 .answer-head .prose, .answer-head > div > p { grid-column: 1 / -1; }
+/* An answer with no risk level to state has no empty column where the badge
+   would have been: the heading starts at the edge like any other heading. */
+.answer-head.no-risk { grid-template-columns: minmax(0, 1fr); }
+.answer-head.no-risk h3 { grid-column: 1; }
 .risk-mark {
   grid-column: 1; grid-row: 1; align-self: center; display: grid; place-items: center;
   /* Sized to the title beside it, not to itself: a badge taller than the line it
@@ -965,27 +969,32 @@ details.analysis-path > summary { color: var(--text); font-weight: 600; flex-wra
 .tone-muted .step-status { color: var(--text-3); }
 .tone-crit .step-status { color: var(--risk-high); }
 
-.step-basis, .step-needs { list-style: none; padding: 0; margin: 6px 0 0; display: grid; gap: 4px; }
-
 /* Basis is what the step stands on; needs is what would settle it. The label
    gets its own column so it reads as a tag rather than running into the text —
    and the two are visually distinct, because confusing them is exactly the
-   mistake to avoid. */
-.step-basis li, .step-needs li {
-  display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 9px;
-  align-items: baseline; font-size: 11.5px; line-height: 1.65; word-break: break-word;
+   mistake to avoid.
+   One label per list, not one per line. A step that searched nine lists showed
+   nine identical 依据 tags stacked down the margin, which is a column of noise
+   where the reader wanted a list: the tag says what kind of thing follows, and
+   it only needs saying once. The lines below it keep the same indent, so the
+   run still reads as belonging to that label. */
+.step-basis, .step-needs {
+  list-style: none; padding: 0; margin: 7px 0 0; color: var(--text-2);
+  display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 3px 9px; align-items: baseline;
 }
-.step-basis li::before, .step-needs li::before {
+.step-basis::before, .step-needs::before {
+  grid-column: 1; grid-row: 1;
   font: 600 9px/1.5 var(--mono); letter-spacing: .03em; text-align: center;
   border: 1px solid currentColor; border-radius: 3px; padding: 1px 0; opacity: .85;
 }
-.step-basis li { color: var(--text-2); }
-.step-basis li::before { content: "依据"; color: var(--text-3); }
-.step-needs li { color: var(--text-2); }
-.step-needs li::before { content: "待补"; color: var(--risk-medium); }
-html[lang="en"] .step-basis li, html[lang="en"] .step-needs li { grid-template-columns: 46px minmax(0, 1fr); }
-html[lang="en"] .step-basis li::before { content: "BASIS"; font-size: 8px; }
-html[lang="en"] .step-needs li::before { content: "NEEDS"; font-size: 8px; }
+.step-basis li, .step-needs li {
+  grid-column: 2; font-size: 11.5px; line-height: 1.65; word-break: break-word;
+}
+.step-basis::before { content: "依据"; color: var(--text-3); }
+.step-needs::before { content: "待补"; color: var(--risk-medium); }
+html[lang="en"] .step-basis, html[lang="en"] .step-needs { grid-template-columns: 46px minmax(0, 1fr); }
+html[lang="en"] .step-basis::before { content: "BASIS"; font-size: 8px; }
+html[lang="en"] .step-needs::before { content: "NEEDS"; font-size: 8px; }
 
 .action-grid.single { grid-template-columns: minmax(0, 1fr); }
 
@@ -1350,8 +1359,11 @@ html[lang="en"] .step-needs li::before { content: "NEEDS"; font-size: 8px; }
 /* ---- what hangs off a conclusion ----
    The answer box has no padding of its own — its head brings its own — so
    anything appended after it has to bring its own too, or it sits on the frame. */
-.answer-extra { padding: 12px 16px 14px; border-top: 1px solid var(--border); }
-.ae-label { font-size: 11.5px; font-weight: 500; margin-bottom: 3px; }
+.answer-extra { padding: 13px 16px 15px; border-top: 1px solid var(--border); }
+/* Same label treatment as a section heading inside the conclusion, because they
+   are the same kind of thing: a name for the block under it. They were set at
+   two different sizes and weights, so the conclusion read as three designs. */
+.ae-label { font-size: 11px; font-weight: 600; letter-spacing: .07em; margin-bottom: 5px; }
 .answer-extra.is-limits .ae-label { color: var(--risk-medium); }
 .answer-extra.is-suggested .ae-label { color: var(--text-2); }
 .ae-note { margin: 0 0 7px; font-size: 10.5px; color: var(--text-3); line-height: 1.6; }
@@ -1510,10 +1522,16 @@ html[lang="en"] .step-needs li::before { content: "NEEDS"; font-size: 8px; }
 .sync-age { font-size: 10.5px; color: var(--text-3); font-variant-numeric: tabular-nums; }
 /* Sections inside a conclusion. A model writes "事实：…", "依据：…", "待办：…"
    and the structure was being flattened into identical paragraphs — the one
-   piece of organisation the writer supplied, discarded on the way to the page. */
-.prose-head { margin: 14px 0 4px; font-size: 12px; font-weight: 600; color: var(--text);
-  letter-spacing: .01em; }
-.prose-head:first-child { margin-top: 0; }
+   piece of organisation the writer supplied, discarded on the way to the page.
+   A section heading was set smaller than the text it headed — 12px over a 13px
+   body — so the one piece of structure the writer supplied read as the least
+   important line in the block. It is a label now, spaced and ruled off, and the
+   body it introduces stays the largest thing in the conclusion. */
+.prose-head {
+  margin: 15px 0 7px; padding-top: 13px; border-top: 1px solid var(--border);
+  font-size: 11px; font-weight: 600; color: var(--text-2); letter-spacing: .07em;
+}
+.prose-head:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
 .prose-labelled { margin: 4px 0; }
 .prose-labelled > b { display: inline-block; min-width: 4.5em; margin-right: 6px; font-weight: 600; color: var(--text-2); }
 .prose > p + p { margin-top: 6px; }

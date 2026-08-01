@@ -161,7 +161,10 @@ async function synthesize(question, locale, results, config, history, grounding,
   ], (text) => onDelta?.(text));
 
   return {
-    overallRisk: grounding.intent === "product_metric" ? "unknown" : (RISK_LEVELS.has(result?.overallRisk) ? result.overallRisk : "unknown"),
+    // A question asking what a value is has no risk level either, whichever gem
+    // it arrived through: the answer is a number from a table, not an assessment
+    // of a transaction.
+    overallRisk: grounding.intent === "product_metric" ? null : (RISK_LEVELS.has(result?.overallRisk) ? result.overallRisk : "unknown"),
     headline: String(result?.headline || "Human review required"),
     executiveSummary: String(result?.executiveSummary || "Insufficient information for a final conclusion."),
     nextStep: String(result?.nextStep || "Collect missing information and route to a reviewer.")
@@ -203,6 +206,11 @@ const disclaimerFor = (locale) => (locale === "en"
   ? "Prototype output for research and triage only. It is not legal advice or an automated approval decision."
   : "本结果仅用于 Prototype 信息研究与风险分流，不构成法律意见或自动审批决定。");
 
+// A briefing, a lookup and a memo have no risk level, and saying "待定" is not
+// a way of saying so: it claims an assessment was attempted and came back
+// inconclusive. None was attempted — these answer a question of fact, and the
+// risk of a transaction is not among the facts. The field is null and the
+// interface shows no badge.
 async function answerBriefing({ question, locale, mock, onEvent }) {
   const id = `CASE-${Date.now().toString(36).toUpperCase()}`;
   const isEn = locale === "en";
@@ -282,7 +290,7 @@ async function answerBriefing({ question, locale, mock, onEvent }) {
   });
 
   const synthesis = {
-    overallRisk: "unknown",
+    overallRisk: null,
     headline: briefing.items.length
       ? (isEn ? `${briefing.items.length} published changes since ${briefing.window.since}` : `自 ${briefing.window.since} 起共 ${briefing.items.length} 项已发布变化`)
       : (isEn ? `No ingested notices since ${briefing.window.since}` : `自 ${briefing.window.since} 起，已同步来源中没有公告`),
@@ -330,13 +338,13 @@ async function answerMemo({ question, locale, history, mock, onEvent }) {
 
   const synthesis = priorTurns.length
     ? {
-      overallRisk: "unknown",
+      overallRisk: null,
       headline: isEn ? `Case memo from ${priorTurns.length} prior turns` : `基于本会话 ${priorTurns.length} 轮分析的案件备忘录`,
       executiveSummary: priorTurns.map((turn, index) => `${index + 1}. ${String(turn.content).replace(/\s+/g, " ").slice(0, 300)}`).join("\n"),
       nextStep: isEn ? "Check each item against the step it came from before circulating it." : "对外传阅前，请逐条对照其来源步骤复核。"
     }
     : {
-      overallRisk: "unknown",
+      overallRisk: null,
       headline: isEn ? "Nothing to write up yet" : "本会话尚无可整理的分析",
       executiveSummary: isEn
         ? "A memo summarises analysis already performed. Submit a scenario first, then ask for the memo."
@@ -395,7 +403,7 @@ async function answerLookup({ question, locale, lookup, mock, onEvent }) {
 
   const synthesis = found.length
     ? {
-      overallRisk: "unknown",
+      overallRisk: null,
       headline: found.map((item) => `${item.subject}：${item.field} ${item.value}`).join("；").slice(0, 200),
       executiveSummary: found.map((item) => `${item.subject} 的 ${item.field} 为 ${item.value}。${item.detail || ""}（来源：${item.sourceId}）`).join(" "),
       nextStep: isEn
@@ -404,13 +412,13 @@ async function answerLookup({ question, locale, lookup, mock, onEvent }) {
     }
     : lookup.unsearchable
       ? {
-        overallRisk: "unknown",
+        overallRisk: null,
         headline: isEn ? "This lookup could not be performed" : "本次检索无法完成",
         executiveSummary: lookup.unsearchable,
         nextStep: isEn ? "Retry with the entity's English legal name." : "请改用该主体的英文法定名称重试。"
       }
       : {
-        overallRisk: "unknown",
+        overallRisk: null,
         headline: isEn ? `${lookup.asked.join(", ")} is not in the ingested records` : `${lookup.asked.join("、")} 不在已接入的数据中`,
         executiveSummary: `${isEn ? "Searched: " : "已检索："}${lookup.searched.map((source) => source.label).join("、")}。${lookup.elsewhere}`,
         nextStep: lookup.elsewhere

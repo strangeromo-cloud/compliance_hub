@@ -126,3 +126,37 @@ for (const [id, question, expected] of acceptanceScenarios) {
     assert.deepEqual(routeQuestion(question), expected);
   });
 }
+
+test("only an assessment carries a risk level", async () => {
+  // Stamping 待定 on a briefing or a lookup claims an assessment was attempted
+  // and came back inconclusive. None was attempted: these answer a question of
+  // fact, and the risk of a transaction is not among the facts.
+  const { assessScenario } = await import("../src/orchestrator.js");
+  const noRisk = [
+    { gemId: "reg-brief", question: "汇总最近 6 个月的公告变化" },
+    { gemId: "case-memo", question: "把本会话整理成案件备忘录" },
+    { gemId: "eccn-watch", question: "100-000000009 的 ECCN 是什么？" }
+  ];
+  for (const { gemId, question } of noRisk) {
+    const result = await assessScenario({ question, locale: "zh", mock: true, gemId });
+    assert.ok(result.synthesis, `${gemId} must answer rather than ask`);
+    assert.equal(result.synthesis.overallRisk, null, `${gemId} must state no risk level`);
+    assert.ok(result.synthesis.headline, `${gemId} still answers`);
+  }
+
+  // A review gem still assesses, and still says so — the contrast is the point.
+  const review = await assessScenario({
+    question: "客户 Rhein Systeme GmbH，注册号 HRB 214553，德国杜塞尔多夫。直销一批办公笔记本，最终用途为该公司自身办公使用。",
+    locale: "zh", mock: true,
+    declaredFacts: {
+      legalName: "Rhein Systeme GmbH", registrationNumber: "HRB 214553", country: "DE",
+      address: "Kölner Str. 12, 40211 Düsseldorf, Germany",
+      ownership: "创始人 Anna Reinhardt 个人持股 100%，无被列名主体直接或间接持股",
+      partNumber: "TP-14-G3", usContent: "0%", eccn: "EAR99", destination: "德国",
+      endUse: "该公司自身办公使用，无转售、无军事或核相关用途"
+    }
+  });
+  assert.ok(review.synthesis, "a review run with the facts to hand reaches a conclusion");
+  assert.ok(["low", "medium", "high", "unknown"].includes(review.synthesis.overallRisk),
+    "and that conclusion states a risk level");
+});

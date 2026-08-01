@@ -1298,9 +1298,13 @@ function conclusionMarkup(data) {
   const limitsBlock = block(t("limitations"), "", limits, "is-limits");
   const suggestedBlock = () => block(t("planSuggested"), t("planSuggestedNote"), suggested, "is-suggested");
 
+  // Only an assessment carries a risk level. A briefing, a lookup or a memo
+  // answers a question of fact, and stamping "待定" on it claims an assessment
+  // was attempted and came back inconclusive — when none was attempted at all.
+  const risk = synthesis.overallRisk;
   const verdict = `
-    <div class="answer-head">
-      <span class="risk-mark risk-${esc(synthesis.overallRisk)}">${esc(riskLabel(synthesis.overallRisk))}</span>
+    <div class="answer-head${risk ? "" : " no-risk"}">
+      ${risk ? `<span class="risk-mark risk-${esc(risk)}">${esc(riskLabel(risk))}</span>` : ""}
       <div>
         <h3>${esc(synthesis.headline)}</h3>
         <div class="prose">${formatBlock(synthesis.executiveSummary)}</div>
