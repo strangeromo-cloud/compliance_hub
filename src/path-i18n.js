@@ -54,6 +54,34 @@ const TERMS = {
   "在已接入数据中检索": "Search the ingested data",
   "按时间顺序汇总已发布公告": "Published notices, in order",
   "整理本会话已产出的结论与证据": "Assemble this session's conclusions and evidence",
+  "系统按问题结构生成": "Planned by the system from the structure of the question",
+
+  // Citations that are words rather than provisions, and the note under each
+  // step saying why it sits where it does in the procedure.
+  "前置要件": "Prerequisite",
+  "直接查询": "Direct lookup",
+  "直接汇总": "Direct roll-up",
+  "文书产出": "Document output",
+  "本系统边界": "The boundary of this system",
+  "BIS Know Your Customer 指引要求先确定实际交易方": "BIS Know Your Customer guidance requires the actual counterparty to be established first",
+  "General Prohibition Four — 被拒绝出口权利的人员": "General Prohibition Four — persons denied export privileges",
+  "同上；名称命中本身不是最终判定": "As above; a name match is not itself a determination",
+  "以身份要素而非名称字符串区分真实命中与误报": "A true match is told from a false positive by identity elements, not by the name string",
+  "间接与合计持股需穿透计算，名单检索不解决": "Indirect and aggregate holdings have to be computed through the chain; list screening does not settle them",
+  "官方 Steps 未列此步；没有准确型号则后续无法进行": "The official Steps do not list this one; without an exact model nothing downstream can proceed",
+  "官方顺序要求先判管辖，再谈分类": "The official order settles jurisdiction before classification",
+  "Classification —— 对照 CCL（Part 774）": "Classification — against the CCL (Part 774)",
+  "目的地 + 管制理由查 Commerce Country Chart（Part 738）": "Destination plus reasons for control, read from the Commerce Country Chart (Part 738)",
+  "确认是否有可用的 License Exception": "Whether any License Exception is available",
+  "DOJ 要求先说明为何需要该第三方，以及合同是否具体描述服务": "DOJ asks first why the third party is needed, and whether the contract describes the services specifically",
+  "基于风险的尽调": "Risk-based due diligence",
+  "同上；与 OFAC 50% 聚合互为输入": "As above; this and OFAC 50 Percent aggregation feed each other",
+  "付款机制控制": "Controls over the payment mechanism",
+  "DOJ 明确要求覆盖整个合作关系存续期，而非仅准入时点": "DOJ requires the whole life of the relationship to be covered, not only the point of onboarding",
+  "问题问的是一个已登记的值，不是一笔交易；没有交易就没有可审查的程序": "The question asks for a recorded value, not about a transaction; with no transaction there is no procedure to run",
+  "问题问的是一段时间内发布了什么，不是一笔交易；没有交易就没有可审查的程序": "The question asks what was published over a period, not about a transaction; with no transaction there is no procedure to run",
+  "备忘录记录既有分析，不产生新的判断": "A memo records existing analysis; it produces no new judgement",
+  "系统不做交易放行": "This system does not release transactions",
 
   // Input labels
   "法律实体全称": "Full legal entity name",
@@ -146,6 +174,11 @@ export function localizePath(path, locale) {
       steps: lane.steps.map((step) => ({
         ...step,
         title: term(step.title),
+        // The provenance under each step title — the provision it comes from and
+        // the note saying why it sits where it does — is as much part of the
+        // procedure as the title, and was left in Chinese under an English path.
+        cite: localizeLine(step.cite, locale),
+        citeNote: localizeLine(step.citeNote, locale),
         basis: localizeLines(step.basis, locale),
         needs: localizeLines(step.needs, locale),
         inputs: (step.inputs || []).map((input) => ({
@@ -155,7 +188,24 @@ export function localizePath(path, locale) {
         }))
       }))
     })),
-    derivation: (path.derivation || []).map((row) => ({ ...row, label: term(row.label) }))
+    // How the path was arrived at: which methodology each lane follows and which
+    // of its steps this system planned rather than took from the procedure.
+    basis: (path.basis || []).map((row) => ({ ...row, label: term(row.label) })),
+    derivation: (path.derivation || []).map((row) => ({
+      ...row,
+      label: term(row.label),
+      methodology: row.methodology ? { ...row.methodology, label: term(row.methodology.label) } : row.methodology,
+      plannedSteps: (row.plannedSteps || []).map(term)
+    })),
+    // Why the path is shorter than the published procedure. These lines are the
+    // system's own reasoning about scope, so they belong to the reader's
+    // language as much as any step title does — they were being shown in Chinese
+    // above an English path.
+    triage: (path.triage || []).map((gate) => ({
+      ...gate,
+      because: localizeLine(gate.because, locale),
+      cite: localizeLine(gate.cite, locale)
+    }))
   };
 }
 

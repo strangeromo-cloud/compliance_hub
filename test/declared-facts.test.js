@@ -87,8 +87,12 @@ test("triage only shortens a path on a stated fact and a stated provision", asyn
   for (const id of ["destination_chart", "licence_exception"]) {
     const step = steps.find((item) => item.id === id);
     assert.equal(step.status, "not_applicable", `${id} should not arise for EAR99`);
-    assert.match(step.basis[0], /EAR99/);
-    assert.match(step.basis[0], /依据/, "a dropped step must cite the rule that dropped it");
+    // In both languages: a shortened path has to explain itself to whoever is
+    // reading it, and the explanation was written in Chinese only.
+    assert.match(step.basis[0].zh, /EAR99/);
+    assert.match(step.basis[0].en, /EAR99/);
+    assert.match(step.basis[0].zh, /依据 § 738\.3/, "a dropped step must cite the rule that dropped it");
+    assert.match(step.basis[0].en, /under § 738\.3/, "and cite it in English too");
   }
   // The general prohibitions do not depend on classification, so they stay.
   assert.notEqual(steps.find((item) => item.id === "prohibitions").status, "not_applicable");

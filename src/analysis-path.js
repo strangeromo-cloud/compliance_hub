@@ -21,7 +21,7 @@
 
 
 import { triage } from "./triage.js";
-import { bi } from "./path-i18n.js";
+import { bi, localizeLine, translateTerm } from "./path-i18n.js";
 import { triggeredDependencies } from "./lane-dependencies.js";
 
 // Published methodologies the path follows.
@@ -752,14 +752,28 @@ export function resolveAnalysisPath(plan, { question, grounding, results = [], d
             ...item,
             ...keep,
             status: "declared",
-            basis: [...item.basis, ...answered.map((input) => `${input.label}：${declaredFacts[input.field]}（用户声明，未核验）`)],
-            needs: item.needs.filter((need) => !answered.some((input) => need.includes(input.label.split(" / ")[0])))
+            // The label is a fixed term and the value is the user's own words, so
+            // the line is written in both languages here rather than translated
+            // afterwards — the value passes through untouched either way.
+            basis: [...item.basis, ...answered.map((input) => bi(
+              `${input.label}：${declaredFacts[input.field]}（用户声明，未核验）`,
+              `${translateTerm(input.label, "en")}: ${declaredFacts[input.field]} (declared by the user, unverified)`))],
+            // A need can be a bilingual pair rather than a string — matching on
+            // the Chinese side, because the input labels this compares against
+            // are written there. Assuming a string threw, and the whole analysis
+            // failed the moment a declaration answered a step with a paired need.
+            needs: item.needs.filter((need) => !answered.some((input) =>
+              localizeLine(need, "zh").includes(input.label.split(" / ")[0])))
           };
         }
         const gated = gates.droppedSteps.get(item.id);
         if (gated && item.status !== "confirmed" && item.status !== "declared") {
+          // Both halves of this line are written in two languages, so the line
+          // is assembled per language rather than concatenated once — including
+          // its own wrapper word, which was Chinese whatever the reader had set.
           return { ...item, ...keep, status: "not_applicable", needs: [],
-            basis: [`${gated.because}（依据 ${gated.cite}）`] };
+            basis: [bi(`${localizeLine(gated.because, "zh")}（依据 ${localizeLine(gated.cite, "zh")}）`,
+              `${localizeLine(gated.because, "en")} (under ${localizeLine(gated.cite, "en")})`)] };
         }
         return { ...item, ...keep };
       }), ...[...resolved.values()]
@@ -783,7 +797,12 @@ export function resolveAnalysisPath(plan, { question, grounding, results = [], d
 // and they come in the order the steps have to close. Whatever the specialists
 // suggested that does not map onto a step is kept at the end rather than
 // dropped.
-export function buildActionPlan(path, results = []) {
+// Built from the localized path, deliberately. Every action here is a step's own
+// "needs" line restated as something to do, and those lines exist in two
+// languages: reading the raw path put Chinese needs — and, where a need was a
+// bilingual pair rather than a string, the text "[object Object]" — into an
+// English action list.
+export function buildActionPlan(path, results = [], locale = "zh") {
   const actions = [];
   const claimed = new Set();
 
@@ -797,7 +816,9 @@ export function buildActionPlan(path, results = []) {
     for (const item of lane.steps) {
       if (item.status === "declared") {
         actions.push({
-          action: `核验用户声明的信息：${item.inputs.map((input) => input.label).join("、")}`,
+          action: locale === "en"
+            ? `Verify what the user declared: ${item.inputs.map((input) => input.label).join(", ")}`
+            : `核验用户声明的信息：${item.inputs.map((input) => input.label).join("、")}`,
           unblocks: [item.title], lane: lane.lane, kind: "verify"
         });
         continue;

@@ -21,6 +21,8 @@
 // Anything a gate does not close stays in the path. Uncertainty never shortens
 // it: an unanswered or ambiguous fact leaves every downstream step standing.
 
+import { bi } from "./path-i18n.js";
+
 const NO_THIRD_PARTY = /(?:直销|直接(?:销售|供货|出口|发运)|无(?:中间商|代理|经销商|第三方)|没有(?:中间商|代理|经销商|第三方)|end.customer directly|direct sale|no (?:agent|intermediary|distributor|third.party))/i;
 const THIRD_PARTY = /代理商|代理|经销商|分销商|中间商|中介|顾问|咨询公司|第三方|agent|intermediar|distributor|reseller|consultant|broker|freight.forwarder|货代/i;
 
@@ -41,7 +43,7 @@ export const GATES = [
     dropsLane: "tpdd",
     cite: "DOJ ECCP — Third-Party Management",
     decide({ question }) {
-      if (NO_THIRD_PARTY.test(question)) return { closed: true, because: "问题描述为直接交易，未涉及代理、经销或中间方" };
+      if (NO_THIRD_PARTY.test(question)) return { closed: true, because: bi("问题描述为直接交易，未涉及代理、经销或中间方", "The question describes a direct transaction, with no agent, distributor or intermediary") };
       if (THIRD_PARTY.test(question)) return { closed: false };
       // Silence is not an answer. A transaction that says nothing about how it is
       // routed may well have an intermediary nobody mentioned.
@@ -54,7 +56,7 @@ export const GATES = [
     cite: "§ 734.4 de minimis · § 732.2 Steps 1–6",
     decide({ facts }) {
       if (BELOW_DE_MINIMIS.test(String(facts.usContent || "").trim())) {
-        return { closed: true, because: "受控美国原产内容低于 de minimis 门槛，物项不因此受 EAR 管辖" };
+        return { closed: true, because: bi("受控美国原产内容低于 de minimis 门槛，物项不因此受 EAR 管辖", "Controlled US-origin content is below the de minimis threshold, so the item is not subject to the EAR on that basis") };
       }
       return { closed: false };
     }
@@ -66,10 +68,10 @@ export const GATES = [
     // apply — end-user, end-use and embargo do not depend on classification — so
     // that step is deliberately not dropped here.
     dropsSteps: ["destination_chart", "licence_exception"],
-    cite: "§ 738.3 Country Chart 适用于列名 ECCN · Part 740",
+    cite: bi("§ 738.3 Country Chart 适用于列名 ECCN · Part 740", "§ 738.3 Country Chart applies to listed ECCNs · Part 740"),
     decide({ facts }) {
       if (EAR99.test(String(facts.eccn || ""))) {
-        return { closed: true, because: "分类为 EAR99，不在管制清单上，无 Country Chart 单元可查、无基于 ECCN 的许可例外" };
+        return { closed: true, because: bi("分类为 EAR99，不在管制清单上，无 Country Chart 单元可查、无基于 ECCN 的许可例外", "Classified EAR99: on no Control List entry, so there is no Country Chart cell to read and no ECCN-based licence exception to consider") };
       }
       return { closed: false };
     }

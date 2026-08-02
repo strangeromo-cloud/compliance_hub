@@ -4,7 +4,7 @@ import { retrievePublicSources } from "./retrieval.js";
 import { callJsonModel, callJsonModelStream, readableProjection } from "./llm.js";
 import { assessClearance } from "./clearance.js";
 import { resolveLookup } from "./lookup.js";
-import { localizePath, localizeLines } from "./path-i18n.js";
+import { localizePath, localizeLines, localizeLine } from "./path-i18n.js";
 import { buildBriefing } from "./briefing.js";
 import { GEM_KINDS } from "./gem-kinds.js";
 import { createMockAgentResult, createMockSynthesis } from "./mock.js";
@@ -131,9 +131,9 @@ async function runAgent(agent, question, locale, sources, config, history, groun
 function clearanceBrief(clearance) {
   if (!clearance) return "";
   if (clearance.cleared) {
-    return `Every clearance condition was met on the stated facts: ${clearance.checks.map((check) => `${check.because} (${check.cite})`).join("; ")}. Where the specialists agree, an overallRisk of "low" is correct here. State the conclusion as "no licence requirement arises on these facts", never as an approval or a release. `;
+    return `Every clearance condition was met on the stated facts: ${clearance.checks.map((check) => `${localizeLine(check.because, "en")} (${localizeLine(check.cite, "en")})`).join("; ")}. Where the specialists agree, an overallRisk of "low" is correct here. State the conclusion as "no licence requirement arises on these facts", never as an approval or a release. `;
   }
-  return `Clearance conditions NOT met: ${clearance.unmet.map((check) => check.because).join("; ")}. overallRisk must not be "low". `;
+  return `Clearance conditions NOT met: ${clearance.unmet.map((check) => localizeLine(check.because, "en")).join("; ")}. overallRisk must not be "low". `;
 }
 
 // The page renders headings, labelled lines and lists, and the model was never
@@ -541,7 +541,7 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
   // A clear conclusion has to carry its own conditions, or it reads as an
   // approval. They go in the limitations block the page already renders, next to
   // the conclusion rather than at the end of a document nobody scrolls to.
-  if (clearance.cleared) groundingSummary.limitations = [...groundingSummary.limitations, ...clearance.conditions];
+  if (clearance.cleared) groundingSummary.limitations = [...groundingSummary.limitations, ...localizeLines(clearance.conditions, locale)];
   let synthesis = null;
   let awaiting = null;
 
@@ -616,10 +616,11 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
   analysisPath = { ...analysisPath, awaitingInput: awaiting ? { step: awaiting.id, title: awaiting.title } : null };
   onEvent({ type: "path", path: analysisPath, final: true });
 
+  const localizedPath = localizePath(analysisPath, locale);
   return {
     id,
     createdAt: new Date().toISOString(),
-    analysisPath: localizePath(analysisPath, locale),
+    analysisPath: localizedPath,
     // The run stopped to ask rather than finishing. Everything downstream — the
     // conclusion, the case record, the thread summary — has to be able to tell
     // "not answered yet" from "answered".
@@ -628,7 +629,7 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
     // declined question is not an answered one — but the run does not stop there
     // again.
     unavailableFacts,
-    actionPlan: buildActionPlan(analysisPath, results),
+    actionPlan: buildActionPlan(localizedPath, results, locale),
     declaredFacts,
     mode: mock ? "grounded-demo" : "live-model",
     intent: grounding.intent,

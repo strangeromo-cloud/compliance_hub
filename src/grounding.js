@@ -278,13 +278,16 @@ export async function collectGrounding(question, agents = [], declaredFacts = {}
     if (screening.fallbackSources.length) {
       // Surfaced as a limitation, not a footnote: the reader has to know the
       // screening ran against a stored copy that later notices may supersede.
-      grounding.limitations.push(
-        `以下来源本机未同步，本次使用随仓库提交的时点快照：${screening.fallbackSources.map((source) => `${source.sourceId}（${String(source.capturedAt).slice(0, 10)}）`).join("、")}。`
-        + "快照之后发布的新增、暂停或废止公告不在其中，依赖结论前必须重新同步。"
-      );
+      const stale = screening.fallbackSources.map((source) => `${source.sourceId}（${String(source.capturedAt).slice(0, 10)}）`).join("、");
+      const staleEn = screening.fallbackSources.map((source) => `${source.sourceId} (${String(source.capturedAt).slice(0, 10)})`).join(", ");
+      grounding.limitations.push(bi(
+        `以下来源本机未同步，本次使用随仓库提交的时点快照：${stale}。快照之后发布的新增、暂停或废止公告不在其中，依赖结论前必须重新同步。`,
+        `These sources are not synced on this host, so a point-in-time copy committed with the repository was used: ${staleEn}. Additions, suspensions and revocations published since that copy are not in it; re-sync before relying on this conclusion.`
+      ));
     }
     if (!screening.screenedSources.length) {
-      grounding.limitations.push("没有任何受限方名单已同步到本机，本次回答不包含任何名单筛查结果。");
+      grounding.limitations.push(bi("没有任何受限方名单已同步到本机，本次回答不包含任何名单筛查结果。",
+        "No restricted-party list is synced on this host, so this answer contains no screening result at all."));
     }
   }
 

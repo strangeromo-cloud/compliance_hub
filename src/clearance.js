@@ -24,6 +24,8 @@
 // system does not release transactions. What changes is whether that step is a
 // formality on a clean file or the place a blocked case stops.
 
+import { bi } from "./path-i18n.js";
+
 const NO_THIRD_PARTY = /(?:直销|直接(?:销售|供货|出口|发运)|无(?:中间商|代理|经销商|第三方)|没有(?:中间商|代理|经销商|第三方)|end.customer directly|direct sale|no (?:agent|intermediary|distributor|third.party))/i;
 
 const EAR99 = /^\s*ear\s*-?\s*99\s*$/i;
@@ -33,14 +35,19 @@ const BELOW_DE_MINIMIS = /^<\s*10%$/;
 // An allow-list, not a block-list: a country nobody wrote a rule for must not
 // fall through into "fine". These are Country Group A:1 members plus the other
 // close partners the prototype uses in its fixtures.
+// Each destination carries its name in both languages, because the condition it
+// produces is read by both sides: "目的地为德国" and "the destination is Germany"
+// are the same finding, and a reader on the English side should not be told it
+// in Chinese.
 const UNRESTRICTED_DESTINATIONS = [
-  [/德国|germany/i, "德国"], [/法国|france/i, "法国"], [/荷兰|netherlands/i, "荷兰"],
-  [/英国|united kingdom|\buk\b/i, "英国"], [/日本|japan/i, "日本"], [/韩国|south korea|korea, republic/i, "韩国"],
-  [/加拿大|canada/i, "加拿大"], [/澳大利亚|australia/i, "澳大利亚"], [/意大利|italy/i, "意大利"],
-  [/西班牙|spain/i, "西班牙"], [/瑞典|sweden/i, "瑞典"], [/丹麦|denmark/i, "丹麦"],
-  [/挪威|norway/i, "挪威"], [/芬兰|finland/i, "芬兰"], [/比利时|belgium/i, "比利时"],
-  [/奥地利|austria/i, "奥地利"], [/瑞士|switzerland/i, "瑞士"], [/爱尔兰|ireland/i, "爱尔兰"],
-  [/新西兰|new zealand/i, "新西兰"]
+  [/德国|germany/i, "德国", "Germany"], [/法国|france/i, "法国", "France"], [/荷兰|netherlands/i, "荷兰", "the Netherlands"],
+  [/英国|united kingdom|\buk\b/i, "英国", "the United Kingdom"], [/日本|japan/i, "日本", "Japan"],
+  [/韩国|south korea|korea, republic/i, "韩国", "South Korea"],
+  [/加拿大|canada/i, "加拿大", "Canada"], [/澳大利亚|australia/i, "澳大利亚", "Australia"], [/意大利|italy/i, "意大利", "Italy"],
+  [/西班牙|spain/i, "西班牙", "Spain"], [/瑞典|sweden/i, "瑞典", "Sweden"], [/丹麦|denmark/i, "丹麦", "Denmark"],
+  [/挪威|norway/i, "挪威", "Norway"], [/芬兰|finland/i, "芬兰", "Finland"], [/比利时|belgium/i, "比利时", "Belgium"],
+  [/奥地利|austria/i, "奥地利", "Austria"], [/瑞士|switzerland/i, "瑞士", "Switzerland"], [/爱尔兰|ireland/i, "爱尔兰", "Ireland"],
+  [/新西兰|new zealand/i, "新西兰", "New Zealand"]
 ];
 
 // End uses that carry their own prohibition regardless of classification
@@ -80,7 +87,7 @@ const stated = (value) => {
 function destinationOf(facts) {
   const declared = stated(facts.destination);
   const hit = declared ? UNRESTRICTED_DESTINATIONS.find(([pattern]) => pattern.test(declared)) : null;
-  return { declared, name: hit?.[1] || null, unrestricted: Boolean(hit) };
+  return { declared, name: hit?.[1] || null, nameEn: hit?.[2] || null, unrestricted: Boolean(hit) };
 }
 
 // The list a US export conclusion cannot be drawn without.
@@ -108,36 +115,40 @@ function conditions({ question, facts, grounding }) {
   const unsynced = screening?.unsyncedSources || [];
   const missingRequired = REQUIRED_LISTS.filter((sourceId) => unsynced.includes(sourceId));
   checks.push(matches.length === 0 && screening?.screenedSources?.length && !missingRequired.length
-    ? { id: "screening", met: true, cite: "§ 732.3(g) · Supplement No. 3 to Part 732", because: `已筛查 ${screening.screenedSources.length} 个官方名单来源（含 CSL，其中包含 OFAC SDN 与 BIS 实体清单），无名称命中` }
+    ? { id: "screening", met: true, cite: "§ 732.3(g) · Supplement No. 3 to Part 732", because: bi(`已筛查 ${screening.screenedSources.length} 个官方名单来源（含 CSL，其中包含 OFAC SDN 与 BIS 实体清单），无名称命中`, `Screened ${screening.screenedSources.length} official list sources (including the CSL, which carries the OFAC SDN and BIS Entity lists); no name matched`) }
     : {
       id: "screening", met: false,
-      because: matches.length ? `名单存在 ${matches.length} 条潜在命中，需先完成身份消歧`
-        : missingRequired.length ? `美国综合筛查名单（trade-csl）尚未同步，本次未筛查——来源缺失不等于无风险，请先在「数据覆盖」页同步一次`
-          : "尚未对交易方完成官方名单筛查"
+      because: matches.length
+        ? bi(`名单存在 ${matches.length} 条潜在命中，需先完成身份消歧`,
+          `${matches.length} potential list matches stand unresolved; identity resolution has to come first`)
+        : missingRequired.length
+          ? bi("美国综合筛查名单（trade-csl）尚未同步，本次未筛查——来源缺失不等于无风险，请先在「数据覆盖」页同步一次",
+            "The US Consolidated Screening List (trade-csl) is not synced, so it was not searched. A missing source is not an absence of risk; sync it once from the data coverage page.")
+          : bi("尚未对交易方完成官方名单筛查", "The counterparty has not been screened against the official lists")
     });
 
   const eccn = stated(facts.eccn);
   const usContent = stated(facts.usContent);
   if (EAR99.test(eccn || "")) {
-    checks.push({ id: "classification", met: true, cite: "Part 774 CCL · § 738.3", because: "分类为 EAR99：受 EAR 管辖但不在管制清单上，无 Country Chart 单元可查" });
+    checks.push({ id: "classification", met: true, cite: "Part 774 CCL · § 738.3", because: bi("分类为 EAR99：受 EAR 管辖但不在管制清单上，无 Country Chart 单元可查", "Classified EAR99: subject to the EAR but on no Control List entry, so there is no Country Chart cell to read") });
   } else if (BELOW_DE_MINIMIS.test(usContent || "")) {
-    checks.push({ id: "classification", met: true, cite: "§ 734.4 de minimis", because: "受控美国原产内容低于 de minimis 门槛，物项不因此受 EAR 管辖" });
+    checks.push({ id: "classification", met: true, cite: "§ 734.4 de minimis", because: bi("受控美国原产内容低于 de minimis 门槛，物项不因此受 EAR 管辖", "Controlled US-origin content is below the de minimis threshold, so the item is not subject to the EAR on that basis") });
   } else {
-    checks.push({ id: "classification", met: false, because: eccn ? `分类为 ${eccn}，属列名 ECCN，需继续查管制理由与目的地矩阵` : "尚未确定分类（ECCN 或 de minimis 判定）" });
+    checks.push({ id: "classification", met: false, because: eccn ? bi(`分类为 ${eccn}，属列名 ECCN，需继续查管制理由与目的地矩阵`, `Classified ${eccn}, a listed ECCN, so the reasons for control and the Country Chart still have to be read`) : bi("尚未确定分类（ECCN 或 de minimis 判定）", "Classification is not established: neither an ECCN nor a de minimis determination") });
   }
 
   checks.push(destination.unrestricted
-    ? { id: "destination", met: true, cite: "Part 738 Commerce Country Chart · Part 740", because: `目的地为${destination.name}，非禁运或武器禁运目的地` }
-    : { id: "destination", met: false, because: destination.declared ? `目的地「${destination.declared}」不在本系统的免许可目的地清单内，需逐项核对国别矩阵与制裁措施` : "尚未说明最终目的地" });
+    ? { id: "destination", met: true, cite: "Part 738 Commerce Country Chart · Part 740", because: bi(`目的地为${destination.name}，非禁运或武器禁运目的地`, `The destination is ${destination.nameEn}, which is neither embargoed nor under an arms embargo`) }
+    : { id: "destination", met: false, because: destination.declared ? bi(`目的地「${destination.declared}」不在本系统的免许可目的地清单内，需逐项核对国别矩阵与制裁措施`, `The stated destination “${destination.declared}” is not on this system’s licence-free list, so the Country Chart and the sanctions programmes have to be read item by item`) : bi("尚未说明最终目的地", "No final destination has been stated") });
 
   checks.push(NO_THIRD_PARTY.test(question)
-    ? { id: "third_party", met: true, cite: "DOJ ECCP — Third-Party Management", because: "问题描述为直接交易，未涉及代理、经销或中间方" }
-    : { id: "third_party", met: false, because: "未说明是否存在代理、经销商或中间方——未提及不等于没有" });
+    ? { id: "third_party", met: true, cite: "DOJ ECCP — Third-Party Management", because: bi("问题描述为直接交易，未涉及代理、经销或中间方", "The question describes a direct transaction, with no agent, distributor or intermediary") }
+    : { id: "third_party", met: false, because: bi("未说明是否存在代理、经销商或中间方——未提及不等于没有", "Whether an agent, distributor or intermediary is involved was not stated, and silence is not an answer") });
 
   const endUseText = withoutDenials(`${endUse || ""} ${question}`);
   checks.push(endUse && !PROHIBITED_END_USE.test(endUseText)
-    ? { id: "end_use", met: true, cite: "§ 744 General Prohibition Five", because: `最终用途已声明为「${endUse}」，未落入 § 744 列举的禁止用途` }
-    : { id: "end_use", met: false, because: endUse ? `声明的最终用途「${endUse}」触及 § 744 列举的敏感用途，需要单独判断` : "尚未声明最终用户与最终用途" });
+    ? { id: "end_use", met: true, cite: "§ 744 General Prohibition Five", because: bi(`最终用途已声明为「${endUse}」，未落入 § 744 列举的禁止用途`, `The end use is declared as “${endUse}”, which is not among the uses prohibited by § 744`) }
+    : { id: "end_use", met: false, because: endUse ? bi(`声明的最终用途「${endUse}」触及 § 744 列举的敏感用途，需要单独判断`, `The declared end use “${endUse}” touches a sensitive use listed in § 744 and has to be assessed on its own`) : bi("尚未声明最终用户与最终用途", "No end user or end use has been declared") });
 
   return checks;
 }
@@ -158,11 +169,14 @@ export function assessClearance({ question = "", facts = {}, grounding = {}, pat
     // Stated with the conclusion, because a clearance that does not carry its
     // own conditions is indistinguishable from an approval.
     conditions: [
-      "以上事实由申报方陈述，未经独立核验；任一事实变化即需重新判断。",
-      "无许可要求不等于无记录义务：仍须按 § 762 保存出口记录五年。",
+      bi("以上事实由申报方陈述，未经独立核验；任一事实变化即需重新判断。",
+        "The facts above are as stated by the declaring party and have not been independently verified; if any of them changes, the assessment has to be redone."),
+      bi("无许可要求不等于无记录义务：仍须按 § 762 保存出口记录五年。",
+        "No licence requirement is not the same as no recordkeeping obligation: export records must still be kept for five years under § 762."),
       // Which lists went unscreened is already stated by grounding, so it is not
       // repeated here.
-      "本结论仅覆盖美国 EAR 与本次已筛查的名单，不含目的国进口管制、制裁或其他法域要求。"
+      bi("本结论仅覆盖美国 EAR 与本次已筛查的名单，不含目的国进口管制、制裁或其他法域要求。",
+        "This conclusion covers the US EAR and the lists screened here. It does not cover the destination country's import controls, its sanctions, or the requirements of any other jurisdiction.")
     ]
   };
 }

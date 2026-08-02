@@ -50,10 +50,13 @@ const clear = (overrides = {}) => assessClearance({
 
 test("a file that meets every condition reaches a clear outcome", () => {
   const verdict = clear();
-  assert.equal(verdict.cleared, true, verdict.unmet.map((check) => check.because).join(" | "));
+  assert.equal(verdict.cleared, true, verdict.unmet.map((check) => check.because?.zh ?? check.because).join(" | "));
   // A conclusion without its conditions is indistinguishable from an approval.
   assert.ok(verdict.conditions.length >= 3);
-  assert.ok(verdict.conditions.some((line) => /762/.test(line)), "record-keeping survives a clear outcome");
+  // Carried in both languages: a conclusion states its conditions to whoever is
+  // reading it.
+  assert.ok(verdict.conditions.some((line) => /762/.test(line.zh)), "record-keeping survives a clear outcome");
+  assert.ok(verdict.conditions.every((line) => line.zh && line.en), "each condition is written in both languages");
   for (const check of verdict.checks) assert.ok(check.cite, `${check.id} must name the provision it rests on`);
 });
 
@@ -81,7 +84,10 @@ test("a placeholder answer is not a fact", () => {
 test("an unscreened US list blocks a clear outcome", () => {
   const verdict = clear({ grounding: { screening: { screenedSources: [{}], unsyncedSources: ["trade-csl"] }, listMatches: [] } });
   assert.equal(verdict.cleared, false);
-  assert.match(verdict.unmet[0].because, /trade-csl|综合筛查/, "the answer must name what was not screened");
+  // Named in both languages: a reader on either side has to be told which list
+  // went unsearched, not just that one did.
+  assert.match(verdict.unmet[0].because.zh, /trade-csl|综合筛查/, "the Chinese answer must name what was not screened");
+  assert.match(verdict.unmet[0].because.en, /trade-csl|Consolidated Screening/, "the English answer must name what was not screened");
 });
 
 test("a potential list match blocks a clear outcome", () => {
@@ -617,4 +623,51 @@ test("the resolved parent is actually screened, not just named", async () => {
 
   // And the path records why the step is there at all.
   assert.ok(path.triggered.some((edge) => edge.to.step === "parent_screening"));
+});
+
+test("an English answer is English all the way down", async () => {
+  // The conclusion was translated and the procedure under it was not, so a
+  // reader on the English side got an English verdict over Chinese reasoning:
+  // gate explanations, clearance conditions, the action list. Checking one
+  // string at a time only ever finds the leak someone noticed — this walks
+  // everything the answer says in its own voice and fails on any CJK character.
+  //
+  // The scenario is deliberately European: no Chinese source data, no Chinese
+  // party name, so every remaining CJK character is this system's own words
+  // leaking through rather than data being quoted faithfully.
+  const { assessScenario } = await import("../src/orchestrator.js");
+  const CJK = /[　-〿㐀-䶿一-鿿＀-￯]/;
+
+  const result = await assessScenario({
+    question: "Customer Rhein Systeme GmbH, registration HRB 214553, Düsseldorf, Germany. Direct sale of EAR99 office laptops, no intermediary, for the customer's own office use.",
+    locale: "en", mock: true,
+    declaredFacts: {
+      legalName: "Rhein Systeme GmbH", registrationNumber: "HRB 214553", country: "DE",
+      address: "Kölner Str. 12, 40211 Düsseldorf, Germany",
+      ownership: "Founder Anna Reinhardt holds 100%; no designated party holds an interest",
+      partNumber: "TP-14-G3", usContent: "< 10%", eccn: "EAR99", destination: "Germany",
+      endUse: "the customer's own office use, no resale, no military or nuclear application"
+    }
+  });
+
+  const leaks = [];
+  const walk = (value, where) => {
+    if (typeof value === "string") { if (CJK.test(value)) leaks.push(`${where}: ${value.slice(0, 90)}`); return; }
+    if (Array.isArray(value)) return value.forEach((item, index) => walk(item, `${where}[${index}]`));
+    if (value && typeof value === "object") {
+      for (const [key, inner] of Object.entries(value)) {
+        // What the user typed is echoed back as they typed it, and a source's
+        // own record is quoted as published. Neither is this system speaking.
+        if (key === "declaredFacts" || key === "question") continue;
+        walk(inner, `${where}.${key}`);
+      }
+    }
+  };
+  walk(result.analysisPath, "analysisPath");
+  walk(result.actionPlan, "actionPlan");
+  walk(result.synthesis, "synthesis");
+  walk(result.grounding?.limitations, "limitations");
+  walk(result.results, "results");
+
+  assert.deepEqual(leaks, [], `English answer still carries Chinese:\n${leaks.join("\n")}`);
 });
