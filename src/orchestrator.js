@@ -470,6 +470,13 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
   let analysisPath = planAnalysisPath({ agents, gemId, routeReasons: routing.reasons, routeMatched: routing.matched, question: contextualQuestion, declaredFacts });
   onEvent({ type: "path", path: localizePath(analysisPath, locale) });
 
+  // Retrieval and grounding are the longest silent stretch of a run: the plan is
+  // on screen and nothing moves for seconds while official sources are fetched
+  // and the whole restricted-party corpus is screened. The stages were announced
+  // only after each finished, which is the wrong end — a reader watching a static
+  // framework cannot tell a slow run from a hung one. Each one says what it is
+  // about to do before it does it.
+  onEvent({ type: "stage", key: "sources" });
   const selectedSources = sourcesForAgents(agents, question);
   const sources = await retrievePublicSources(selectedSources);
   const publicSources = sources.map(({ excerpt, retrievalError, ...source }) => ({
@@ -479,6 +486,7 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
   }));
   onEvent({ type: "sources", sources: publicSources });
 
+  onEvent({ type: "stage", key: "grounding" });
   const grounding = await collectGrounding(contextualQuestion, agents, declaredFacts);
   // The comparison detail is the argument behind the conclusion. Returning only
   // counts left the reader with a verdict and no way to see how it was reached.

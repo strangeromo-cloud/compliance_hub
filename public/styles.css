@@ -1453,7 +1453,10 @@ html[lang="en"] .step-needs::before { content: "NEEDS"; font-size: 8px; }
 .fl-step.current .fl-node { animation: asking-pulse 1.8s ease-in-out infinite; }
 .fl-step.current .fl-text { color: var(--text); font-weight: 600; }
 /* While the analysis is running on that step the whole row says so. */
-.flow-panel .fl-step.current.is-running .fl-text::after { content: "…"; margin-left: 4px; color: var(--accent-text); }
+/* Both rails, not only the docked one: below the breakpoint that hides the right
+   column the inline copy is the only rail there is, and it was the copy without
+   the indicator. */
+.fl-step.current.is-running .fl-text::after { content: "…"; margin-left: 4px; color: var(--accent-text); }
 @media (prefers-reduced-motion: reduce) { .fl-step.current .fl-node { animation: none; } }
 
 /* ---- what does not apply, folded away ---- */

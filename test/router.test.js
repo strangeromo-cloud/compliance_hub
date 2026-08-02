@@ -160,3 +160,28 @@ test("only an assessment carries a risk level", async () => {
   assert.ok(["low", "medium", "high", "unknown"].includes(review.synthesis.overallRisk),
     "and that conclusion states a risk level");
 });
+
+test("a run says what it is doing before it does it", async () => {
+  // Retrieval and screening are the longest silent stretch of a review: the plan
+  // is on screen and nothing moves while official sources are fetched and the
+  // whole restricted-party corpus is searched. Both stages were announced only
+  // after finishing, which is the wrong end of the work — a reader watching a
+  // static framework cannot tell a slow run from a hung one.
+  const { assessScenario } = await import("../src/orchestrator.js");
+  const seen = [];
+  await assessScenario({
+    question: "客户 Aveox Technologies (Shenzhen) Co., Ltd.，直销，请做受限方筛查",
+    locale: "zh", mock: true,
+    onEvent: (event) => seen.push(event.type === "stage" ? `stage:${event.key}` : event.type)
+  });
+
+  const order = seen.filter((name) => name.startsWith("stage:") || name === "sources" || name === "grounding" || name === "path");
+  assert.ok(order.indexOf("stage:sources") > -1, "the run announces retrieval");
+  assert.ok(order.indexOf("stage:grounding") > -1, "and screening");
+  // Announced before the result of that work arrives, not after — which is the
+  // whole point: the announcement has to cover the wait, not follow it.
+  assert.ok(order.indexOf("stage:sources") < order.indexOf("sources"), "retrieval is announced before its result");
+  assert.ok(order.indexOf("stage:grounding") < order.indexOf("grounding"), "screening is announced before its result");
+  // And the plan is up before either, so there is something to announce against.
+  assert.ok(order.indexOf("path") < order.indexOf("stage:sources"), "the plan goes up first");
+});

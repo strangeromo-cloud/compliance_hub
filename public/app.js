@@ -847,7 +847,13 @@ function flowMarkup(path, options = {}) {
   // showing "continuing the analysis" — and computing a fresh guess put the rail
   // on a later step the body was not working on. While a specialist is running it
   // is that lane. Otherwise it is the question waiting on the reader.
-  const runningLane = options.activeLane ? path.lanes.find((lane) => lane.lane === options.activeLane) : null;
+  const runningLane = options.activeLane
+    ? path.lanes.find((lane) => lane.lane === options.activeLane)
+    // Before the first specialist starts, the work is retrieval and screening —
+    // which belongs to the first lane. Falling through to "the first blocked
+    // step" pointed the rail at a question waiting on the reader while the run
+    // was busy elsewhere.
+    : (options.stage ? path.lanes[0] : null);
   const asking = options.currentStep
     || (runningLane
       // Settled means settled, and a step the procedure does not reach for is
@@ -882,8 +888,14 @@ function flowMarkup(path, options = {}) {
           const view = stepState(item);
           const shape = FLOW_STATE[view] || FLOW_STATE[item.status] || FLOW_STATE.pending;
           const current = item.id === asking;
+          // "Running" used to mean only "a continuation is in flight", so during
+          // an ordinary run — the whole of retrieval, screening and the
+          // specialists — the rail marked a step as current and then said nothing
+          // about whether anything was happening to it. A reader watching a
+          // static rail cannot tell work from a hang.
+          const isRunning = current && Boolean(options.currentStep || options.activeLane || options.stage);
           return `
-          <li class="fl-step ${shape.cls} ${current ? "current" : ""} ${current && options.currentStep ? "is-running" : ""}">
+          <li class="fl-step ${shape.cls} ${current ? "current" : ""} ${isRunning ? "is-running" : ""}">
             <button type="button" data-flow-step="${esc(item.id)}" title="${esc([label(STEP_STATUS_VOCAB, item.status, state.locale), item.needs?.[0] || item.basis?.[0] || ""].filter(Boolean).join(" — "))}">
               <span class="fl-node" aria-hidden="true">${shape.mark}</span>
               <span class="fl-text">${esc(item.title)}</span>
@@ -1653,7 +1665,7 @@ async function analyze(event, options = {}) {
   const collected = { agents: [], sources: [] };
   // Lane progress is kept outside the DOM so a redraw can restore the streamed
   // text: the path is re-rendered whenever a lane starts or finishes.
-  const progress = { activeLane: null, doneLanes: new Set(), text: {}, summary: {}, index: 0, total: 0, clock: null };
+  const progress = { activeLane: null, doneLanes: new Set(), text: {}, summary: {}, index: 0, total: 0, clock: null, stage: null };
 
   // Each delta carries the whole readable text of the call that produced it, not
   // an increment — the projection re-normalizes whitespace, so diffing against the
@@ -1696,6 +1708,43 @@ async function analyze(event, options = {}) {
         setStream(laneNode.querySelector("[data-lane-stream]"), null, progress.text[lane]);
       }
     }
+  }
+
+  // Between the plan going up and the first specialist speaking, retrieval and
+  // screening run for seconds with nothing on screen changing — which reads as a
+  // hang. It cannot go in a lane's own box: lanes are revealed as they run, and
+  // during this window none has, so there is no lane box to write into and
+  // nothing would have appeared. It goes under the framework instead, which is
+  // exactly what the reader is looking at, and says which stage is running.
+  function showStageWaiting() {
+    const host = live.querySelector("[data-live-path]");
+    const existing = host?.querySelector("[data-stage-wait]");
+    if (!host || progress.activeLane || !progress.stage) return existing?.remove();
+    const label = t(`step_${progress.stage}`);
+    if (existing) return void (existing.querySelector(".sb-who").textContent = label);
+    host.insertAdjacentHTML("beforeend",
+      `<div class="stream-box is-live is-waiting" data-stage-wait>
+        <div class="sb-who">${esc(label)}</div>
+        <div class="sb-text"></div>
+        <div class="sb-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+      </div>`);
+  }
+
+  // The body follows the work, but only when it has left the screen. The one
+  // deliberate scroll at the end of a run is what puts the reader on the question
+  // waiting for them; this is the same restraint applied while the run is going —
+  // a lane that scrolled out of view while the previous one finished is brought
+  // back, and a lane already visible is left exactly where it is. Scrolling on
+  // every event would take the page away from a reader who is reading.
+  function followRunning() {
+    const lane = progress.activeLane || collected.path?.lanes?.[0]?.lane;
+    if (!lane) return;
+    const node = live.querySelector(`.path-lane[data-lane="${CSS.escape(lane)}"]`);
+    if (!node) return;
+    const box = node.getBoundingClientRect();
+    const view = $("thread").getBoundingClientRect();
+    if (box.top >= view.top + 20 && box.top <= view.bottom - 80) return;
+    node.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   function drawPath() {
@@ -1754,7 +1803,11 @@ async function analyze(event, options = {}) {
     if (event.type === "path") {
       collected.path = event.path;
       drawPath();
-      renderFlowPanel(event.path, { activeLane: progress.activeLane });
+      // drawPath rebuilds the lane markup, so the waiting box has to be put back
+      // — otherwise announcing a stage and then resolving the path wipes the one
+      // sign that anything is happening.
+      showStageWaiting();
+      renderFlowPanel(event.path, { activeLane: progress.activeLane, stage: progress.stage });
     }
     // A path with no specialists — a lookup, a briefing, a memo — used to sit on
     // "retrieving official sources" for the whole of its work, with no clock and
@@ -1765,12 +1818,26 @@ async function analyze(event, options = {}) {
       clearInterval(progress.clock);
       renderSteps(live, done, event.key);
       progress.clock = startElapsed(live);
+      // And inside the path, where the analysis will appear. A line at the top of
+      // the answer saying "screening and structured facts" is easy to miss above a
+      // framework that is not moving; the reader is looking at the lanes, so the
+      // lane about to run is where it has to be said.
+      progress.stage = event.key;
+      showStageWaiting();
+      renderFlowPanel(collected.path, { activeLane: progress.activeLane, stage: progress.stage });
+      followRunning();
       return;
     }
     if (event.type === "agent_start") {
       // The lane becomes the active one, so the reasoning about to stream lands
       // inside the steps it is reasoning about.
       progress.activeLane = event.agent;
+      // Retrieval and screening are over once a specialist speaks. Leaving the
+      // stage set would put the waiting animation back on the first lane every
+      // time a lane finished and the next had not yet started — and again on the
+      // final path event, so a finished answer would end on a spinner.
+      progress.stage = null;
+      showStageWaiting();
       progress.index = (progress.index || 0) + 1;
       clearInterval(progress.clock);
       renderSteps(live, done, "agents", `${agentName(event.agent)} · ${progress.index}/${progress.total}`);
@@ -1778,7 +1845,8 @@ async function analyze(event, options = {}) {
       drawPath();
       // Label and placeholder go up immediately; the first token can be seconds away.
       streamInto(event.agent, `${agentName(event.agent)} · ${progress.index}/${progress.total}`, "");
-      renderFlowPanel(collected.path, { activeLane: progress.activeLane });
+      renderFlowPanel(collected.path, { activeLane: progress.activeLane, stage: progress.stage });
+      followRunning();
     }
     // A provider that ignores stream: true degrades to one update at the end,
     // which is indistinguishable from a broken feature unless it is said.
@@ -1796,7 +1864,7 @@ async function analyze(event, options = {}) {
       progress.summary[event.result.agent] = event.result;
       if (progress.activeLane === event.result.agent) progress.activeLane = null;
       drawPath();
-      renderFlowPanel(collected.path, { activeLane: progress.activeLane });
+      renderFlowPanel(collected.path, { activeLane: progress.activeLane, stage: progress.stage });
     }
     if (event.type === "synthesis_delta") {
       progress.text.review = event.text;
@@ -1810,7 +1878,7 @@ async function analyze(event, options = {}) {
       progress.clock = startElapsed(live);
       streamInto("review", t("step_synthesizing"), "");
       drawPath();
-      renderFlowPanel(collected.path, { activeLane: progress.activeLane });
+      renderFlowPanel(collected.path, { activeLane: progress.activeLane, stage: progress.stage });
     }
   };
 
