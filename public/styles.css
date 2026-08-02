@@ -1405,11 +1405,13 @@ html[lang="en"] .step-needs::before { content: "NEEDS"; font-size: 8px; }
 }
 @keyframes asking-pulse {
   0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent); }
-  50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 0%, transparent); }
+  50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 0%, transparent); }
 }
 @media (prefers-reduced-motion: reduce) { .path-step.asking .step-mark { animation: none; } }
-/* And the same step in the rail, so the two panels point at one place. */
-.fl-step.current .fl-node { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent); border-color: var(--accent); background: var(--accent); color: #fff; }
+/* And the same step in the rail, so the two panels point at one place. The ring
+   is a glow around the dot, not part of it: at 3px it added enough apparent
+   width that the running step read as a larger circle than its neighbours. */
+.fl-step.current .fl-node { box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 30%, transparent); border-color: var(--accent); background: var(--accent); color: #fff; }
 .fl-step.current { position: relative; }
 .fl-step.current::after { content: ""; position: absolute; left: -8px; top: 4px; bottom: 4px; width: 2px; border-radius: 2px; background: var(--accent); }
 .fl-step.current .fl-text { color: var(--text); font-weight: 600; }
@@ -1443,11 +1445,12 @@ html[lang="en"] .step-needs::before { content: "NEEDS"; font-size: 8px; }
      is the one that looks misaligned. */
   padding: 3px 6px 3px 8px; }
 .fl-step.current::after { left: -6px; top: 3px; bottom: 3px; width: 3px; }
-/* Scaled about its own centre, so the centre stays on the column with the rest.
-   Pinning the left edge instead — which is what an earlier measurement of
-   getBoundingClientRect().left led to — keeps the edges flush and pushes the
-   circle visibly right, because a row of circles reads as aligned by centre. */
-.fl-step.current .fl-node { transform: scale(1.15); animation: asking-pulse 1.8s ease-in-out infinite; }
+/* Same size as every other dot. It is already the only one filled with the
+   accent, on the only banded row, next to the only accent bar and the only bold
+   line of text — enlarging it on top of that made it bulge out of a column whose
+   whole job is to be a straight line of equal marks. The pulse stays: it says
+   the step is running, which none of the other signals say. */
+.fl-step.current .fl-node { animation: asking-pulse 1.8s ease-in-out infinite; }
 .fl-step.current .fl-text { color: var(--text); font-weight: 600; }
 /* While the analysis is running on that step the whole row says so. */
 .flow-panel .fl-step.current.is-running .fl-text::after { content: "…"; margin-left: 4px; color: var(--accent-text); }
