@@ -22,7 +22,14 @@
 
 const RULES = {
   trade: [
-    /华为|huawei|entity list|restricted part|sanction|制裁|限制名单|交易对方|交易方|party.screening|screening|sdn|ofac|denied|ownership|所有权|最终用户|end.user|最终用途|end.use|名单命中|list match|false positive/i
+    // The Chinese half was thinner than the English: "screening" put a question
+    // on the trade lane and 筛查 did not, "entity list" did and 实体清单 did not.
+    // So "客户 X，请做受限方筛查" — a question whose entire subject is restricted-
+    // party screening — matched only 产品 and ran as a product question.
+    // 名单 subsumes the narrower 限制名单 and 名单命中 it replaces: in export
+    // control a 名单 is a restricted-party list, where 清单 is ambiguous between
+    // the Entity List and the Control List and is deliberately not matched bare.
+    /华为|huawei|entity list|实体清单|restricted part|受限方|被列名|sanction|制裁|名单|交易对方|交易方|party.screening|screening|筛查|sdn|ofac|denied|ownership|所有权|最终用户|end.user|最终用途|end.use|list match|false positive/i
   ],
   product: [
     /h100|h200|gpu|cpu|chip|芯片|eccn|app|tpp|product|产品|export|出口|reexport|转运|transit|墨西哥|mexico|加拿大|canada|dual.use|两用物项|encryption|加密|服务器|server|高性能计算|计算卡|显卡/i

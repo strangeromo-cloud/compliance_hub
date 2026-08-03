@@ -243,3 +243,34 @@ test("the routing rules exist in exactly one place", async () => {
     assert.match(source, new RegExp(symbol), `${file} must still expose ${symbol}`);
   }
 });
+
+test("the Chinese half of the routing rules is as wide as the English", async () => {
+  // "screening" put a question on the trade lane and 筛查 did not; "entity list"
+  // did and 实体清单 did not. So a question whose entire subject was restricted-
+  // party screening matched no rule at all and fell through to the "nothing
+  // matched, run everything" fallback — which reads like a decision and is not.
+  const { judgeIntent } = await import("../public/intent.js");
+
+  const onlyTrade = [
+    "客户 Aveox Technologies，直销，请做受限方筛查",
+    "请对这家公司做名单筛查",
+    "该交易对手是否需要做受限方筛查？",
+    "对方在不可靠实体名单里吗"
+  ];
+  for (const question of onlyTrade) {
+    const verdict = judgeIntent({ question });
+    assert.equal(verdict.matched, true, `${question} must match a rule, not fall back`);
+    assert.deepEqual(verdict.agents, ["trade"], question);
+  }
+
+  // 清单 stays ambiguous between the Entity List and the Control List, so it is
+  // deliberately not matched bare: 管制清单 is the CCL and must not put a question
+  // on the party-screening lane. (It matches no rule at all today, so it falls
+  // back to every lane — the fallback is a separate gap, not this rule firing.)
+  const ccl = judgeIntent({ question: "CCL 管制清单里这一项的管制理由是什么" });
+  assert.equal(ccl.reasons.trade, undefined, "管制清单 must not match the party-screening rule");
+
+  // And a question that names both still gets both.
+  const both = judgeIntent({ question: "对这个产品出口做受限方筛查" });
+  assert.deepEqual(both.agents, ["trade", "product"]);
+});
