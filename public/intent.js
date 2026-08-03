@@ -29,13 +29,22 @@ const RULES = {
     // 名单 subsumes the narrower 限制名单 and 名单命中 it replaces: in export
     // control a 名单 is a restricted-party list, where 清单 is ambiguous between
     // the Entity List and the Control List and is deliberately not matched bare.
-    /华为|huawei|entity list|实体清单|restricted part|受限方|被列名|sanction|制裁|名单|交易对方|交易方|party.screening|screening|筛查|sdn|ofac|denied|ownership|所有权|最终用户|end.user|最终用途|end.use|list match|false positive/i
+    /华为|huawei|entity list|实体清单|restricted part|受限方|被列名|sanction|制裁|名单|交易对方|交易方|party.screening|screening|筛查|sdn|ofac|denied|ownership|所有权|股权穿透|穿透|持股|母公司|实际控制人|50%|50 percent|最终用户|end.user|最终用途|end.use|list match|false positive/i
   ],
   product: [
-    /h100|h200|gpu|cpu|chip|芯片|eccn|app|tpp|product|产品|export|出口|reexport|转运|transit|墨西哥|mexico|加拿大|canada|dual.use|两用物项|encryption|加密|服务器|server|高性能计算|计算卡|显卡/i
+    // The lane is item and licensing, so the words a reviewer actually writes
+    // about both belong here: a licence question, a classification question and
+    // a Country Chart question were all falling through to "nothing matched".
+    // 管制 is matched only in a compound — bare, it is as much 出口管制管控名单 as
+    // it is 管制编码, and it would pull party screening onto this lane.
+    /h100|h200|gpu|cpu|chip|芯片|eccn|ccl|hts|ccats|app|tpp|product|产品|物项|型号|料号|part number|export|出口|reexport|转运|transit|墨西哥|mexico|加拿大|canada|dual.use|两用物项|encryption|加密|服务器|server|高性能计算|计算卡|显卡|licen|许可|管制清单|管制编码|管制号|管制理由|分类|归类|classification|国别矩阵|country chart|de minimis|最低含量|原产内容|外国直接产品|foreign direct product|\bfdp\b/i
   ],
   tpdd: [
-    /tpdd|third.party|due diligence|shell compan|空壳|第三方|中间商|顾问|经销商|distributor|consultant|commission|佣金|ubo|beneficial owner|实际控制|pep|离岸|offshore|付款|货代|freight.forwarder|成功费|success fee|共享办公|shared.office|政府招标|government tender|尽职调查|尽调|咨询公司|代理商|分销商|中介|支付|回佣/i
+    // Same widening on this side: 受益所有人 is the Chinese for a term that was
+    // only matched in English, and the DOJ factors this lane works through —
+    // commercial rationale, scope of services, the payment route — had no words
+    // of their own here at all.
+    /tpdd|third.party|due diligence|背景调查|shell compan|空壳|第三方|中间商|顾问|经销商|distributor|consultant|commission|佣金|ubo|beneficial owner|受益所有人|实际控制|pep|离岸|offshore|付款|收款|打款|汇款|账户|货代|freight.forwarder|成功费|success fee|商业合理性|服务范围|共享办公|shared.office|政府招标|government tender|尽职调查|尽调|咨询公司|代理商|代理|分销商|中介|支付|回佣/i
   ]
 };
 

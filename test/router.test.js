@@ -274,3 +274,35 @@ test("the Chinese half of the routing rules is as wide as the English", async ()
   const both = judgeIntent({ question: "对这个产品出口做受限方筛查" });
   assert.deepEqual(both.agents, ["trade", "product"]);
 });
+
+test("a question about a lane's own subject matches that lane", async () => {
+  // The rules were written in English first and the Chinese half never caught
+  // up, on any of the three lanes. A licence question, a Country Chart question,
+  // a beneficial-ownership question and an ownership-aggregation question all
+  // matched nothing at all and fell through to "run everything" — which reads
+  // like a routing decision and is the absence of one.
+  const { judgeIntent } = await import("../public/intent.js");
+
+  const PROBE = [
+    ["product", "需要许可证吗？"], ["product", "有没有可用的许可例外"],
+    ["product", "这个料号的 CCL 管制清单条目是什么"], ["product", "查一下国别矩阵怎么读"],
+    ["product", "de minimis 门槛怎么算"], ["product", "外国直接产品规则适用吗"],
+    ["product", "这个型号的管制编码是多少"], ["product", "该物项属于哪一类管制"],
+    ["tpdd", "这家代理的商业合理性怎么判断"], ["tpdd", "合同里服务范围写得太笼统"],
+    ["tpdd", "对方要求打款到第三国账户"], ["tpdd", "需要做背景调查吗"],
+    ["tpdd", "受益所有人没有披露"],
+    ["trade", "这家公司的股权穿透到底是谁"], ["trade", "母公司是不是被列名主体"],
+    ["trade", "50% 规则怎么算合计持股"], ["trade", "请对这家公司做名单筛查"]
+  ];
+  for (const [lane, question] of PROBE) {
+    const verdict = judgeIntent({ question });
+    assert.equal(verdict.matched, true, `${question} must match a rule rather than fall back`);
+    assert.ok(verdict.agents.includes(lane), `${question} belongs on ${lane}, got [${verdict.agents}]`);
+    assert.ok((verdict.reasons[lane] || []).length, `${question} must be able to name why ${lane} is on the path`);
+  }
+
+  // Widening must not blur the lanes into each other. 管制 is matched only in a
+  // compound: bare, it is as much 出口管制管控名单 as 管制编码.
+  assert.equal(judgeIntent({ question: "CCL 管制清单里这一项的管制理由是什么" }).reasons.trade, undefined);
+  assert.equal(judgeIntent({ question: "这家公司的股权穿透到底是谁" }).reasons.product, undefined);
+});
