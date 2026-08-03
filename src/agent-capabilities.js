@@ -75,6 +75,92 @@ export const CAPABILITIES = {
     }
   },
 
+  "product.classification_status": {
+    provider: "product",
+    title: { zh: "物项分类是否成立", en: "Whether the item's classification is established" },
+    summary: {
+      zh: "判断分类是否已成立到可以往下走：EAR99、列名 ECCN，还是尚未分类。",
+      en: "Whether classification is settled enough to proceed: EAR99, a listed ECCN, or not yet classified."
+    },
+    cite: "Part 774 CCL · § 732.3(b) Step 7",
+    input: [
+      { name: "eccn", type: "string", required: false, zh: "已声明的 ECCN 或管制编码", en: "Declared ECCN or control code" },
+      { name: "partNumber", type: "string", required: false, zh: "准确型号或 part number", en: "Exact model or part number" }
+    ],
+    run({ eccn = "", partNumber = "" }) {
+      const code = String(eccn).trim();
+      if (/^\s*ear\s*-?\s*99\s*$/i.test(code)) {
+        return {
+          answer: "ear99",
+          zh: "分类为 EAR99：受 EAR 管辖但不在管制清单上",
+          en: "Classified EAR99: subject to the EAR but on no Control List entry"
+        };
+      }
+      if (/^\d[A-E]\d{3}/i.test(code)) {
+        return {
+          answer: "listed",
+          eccn: code,
+          zh: `分类为 ${code}，属列名 ECCN`,
+          en: `Classified ${code}, a listed ECCN`
+        };
+      }
+      // A product family name cannot locate a control entry, so "we know the
+      // product" is not the same as "we know the classification".
+      return {
+        answer: "unclassified",
+        zh: partNumber ? `已有型号 ${partNumber}，但尚未确定分类` : "尚未确定分类，也没有可定位管制条目的准确型号",
+        en: partNumber ? `Model ${partNumber} is known, but the classification is not established`
+          : "No classification, and no exact model that could locate a control entry"
+      };
+    }
+  },
+
+  "tpdd.payment_risk": {
+    provider: "tpdd",
+    title: { zh: "付款路径风险信号", en: "Payment-route risk signals" },
+    summary: {
+      zh: "按 DOJ ECCP 的付款机制因素，指出收款安排中已出现的红旗。",
+      en: "Red flags already present in the payment arrangement, under the DOJ ECCP payment-mechanism factors."
+    },
+    cite: "DOJ ECCP — Controls / Payment",
+    input: [
+      { name: "payee", type: "string", required: false, zh: "收款主体与账户所在地", en: "Payee and account location" },
+      { name: "fees", type: "string", required: false, zh: "费用结构与交付物", en: "Fee structure and deliverables" }
+    ],
+    run({ payee = "", fees = "" }) {
+      const text = `${payee} ${fees}`;
+      const flags = [];
+      // Each flag is a stated fact in the arrangement, never an inference about
+      // the counterparty: the point is what was written down, not a character
+      // assessment of who wrote it.
+      if (/bvi|开曼|cayman|塞舌尔|seychelles|离岸|offshore|巴拿马|panama/i.test(text)) {
+        flags.push(bi("收款账户位于离岸法域", "The receiving account sits in an offshore jurisdiction"));
+      }
+      if (/成功费|success fee|佣金|commission|提成|回佣/i.test(text)) {
+        flags.push(bi("报酬含成功费或佣金成分", "Remuneration includes a success fee or commission"));
+      }
+      if (/第三方|third.party|他人账户|代收|指定账户/i.test(text)) {
+        flags.push(bi("收款方与合同相对方不一致", "The payee differs from the contracting counterparty"));
+      }
+      if (!payee.trim() && !fees.trim()) {
+        return {
+          answer: "not_stated",
+          flags: [],
+          zh: "尚未说明收款主体与费用结构，无法判断付款路径",
+          en: "Neither the payee nor the fee structure has been stated, so the payment route cannot be assessed"
+        };
+      }
+      return {
+        answer: flags.length ? "flags_present" : "no_flags",
+        flags,
+        zh: flags.length ? `付款安排中已出现 ${flags.length} 项红旗：${flags.map((f) => f.zh).join("；")}`
+          : "已说明的付款安排中未出现列举的红旗",
+        en: flags.length ? `${flags.length} red flag${flags.length === 1 ? "" : "s"} in the payment arrangement: ${flags.map((f) => f.en).join("; ")}`
+          : "No listed red flag appears in the payment arrangement as stated"
+      };
+    }
+  },
+
   "product.item_jurisdiction": {
     provider: "product",
     title: { zh: "物项是否受 EAR 管辖", en: "Whether the item is subject to the EAR" },
@@ -160,6 +246,12 @@ export function argsFromRun(id, { grounding = {}, facts = {} } = {}) {
   }
   if (id === "product.item_jurisdiction") {
     return { eccn: facts.eccn || "", usContent: facts.usContent || "" };
+  }
+  if (id === "product.classification_status") {
+    return { eccn: facts.eccn || "", partNumber: facts.partNumber || "" };
+  }
+  if (id === "tpdd.payment_risk") {
+    return { payee: facts.payee || "", fees: facts.fees || "" };
   }
   throw new Error(`No run adapter for capability: ${id}`);
 }

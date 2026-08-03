@@ -135,3 +135,62 @@ test("a designated party actually closes the licence exceptions", async () => {
   const openStep = clean.lanes.flatMap((lane) => lane.steps).find((item) => item.id === "licence_exception");
   assert.notEqual(openStep.status, "evidence_needed");
 });
+
+test("all four lanes-crossings are wired, each way, with its provision", async () => {
+  // Two capabilities proved the mechanism; these are the crossings that make it
+  // a layer. Each one is a question the calling lane genuinely cannot answer for
+  // itself, and each carries the rule that makes the answer bear on the step.
+  const { invokeCapability, CAPABILITIES } = await import("../src/agent-capabilities.js");
+
+  // Diligence depth is risk-based under the ECCP, and what is being sold sets it.
+  const listed = invokeCapability("product.classification_status", { args: { eccn: "4A090.a" } });
+  assert.equal(listed.answer, "listed");
+  assert.equal(invokeCapability("product.classification_status", { args: { eccn: "EAR99" } }).answer, "ear99");
+  // Knowing the product is not knowing the classification: a family name cannot
+  // locate a control entry.
+  const named = invokeCapability("product.classification_status", { args: { partNumber: "AI-8100-H1" } });
+  assert.equal(named.answer, "unclassified");
+  assert.match(named.zh, /AI-8100-H1/);
+
+  // Payment-route flags are facts about the arrangement, never a character
+  // assessment of the counterparty.
+  const flagged = invokeCapability("tpdd.payment_risk", {
+    args: { payee: "Silverline Advisory Ltd., BVI account", fees: "15% success fee" }
+  });
+  assert.equal(flagged.answer, "flags_present");
+  assert.equal(flagged.flags.length, 2);
+  assert.ok(flagged.flags.every((flag) => flag.zh && flag.en));
+  assert.equal(invokeCapability("tpdd.payment_risk", { args: {} }).answer, "not_stated",
+    "silence about the payment route is not the absence of risk in it");
+  assert.equal(invokeCapability("tpdd.payment_risk", { args: { payee: "Kunde GmbH, Frankfurt" } }).answer, "no_flags");
+
+  // Every lane both asks and answers, which is what makes this a layer rather
+  // than one hard-wired dependency.
+  const providers = new Set(Object.values(CAPABILITIES).map((capability) => capability.provider));
+  assert.deepEqual([...providers].sort(), ["product", "tpdd", "trade"]);
+});
+
+test("a crossing shows up on the step that made it", async () => {
+  const { planAnalysisPath, resolveAnalysisPath } = await import("../src/analysis-path.js");
+  const { localizeLines } = await import("../src/path-i18n.js");
+  const question = "顾问协助我们向新加坡出口一批 4A090.a 设备，收 15% 成功费并付款到 BVI 账户";
+  const grounding = {
+    screening: { screenedSources: [{ sourceId: "trade-csl", recordCount: 3, capturedAt: "2026-07-31" }], unsyncedSources: [] },
+    listMatches: [], internalParties: [], limitations: [], partyCandidates: []
+  };
+  const facts = { eccn: "4A090.a", payee: "BVI 账户", fees: "15% 成功费" };
+  const path = resolveAnalysisPath(
+    planAnalysisPath({ agents: ["product", "tpdd"], question, declaredFacts: facts }),
+    { question, grounding, declaredFacts: facts, final: true }
+  );
+  const steps = path.lanes.flatMap((lane) => lane.steps);
+
+  const prohibitions = steps.find((item) => item.id === "prohibitions");
+  assert.ok(localizeLines(prohibitions.basis, "zh").some((line) => /调用 第三方尽调 Agent/.test(line)),
+    "the knowledge standard is asked of the lane that holds the payment route");
+  assert.ok(localizeLines(prohibitions.basis, "en").some((line) => /DOJ ECCP/.test(line)));
+
+  const rationale = steps.find((item) => item.id === "rationale_fees");
+  assert.ok(localizeLines(rationale.basis, "zh").some((line) => /调用 产品出口管制 Agent/.test(line)),
+    "and diligence depth is asked of the lane that holds the classification");
+});

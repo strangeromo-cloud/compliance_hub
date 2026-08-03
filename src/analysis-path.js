@@ -681,8 +681,13 @@ function productSteps(question, grounding, results, declaredFacts = {}) {
       ? { needs: ["分类成立后方可查 Country Chart"] }
       : { needs: ["最终目的地，以及该 ECCN 的管制理由在 Country Chart 上对应的单元", ...needsMatching(results, "product", /目的地|国别|矩阵/i)] }));
 
+  // The knowledge standard is what General Prohibition Ten turns on, and a
+  // payment route is evidence about knowledge — which is the diligence lane's
+  // question, not this one's. So it is asked.
+  const payment = invokeCapability("tpdd.payment_risk", { caller: "prohibitions", context: { grounding, facts: declaredFacts } });
   steps.push(step("prohibitions", "十项一般禁令（最终用户、最终用途、禁运、知情）", "evidence_needed",
-    { needs: ["最终用户、最终用途与实际交易链；General Prohibitions 需逐项过", ...needsMatching(results, "product", /最终用户|最终用途|用途|禁令/i)] }));
+    { basis: payment.answer === "flags_present" ? [payment.line] : [],
+      needs: ["最终用户、最终用途与实际交易链；General Prohibitions 需逐项过", ...needsMatching(results, "product", /最终用户|最终用途|用途|禁令/i)] }));
 
   // The one place this lane cannot answer for itself. Whether a Part 740
   // exception survives is decided by who the counterparty is, which is the trade
@@ -699,7 +704,7 @@ function productSteps(question, grounding, results, declaredFacts = {}) {
   return steps;
 }
 
-function tpddSteps(question, grounding, results) {
+function tpddSteps(question, grounding, results, declaredFacts = {}) {
   // Ordered as the DOJ states it: business rationale first, then diligence,
   // then the payment mechanism, then monitoring across the relationship.
   const rules = [
@@ -709,10 +714,17 @@ function tpddSteps(question, grounding, results) {
     ["payment_path", "收款主体与付款路径", /付款|收款|账户|汇款|payment/i],
     ["ongoing_monitoring", "持续监控与再评估", /监控|复审|再评估|定期|monitor/i]
   ];
+  // Diligence under the ECCP is risk-based, and what is being sold is what sets
+  // the depth — a listed ECCN moving through an intermediary is not the same
+  // posture as EAR99. That is the product lane's question.
+  const classification = invokeCapability("product.classification_status", {
+    caller: "rationale_fees", context: { grounding, facts: declaredFacts }
+  });
   return rules.map(([id, title, pattern]) => {
     const needs = needsMatching(results, "tpdd", pattern);
     return step(id, title, "evidence_needed",
-      { needs: needs.length ? needs : [id === "ongoing_monitoring" ? "尚未设定复审周期与触发条件" : "需取得对应证明文件"] });
+      { basis: id === "rationale_fees" && classification.answer === "listed" ? [classification.line] : [],
+        needs: needs.length ? needs : [id === "ongoing_monitoring" ? "尚未设定复审周期与触发条件" : "需取得对应证明文件"] });
   });
 }
 
@@ -724,7 +736,7 @@ export function resolveAnalysisPath(plan, { question, grounding, results = [], d
   const resolvers = {
     trade: () => tradeSteps(question, grounding, results, declaredFacts),
     product: () => productSteps(question, grounding, results, declaredFacts),
-    tpdd: () => tpddSteps(question, grounding, results),
+    tpdd: () => tpddSteps(question, grounding, results, declaredFacts),
     lookup: () => lookupSteps(grounding),
     briefing: () => briefingSteps(grounding),
     memo: () => memoSteps(grounding),
