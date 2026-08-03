@@ -1,5 +1,6 @@
 import { GEMS, GEM_BY_ID, GEM_GROUPS, factCoverage, matchGems, toggleWorkspaceGem, workspaceGemIds } from "/gems.js";
 import { EVIDENCE_STATUS, STEP_STATUS_VOCAB, label, tone } from "/status-vocabulary.js";
+import { judgeIntent } from "/intent.js";
 
 const i18n = {
   zh: {
@@ -43,7 +44,7 @@ const i18n = {
     filterAll: "全部", filterTrade: "Trade", filterProduct: "Product", filterTpdd: "TPDD", filterCross: "跨域",
     runtimeRules: "规则模式", runtimeReady: "实时模型", runtimeMissing: "未配置模型",
     modeHint: "点击切换规则模式与实时模型",
-    routeLabel: "路由", routedTo: "已路由至",
+    routeLabel: "路由", intentReview: "合规审查", intentLookup: "直接查询", intentBriefing: "监管变化简报", intentMemo: "案件备忘录", intentNoReview: "不进入合规审查流程", intentAllLanes: "未匹配到关键词，三条线全跑", routedTo: "已路由至",
     overallAssessment: "总体判断", nextStep: "下一步", missingInfo: "仍需信息", actions: "建议行动", planSuggested: "专业 Agent 的其他建议", planSuggestedNote: "这些建议未对应分析路径上的某一步，供人工复核时参考", notClosed: "尚有 {n} 项未补齐", stepAsk: "请补充以下信息，分析将从这里继续", naCount: "{n} 项本次不适用或已跳过", stepTriggered: "由前一步的发现触发", flowFolded: "另有 {n} 项不适用或已跳过", laneFindings: "本条线的分析发现（专业 Agent 输出，非全案结论）", interimVerdict: "阶段性判断（基于现有信息，未结案）", noItems: "暂无", limitations: "结论边界与限制",
     sourceLive: "实时获取", sourceMetadata: "元数据", sourceUnavailable: "获取失败", sourceNotFetched: "未获取", sourceArchived: "已采集副本", sourceCitationOnly: "仅引用", sourceCached: "缓存", noQueryableSource: "暂无可直查的来源（需先同步）", sourceQueryHint: "@ 直查数据源", sourceQueryPlaceholder: "输入实体名、公告号或条文关键词（按相关性排序；留空则浏览全部）…",
     queryEmpty: "请输入查询内容", queryHits: "{total} 条命中", browseCount: "共 {total} 条", browseAll: "浏览全部", pagePrev: "上一页", pageNext: "下一页", relMatched: "命中", relMissed: "未命中", relPartial: "另有 {n} 条仅命中部分检索词，未列出", queryNoHit: "该来源中未找到匹配记录", queryTruncated: "显示前 {shown} 条，共 {total} 条",
@@ -101,7 +102,7 @@ const i18n = {
     filterAll: "All", filterTrade: "Trade", filterProduct: "Product", filterTpdd: "TPDD", filterCross: "Cross-domain",
     runtimeRules: "Rules mode", runtimeReady: "Live model", runtimeMissing: "No model configured",
     modeHint: "Toggle between rules mode and the live model",
-    routeLabel: "Route", routedTo: "Routed to",
+    routeLabel: "Route", intentReview: "Compliance review", intentLookup: "Direct lookup", intentBriefing: "Regulatory briefing", intentMemo: "Case memo", intentNoReview: "no review procedure runs", intentAllLanes: "no term matched, so all three run", routedTo: "Routed to",
     overallAssessment: "Overall assessment", nextStep: "Next step", missingInfo: "Missing information", actions: "Recommended actions", planSuggested: "Other suggestions from the specialists", planSuggestedNote: "These do not map onto a step in the analysis path; they are for the reviewer to weigh", notClosed: "{n} items still open", stepAsk: "Add these and the analysis continues from here", naCount: "{n} not applicable or skipped", stepTriggered: "triggered by an earlier finding", flowFolded: "{n} more not applicable or skipped", laneFindings: "What this lane found (specialist output, not the case conclusion)", interimVerdict: "Interim assessment (on incomplete facts, not a conclusion)", noItems: "None", limitations: "Limits on this conclusion",
     sourceLive: "Live", sourceMetadata: "Metadata", sourceUnavailable: "Unavailable", sourceNotFetched: "Not fetched", sourceArchived: "Archived copy", sourceCitationOnly: "Cited only", sourceCached: "Cached", noQueryableSource: "No queryable source yet (sync one first)", sourceQueryHint: "@ query a source", sourceQueryPlaceholder: "Entity name, notice number or keyword — ranked by relevance; leave empty to browse all…",
     queryEmpty: "Enter something to look up", queryHits: "{total} matches", browseCount: "{total} records", browseAll: "Browse all", pagePrev: "Previous", pageNext: "Next", relMatched: "matched", relMissed: "not matched", relPartial: "{n} more records matched only part of the query and are not listed", queryNoHit: "No matching record in this source", queryTruncated: "Showing {shown} of {total}",
@@ -717,23 +718,36 @@ function openGemDetail(gemId) {
 
 function riskLabel(level) { return t(`risk${level.charAt(0).toUpperCase()}${level.slice(1)}`); }
 
-function estimatedRoute(question) {
-  const lower = question.toLowerCase();
-  const agents = [];
-  if (/华为|huawei|名单|entity|sdn|交易方|restricted|sanction|party|ownership|所有权|最终用户|end.user|最终用途|end.use|false positive|screening|管控名单|筛查/.test(lower)) agents.push("trade");
-  if (/h100|gpu|cpu|芯片|产品|eccn|加密|encryption|licen|许可|product|出口|export|两用物项|dual.use|bom|镓|gallium|de minimis|734|管辖/.test(lower)) agents.push("product");
-  if (/顾问|consultant|成功费|success fee|bvi|付款|payment|第三方|third.party|尽调|due diligence|shell|ubo|经销商|distributor|共享办公|政府招标|货代|freight|关联公司|affiliate/.test(lower)) agents.push("tpdd");
-  return agents.length ? [...new Set(agents)] : ["trade", "product", "tpdd"];
-}
-
+// What this question is going to do, said before it is sent. The hint used to
+// list specialist agents for every question, from its own copy of the routing
+// rules — so a question the run answers as a lookup, opening no procedure at
+// all, was announced as a compliance review, and selecting the briefing gem
+// changed nothing about what the hint claimed. It asks the shared judgement now,
+// which is the one the run itself makes.
 function updateRouteHint() {
   const value = $("questionInput").value.trim();
   const host = $("routeHint");
   document.querySelector(".slash-hint").classList.toggle("hidden", Boolean(state.sourceQuery));
   if (state.sourceQuery) { host.innerHTML = `<span>${esc(t("lookupMode"))}</span>`; return; }
   if (!value) { host.innerHTML = ""; return; }
-  const agents = estimatedRoute(value);
-  host.innerHTML = `<span>${t("routeLabel")}</span>${agents.map((a) => `<span class="route-tag">${agentName(a)}</span>`).join("")}`;
+
+  const verdict = judgeIntent({ question: value, gemKind: state.activeGem?.kind || null });
+  if (!verdict.review) {
+    const what = verdict.kind === "lookup" ? t("intentLookup")
+      : verdict.kind === "briefing" ? t("intentBriefing") : t("intentMemo");
+    host.innerHTML = `<span class="route-kind">${esc(what)}</span><span>${esc(t("intentNoReview"))}</span>`;
+    return;
+  }
+  // Which words put a lane on the path, on the tag itself. "Why is third-party
+  // diligence being checked" is answered by the question, not by this system's
+  // say-so — and where nothing matched, the hint says every lane runs rather
+  // than showing three tags as though the question had been understood.
+  host.innerHTML = `<span class="route-kind">${esc(t("intentReview"))}</span>`
+    + verdict.agents.map((agent) => {
+      const why = (verdict.reasons[agent] || []).join(" · ");
+      return `<span class="route-tag"${why ? ` title="${esc(why)}"` : ""}>${esc(agentName(agent))}</span>`;
+    }).join("")
+    + (verdict.matched ? "" : `<span>${esc(t("intentAllLanes"))}</span>`);
 }
 
 // The Content-Security-Policy is `style-src 'self'`, which bars style attributes

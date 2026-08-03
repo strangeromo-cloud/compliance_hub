@@ -185,3 +185,61 @@ test("a run says what it is doing before it does it", async () => {
   // And the plan is up before either, so there is something to announce against.
   assert.ok(order.indexOf("path") < order.indexOf("stage:sources"), "the plan goes up first");
 });
+
+test("the page and the run judge a question the same way", async () => {
+  // The composer had its own copy of the routing rules, so it announced a
+  // compliance review for questions the run answers as a lookup and never routes
+  // to an agent at all, and selecting a briefing gem changed nothing about what
+  // it claimed. One copy now, in public/, imported by both — this checks the
+  // server still reaches the shared rules and that the judgement matches the
+  // order assessScenario actually decides in.
+  const { judgeIntent } = await import("../public/intent.js");
+  const { routeQuestion } = await import("../src/router.js");
+  const { lookupSubject } = await import("../src/lookup.js");
+  const { GEM_KINDS } = await import("../src/gem-kinds.js");
+
+  const cases = [
+    { q: "100-000000009 的 ECCN 是什么？", kind: "lookup", agents: [] },
+    { q: "华为是否在实体清单上？", kind: "lookup", agents: [] },
+    { q: "新顾问要求 15% 成功费并付款到 BVI 账户", kind: "review", agents: ["tpdd"] },
+    { q: "交易方 Aveox Technologies 的产品出口审查", kind: "review", agents: ["trade", "product"] }
+  ];
+  for (const item of cases) {
+    const verdict = judgeIntent({ question: item.q });
+    assert.equal(verdict.kind, item.kind, item.q);
+    assert.deepEqual(verdict.agents, item.agents, item.q);
+    // And the halves agree: a lookup is exactly what lookupSubject matches,
+    // because resolveLookup answers everything it matches.
+    assert.equal(Boolean(lookupSubject(item.q)), item.kind === "lookup", item.q);
+    if (item.kind === "review") assert.deepEqual(routeQuestion(item.q, false), verdict.agents, item.q);
+  }
+
+  // A gem that produces a briefing or a memo settles it before the question is
+  // read at all — those name no counterparty and no item.
+  for (const gemId of ["reg-brief", "case-memo"]) {
+    const verdict = judgeIntent({ question: "华为是否在实体清单上？", gemKind: GEM_KINDS[gemId] });
+    assert.equal(verdict.review, false, gemId);
+    assert.deepEqual(verdict.agents, [], `${gemId} opens no review procedure`);
+  }
+
+  // Nothing matched means every lane runs, and the page is told so rather than
+  // being handed three tags that look like a decision.
+  const vague = judgeIntent({ question: "这个能做吗" });
+  assert.equal(vague.matched, false);
+  assert.deepEqual(vague.agents, ["trade", "product", "tpdd"]);
+});
+
+test("the routing rules exist in exactly one place", async () => {
+  // Two copies of a rule diverge — that is what put an agent tag under a lookup
+  // question for months. The page must not grow a second set.
+  const { readFile } = await import("node:fs/promises");
+  const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
+  assert.doesNotMatch(app, /function estimatedRoute/, "the page must ask the shared judgement, not re-derive it");
+  assert.match(app, /from "\/intent\.js"/, "and it has to import it");
+
+  for (const [file, symbol] of [["../src/router.js", "routeQuestion"], ["../src/question-intent.js", "classifyQuestionIntent"]]) {
+    const source = await readFile(new URL(file, import.meta.url), "utf8");
+    assert.match(source, /from "\.\.\/public\/intent\.js"/, `${file} must re-export the shared rules`);
+    assert.match(source, new RegExp(symbol), `${file} must still expose ${symbol}`);
+  }
+});

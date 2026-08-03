@@ -12,6 +12,9 @@
 // such classification exists", and only the first is something this system can
 // actually say.
 
+import { LIST_TAGS, lookupSubject } from "../public/intent.js";
+
+export { lookupSubject };
 import { readNormalized } from "./data-layer/storage.js";
 import { manufacturerFactsFor, findProducts } from "./internal-data.js";
 
@@ -19,65 +22,6 @@ import { manufacturerFactsFor, findProducts } from "./internal-data.js";
 // differently — NVIDIA's 900-21010-0000-000, AMD's 100-000000009, a Lenovo
 // TX-1140. Matching a shape rather than a vocabulary is what lets an unfamiliar
 // vendor's number be recognised as one.
-const PART_NUMBER = /\b[0-9A-Z]{2,6}-[0-9A-Z]{3,}(?:-[0-9A-Z]+)*\b/gi;
-const ECCN = /\b(\d[A-E]\d{3}(?:\.[a-z](?:\.\d+)?)?)\b/g;
-const CN_CONTROL_CODE = /\b(\d[A-E]\d{3})\b/g;
-
-const ASKS_CLASSIFICATION = /\beccn\b|分类|管制编码|管制号|归类|classification/i;
-const ASKS_MEANING = /是什么|什么意思|指的是|含义|定义|what is|means|meaning/i;
-// A question that also describes a transaction is not a lookup, whatever else it
-// contains: the moment a destination or a counterparty is in play, the procedure
-// is the point.
-const DESCRIBES_TRANSACTION = /出口到|运往|发运|销售给|卖给|客户|最终用户|代理商|经销商|中间商|目的地|是否需要许可|能否交易|ship to|export to|end user|customer|licen[cs]e required/i;
-
-// Which list a question is actually asking about. Naming one is a constraint:
-// "is Huawei on the Entity List" is answered by the Entity List, and screening
-// eleven other sources to answer it produces hits nobody asked about and a
-// diligence procedure nobody wanted.
-//
-// The tag is the sourceList value the record itself carries, because the CSL is
-// an aggregate: the Entity List and the SDN list live inside the same source and
-// can only be told apart per record.
-const LIST_TAGS = [
-  { tag: "entity_list", match: /entity list|实体清单|\bel\b/i, sourceIds: ["trade-csl"], recordList: /entity list/i, label: "BIS 实体清单（Entity List）" },
-  { tag: "denied_persons", match: /denied person|dpl|拒绝清单/i, sourceIds: ["trade-csl"], recordList: /denied persons/i, label: "BIS 被拒绝人员清单（DPL）" },
-  { tag: "unverified", match: /unverified list|\buvl\b|未核实清单/i, sourceIds: ["trade-csl"], recordList: /unverified/i, label: "BIS 未核实清单（UVL）" },
-  { tag: "military_end_user", match: /military end user|\bmeu\b|军事最终用户/i, sourceIds: ["trade-csl"], recordList: /military end user/i, label: "BIS 军事最终用户清单（MEU）" },
-  { tag: "sdn", match: /\bsdn\b|specially designated|特别指定|ofac/i, sourceIds: ["trade-csl", "ofac-sls"], recordList: /specially designated/i, label: "OFAC SDN 清单" },
-  { tag: "uflpa", match: /uflpa|维吾尔|强迫劳动/i, sourceIds: ["us-uflpa"], recordList: null, label: "UFLPA 实体清单" },
-  { tag: "1260h", match: /1260h|中国军工企业|chinese military compan/i, sourceIds: ["us-dod-1260h"], recordList: null, label: "美国国防部 1260H 清单" },
-  { tag: "unreliable_entity", match: /不可靠实体/i, sourceIds: ["china-unreliable-entity"], recordList: null, label: "中国不可靠实体清单" },
-  { tag: "china_control", match: /管控名单|中国管控/i, sourceIds: ["china-control-entities"], recordList: null, label: "中国出口管制管控名单" }
-];
-
-const ASKS_MEMBERSHIP = /是否(在|被列入|属于)|在不在|有没有(被)?列入|是不是在|列入了吗|被列入|is .* on the|appear on|listed on|included in/i;
-
-const unique = (values) => [...new Set(values)];
-
-export function lookupSubject(question = "") {
-  const text = String(question);
-  if (DESCRIBES_TRANSACTION.test(text)) return null;
-
-  const parts = unique((text.match(PART_NUMBER) || []).map((value) => value.toUpperCase()))
-    // An ECCN looks nothing like a part number, but a control code such as
-    // 4A090.a would match neither; keeping them apart avoids searching for a
-    // classification as though it were a product.
-    .filter((value) => !/^\d[A-E]\d{3}/i.test(value));
-  const codes = unique([...text.matchAll(ECCN)].map((match) => match[1].toUpperCase()));
-
-  if (parts.length && ASKS_CLASSIFICATION.test(text)) return { kind: "classification_of_part", parts, codes };
-  if (codes.length && (ASKS_MEANING.test(text) || ASKS_CLASSIFICATION.test(text))) return { kind: "meaning_of_code", parts, codes };
-
-  // "Is X on the Entity List" is a membership question. It is answered by
-  // searching that list — not by opening a diligence procedure that goes on to
-  // ask about beneficial ownership, which is a different question nobody asked.
-  const tags = LIST_TAGS.filter((entry) => entry.match.test(text));
-  if (ASKS_MEMBERSHIP.test(text) && (tags.length || /名单|清单|list/i.test(text))) {
-    return { kind: "list_membership", tags, parts, codes };
-  }
-  return null;
-}
-
 // The vendors' own published tables, which are the primary source for a part
 // number: BIS publishes the control list but not which product is on it, so for
 // a specific part the manufacturer's statement is the answer and everything else

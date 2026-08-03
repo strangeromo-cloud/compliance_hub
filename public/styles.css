@@ -414,6 +414,11 @@ details.trace.limits > summary { color: var(--risk-medium); }
 .composer-foot { display: flex; align-items: center; gap: 8px; padding: 4px 8px 7px 12px; }
 .route-hint { flex: 1; display: flex; align-items: center; gap: 5px; font-size: 10.5px; color: var(--text-3); min-width: 0; flex-wrap: wrap; }
 .route-hint .route-tag { border: 1px solid var(--border); border-radius: 3px; padding: 0 5px; color: var(--text-2); }
+/* What kind of run this is, ahead of the detail: a lookup and a review are
+   different things and the composer should say which before the question is
+   sent, not after the answer comes back looking unlike what was expected. */
+.route-hint .route-kind { color: var(--text-2); font-weight: 500; }
+.route-hint .route-tag[title] { cursor: help; border-style: dashed; }
 .slash-hint { font-size: 10.5px; color: var(--text-3); white-space: nowrap; }
 .send-btn { width: 28px; height: 28px; display: grid; place-items: center; flex: 0 0 auto; border: 0; border-radius: 8px; background: var(--accent); color: #fff; cursor: pointer; }
 .send-btn:disabled { opacity: .4; cursor: default; }
