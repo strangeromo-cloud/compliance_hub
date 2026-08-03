@@ -45,9 +45,10 @@ export const CAPABILITIES = {
     input: [
       { name: "matches", type: "array", required: true, zh: "本次名单检索的命中记录", en: "Matches from this screening run" },
       { name: "parentHits", type: "array", required: false, zh: "母公司筛查的命中记录", en: "Matches from screening the parent" },
-      { name: "sourcesSearched", type: "number", required: true, zh: "已检索的名单来源数", en: "How many list sources were searched" }
+      { name: "sourcesSearched", type: "number", required: true, zh: "已检索的名单来源数", en: "How many list sources were searched" },
+      { name: "sources", type: "array", required: false, zh: "已检索的来源 id", en: "Ids of the sources searched" }
     ],
-    run({ matches = [], parentHits = [], sourcesSearched = 0 }) {
+    run({ matches = [], parentHits = [], sourcesSearched = 0, sources = [] }) {
       // A screening that could not run is not a screening that found nothing,
       // and the caller has to be able to tell the difference before relying on
       // "no match" for anything.
@@ -65,6 +66,13 @@ export const CAPABILITIES = {
         answer: listed || parentListed ? "potential_match" : "no_match",
         subject,
         viaParent: !listed && parentListed,
+        // The lane is answerable for reading the data correctly; the data is
+        // what the answer rests on. A consumer outside this process has to be
+        // able to reach the records without trusting the sentence.
+        evidence: {
+          sources: sources.length ? sources : null,
+          records: [...matches, ...parentHits].map((hit) => hit.recordId).filter(Boolean).slice(0, 8)
+        },
         zh: listed ? `交易方在已筛查名单中存在 ${matches.length} 条潜在命中`
           : parentListed ? "交易方本身未命中，但其母公司在已筛查名单中存在潜在命中"
             : `在 ${sourcesSearched} 个已同步名单来源中未发现命中`,
@@ -92,6 +100,7 @@ export const CAPABILITIES = {
       if (/^\s*ear\s*-?\s*99\s*$/i.test(code)) {
         return {
           answer: "ear99",
+          evidence: { basis: "user_declaration" },
           zh: "分类为 EAR99：受 EAR 管辖但不在管制清单上",
           en: "Classified EAR99: subject to the EAR but on no Control List entry"
         };
@@ -100,6 +109,7 @@ export const CAPABILITIES = {
         return {
           answer: "listed",
           eccn: code,
+          evidence: { basis: "user_declaration" },
           zh: `分类为 ${code}，属列名 ECCN`,
           en: `Classified ${code}, a listed ECCN`
         };
@@ -108,6 +118,7 @@ export const CAPABILITIES = {
       // product" is not the same as "we know the classification".
       return {
         answer: "unclassified",
+        evidence: { basis: "user_declaration" },
         zh: partNumber ? `已有型号 ${partNumber}，但尚未确定分类` : "尚未确定分类，也没有可定位管制条目的准确型号",
         en: partNumber ? `Model ${partNumber} is known, but the classification is not established`
           : "No classification, and no exact model that could locate a control entry"
@@ -153,6 +164,7 @@ export const CAPABILITIES = {
       return {
         answer: flags.length ? "flags_present" : "no_flags",
         flags,
+        evidence: { basis: "user_declaration" },
         zh: flags.length ? `付款安排中已出现 ${flags.length} 项红旗：${flags.map((f) => f.zh).join("；")}`
           : "已说明的付款安排中未出现列举的红旗",
         en: flags.length ? `${flags.length} red flag${flags.length === 1 ? "" : "s"} in the payment arrangement: ${flags.map((f) => f.en).join("; ")}`
@@ -179,6 +191,7 @@ export const CAPABILITIES = {
       if (/^<\s*10%$/.test(content)) {
         return {
           answer: "not_subject",
+          evidence: { basis: "user_declaration" },
           zh: "受控美国原产内容低于 de minimis 门槛，物项不因此受 EAR 管辖",
           en: "Controlled US-origin content is below the de minimis threshold, so the item is not subject to the EAR on that basis"
         };
@@ -186,6 +199,7 @@ export const CAPABILITIES = {
       if (code) {
         return {
           answer: "subject",
+          evidence: { basis: "user_declaration" },
           zh: `已声明分类为 ${code}，物项受 EAR 管辖`,
           en: `Declared as ${code}, so the item is subject to the EAR`
         };
@@ -194,6 +208,7 @@ export const CAPABILITIES = {
       // the question open rather than resolving it in either direction.
       return {
         answer: "unknown",
+        evidence: { basis: "user_declaration" },
         zh: "尚未确定管辖：既未声明分类，也未给出受控美国原产内容占比",
         en: "Jurisdiction is unsettled: neither a classification nor a controlled US-content share has been stated"
       };
@@ -238,10 +253,12 @@ export function describeCapabilities(locale = "zh") {
 // capability elsewhere replaces this adapter and nothing else.
 export function argsFromRun(id, { grounding = {}, facts = {} } = {}) {
   if (id === "trade.party_status") {
+    const searched = grounding.screening?.screenedSources || [];
     return {
       matches: grounding.listMatches || [],
       parentHits: (grounding.parentScreening || []).flatMap((entry) => entry.hits || []),
-      sourcesSearched: (grounding.screening?.screenedSources || []).length
+      sourcesSearched: searched.length,
+      sources: searched.map((source) => source.sourceId).filter(Boolean)
     };
   }
   if (id === "product.item_jurisdiction") {

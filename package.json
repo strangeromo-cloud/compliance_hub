@@ -11,7 +11,8 @@
     "seed": "node scripts/generate-seed.mjs",
     "test": "node --test",
     "refresh-fallback": "node scripts/refresh-fallback.mjs",
-    "check-model": "node scripts/check-model.mjs"
+    "check-model": "node scripts/check-model.mjs",
+    "mcp": "node mcp-server.js"
   },
   "engines": {
     "node": "24.x"
