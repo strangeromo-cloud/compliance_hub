@@ -23,6 +23,7 @@
 import { triage } from "./triage.js";
 import { bi, localizeLine, translateTerm } from "./path-i18n.js";
 import { triggeredDependencies } from "./lane-dependencies.js";
+import { invokeCapability, licenceExceptionOutcome } from "./agent-capabilities.js";
 
 // Published methodologies the path follows.
 //
@@ -440,7 +441,7 @@ function memoSteps(grounding) {
       "备忘录记录既有结论与证据，不产生新的判断"] })];
 }
 
-function tradeSteps(question, grounding, results) {
+function tradeSteps(question, grounding, results, declaredFacts = {}) {
   const steps = [];
   const screened = grounding.screening?.screenedSources || [];
   const unsynced = grounding.screening?.unsyncedSources || [];
@@ -494,6 +495,14 @@ function tradeSteps(question, grounding, results) {
       }
       : { needs: [bi("尚无已同步的受限方名单来源，需先完成同步", "No restricted-party list is synced yet; sync one first")] }));
 
+  // What a match means depends on the item: § 744.11 attaches to items subject
+  // to the EAR, so a designated party and an item outside the EAR's reach is a
+  // different finding from a designated party and an item inside it. That is the
+  // product lane's question, so it is asked rather than assumed.
+  const jurisdiction = matches.length
+    ? invokeCapability("product.item_jurisdiction", { caller: "name_match", context: { grounding, facts: declaredFacts } })
+    : null;
+
   if (!screened.length) {
     steps.push(step("name_match", "名称匹配", "not_reached", { needs: ["名单来源同步后方可进行"] }));
   } else {
@@ -507,7 +516,7 @@ function tradeSteps(question, grounding, results) {
           const noticeEn = match.noticeNumber ? `, ${match.noticeNumber}` : "";
           return bi(`${name}：相似度 ${match.matchScore}，${identical ? "规范化后名称完全一致" : match.matchBasis}${notice}`,
             `${name}: score ${match.matchScore}, ${identical ? "identical after normalisation" : match.matchBasis}${noticeEn}`);
-        }) }
+        }).concat(jurisdiction ? [jurisdiction.line] : []) }
         : { basis: [(() => {
           const total = screened.reduce((n, s) => n + s.recordCount, 0).toLocaleString();
           return bi(`在已同步来源中未发现名称命中（共检索 ${total} 条）`,
@@ -637,7 +646,7 @@ function tradeSteps(question, grounding, results) {
   return steps;
 }
 
-function productSteps(question, grounding, results) {
+function productSteps(question, grounding, results, declaredFacts = {}) {
   const steps = [];
   const facts = grounding.facts || [];
   const classificationFacts = facts.filter((fact) => /eccn|tpp|管制编码|分类/i.test(fact.fact || ""));
@@ -675,8 +684,17 @@ function productSteps(question, grounding, results) {
   steps.push(step("prohibitions", "十项一般禁令（最终用户、最终用途、禁运、知情）", "evidence_needed",
     { needs: ["最终用户、最终用途与实际交易链；General Prohibitions 需逐项过", ...needsMatching(results, "product", /最终用户|最终用途|用途|禁令/i)] }));
 
-  steps.push(step("licence_exception", "许可例外", "not_reached",
-    { needs: ["管辖、分类与国别矩阵成立后方可判断是否有可用的 License Exception"] }));
+  // The one place this lane cannot answer for itself. Whether a Part 740
+  // exception survives is decided by who the counterparty is, which is the trade
+  // lane's question — so it is asked, and the answer is recorded with the lane
+  // that gave it. Until now the dependency graph could only state this rule;
+  // nothing enforced it, and the step went on saying "awaiting an earlier step"
+  // while a designated party sat in the same answer.
+  const exceptions = licenceExceptionOutcome({ grounding, facts: declaredFacts });
+  steps.push(step("licence_exception", "许可例外", exceptions.status || "not_reached",
+    exceptions.status
+      ? { basis: exceptions.basis, needs: exceptions.needs }
+      : { basis: exceptions.basis, needs: ["管辖、分类与国别矩阵成立后方可判断是否有可用的 License Exception"] }));
 
   return steps;
 }
@@ -704,8 +722,8 @@ function tpddSteps(question, grounding, results) {
 // with nothing yet to decide it stays pending rather than being guessed at.
 export function resolveAnalysisPath(plan, { question, grounding, results = [], declaredFacts = {}, templated = false, final = false }) {
   const resolvers = {
-    trade: () => tradeSteps(question, grounding, results),
-    product: () => productSteps(question, grounding, results),
+    trade: () => tradeSteps(question, grounding, results, declaredFacts),
+    product: () => productSteps(question, grounding, results, declaredFacts),
     tpdd: () => tpddSteps(question, grounding, results),
     lookup: () => lookupSteps(grounding),
     briefing: () => briefingSteps(grounding),

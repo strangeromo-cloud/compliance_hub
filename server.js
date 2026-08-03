@@ -7,6 +7,7 @@ import { classifyModelError, testModelConnection } from "./src/llm.js";
 import { getDataSourceCoverage, queryDataSource, syncSource } from "./src/data-layer/service.js";
 import { deleteThread, listThreads, readThread, saveCase, storageDurability } from "./src/case-store.js";
 import { DECLARABLE_FIELDS, describeProcedures } from "./src/analysis-path.js";
+import { describeCapabilities } from "./src/agent-capabilities.js";
 import { closeDb, DB_PATH, REQUIRED_NODE_MAJOR } from "./src/data-layer/db.js";
 import { importLegacyStore } from "./src/data-layer/import-legacy.js";
 import { readSnapshotMeta, readSyncStatus } from "./src/data-layer/storage.js";
@@ -223,6 +224,14 @@ const server = createServer(async (request, response) => {
     // has stopped executing.
     if (request.method === "GET" && url.pathname === "/api/procedures") {
       return sendJson(response, 200, describeProcedures());
+    }
+
+    // The catalogue of what one agent can ask another for. Read-only and carries
+    // no case data — it is the list a published tool server or a skill manifest
+    // would serve, and it exists here so a capability cannot be exposed without
+    // the provision that makes its answer binding travelling with it.
+    if (request.method === "GET" && url.pathname === "/api/capabilities") {
+      return sendJson(response, 200, { capabilities: describeCapabilities(url.searchParams.get("locale") === "en" ? "en" : "zh") });
     }
 
     if (request.method === "GET" && url.pathname === "/api/data-sources") {
