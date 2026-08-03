@@ -194,3 +194,19 @@ test("a crossing shows up on the step that made it", async () => {
   assert.ok(localizeLines(rationale.basis, "zh").some((line) => /调用 产品出口管制 Agent/.test(line)),
     "and diligence depth is asked of the lane that holds the classification");
 });
+
+test("the guide lists the live catalogue rather than a copy of it", async () => {
+  // A page that guesses at what the system exposes is worse than one that stays
+  // quiet — and the point of the section is that a capability cannot be
+  // published without its provision, so a hand-written listing would defeat it.
+  const { readFile } = await import("node:fs/promises");
+  const guide = await readFile(new URL("../public/guide.js", import.meta.url), "utf8");
+  const { CAPABILITIES } = await import("../src/agent-capabilities.js");
+
+  assert.match(guide, /fetch\(`\/api\/capabilities\?locale=\$\{state\.locale\}`\)/,
+    "the catalogue is fetched, and fetched for the reader's language");
+  assert.match(guide, /loadCapabilities\(\);/, "and refetched when the language changes");
+  for (const id of Object.keys(CAPABILITIES)) {
+    assert.doesNotMatch(guide, new RegExp(id.replace(".", "\\.")), `${id} must not be hard-coded into the page`);
+  }
+});

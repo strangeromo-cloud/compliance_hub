@@ -32,6 +32,10 @@ const copy = {
       ["物项分类", "NVIDIA 1,352 个料号、AMD 8,554 个料号的厂商公开分类表已接入，按 part number 直接查 ECCN、HTS、CCATS。厂商声明不是分类决定。"],
       ["路径长度", "按已陈述的事实分流：无第三方则不启尽调通道，EAR99 则无国别矩阵可查。每次跳过都写明触发它的事实和条文，「不确定」永远不缩短路径。"]
     ],
+    capLabel: "对外能力", capTitle: "一条线可以问另一条线什么",
+    capLead: "跨线的问题不经 Agent 互相对话，而是走一份具名的能力注册表：入参是声明的，答案带条文出处，是规则的就用代码算。同一份注册表可以对外发布——`npm run mcp` 以 MCP 工具提供，`/api/capabilities` 直接可读。",
+    capHeads: ["能力", "由哪条线作答", "回答什么", "依据"],
+    capNote: "每次调用都记录谁问的、哪条线答的、依据哪条条文，并写在发起调用的那一步上。答案还会带上它站在什么之上：检索了哪些来源、命中哪些记录，或者明说它只站在用户声明上、未经核验。",
     lanesLabel: "覆盖范围", lanesTitle: "三条合规线",
     lanes: [
       ["Trade", "受限方筛查与身份消歧", "美国 CSL / OFAC / EAR 744；中国管控名单与不可靠实体清单；欧盟、台湾、日本、UFLPA、美国防部 1260H"],
@@ -163,6 +167,10 @@ const copy = {
       ["Item classification", "NVIDIA\u2019s 1,352 parts and AMD\u2019s 8,554 are ingested \u2014 ECCN, HTS and CCATS by part number. A vendor\u2019s statement is not a classification decision."],
       ["Path length", "Triage on stated facts: no third party means no diligence lane, EAR99 means no Country Chart cell to read. Every omission names the fact and the provision behind it, and uncertainty never shortens the path."]
     ],
+    capLabel: "Capabilities", capTitle: "What one lane can ask another",
+    capLead: "A question that crosses lanes does not become a conversation between agents. It goes through a named registry: inputs are declared, answers carry the provision that makes them binding, and anything that is a rule is computed in code. The same registry can be served outside — `npm run mcp` publishes it as MCP tools, and `/api/capabilities` reads it directly.",
+    capHeads: ["Capability", "Answered by", "What it answers", "Provision"],
+    capNote: "Every call records who asked, which lane answered and under which provision, on the step that made it. The answer also carries what it stands on: the sources searched and the records matched, or the plain statement that it rests on an unverified user declaration.",
     lanesLabel: "Scope", lanesTitle: "Three compliance lanes",
     lanes: [
       ["Trade", "Restricted-party screening and identity resolution", "US CSL / OFAC / EAR 744; PRC control and unreliable-entity lists; EU, Taiwan, Japan, UFLPA, DoD 1260H"],
@@ -270,7 +278,7 @@ const copy = {
   }
 };
 
-const state = { locale: localStorage.getItem("compliance-locale") || "zh", coverage: null, procedures: null };
+const state = { locale: localStorage.getItem("compliance-locale") || "zh", coverage: null, procedures: null, capabilities: null };
 const $ = (id) => document.getElementById(id);
 const esc = (value = "") => String(value).replace(/[&<>'"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[c]);
 const c = () => copy[state.locale];
@@ -305,6 +313,36 @@ function gemBacking(gem) {
     records: usable.reduce((n, s) => n + (s.sync.recordCount || 0), 0),
     missing: known.length - usable.length
   };
+}
+
+// Rendered only when the endpoint answered, like the procedures above. A page
+// that guesses at what the system exposes to the outside is worse than one that
+// stays quiet — and the point of this section is that a capability cannot be
+// published without the provision that makes its answer binding, so a listing
+// that invented one would defeat it.
+function capabilitiesSection() {
+  const t = c();
+  const list = state.capabilities;
+  if (!list?.length) return "";
+  return `
+    <section class="guide-reg">
+      <div class="guide-gutter">${esc(t.capLabel)}</div>
+      <div class="guide-body">
+        <h2>${esc(t.capTitle)}</h2>
+        <p>${esc(t.capLead)}</p>
+        <div class="table-wrap"><table>
+          <thead><tr>${t.capHeads.map((head) => `<th>${esc(head)}</th>`).join("")}</tr></thead>
+          <tbody>${list.map((item) => `
+            <tr>
+              <td><b>${esc(item.title)}</b><br><code>${esc(item.id)}</code></td>
+              <td>${esc(item.providerName)}</td>
+              <td>${esc(item.summary)}</td>
+              <td>${esc(item.cite)}</td>
+            </tr>`).join("")}</tbody>
+        </table></div>
+        <p class="guide-note">${esc(t.capNote)}</p>
+      </div>
+    </section>`;
 }
 
 // Rendered only when the endpoint answered. A procedures section that guesses
@@ -478,6 +516,7 @@ function render() {
     </section>
 
     ${proceduresSection()}
+    ${capabilitiesSection()}
 
     <section class="guide-reg">
       <div class="guide-gutter">${esc(t.demoLabel)}</div>
@@ -510,6 +549,17 @@ function render() {
     </section>`;
 }
 
+// The catalogue is written in both languages on the server, so switching sides
+// refetches rather than translating on the page. Section headings around
+// untranslated capability titles is exactly the half-English answer this whole
+// interface was corrected for.
+function loadCapabilities() {
+  fetch(`/api/capabilities?locale=${state.locale}`)
+    .then((response) => (response.ok ? response.json() : null))
+    .then((data) => { if (data?.capabilities) { state.capabilities = data.capabilities; render(); } })
+    .catch(() => { /* the section simply does not render */ });
+}
+
 function applyLocale(locale) {
   state.locale = locale;
   localStorage.setItem("compliance-locale", locale);
@@ -520,6 +570,7 @@ function applyLocale(locale) {
   $("guideZh").classList.toggle("active", locale === "zh");
   $("guideEn").classList.toggle("active", locale === "en");
   render();
+  loadCapabilities();
 }
 
 $("guideZh").addEventListener("click", () => applyLocale("zh"));
