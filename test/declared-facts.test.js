@@ -201,3 +201,42 @@ test("history durability is reported, never assumed", async () => {
   const source = await readFile(new URL("../server.js", import.meta.url), "utf8");
   assert.match(source, /historyPersistent: storage\.persistent/, "the capability endpoint must publish it");
 });
+
+test("the rail marks the running lane even when its steps are already settled", async () => {
+  // Grounding closes the screening steps before the specialist writes a word
+  // about them, so a lane can be running with every one of its steps settled.
+  // Returning "no current step" then left the rail marking nothing at all while
+  // the body showed that lane working — two panels three feet apart disagreeing
+  // about whether anything was happening.
+  const { currentStepId } = await import("../public/status-vocabulary.js");
+
+  const settled = { lanes: [{ lane: "trade", steps: [
+    { id: "identify_party", status: "confirmed" },
+    { id: "search_lists", status: "confirmed" }
+  ] }] };
+  assert.equal(currentStepId(settled, { activeLane: "trade" }), "search_lists",
+    "a running lane with nothing open still has to point somewhere");
+
+  // An open step wins over the fallback, because that is where the work is.
+  const partly = { lanes: [{ lane: "trade", steps: [
+    { id: "identify_party", status: "confirmed" },
+    { id: "ownership", status: "evidence_needed", inputs: [{ field: "ownership" }] },
+    { id: "search_lists", status: "confirmed" }
+  ] }] };
+  assert.equal(currentStepId(partly, { activeLane: "trade" }), "ownership");
+
+  // A step the procedure never reaches for is folded out of the rail, so it must
+  // not be what the rail lands on.
+  const folded = { lanes: [{ lane: "trade", steps: [
+    { id: "identify_party", status: "confirmed" },
+    { id: "parent_screening", status: "not_applicable" }
+  ] }] };
+  assert.equal(currentStepId(folded, { activeLane: "trade" }), "identify_party");
+
+  // Before any specialist starts, the work belongs to the first lane rather than
+  // to a question waiting on the reader.
+  assert.equal(currentStepId(settled, { stage: "grounding" }), "search_lists");
+  // And with nothing running, the rail falls back to what the caller computed.
+  assert.equal(currentStepId(settled, { firstBlocked: "ownership" }), "ownership");
+  assert.equal(currentStepId(settled, {}), null);
+});

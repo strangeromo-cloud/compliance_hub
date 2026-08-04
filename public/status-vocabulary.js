@@ -54,3 +54,66 @@ export function label(vocabulary, key, locale = "zh") {
 export function tone(vocabulary, key) {
   return vocabulary[key]?.tone || "muted";
 }
+
+
+export const SETTLED_STATUS = new Set(["confirmed", "declared", "review_required", "not_applicable"]);
+
+// What a step is, right now, in one place.
+//
+// The rail and the body each worked this out for themselves, and each got it
+// wrong in a different way: the rail did not know a step had been declined, it
+// counted an inapplicable step as the one being worked on, and it drew declined
+// steps the body had hidden entirely. Three symptoms, one cause — "which step is
+// current" meant three things and was coordinated by hand.
+//
+//   done      settled, nothing outstanding
+//   declared  answered by the reader, unverified
+//   asking    the step the reader is being asked to answer now
+//   skipped   the reader declined it; outstanding, but not a question any more
+//   na        the procedure does not reach for it
+//   review    only a person can close it
+//   pending   not reached yet
+
+export function stepState(item) {
+  if (!item) return "pending";
+  if (item.status === "evidence_needed" && item.inputs?.length) {
+    return isAskable(item) ? "asking" : "skipped";
+  }
+  return {
+    confirmed: "done", declared: "declared", not_applicable: "na",
+    review_required: "review", evidence_needed: "asking",
+    not_reached: "pending", pending: "pending"
+  }[item.status] || "pending";
+}
+
+export const FOLDED = new Set(["na", "skipped"]);
+
+// Which step the rail should mark. One definition, because there are three
+// meanings of "current" here and picking the wrong one is how the two panels
+// ended up disagreeing with each other.
+export function currentStepId(path, options = {}) {
+  if (options.currentStep) return options.currentStep;
+  const runningLane = options.activeLane
+    ? path.lanes.find((lane) => lane.lane === options.activeLane)
+    // Before the first specialist starts, the work is retrieval and screening —
+    // which belongs to the first lane. Falling through to "the first blocked
+    // step" pointed the rail at a question waiting on the reader while the run
+    // was busy elsewhere.
+    : (options.stage ? path.lanes[0] : null);
+  if (!runningLane) return options.firstBlocked ?? null;
+
+  // Settled means settled, and a step the procedure does not reach for is
+  // settled — the body folds it into "N not applicable". Hand-rolling the test
+  // as "not confirmed and not declared" let the rail pick an inapplicable step
+  // and mark it as running while the body had folded it out of sight.
+  const open = runningLane.steps.find((item) => !SETTLED_STATUS.has(item.status));
+  if (open) return open.id;
+
+  // A lane can be running with every one of its steps already settled: grounding
+  // closes the screening steps before the specialist writes a word about them.
+  // Returning null then left the rail marking nothing at all while the body
+  // showed that lane working — two panels three feet apart disagreeing about
+  // whether anything was happening. The rail points at the last step it actually
+  // draws for that lane instead.
+  return runningLane.steps.filter((item) => !FOLDED.has(stepState(item))).at(-1)?.id || null;
+}

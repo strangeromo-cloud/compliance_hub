@@ -1,5 +1,5 @@
 import { GEMS, GEM_BY_ID, GEM_GROUPS, factCoverage, matchGems, toggleWorkspaceGem, workspaceGemIds } from "/gems.js";
-import { EVIDENCE_STATUS, STEP_STATUS_VOCAB, label, tone } from "/status-vocabulary.js";
+import { EVIDENCE_STATUS, FOLDED, SETTLED_STATUS, STEP_STATUS_VOCAB, currentStepId, label, stepState, tone } from "/status-vocabulary.js";
 import { judgeIntent } from "/intent.js";
 
 const i18n = {
@@ -783,39 +783,9 @@ function setPanelTab(tab) {
 // of the plan stays visible.
 // Settled means the step is closed: established, declared by the user, or handed
 // to a human. Reached-but-blocked is not progress.
-const SETTLED_STATUS = new Set(["confirmed", "declared", "review_required", "not_applicable"]);
-
-// What a step is, right now, in one place.
-//
-// The rail and the body each worked this out for themselves, and each got it
-// wrong in a different way: the rail did not know a step had been declined, it
-// counted an inapplicable step as the one being worked on, and it drew declined
-// steps the body had hidden entirely. Three symptoms, one cause — "which step is
-// current" meant three things and was coordinated by hand.
-//
-//   done      settled, nothing outstanding
-//   declared  answered by the reader, unverified
-//   asking    the step the reader is being asked to answer now
-//   skipped   the reader declined it; outstanding, but not a question any more
-//   na        the procedure does not reach for it
-//   review    only a person can close it
-//   pending   not reached yet
-export function stepState(item) {
-  if (!item) return "pending";
-  if (item.status === "evidence_needed" && item.inputs?.length) {
-    return isAskable(item) ? "asking" : "skipped";
-  }
-  return {
-    confirmed: "done", declared: "declared", not_applicable: "na",
-    review_required: "review", evidence_needed: "asking",
-    not_reached: "pending", pending: "pending"
-  }[item.status] || "pending";
-}
 
 // Shown at full height, folded into a summary line, or not drawn at all. Both
 // sides use this so a step cannot be visible on one and absent on the other.
-const FOLDED = new Set(["na", "skipped"]);
-
 const FLOW_STATE = {
   skipped: { cls: "skipped", mark: "–" },
   confirmed: { cls: "done", mark: "✓" },
@@ -871,7 +841,7 @@ function renderFlowPanel(path, options = {}) {
   // from rather than recomputing one from a path that has not caught up.
   if (state.resumingStep) options = { ...options, currentStep: state.resumingStep };
   const panel = $("flowPanel");
-  const markup = flowMarkup(path, options);
+  const markup = flowMarkup(path, { ...options, firstBlocked: path ? firstBlockedStep(path) : null });
   const steps = (path?.lanes || []).flatMap((lane) => lane.steps);
   const executed = steps.filter((item) => SETTLED_STATUS.has(item.status)).length;
   $("flowCount").textContent = steps.length ? `${executed}/${steps.length}` : "";
@@ -898,22 +868,7 @@ function flowMarkup(path, options = {}) {
   // showing "continuing the analysis" — and computing a fresh guess put the rail
   // on a later step the body was not working on. While a specialist is running it
   // is that lane. Otherwise it is the question waiting on the reader.
-  const runningLane = options.activeLane
-    ? path.lanes.find((lane) => lane.lane === options.activeLane)
-    // Before the first specialist starts, the work is retrieval and screening —
-    // which belongs to the first lane. Falling through to "the first blocked
-    // step" pointed the rail at a question waiting on the reader while the run
-    // was busy elsewhere.
-    : (options.stage ? path.lanes[0] : null);
-  const asking = options.currentStep
-    || (runningLane
-      // Settled means settled, and a step the procedure does not reach for is
-      // settled — the body folds it into "N not applicable". Hand-rolling the
-      // test as "not confirmed and not declared" let the rail pick an
-      // inapplicable step and mark it as running while the body had folded it
-      // out of sight: on the left it was gone, on the right it was in progress.
-      ? runningLane.steps.find((item) => !SETTLED_STATUS.has(item.status))?.id || null
-      : firstBlockedStep(path));
+  const asking = currentStepId(path, options);
   const percent = Math.round((executed / steps.length) * 100);
 
   return `
@@ -1820,7 +1775,12 @@ async function analyze(event, options = {}) {
     const box = node.getBoundingClientRect();
     const view = $("thread").getBoundingClientRect();
     if (box.top >= view.top + 20 && box.top <= view.bottom - 80) return;
-    node.scrollIntoView({ behavior: "smooth", block: "start" });
+    // Not smooth. A smooth scroll is animated and therefore asynchronous, and the
+    // next path event replaces the very node being scrolled to — which cancels
+    // the animation part-way and leaves the reader wherever it got to, or more
+    // often nowhere at all. Following a running process is also not a case where
+    // easing helps: the work moved, and the page should already be there.
+    node.scrollIntoView({ block: "start" });
   }
 
   function drawPath() {
