@@ -35,7 +35,7 @@ const i18n = {
     basis_normalized_name_identical: "规范化后名称完全一致", basis_one_normalized_name_contains_the_other: "一个名称包含另一个",
     basis_token_overlap: "词元重叠", basis_weak_token_overlap: "弱词元重叠", basis_no_overlap: "无重叠", basis_no_comparable_name: "无可比对名称",
     disp_strong_potential_match_escalate_for_human_confirmation: "身份要素一致 —— 建议升级人工确认",
-    disp_potential_match_requires_identity_review: "潜在命中 —— 需人工核对身份要素",
+    disp_potential_match_requires_identity_review: "潜在命中 —— 需人工核对身份要素", disp_potential_match_requires_review: "名单条目 —— 命中与否须经人工核对",
     disp_weak_potential_match_requires_identity_review: "弱潜在命中 —— 需人工核对",
     disp_likely_false_positive_identity_elements_conflict: "身份要素冲突 —— 判定为疑似误报（仍需人工用注册证据确认）",
     disp_below_review_threshold: "低于复核阈值",
@@ -46,7 +46,7 @@ const i18n = {
     modeHint: "点击切换规则模式与实时模型",
     routeLabel: "路由", intentReview: "合规审查", intentLookup: "直接查询", intentBriefing: "监管变化简报", intentMemo: "案件备忘录", intentNoReview: "不进入合规审查流程", intentAllLanes: "未匹配到关键词，三条线全跑", routedTo: "已路由至",
     overallAssessment: "总体判断", nextStep: "下一步", missingInfo: "仍需信息", actions: "建议行动", planSuggested: "专业 Agent 的其他建议", planSuggestedNote: "这些建议未对应分析路径上的某一步，供人工复核时参考", notClosed: "尚有 {n} 项未补齐", stepAsk: "请补充以下信息，分析将从这里继续", naCount: "{n} 项本次不适用或已跳过", stepTriggered: "由前一步的发现触发", flowFolded: "另有 {n} 项不适用或已跳过", laneFindings: "本条线的分析发现（专业 Agent 输出，非全案结论）", interimVerdict: "阶段性判断（基于现有信息，未结案）", noItems: "暂无", limitations: "结论边界与限制",
-    sourceLive: "实时获取", sourceMetadata: "元数据", sourceUnavailable: "获取失败", sourceNotFetched: "未获取", sourceArchived: "已采集副本", sourceCitationOnly: "仅引用", sourceCached: "缓存", noQueryableSource: "暂无可直查的来源（需先同步）", sourceQueryHint: "@ 直查数据源", sourceQueryPlaceholder: "输入实体名、公告号或条文关键词（按相关性排序；留空则浏览全部）…",
+    sourceLive: "实时获取", sourceMetadata: "元数据", sourceUnavailable: "获取失败", sourceNotFetched: "未获取", sourceArchived: "已采集副本", sourceCitationOnly: "仅引用", sourceCached: "缓存", noQueryableSource: "暂无可直查的来源（需先同步）", sourceQueryHint: "@ 直查数据源", srcAuthority: "发布机构", srcCountry: "法域", srcUpdates: "更新频率", srcCaptured: "本地采集于", srcBoundary: "这里返回来源自己的记录，不是判定结论。", sourceQueryPlaceholder: "输入实体名、公告号或条文关键词（按相关性排序；留空则浏览全部）…",
     queryEmpty: "请输入查询内容", queryHits: "{total} 条命中", browseCount: "共 {total} 条", browseAll: "浏览全部", pagePrev: "上一页", pageNext: "下一页", relMatched: "命中", relMissed: "未命中", relPartial: "另有 {n} 条仅命中部分检索词，未列出", queryNoHit: "该来源中未找到匹配记录", queryTruncated: "显示前 {shown} 条，共 {total} 条",
     queryEscalate: "以此发起完整筛查 →", escalatePrefix: "请对 {q} 做完整合规筛查",
     queryDisclaimer: "直查返回的是来源原始记录，不是判定结论。", jumpSource: "在该来源中直查", lookupMode: "直查模式 · 不经 Agent 分析", sourceStale: "缓存（已过期）", evidenceCollapse: "收起证据栏", evidenceExpand: "展开证据栏",
@@ -93,7 +93,7 @@ const i18n = {
     basis_normalized_name_identical: "normalized names identical", basis_one_normalized_name_contains_the_other: "one name contains the other",
     basis_token_overlap: "token overlap", basis_weak_token_overlap: "weak token overlap", basis_no_overlap: "no overlap", basis_no_comparable_name: "no comparable name",
     disp_strong_potential_match_escalate_for_human_confirmation: "Identity elements agree — escalate for human confirmation",
-    disp_potential_match_requires_identity_review: "Potential match — identity elements need review",
+    disp_potential_match_requires_identity_review: "Potential match — identity elements need review", disp_potential_match_requires_review: "A list entry — whether it matches is for a human to confirm",
     disp_weak_potential_match_requires_identity_review: "Weak potential match — needs review",
     disp_likely_false_positive_identity_elements_conflict: "Identity elements conflict — likely false positive (still requires confirmation against registration evidence)",
     disp_below_review_threshold: "Below review threshold",
@@ -104,7 +104,7 @@ const i18n = {
     modeHint: "Toggle between rules mode and the live model",
     routeLabel: "Route", intentReview: "Compliance review", intentLookup: "Direct lookup", intentBriefing: "Regulatory briefing", intentMemo: "Case memo", intentNoReview: "no review procedure runs", intentAllLanes: "no term matched, so all three run", routedTo: "Routed to",
     overallAssessment: "Overall assessment", nextStep: "Next step", missingInfo: "Missing information", actions: "Recommended actions", planSuggested: "Other suggestions from the specialists", planSuggestedNote: "These do not map onto a step in the analysis path; they are for the reviewer to weigh", notClosed: "{n} items still open", stepAsk: "Add these and the analysis continues from here", naCount: "{n} not applicable or skipped", stepTriggered: "triggered by an earlier finding", flowFolded: "{n} more not applicable or skipped", laneFindings: "What this lane found (specialist output, not the case conclusion)", interimVerdict: "Interim assessment (on incomplete facts, not a conclusion)", noItems: "None", limitations: "Limits on this conclusion",
-    sourceLive: "Live", sourceMetadata: "Metadata", sourceUnavailable: "Unavailable", sourceNotFetched: "Not fetched", sourceArchived: "Archived copy", sourceCitationOnly: "Cited only", sourceCached: "Cached", noQueryableSource: "No queryable source yet (sync one first)", sourceQueryHint: "@ query a source", sourceQueryPlaceholder: "Entity name, notice number or keyword — ranked by relevance; leave empty to browse all…",
+    sourceLive: "Live", sourceMetadata: "Metadata", sourceUnavailable: "Unavailable", sourceNotFetched: "Not fetched", sourceArchived: "Archived copy", sourceCitationOnly: "Cited only", sourceCached: "Cached", noQueryableSource: "No queryable source yet (sync one first)", sourceQueryHint: "@ query a source", srcAuthority: "Published by", srcCountry: "Jurisdiction", srcUpdates: "Updated", srcCaptured: "Captured locally", srcBoundary: "This returns the source's own records, not a determination.", sourceQueryPlaceholder: "Entity name, notice number or keyword — ranked by relevance; leave empty to browse all…",
     queryEmpty: "Enter something to look up", queryHits: "{total} matches", browseCount: "{total} records", browseAll: "Browse all", pagePrev: "Previous", pageNext: "Next", relMatched: "matched", relMissed: "not matched", relPartial: "{n} more records matched only part of the query and are not listed", queryNoHit: "No matching record in this source", queryTruncated: "Showing {shown} of {total}",
     queryEscalate: "Run a full screening on this →", escalatePrefix: "Run a full compliance screening on {q}",
     queryDisclaimer: "A lookup returns the source's own records, not a determination.", jumpSource: "Look this up in the source", lookupMode: "Lookup mode · does not run the agents", sourceStale: "Cached (stale)", evidenceCollapse: "Collapse evidence", evidenceExpand: "Expand evidence",
@@ -614,6 +614,7 @@ function activateSourceQuery(sourceId, prefill = "") {
   $("questionInput").placeholder = t("sourceQueryPlaceholder");
   renderActiveGem();
   updateRouteHint();
+  renderFlowPanel(null);
   $("questionInput").focus();
 }
 
@@ -622,6 +623,7 @@ function clearSourceQuery() {
   $("questionInput").placeholder = t("placeholder");
   renderActiveGem();
   updateRouteHint();
+  renderFlowPanel(null);
 }
 
 function paletteQuery() {
@@ -830,6 +832,38 @@ const FLOW_STATE = {
 let lastFlowPath = null;
 const collectedPath = () => lastFlowPath;
 
+// A lookup has no analysis path, so the rail sat on "ask a question and the
+// progress appears here" for the whole of it — half the screen given over to
+// telling the reader that the thing they are doing is not the thing this panel
+// is for. What belongs there instead is what they are looking at: which source,
+// what it is for, how much of it there is and when it was captured. The reason a
+// reader opens a source directly is usually to check a claim the analysis made
+// about it, and that check needs the source's own terms in front of them.
+function sourcePanelMarkup(source) {
+  const sync = source.sync || {};
+  const stale = sync.status === "fallback_snapshot";
+  const rows = [
+    [t("srcAuthority"), source.authority],
+    [t("srcCountry"), source.country],
+    [t("srcUpdates"), source.updateFrequency],
+    [t("srcCaptured"), String(sync.capturedAt || sync.completedAt || "").slice(0, 10)]
+  ].filter(([, value]) => value);
+
+  return `
+    <div class="src-panel">
+      <div class="sp-head"><h3>${esc(source.sourceName || source.sourceId)}</h3>
+        <span class="sp-count">${(sync.recordCount || 0).toLocaleString()}</span></div>
+      <p class="sp-id">@${esc(source.sourceId)}</p>
+      ${source.purpose ? `<p class="sp-purpose">${esc(localized(source.purpose))}</p>` : ""}
+      <dl class="sp-facts">${rows.map(([label, value]) => `
+        <div><dt>${esc(label)}</dt><dd>${esc(value)}</dd></div>`).join("")}</dl>
+      ${stale ? `<p class="sp-stale">${esc(t("sourceArchived"))}</p>` : ""}
+      ${source.attribution ? `<p class="sp-note">${esc(localized(source.attribution))}</p>` : ""}
+      ${source.websiteUrl ? `<a class="sp-link" href="${esc(source.websiteUrl)}" target="_blank" rel="noopener noreferrer">${esc(t("rsOpen"))}</a>` : ""}
+      <p class="sp-boundary">${esc(t("srcBoundary"))}</p>
+    </div>`;
+}
+
 function renderFlowPanel(path, options = {}) {
   if (path) lastFlowPath = path;
   else path = lastFlowPath;
@@ -841,7 +875,10 @@ function renderFlowPanel(path, options = {}) {
   const steps = (path?.lanes || []).flatMap((lane) => lane.steps);
   const executed = steps.filter((item) => SETTLED_STATUS.has(item.status)).length;
   $("flowCount").textContent = steps.length ? `${executed}/${steps.length}` : "";
-  panel.innerHTML = markup || `<p class="evidence-empty">${esc(t("flowEmpty"))}</p>`;
+  // While a source is open the panel belongs to that source, not to an analysis
+  // path that this kind of question never produces.
+  const sourceView = !markup && state.sourceQuery ? sourcePanelMarkup(state.sourceQuery) : "";
+  panel.innerHTML = markup || sourceView || `<p class="evidence-empty">${esc(t("flowEmpty"))}</p>`;
   hydrateBars(panel);
   // Below the breakpoint that hides the right column the rail has to live
   // somewhere, so the same markup is mirrored into the answer and CSS picks one.
@@ -1504,17 +1541,41 @@ async function loadCoverage() {
 /* ------------------------------------------------------------- analysis */
 
 const PARTY_FIELDS = [
-  ["entityNameEn", "英文名"], ["commonNames", "常用名"], ["aliases", "别名"],
-  ["country", "国别"], ["addresses", "地址"], ["address", "地址"],
-  ["registrationNumber", "注册号"], ["noticeNumber", "公告"], ["effectiveFrom", "生效"],
-  ["measures", "措施"], ["restrictionType", "限制类型"], ["sourceList", "所属名单"], ["programs", "项目"]
+  ["entityNameEn", { zh: "英文名", en: "English name" }], ["commonNames", { zh: "常用名", en: "Common names" }],
+  ["aliases", { zh: "别名", en: "Aliases" }], ["country", { zh: "国别", en: "Country" }],
+  ["addresses", { zh: "地址", en: "Address" }], ["address", { zh: "地址", en: "Address" }],
+  ["registrationNumber", { zh: "注册号", en: "Registration" }], ["noticeNumber", { zh: "公告", en: "Notice" }],
+  ["effectiveFrom", { zh: "生效", en: "Effective" }], ["measures", { zh: "措施", en: "Measures" }],
+  ["restrictionType", { zh: "限制类型", en: "Restriction" }], ["sourceList", { zh: "所属名单", en: "On list" }],
+  ["programs", { zh: "项目", en: "Programmes" }]
 ];
-const TEXT_FIELDS = [["part", "所属部分"], ["effectiveDate", "版本日期"], ["noticeNumber", "公告"], ["publishedAt", "发布"], ["effectiveFrom", "生效"], ["measureType", "类型"]];
+const TEXT_FIELDS = [
+  ["part", { zh: "所属部分", en: "Part" }], ["effectiveDate", { zh: "版本日期", en: "Version date" }],
+  ["noticeNumber", { zh: "公告", en: "Notice" }], ["publishedAt", { zh: "发布", en: "Published" }],
+  ["effectiveFrom", { zh: "生效", en: "Effective" }], ["measureType", { zh: "类型", en: "Type" }]
+];
+
+// An address arrives from the publisher as a structured record, and the browser
+// was printing it as one: {"address":"172 Xibin Rd…","city":"Daqing","state":null,
+// "postal_code":"163453","country":"CN"}. That is the field a reader most often
+// came here to read, rendered as the thing they least wanted to see. Structured
+// values are flattened into their non-empty parts, in the order they were given,
+// and anything genuinely unprintable is dropped rather than dumped.
+function flatten(value) {
+  if (value === null || value === undefined || value === "") return "";
+  if (typeof value !== "object") return String(value);
+  if (Array.isArray(value)) return value.map(flatten).filter(Boolean).join(", ");
+  return Object.values(value).map(flatten).filter(Boolean).join(", ");
+}
 
 function fieldValue(value) {
-  if (Array.isArray(value)) return value.filter(Boolean).slice(0, 4).map((item) => (typeof item === "object" ? JSON.stringify(item) : String(item))).join(" · ");
-  if (value && typeof value === "object") return JSON.stringify(value).slice(0, 160);
-  return value === null || value === undefined || value === "" ? "" : String(value);
+  if (Array.isArray(value)) {
+    const parts = value.map(flatten).filter(Boolean);
+    // The count is the honest way to say a list was cut, rather than trailing off
+    // and letting the reader assume they saw all of it.
+    return parts.slice(0, 4).join(" · ") + (parts.length > 4 ? ` · +${parts.length - 4}` : "");
+  }
+  return flatten(value);
 }
 
 function recordMarkup(record) {
@@ -1522,7 +1583,7 @@ function recordMarkup(record) {
   const title = record.entityName || record.noticeTitle || record.title || record.recordId || "—";
   const template = isParty ? PARTY_FIELDS : TEXT_FIELDS;
   const rows = template
-    .map(([key, label]) => [label, fieldValue(record[key])])
+    .map(([key, label]) => [localized(label), fieldValue(record[key])])
     .filter(([, value]) => value);
 
   return `
@@ -1538,7 +1599,8 @@ function recordMarkup(record) {
         <span class="rr-terms">${esc(t("relMatched"))} ${record.relevance.matchedTerms.map((term) => `<b>${esc(term)}</b>`).join("")}${record.relevance.missedTerms.length ? `<span class="rr-miss">${esc(t("relMissed"))} ${record.relevance.missedTerms.map(esc).join(" ")}</span>` : ""}</span>
       </div>` : ""}
       ${(record.matchSnippets || []).map((snippet) => `<p class="rec-snippet">${esc(snippet.text)}</p>`).join("")}
-      ${record.matchDisposition ? `<div class="rec-warn">${esc(t(`disp_${record.matchDisposition}`) || record.matchDisposition)}</div>` : ""}
+      ${record.matchDisposition && t(`disp_${record.matchDisposition}`)
+        ? `<div class="rec-warn">${esc(t(`disp_${record.matchDisposition}`))}</div>` : ""}
     </article>`;
 }
 

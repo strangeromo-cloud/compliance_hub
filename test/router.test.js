@@ -306,3 +306,48 @@ test("a question about a lane's own subject matches that lane", async () => {
   assert.equal(judgeIntent({ question: "CCL 管制清单里这一项的管制理由是什么" }).reasons.trade, undefined);
   assert.equal(judgeIntent({ question: "这家公司的股权穿透到底是谁" }).reasons.product, undefined);
 });
+
+test("a source record reads as a record, not as its storage", async () => {
+  // An address arrives from the publisher as a structured value, and the browser
+  // was printing the structure: {"address":"172 Xibin Rd…","city":"Daqing",
+  // "state":null,"postal_code":"163453","country":"CN"}. That is the field a
+  // reader most often opens a source to read, rendered as the thing they least
+  // wanted to see.
+  const { readFile } = await import("node:fs/promises");
+  const source = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
+  const { fieldValue, PARTY_FIELDS } = await import(`data:text/javascript,${encodeURIComponent(
+    source.slice(source.indexOf("const PARTY_FIELDS"), source.indexOf("\nfunction recordMarkup"))
+      .replace("const PARTY_FIELDS", "export const PARTY_FIELDS")
+      .replace("function fieldValue", "export function fieldValue"))}`);
+
+  assert.equal(
+    fieldValue([{ address: "172 Xibin Rd", city: "Daqing", state: null, postal_code: "163453", country: "CN" }]),
+    "172 Xibin Rd, Daqing, 163453, CN"
+  );
+  assert.equal(fieldValue("EAR99"), "EAR99");
+  assert.equal(fieldValue(null), "");
+  assert.equal(fieldValue([]), "");
+  // A truncated list says how much was cut rather than trailing off and letting
+  // the reader assume they saw all of it.
+  assert.equal(fieldValue(["a", "b", "c", "d", "e", "f"]), "a · b · c · d · +2");
+
+  // Every field label is written in both languages, like everything else the
+  // interface says for itself.
+  for (const [, label] of PARTY_FIELDS) {
+    assert.ok(label.zh && label.en, `${JSON.stringify(label)} needs both languages`);
+  }
+});
+
+test("a disposition with no translation is not shown as its own key", async () => {
+  // The OpenSanctions adapters emit a disposition the copy table never had, so
+  // the reader was handed "disp_potential_match_requires_review". Saying nothing
+  // beats showing an identifier.
+  const { readFile } = await import("node:fs/promises");
+  const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
+  const adapters = await readFile(new URL("../src/data-layer/adapters-os.js", import.meta.url), "utf8");
+
+  for (const [, value] of adapters.matchAll(/matchDisposition: "([a-z_]+)"/g)) {
+    assert.ok(app.includes(`disp_${value}:`), `disp_${value} has no translation`);
+  }
+  assert.doesNotMatch(app, /\|\| record\.matchDisposition/, "an untranslated key must not fall through to the reader");
+});
