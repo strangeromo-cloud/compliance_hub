@@ -27,6 +27,7 @@
 
   --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
   --rail-w: 240px;
+  --panel-w: 380px;
   --bar-h: 48px;
   --radius: 6px;
   --radius-lg: 12px;
@@ -104,7 +105,7 @@ kbd { font-family: var(--mono); border: 1px solid var(--border-strong); border-r
 .app {
   height: 100vh;
   display: grid;
-  grid-template-columns: var(--rail-w) minmax(0, 1fr) 300px;
+  grid-template-columns: var(--rail-w) minmax(0, 1fr) var(--panel-w);
   overflow: hidden;
 }
 .app.no-evidence { grid-template-columns: var(--rail-w) minmax(0, 1fr); }
@@ -443,7 +444,10 @@ html[data-theme="light"] .palette { box-shadow: 0 14px 36px rgba(0,0,0,.14); }
 
 /* --------------------------------------------------------------- evidence */
 
-.evidence { border-left: 1px solid var(--border); background: var(--surface); display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
+/* The right column is a panel, not more page. Sharing the workspace's surface
+   made the boundary a hairline and the two read as one scrolling area — which
+   matters more now the panel is where a lookup's output lands. */
+.evidence { border-left: 1px solid var(--border); background: var(--surface-2); display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
 .evidence-head { height: var(--bar-h); flex: 0 0 auto; display: flex; align-items: center; gap: 7px; padding: 0 14px; border-bottom: 1px solid var(--border); }
 .evidence-head h2 { font-size: 12.5px; font-weight: 600; color: var(--text-2); }
 .count-badge { font-size: 10px; font-variant-numeric: tabular-nums; color: var(--text-3); border: 1px solid var(--border); border-radius: 10px; padding: 0 6px; }
@@ -1620,3 +1624,12 @@ html[lang="en"] .step-needs::before { content: "NEEDS"; font-size: 8px; }
 .sp-link:hover { text-decoration: underline; text-underline-offset: 2px; }
 .sp-boundary { margin: 14px 0 0; padding-top: 10px; border-top: 1px solid var(--border);
   font-size: 10.5px; line-height: 1.6; color: var(--text-3); }
+
+/* A lookup's output, in the panel. The cards carry their own surface so they sit
+   on the panel rather than dissolving into it. */
+.lookup-out { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); }
+.lookup-out .rec { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; }
+.lookup-out .rec-fields > div { grid-template-columns: 64px minmax(0, 1fr); gap: 8px; }
+.lookup-out .rec-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.lookup-out .rec-actions .btn { height: 26px; padding: 0 10px; font-size: 11.5px; }
+.lookup-out .msg-meta { flex-wrap: wrap; }

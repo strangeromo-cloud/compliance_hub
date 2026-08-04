@@ -351,3 +351,40 @@ test("a disposition with no translation is not shown as its own key", async () =
   }
   assert.doesNotMatch(app, /\|\| record\.matchDisposition/, "an untranslated key must not fall through to the reader");
 });
+
+test("the composer never refuses a click it should accept", async () => {
+  // Two ways this went wrong. An empty box in lookup mode is a request to browse
+  // the whole source — the placeholder says exactly that — and it sat behind a
+  // button that behaved as though there were nothing to send. And assigning to
+  // .value fires no input event, so prefilling a question and then refusing to
+  // send it was one keystroke away every time.
+  const { readFile } = await import("node:fs/promises");
+  const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
+
+  assert.match(app, /function syncSubmitState\(\)/, "one definition of whether send is available");
+  assert.match(app, /state\.busy \|\| \(empty && !state\.sourceQuery\)/,
+    "an empty box only blocks send outside lookup mode");
+
+  // Every programmatic fill goes through setComposer, because hunting call sites
+  // is how the state drifted apart to begin with.
+  const direct = [...app.matchAll(/\$\("questionInput"\)\.value = /g)].length;
+  assert.equal(direct, 1, "only setComposer may assign the composer's value");
+  assert.match(app, /function setComposer\(value\) \{\n  \$\("questionInput"\)\.value = value;\n  syncSubmitState\(\);/);
+});
+
+test("a lookup's output is the panel, and leaves the thread alone", async () => {
+  // A lookup is not a turn in a conversation — nobody asked the system anything,
+  // they opened a drawer. Paging through 25,921 records must not fill the thread
+  // with a record of clicks.
+  const { readFile } = await import("node:fs/promises");
+  const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
+  const lookup = app.slice(app.indexOf("async function runSourceQuery"), app.indexOf("\nasync function analyze"));
+
+  assert.doesNotMatch(lookup, /threadInner/, "a lookup must not write to the thread");
+  assert.match(lookup, /\$\("flowPanel"\)/, "it writes to the panel");
+  assert.match(lookup, /sourcePanelMarkup\(source\)/, "with the source's own terms above the records");
+
+  // The buttons moved with it, so the handler has to hear them there.
+  assert.match(app, /\$\("flowPanel"\)\.addEventListener\("click", onWorkspaceClick\)/);
+  assert.match(app, /\$\("threadInner"\)\.addEventListener\("click", onWorkspaceClick\)/);
+});

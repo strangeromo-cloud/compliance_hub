@@ -610,11 +610,12 @@ function activateSourceQuery(sourceId, prefill = "") {
   state.sourceQuery = source;
   state.activeGem = null;
   closePalette();
-  $("questionInput").value = prefill;
+  setComposer(prefill);
   $("questionInput").placeholder = t("sourceQueryPlaceholder");
   renderActiveGem();
   updateRouteHint();
   renderFlowPanel(null);
+  syncSubmitState();
   $("questionInput").focus();
 }
 
@@ -624,6 +625,7 @@ function clearSourceQuery() {
   renderActiveGem();
   updateRouteHint();
   renderFlowPanel(null);
+  syncSubmitState();
 }
 
 function paletteQuery() {
@@ -677,7 +679,7 @@ function movePalette(step) {
 function choosePalette() {
   const gem = state.palette.items[state.palette.index];
   if (!gem) return;
-  $("questionInput").value = "";
+  setComposer("");
   activateGem(gem.id);
 }
 
@@ -1559,6 +1561,28 @@ function recordMarkup(record) {
     </article>`;
 }
 
+// Setting the composer's text goes through here, because assigning to .value
+// fires no input event — so every programmatic fill was leaving the send button
+// in whatever state the last keystroke had put it in. Prefilling a question and
+// then refusing to send it is a particularly bad version of that.
+function setComposer(value) {
+  $("questionInput").value = value;
+  syncSubmitState();
+}
+
+// Whether the send button can be pressed, decided in one place.
+//
+// It was being toggled from inside the two run paths and nowhere else, so an
+// empty box in lookup mode — which is a request to browse the whole source, and
+// the placeholder says so — sat behind a button that looked and behaved as
+// though there were nothing to send. An empty box in ordinary mode is genuinely
+// unsendable, and now says so rather than accepting the click and answering with
+// a toast.
+function syncSubmitState() {
+  const empty = !$("questionInput").value.trim();
+  $("submitBtn").disabled = state.busy || (empty && !state.sourceQuery);
+}
+
 async function runSourceQuery(event, options = {}) {
   if (event) event.preventDefault();
   if (state.busy) return;
@@ -1568,13 +1592,8 @@ async function runSourceQuery(event, options = {}) {
   const query = options.query !== undefined ? options.query : $("questionInput").value.trim();
   const offset = Number(options.offset) || 0;
 
-  $("startPanel").classList.add("hidden");
-  if (!options.replace) {
-    $("threadInner").insertAdjacentHTML("beforeend",
-      `<article class="msg msg-user"><div class="bubble"><span class="gem-tag">@${esc(source.sourceId)}</span><br>${esc(query || t("browseAll"))}</div></article>`);
-    $("questionInput").value = "";
-  }
-  state.busy = true; $("submitBtn").disabled = true;
+  if (!options.replace) setComposer("");
+  state.busy = true; syncSubmitState();
 
   try {
     const response = await fetch("/api/data-sources/query", {
@@ -1589,8 +1608,7 @@ async function runSourceQuery(event, options = {}) {
     const shownTo = offset + data.records.length;
     const stale = data.mode === "bundled_fallback_snapshot";
     const markup = `
-      <article class="msg msg-assistant" data-lookup="${esc(source.sourceId)}" data-lookup-query="${esc(query)}" data-lookup-offset="${offset}">
-        <span class="avatar" aria-hidden="true">⛁</span>
+      <section class="lookup-out" data-lookup="${esc(source.sourceId)}" data-lookup-query="${esc(query)}" data-lookup-offset="${offset}">
         <div>
           <div class="msg-meta">
             <span class="tag">@${esc(source.sourceId)}</span><span class="sep">·</span>
@@ -1615,18 +1633,20 @@ async function runSourceQuery(event, options = {}) {
                <div class="rec-actions"><button type="button" class="btn" data-browse="${esc(source.sourceId)}">${esc(t("browseAll"))}</button></div>`}
           <p class="msg-note">${esc(t("queryDisclaimer"))}</p>
         </div>
-      </article>`;
-    // Paging replaces the panel in place rather than appending another copy of the
-    // same lookup, so the thread stays a record of questions, not of clicks.
-    if (options.replace) options.replace.outerHTML = markup;
-    else $("threadInner").insertAdjacentHTML("beforeend", markup);
-    hydrateBars($("threadInner"));
-    (options.replace ? $("threadInner").querySelector(`[data-lookup-offset="${offset}"]`) : $("threadInner").lastElementChild)
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      </section>`;
+    // The panel is the output. A lookup is not a turn in a conversation — nobody
+    // asked the system anything, they opened a drawer — so it does not go in the
+    // thread, and paging through 25,921 records does not fill the thread with a
+    // record of clicks.
+    const panel = $("flowPanel");
+    panel.innerHTML = sourcePanelMarkup(source) + markup;
+    setPanelTab("flow");
+    hydrateBars(panel);
+    panel.scrollTop = 0;
   } catch (error) {
     toast(`${t("error")}: ${error.message}`);
   } finally {
-    state.busy = false; $("submitBtn").disabled = false;
+    state.busy = false; syncSubmitState();
   }
 }
 
@@ -1681,13 +1701,13 @@ async function analyze(event, options = {}) {
     $("startPanel").classList.add("hidden");
     $("threadInner").insertAdjacentHTML("beforeend",
       `<article class="msg msg-user"><div class="bubble">${gem ? `<span class="gem-tag">${esc(gem.command)}</span><br>` : ""}${esc(raw)}</div></article>`);
-    $("questionInput").value = "";
+    setComposer("");
     updateRouteHint();
     renderActiveGem();
   }
 
   state.busy = true;
-  $("submitBtn").disabled = true;
+  syncSubmitState();
 
   const live = resuming || createLiveMessage();
   if (!resuming) { live.dataset.question = question; live.dataset.gem = gem?.id || ""; }
@@ -2044,7 +2064,7 @@ async function analyze(event, options = {}) {
     clearInterval(progress.clock);
     state.resumingStep = null;
     state.busy = false;
-    $("submitBtn").disabled = false;
+    syncSubmitState();
   }
 }
 
@@ -2056,7 +2076,7 @@ function newConversation() {
   state.unavailableFacts = [];
   $("threadInner").innerHTML = "";
   $("startPanel").classList.remove("hidden");
-  $("questionInput").value = "";
+  setComposer("");
   clearGem();
   renderEvidence([]);
   updateRouteHint();
@@ -2216,6 +2236,7 @@ $("questionInput").addEventListener("input", () => {
     if (query !== null) openPalette(query); else closePalette();
   }
   updateRouteHint();
+  syncSubmitState();
   if (state.activeGem) renderActiveGem();
 });
 
@@ -2257,7 +2278,7 @@ $("palette").addEventListener("click", (event) => {
   }
   const button = event.target.closest("[data-gem]");
   if (!button) return;
-  $("questionInput").value = "";
+  setComposer("");
   activateGem(button.dataset.gem);
 });
 
@@ -2266,7 +2287,7 @@ $("starterGrid").addEventListener("click", (event) => {
   if (!button) return;
   const scenario = scenarios[state.locale].find((item) => item.id === button.dataset.starter);
   if (!scenario) return;
-  $("questionInput").value = scenario.question;
+  setComposer(scenario.question);
   updateRouteHint();
   $("questionInput").focus();
 });
@@ -2288,7 +2309,7 @@ $("gemNav").addEventListener("click", (event) => {
 // Declarations are submitted as another turn in the same thread, so the
 // transcript records what was supplied and the conclusion is recomputed with it
 // rather than being patched in place.
-$("threadInner").addEventListener("click", (event) => {
+const onWorkspaceClick = (event) => {
   const gotoStep = event.target.closest("[data-goto-step]");
   if (gotoStep) {
     const step = gotoStep.closest(".msg-assistant")?.querySelector(`.path-step[data-step-id="${CSS.escape(gotoStep.dataset.gotoStep)}"]`);
@@ -2325,7 +2346,7 @@ $("threadInner").addEventListener("click", (event) => {
   const escalate = event.target.closest("[data-escalate]");
   if (escalate) {
     clearSourceQuery();
-    $("questionInput").value = t("escalatePrefix").replace("{q}", escalate.dataset.escalate);
+    setComposer(t("escalatePrefix").replace("{q}", escalate.dataset.escalate));
     updateRouteHint();
     $("questionInput").focus();
     return;
@@ -2436,9 +2457,14 @@ $("threadInner").addEventListener("click", (event) => {
     renderFlowPanel(null, {});
     return analyze(null, { continueIn: answer });
   }
-  $("questionInput").value = `${t("declarePrefix")}${labels.join("；")}`;
-  $("questionForm").requestSubmit();
-});
+  setComposer(`${t("declarePrefix")}${labels.join("；")}`);
+  $("questionForm").requestSubmit();};
+$("threadInner").addEventListener("click", onWorkspaceClick);
+// The lookup output lives in the right panel now, and its paging, escalate and
+// browse-all buttons are the same buttons — so the same handler has to hear
+// them there. Two copies of this logic is how the two panels came to disagree
+// about everything else.
+$("flowPanel").addEventListener("click", onWorkspaceClick);
 
 $("gemRow").addEventListener("click", (event) => {
   if (event.target.closest("[data-source-drop]")) return clearSourceQuery();
@@ -2555,7 +2581,7 @@ $("scenarioDialog").addEventListener("click", (event) => {
   if (!pick) return;
   const scenario = scenarios[state.locale].find((item) => item.id === pick.dataset.scenario);
   if (!scenario) return;
-  $("questionInput").value = scenario.question;
+  setComposer(scenario.question);
   // Some scenarios are a prepared file, not just a question: they carry the
   // declarations a reviewer would already have to hand. Those go into the
   // declared facts, where they stay visible and editable — never asserted by
@@ -2575,5 +2601,6 @@ setPanelTab(state.panelTab);
 applyLocale(state.locale);
 renderEvidence([]);
 renderFlowPanel(null);
+syncSubmitState();
 loadRuntimeCapabilities();
 loadCases();
