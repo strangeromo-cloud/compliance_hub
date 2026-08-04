@@ -337,6 +337,20 @@ export function groundingContext(grounding) {
     grounding.facts.length ? `Verified facts:\n${grounding.facts.map((item) => `- [${item.sourceId}]${item.noticeNumber ? ` [${item.noticeNumber}]` : ""} ${item.fact}`).join("\n")}` : "Verified facts: none",
     grounding.listMatches.length ? `Structured-list potential matches:\n${JSON.stringify(grounding.listMatches, null, 2)}` : "Structured-list potential matches: none",
     grounding.internalParties.length ? `Internal master-data records touched by those designations (SYNTHETIC demo data):\n${JSON.stringify(grounding.internalParties, null, 2)}` : "Internal master-data impact: none found",
+    // What ownership resolution found, and what screening the parent produced.
+    // Both were computed, shown on the path, and withheld from the specialist
+    // that had to reason about them.
+    grounding.ownership
+      ? `Ownership chain (GLEIF, accounting consolidation — carries no shareholding percentage):\n${JSON.stringify(grounding.ownership, null, 2)}`
+      : "Ownership chain: not resolved",
+    grounding.parentScreening?.length
+      ? `Parent screened in its own right:\n${JSON.stringify(grounding.parentScreening, null, 2)}`
+      : "Parent screening: not applicable",
+    // The answers other lanes gave, with the provision behind each. Stated as
+    // findings the specialist must reason from, not as suggestions.
+    grounding.crossLane?.length
+      ? `Answers from the other lanes — treat each as established, and cite the provision given:\n${grounding.crossLane.map((call) => `- [${call.id}] ${call.en} (${call.cite})`).join("\n")}`
+      : "Cross-lane answers: none",
     grounding.limitations.length ? `Limitations:\n${grounding.limitations.map((item) => `- ${item}`).join("\n")}` : "Limitations: none"
   ].join("\n\n");
 }

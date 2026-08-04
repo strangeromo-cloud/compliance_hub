@@ -7,12 +7,14 @@
 // for the answer. A capability is that missing thing: a named question one lane
 // asks another, with the provision that makes the answer binding.
 //
-// Deterministic first, and this is the whole design constraint. Whether a Part
-// 740 exception survives a § 744 designation is a rule, not a judgement, so it
-// is computed in code and cites the rule. A capability may fall back to the
-// provider's model only where the question really does need judgement, and when
-// it does the answer has to be labelled as that agent's opinion rather than a
-// fact. The reason is this system's one load-bearing property: every conclusion
+// Deterministic, and this is the whole design constraint. Whether a Part 740
+// exception survives a § 744 designation is a rule, not a judgement, so it is
+// computed in code and cites the rule. Every capability here is a pure function;
+// none reaches the model, and adding one that did would need a way to label its
+// answer as that lane's opinion rather than a fact — which does not exist yet,
+// so the constraint holds by construction rather than by discipline.
+//
+// The reason is this system's one load-bearing property: every conclusion
 // traces to a provision and a dataset. If "trade asks product" became "trade's
 // model call contains product's model output", provenance would degrade from a
 // chain into a conversation — which is what the dependency graph, the triage

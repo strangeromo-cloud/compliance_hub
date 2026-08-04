@@ -210,3 +210,51 @@ test("the guide lists the live catalogue rather than a copy of it", async () => 
     assert.doesNotMatch(guide, new RegExp(id.replace(".", "\\.")), `${id} must not be hard-coded into the page`);
   }
 });
+
+test("a cross-lane answer reaches the specialist that needed it", async () => {
+  // The answers were reaching the path — the reader saw "asked the trade
+  // compliance agent, one potential match" under the licence-exception step —
+  // and not the specialist that asked. So the product agent wrote its analysis
+  // of licence exceptions without knowing the counterparty was designated, while
+  // the step above its own output said so. One lane asking another has to inform
+  // that lane's reasoning, or it is a caption rather than a question.
+  const { groundingContext } = await import("../src/grounding.js");
+  const { CAPABILITIES, invokeCapability } = await import("../src/agent-capabilities.js");
+
+  const context = {
+    grounding: { listMatches: [{ entityName: "Designated Co", recordId: "r7" }], screening: { screenedSources: [{ sourceId: "trade-csl" }] } },
+    facts: { eccn: "4A090.a", payee: "BVI 账户", fees: "15% 成功费" }
+  };
+  const crossLane = Object.keys(CAPABILITIES)
+    .map((id) => { try { return invokeCapability(id, { caller: "grounding", context }); } catch { return null; } })
+    .filter(Boolean);
+  assert.equal(crossLane.length, Object.keys(CAPABILITIES).length, "every capability answers from this grounding");
+
+  const prompt = groundingContext({
+    intent: "scenario_assessment", facts: [], listMatches: [], internalParties: [], limitations: [],
+    screening: { screenedSources: [], unsyncedSources: [] },
+    ownership: { subject: { name: "Acme GmbH" }, ultimateParent: { name: "Acme Holding AG" } },
+    parentScreening: [{ parent: { name: "Acme Holding AG" }, hits: [], screened: ["trade-csl"] }],
+    crossLane
+  });
+
+  // The provision travels with the answer, so the specialist cites the rule
+  // rather than restating the sentence.
+  for (const call of crossLane) {
+    assert.ok(prompt.includes(call.en), `${call.id} must reach the prompt`);
+    assert.ok(prompt.includes(call.cite), `${call.id} must carry its provision into the prompt`);
+  }
+  // And the two things grounding computed, showed on the path, and used to
+  // withhold from the model.
+  assert.match(prompt, /Ownership chain/);
+  assert.match(prompt, /Acme Holding AG/);
+  assert.match(prompt, /Parent screened in its own right/);
+});
+
+test("no capability reaches the model", async () => {
+  // Deterministic by construction rather than by discipline: the constraint the
+  // module states is checked, so it cannot quietly stop being true.
+  const { readFile } = await import("node:fs/promises");
+  const source = await readFile(new URL("../src/agent-capabilities.js", import.meta.url), "utf8");
+  assert.doesNotMatch(source, /callJsonModel|fetch\s*\(/, "a capability must stay a pure function");
+});

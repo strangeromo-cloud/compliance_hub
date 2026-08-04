@@ -7,6 +7,7 @@ import { resolveLookup } from "./lookup.js";
 import { localizePath, localizeLines, localizeLine } from "./path-i18n.js";
 import { buildBriefing } from "./briefing.js";
 import { GEM_KINDS } from "./gem-kinds.js";
+import { CAPABILITIES, invokeCapability } from "./agent-capabilities.js";
 import { createMockAgentResult, createMockSynthesis } from "./mock.js";
 import { collectGrounding, groundingContext } from "./grounding.js";
 import { buildActionPlan, planAnalysisPath, resolveAnalysisPath } from "./analysis-path.js";
@@ -436,6 +437,21 @@ async function answerLookup({ question, locale, lookup, mock, onEvent }) {
   return result;
 }
 
+// Every capability the lanes ask each other for, answered once from the same
+// grounding the path uses — so the sentence in the step and the fact in the
+// prompt cannot disagree. Cheap to do eagerly: each one is a pure function over
+// data already in hand.
+function crossLaneAnswers(context) {
+  const answers = [];
+  for (const id of Object.keys(CAPABILITIES)) {
+    try { answers.push(invokeCapability(id, { caller: "grounding", context })); }
+    // A capability that cannot answer from what is known is not an error in the
+    // run; it simply has nothing to contribute to this one.
+    catch { /* required input missing for this question */ }
+  }
+  return answers;
+}
+
 export async function assessScenario({ question, locale = "zh", config = {}, mock = false, history = [], gemId = null, declaredFacts = {}, unavailableFacts = [], onEvent = () => {} }) {
   // A question that asks for a stored value is answered, not reviewed. There is
   // no counterparty, no destination and no transaction in "what is this part's
@@ -507,7 +523,16 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
     partyCandidates: grounding.partyCandidates || [],
     ownership: grounding.ownership || null,
     parentScreening: grounding.parentScreening || null,
-    limitations: localizeLines(grounding.limitations, locale)
+    limitations: localizeLines(grounding.limitations, locale),
+    // The cross-lane answers, resolved once and shown to everyone who needs them.
+    //
+    // They were reaching the path — the reader saw "asked the trade compliance
+    // agent, one potential match" under the licence-exception step — and not the
+    // specialist that asked. So the product agent wrote its analysis of licence
+    // exceptions without knowing the counterparty was designated, while the step
+    // above its own output said so. One lane asking another has to inform that
+    // lane's reasoning, or it is a caption rather than a question.
+    crossLane: crossLaneAnswers({ grounding, facts: declaredFacts })
   };
   onEvent({ type: "grounding", intent: grounding.intent, grounding: groundingSummary });
 
