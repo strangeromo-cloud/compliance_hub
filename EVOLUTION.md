@@ -127,3 +127,23 @@ other half of the same habit, is covered by the same change.
 
 Both wait on data. A few hundred recorded cases is the floor, which is why the
 first work was recording them rather than training on them.
+
+### Where it runs now, and why
+
+Decided 2026-08-03: the prototype stays on an external model endpoint. The two
+deployments are Zeabur containers with no GPU, and their value is where they sit
+rather than what they can compute — the Hong Kong one reaches all six PRC
+official sources with no fallbacks, which is not something to trade away for
+slow local inference.
+
+Two things follow, and they are decisions rather than oversights. The composer
+keeps its line telling readers not to enter trade secrets or unpublished
+transaction data, and it stays until the model is served somewhere that has been
+verified to be internal, without egress and without question text in its logs.
+And the case corpus this collects is therefore made of questions people were
+willing to type into an external service — worth remembering when reading the
+fallback rate, because the phrasing may be more cautious than real work.
+
+Serving locally is not blocked on anything technical. It is blocked on a GPU, and
+the argument for one is easier to make with a few dozen real cases in hand than
+without them.
