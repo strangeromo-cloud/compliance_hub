@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { assessScenario } from "./src/orchestrator.js";
 import { classifyModelError, testModelConnection } from "./src/llm.js";
 import { getDataSourceCoverage, queryDataSource, syncSource } from "./src/data-layer/service.js";
-import { deleteThread, listThreads, readThread, saveCase, storageDurability } from "./src/case-store.js";
+import { deleteThread, evolutionSignals, listThreads, readThread, saveCase, storageDurability } from "./src/case-store.js";
 import { DECLARABLE_FIELDS, describeProcedures } from "./src/analysis-path.js";
 import { describeCapabilities } from "./src/agent-capabilities.js";
 import { closeDb, DB_PATH, REQUIRED_NODE_MAJOR } from "./src/data-layer/db.js";
@@ -230,6 +230,14 @@ const server = createServer(async (request, response) => {
     // no case data — it is the list a published tool server or a skill manifest
     // would serve, and it exists here so a capability cannot be exposed without
     // the provision that makes its answer binding travelling with it.
+    // How well the system is reading the questions it is given. Read-only
+    // aggregates over case_signals — no case text beyond the questions asked, and
+    // nothing that identifies a reader.
+    if (request.method === "GET" && url.pathname === "/api/evolution") {
+      const days = Math.min(365, Math.max(1, Number(url.searchParams.get("days")) || 90));
+      return sendJson(response, 200, evolutionSignals({ days }));
+    }
+
     if (request.method === "GET" && url.pathname === "/api/capabilities") {
       return sendJson(response, 200, { capabilities: describeCapabilities(url.searchParams.get("locale") === "en" ? "en" : "zh") });
     }

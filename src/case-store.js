@@ -30,6 +30,47 @@ const MAX_TURNS = 30;
 const caseId = (value) => (/^CASE-[A-Z0-9]{1,24}$/.test(String(value)) ? String(value) : null);
 const threadId = (value) => (/^TH-[A-Za-z0-9]{1,32}$/.test(String(value)) ? String(value) : null);
 
+// What this run cost the reader, projected out of the result.
+//
+// The signals are extracted here rather than left inside the payload because
+// they have to survive the history limits: threads and turns are bounded on
+// purpose, and the measurement of how well the system read the question is the
+// last thing that should be deleted to make room for recent chat.
+function caseSignals(result, question, locale, tid, turnIndex) {
+  const steps = (result.analysisPath?.lanes || []).flatMap((lane) => lane.steps || []);
+  const open = steps.filter((step) => step.status === "evidence_needed");
+  const settled = steps.filter((step) => step.status === "confirmed" || step.status === "declared" || step.status === "not_applicable");
+  // Whether any term in the question put a lane on the path, or every lane ran
+  // because nothing matched. planAnalysisPath writes the reason onto each lane,
+  // so this reads the run's own answer rather than recomputing one.
+  const rows = result.analysisPath?.derivation || [];
+  const matched = rows.some((row) => row.matchedBy === "question_terms" || row.matchedBy === "gem" || row.matchedBy === "direct_lookup" || row.matchedBy === "gem_kind");
+  return {
+    case_id: result.id,
+    thread_id: tid,
+    created_at: result.createdAt || new Date().toISOString(),
+    question: String(question).slice(0, 500),
+    locale: locale === "en" ? "en" : "zh",
+    mode: result.mode || "",
+    gem_id: result.gemId || null,
+    kind: result.analysisPath?.lanes?.[0]?.lane === "briefing" ? "briefing"
+      : result.intent === "data_lookup" ? "lookup"
+        : result.intent === "case_memo" ? "memo" : "review",
+    intent: result.intent || "",
+    lanes: toJson(result.agents || []),
+    route_matched: matched ? 1 : 0,
+    turn_index: turnIndex,
+    // Which step stopped the run. Null means it reached a conclusion without
+    // having to interrupt.
+    asked_step: result.awaitingInput?.step || null,
+    declared: toJson(Object.keys(result.declaredFacts || {})),
+    unavailable: toJson(result.unavailableFacts || []),
+    open_steps: open.length,
+    settled_steps: settled.length,
+    overall_risk: result.synthesis?.overallRisk || null
+  };
+}
+
 export async function saveCase(result, question, locale, thread) {
   const id = caseId(result?.id);
   if (!id) return null;
@@ -56,8 +97,23 @@ export async function saveCase(result, question, locale, thread) {
         headline = excluded.headline, overall_risk = excluded.overall_risk, payload = excluded.payload`)
       .run(id, tid, createdAt, title, headline, risk, toJson({ ...result, question, locale, threadId: tid }));
 
+    // The signals outlive the turn. Written in the same transaction so a run is
+    // never measured as having happened without its record, or the reverse.
+    const turnIndex = database.prepare("SELECT count(*) AS n FROM turns WHERE thread_id = ?").get(tid)?.n || 1;
+    const signals = caseSignals(result, question, locale, tid, turnIndex);
+    database.prepare(`
+      INSERT INTO case_signals (case_id, thread_id, created_at, question, locale, mode, gem_id, kind, intent,
+        lanes, route_matched, turn_index, asked_step, declared, unavailable, open_steps, settled_steps, overall_risk)
+      VALUES (@case_id, @thread_id, @created_at, @question, @locale, @mode, @gem_id, @kind, @intent,
+        @lanes, @route_matched, @turn_index, @asked_step, @declared, @unavailable, @open_steps, @settled_steps, @overall_risk)
+      ON CONFLICT (case_id) DO UPDATE SET
+        asked_step = excluded.asked_step, declared = excluded.declared, unavailable = excluded.unavailable,
+        open_steps = excluded.open_steps, settled_steps = excluded.settled_steps, overall_risk = excluded.overall_risk`)
+      .run(signals);
+
     // Bounded in the same transaction that grew them, so the limits hold even
-    // if the process stops immediately afterwards.
+    // if the process stops immediately afterwards. case_signals is deliberately
+    // not among them.
     database.prepare(`
       DELETE FROM turns WHERE thread_id = ? AND case_id NOT IN (
         SELECT case_id FROM turns WHERE thread_id = ? ORDER BY created_at DESC LIMIT ?)`)
@@ -136,4 +192,50 @@ export async function deleteThread(id) {
     database.prepare("DELETE FROM threads WHERE thread_id = ?").run(tid);
     return true;
   });
+}
+
+// The baseline, in one query.
+//
+// There is no evolution without a measurement that predates it, and the
+// measurements that matter are all about how well the system read the question
+// rather than how well it answered: how often nothing matched and every lane ran
+// by default, how many rounds it took to get the facts, which field was most
+// often supplied only after being asked for. Each of those is a thing that can
+// be improved without touching a single provision.
+export function evolutionSignals({ days = 90 } = {}) {
+  const since = new Date(Date.now() - days * 86_400_000).toISOString();
+  const database = db();
+  const rows = database.prepare("SELECT * FROM case_signals WHERE created_at >= ? ORDER BY created_at DESC").all(since);
+  if (!rows.length) return { since, total: 0, reviews: 0, fallbackRate: null, askRate: null, averageTurns: null, byKind: [], askedSteps: [], lateFields: [] };
+
+  const reviews = rows.filter((row) => row.kind === "review");
+  const count = (list, test) => list.filter(test).length;
+  const tally = (list, key) => {
+    const seen = new Map();
+    for (const value of list) seen.set(value, (seen.get(value) || 0) + 1);
+    return [...seen].map(([name, n]) => ({ name, count: n })).sort((left, right) => right.count - left.count);
+  };
+
+  // A field the reader had to be asked for is a field the composer could have
+  // asked for up front. Counted only where the run actually stopped, because a
+  // fact volunteered in the first message was never late.
+  const lateFields = tally(rows.filter((row) => row.asked_step).flatMap((row) => fromJson(row.declared) || []));
+  const threads = new Map();
+  for (const row of rows) threads.set(row.thread_id, Math.max(threads.get(row.thread_id) || 0, row.turn_index));
+
+  return {
+    since,
+    total: rows.length,
+    reviews: reviews.length,
+    // Nothing in the question matched a routing term, so every lane ran. This is
+    // the headline number for how well the vocabulary covers how people write.
+    fallbackRate: reviews.length ? count(reviews, (row) => !row.route_matched) / reviews.length : null,
+    // How often a run had to stop and ask rather than reaching a conclusion.
+    askRate: rows.length ? count(rows, (row) => row.asked_step) / rows.length : null,
+    averageTurns: threads.size ? [...threads.values()].reduce((sum, n) => sum + n, 0) / threads.size : null,
+    byKind: tally(rows.map((row) => row.kind)),
+    askedSteps: tally(rows.map((row) => row.asked_step).filter(Boolean)).slice(0, 8),
+    lateFields: lateFields.slice(0, 8),
+    unanswered: count(rows, (row) => row.open_steps > 0)
+  };
 }

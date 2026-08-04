@@ -3,6 +3,9 @@ const copy = {
     brandSub: "合规情报原型", back: "返回对话", title: "公开数据覆盖与接入状态", lead: "每个来源当前读到了什么、授权允许怎么用、以及哪些来源因为验证码或反爬必须保留人工查询。",
     checked: "调研核验日期", connected: "真实同步成功", ready: "现在可以开发", limited: "有限制可开发", manual: "仅人工查询", boundary: "数据边界",
     disclosure: "「已同步」指真实保存了官方原始快照与标准化记录，不等于完成法律判断或交易放行。「刷新失败」指快照仍可用、只是最近一次刷新没成功，与从未采集到的「同步失败」是两回事。标注了授权限制的来源（如 CC-BY-NC 仅限非商用）必须按其条款使用；所有同步数据与历史记录存在单个 SQLite 文件（data/runtime/hub.db）中；容器文件系统是临时的，未挂载 Volume 时重新部署会清空它。厂商分类表（NVIDIA、AMD）是厂商对自家产品的声明，不是分类决定，出口商仍需自行分类。",
+    evoTitle: "提问覆盖", evoHelp: "这套部署把用户的问题读得有多准。四项都可以在不动任何条文的前提下改进。",
+    evoFallback: "未匹配关键词，三条线全跑", evoAsk: "中途停下追问", evoTurns: "平均轮数", evoOpen: "仍有未闭合步骤",
+    evoSteps: "最常停下的步骤", evoFields: "被追问后才补上的字段",
     search: "搜索来源、机构或覆盖字段", feasibility: "可行性", all: "全部", registry: "数据源注册表", help: "“已读取”表示当前 Prototype 的真实能力，不等于已经建立完整历史数据库。",
     noResults: "没有符合当前筛选条件的数据源。", current: "当前覆盖", target: "目标数据", access: "接入方式", frequency: "更新", webSearch: "Web Search", auth: "需要凭证", captcha: "存在验证码", noData: "尚未保存结构化字段",
     currentLabels: { query_context: "查询时网页上下文", verified_lookup: "已核验结构化查询", structured_snapshot: "完整结构化快照", sample_snapshot: "样本快照 + 实时查询", planned: "尚未接入", manual: "人工查询入口" },
@@ -16,6 +19,9 @@ const copy = {
     brandSub: "Compliance intelligence", back: "Back to chat", title: "Public data coverage & integration status", lead: "What each source currently reads, what its licence permits, and which sources stay manual because of a CAPTCHA or an anti-bot wall.",
     checked: "Research checked", connected: "Successful syncs", ready: "Build now", limited: "Build with limits", manual: "Manual only", boundary: "Data boundary",
     disclosure: "Synced means an official raw snapshot and normalized records were saved; it is not a legal determination or transaction clearance. Refresh failed means the snapshot is still usable and only the latest refresh did not land — different from Sync failed, which means the source was never captured. Sources marked with a licence limit (CC-BY-NC is non-commercial only) must be used on those terms. Synced data and case history live in one SQLite file (data/runtime/hub.db); the container filesystem is ephemeral, so without a mounted volume a redeploy clears it. A vendor classification table is the manufacturer\u2019s statement about its own product, not a classification decision \u2014 the exporter remains responsible for its own.",
+    evoTitle: "Question coverage", evoHelp: "How well this deployment reads the questions it is given. Every figure here can be improved without touching a provision.",
+    evoFallback: "No term matched, so all three lanes ran", evoAsk: "Stopped to ask mid-run", evoTurns: "Rounds per thread", evoOpen: "Still holding an open step",
+    evoSteps: "Steps that most often stop the run", evoFields: "Fields supplied only after being asked for",
     search: "Search source, authority, or covered field", feasibility: "Feasibility", all: "All", registry: "Data source registry", help: "Readable today describes actual prototype capability; it does not mean a complete historical database exists.",
     noResults: "No data sources match the current filters.", current: "Current coverage", target: "Target data", access: "Access", frequency: "Update", webSearch: "Web Search", auth: "Credentials required", captcha: "CAPTCHA present", noData: "No structured fields saved yet",
     currentLabels: { query_context: "Query-time page context", verified_lookup: "Verified structured lookup", structured_snapshot: "Full structured snapshot", sample_snapshot: "Sample + live query", planned: "Not connected", manual: "Manual query entry" },
@@ -59,6 +65,10 @@ function applyLocale(locale) {
   $("disclosureTitle").textContent = c.boundary; $("disclosureText").textContent = c.disclosure; $("sourceSearch").placeholder = c.search; $("feasibilityLabel").textContent = c.feasibility;
   $("registryTitle").textContent = c.registry; $("registryHelp").textContent = c.help; $("registryEmpty").textContent = c.noResults;
   $("feasibilitySelect").options[0].textContent = c.all; $("feasibilitySelect").options[1].textContent = c.feasibilityLabels.can_build_now; $("feasibilitySelect").options[2].textContent = c.feasibilityLabels.can_build_with_limitations; $("feasibilitySelect").options[3].textContent = c.feasibilityLabels.manual_only;
+  $("evoTitle").textContent = c.evoTitle; $("evoHelp").textContent = c.evoHelp;
+  $("evoFallbackLabel").textContent = c.evoFallback; $("evoAskLabel").textContent = c.evoAsk;
+  $("evoTurnsLabel").textContent = c.evoTurns; $("evoOpenLabel").textContent = c.evoOpen;
+  $("evoStepsTitle").textContent = c.evoSteps; $("evoFieldsTitle").textContent = c.evoFields;
   $("coverageZh").classList.toggle("active", locale === "zh"); $("coverageEn").classList.toggle("active", locale === "en");
   render();
 }
@@ -100,12 +110,42 @@ function render() {
   $("sourceRegistry").innerHTML = visible.map(renderCard).join(""); $("visibleSourceCount").textContent = visible.length; $("registryEmpty").classList.toggle("hidden", visible.length > 0);
 }
 
+// How well this deployment is reading the questions it is given.
+//
+// Hidden until there is something to show: a panel of dashes is worse than no
+// panel, and a fresh deployment has no cases yet. Every figure here can be
+// improved without touching a provision — which is exactly why they are the
+// ones worth watching.
+function renderEvolution(data) {
+  const panel = $("evolutionPanel");
+  if (!data || !data.total) { panel.hidden = true; return; }
+  panel.hidden = false;
+  const pct = (value) => (value === null ? "—" : `${Math.round(value * 100)}%`);
+  $("evoTotal").textContent = data.total;
+  $("evoFallback").textContent = pct(data.fallbackRate);
+  $("evoAsk").textContent = pct(data.askRate);
+  $("evoTurns").textContent = data.averageTurns === null ? "—" : data.averageTurns.toFixed(1);
+  $("evoOpen").textContent = data.unanswered;
+  const list = (rows) => rows.length
+    ? rows.map((row) => `<li><span>${esc(row.name)}</span><b>${row.count}</b></li>`).join("")
+    : `<li class="evo-none"><span>—</span></li>`;
+  $("evoSteps").innerHTML = list(data.askedSteps || []);
+  $("evoFields").innerHTML = list(data.lateFields || []);
+}
+
 async function loadRegistry() {
   try {
     const response = await fetch("/api/data-sources"); if (!response.ok) throw new Error(); state.data = await response.json();
     const counts = state.data.counts; $("checkedAt").textContent = state.data.checkedAt; $("connectedCount").textContent = (state.data.syncCounts?.success || 0) + (state.data.syncCounts?.refresh_failed || 0); $("readyCount").textContent = counts.can_build_now || 0; $("limitedCount").textContent = counts.can_build_with_limitations || 0; $("manualCount").textContent = counts.manual_only || 0;
     render();
   } catch { $("sourceRegistry").innerHTML = `<div class="registry-empty">Unable to load the data source registry.</div>`; }
+}
+
+async function loadEvolution() {
+  try {
+    const response = await fetch("/api/evolution?days=90");
+    if (response.ok) renderEvolution(await response.json());
+  } catch { /* the panel simply stays hidden */ }
 }
 
 document.querySelector(".coverage-filters").addEventListener("click", (event) => { const button = event.target.closest("[data-module]"); if (!button) return; state.module = button.dataset.module; document.querySelectorAll("[data-module]").forEach((item) => { item.classList.toggle("active", item === button); item.setAttribute("aria-pressed", item === button); }); render(); });
@@ -136,4 +176,4 @@ $("coverageZh").addEventListener("click", () => applyLocale("zh")); $("coverageE
 $("coverageTheme").addEventListener("click", () => setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark"));
 
 setTheme(localStorage.getItem("compliance-theme") || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark"));
-applyLocale(state.locale); loadRegistry();
+applyLocale(state.locale); loadRegistry(); loadEvolution();

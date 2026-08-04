@@ -212,7 +212,7 @@ const disclaimerFor = (locale) => (locale === "en"
 // inconclusive. None was attempted — these answer a question of fact, and the
 // risk of a transaction is not among the facts. The field is null and the
 // interface shows no badge.
-async function answerBriefing({ question, locale, mock, onEvent }) {
+async function answerBriefing({ question, locale, mock, onEvent, gemId = null }) {
   const id = `CASE-${Date.now().toString(36).toUpperCase()}`;
   const isEn = locale === "en";
   onEvent({ type: "routed", id, agents: ["briefing"], mode: mock ? "grounded-demo" : "live-model" });
@@ -307,6 +307,7 @@ async function answerBriefing({ question, locale, mock, onEvent }) {
   return {
     id, createdAt: new Date().toISOString(), analysisPath: localizePath(path, locale), awaitingInput: null,
     unavailableFacts: [], actionPlan: [], declaredFacts: {},
+    gemId,
     mode: mock ? "grounded-demo" : "live-model",
     intent: grounding.intent, grounding, agents: ["briefing"],
     synthesis, results: [], sources: [], disclaimer: disclaimerFor(locale)
@@ -316,7 +317,7 @@ async function answerBriefing({ question, locale, mock, onEvent }) {
 // A memo records what was already decided. It is deliberately not a new
 // analysis: producing fresh judgements under the name "memo" would put
 // conclusions in a document that nothing on the path ever supported.
-async function answerMemo({ question, locale, history, mock, onEvent }) {
+async function answerMemo({ question, locale, history, mock, onEvent, gemId = null }) {
   const id = `CASE-${Date.now().toString(36).toUpperCase()}`;
   const isEn = locale === "en";
   onEvent({ type: "routed", id, agents: ["memo"], mode: mock ? "grounded-demo" : "live-model" });
@@ -357,13 +358,14 @@ async function answerMemo({ question, locale, history, mock, onEvent }) {
   return {
     id, createdAt: new Date().toISOString(), analysisPath: localizePath(path, locale), awaitingInput: null,
     unavailableFacts: [], actionPlan: [], declaredFacts: {},
+    gemId,
     mode: mock ? "grounded-demo" : "live-model",
     intent: grounding.intent, grounding, agents: ["memo"],
     synthesis, results: [], sources: [], disclaimer: disclaimerFor(locale)
   };
 }
 
-async function answerLookup({ question, locale, lookup, mock, onEvent }) {
+async function answerLookup({ question, locale, lookup, mock, onEvent, gemId = null }) {
   const id = `CASE-${Date.now().toString(36).toUpperCase()}`;
   const isEn = locale === "en";
   onEvent({ type: "routed", id, agents: ["lookup"], mode: mock ? "grounded-demo" : "live-model" });
@@ -428,6 +430,7 @@ async function answerLookup({ question, locale, lookup, mock, onEvent }) {
   const result = {
     id, createdAt: new Date().toISOString(), analysisPath: localizePath(path, locale), awaitingInput: null,
     unavailableFacts: [], actionPlan: [], declaredFacts: {},
+    gemId,
     mode: mock ? "grounded-demo" : "live-model",
     intent: grounding.intent, grounding, agents: ["lookup"],
     synthesis, results: [], sources: [],
@@ -464,11 +467,11 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
   // it — the gem said which lane to open with and nothing said whether to open
   // any.
   const kind = GEM_KINDS[gemId] || null;
-  if (kind === "briefing") return await answerBriefing({ question, locale, mock, onEvent });
-  if (kind === "memo") return await answerMemo({ question, locale, history, mock, onEvent });
+  if (kind === "briefing") return await answerBriefing({ question, locale, mock, onEvent, gemId });
+  if (kind === "memo") return await answerMemo({ question, locale, history, mock, onEvent, gemId });
 
   const lookup = await resolveLookup(question).catch(() => null);
-  if (lookup) return await answerLookup({ question, locale, lookup, mock, onEvent });
+  if (lookup) return await answerLookup({ question, locale, lookup, mock, onEvent, gemId });
 
   const directAgents = routeQuestion(question, false);
   const contextualQuestion = `${history.filter((item) => item.role === "user").map((item) => item.content).join("\n")}\n${question}`;
@@ -664,6 +667,7 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
     unavailableFacts,
     actionPlan: buildActionPlan(localizedPath, results, locale),
     declaredFacts,
+    gemId,
     mode: mock ? "grounded-demo" : "live-model",
     intent: grounding.intent,
     grounding: groundingSummary,

@@ -89,6 +89,41 @@ CREATE TABLE IF NOT EXISTS turns (
 );
 CREATE INDEX IF NOT EXISTS turns_by_thread ON turns (thread_id, created_at);
 
+  -- What each run cost the reader, kept past the point where the turn itself is
+  -- pruned. threads and turns are a history feature and are bounded on purpose;
+  -- this is the record of how well the system read the question, and deleting it
+  -- to make room for recent chat history would mean the one measurement that
+  -- could improve the reading is the first thing thrown away.
+  --
+  -- One row per case, a few hundred bytes, never pruned by the history limits.
+  -- Deliberately not the whole payload: what is needed is the question, what was
+  -- asked for, and what it cost — not a second copy of every answer.
+  CREATE TABLE IF NOT EXISTS case_signals (
+    case_id        TEXT PRIMARY KEY,
+    thread_id      TEXT NOT NULL,
+    created_at     TEXT NOT NULL,
+    question       TEXT NOT NULL DEFAULT '',
+    locale         TEXT NOT NULL DEFAULT 'zh',
+    mode           TEXT NOT NULL DEFAULT '',
+    gem_id         TEXT,
+    kind           TEXT NOT NULL DEFAULT 'review',
+    intent         TEXT NOT NULL DEFAULT '',
+    lanes          TEXT NOT NULL DEFAULT '[]',
+    -- Whether any term in the question put a lane on the path, or every lane ran
+    -- because nothing matched. The fallback rate is the headline number for how
+    -- well the routing vocabulary covers how people actually write.
+    route_matched  INTEGER NOT NULL DEFAULT 0,
+    turn_index     INTEGER NOT NULL DEFAULT 1,
+    asked_step     TEXT,
+    declared       TEXT NOT NULL DEFAULT '[]',
+    unavailable    TEXT NOT NULL DEFAULT '[]',
+    open_steps     INTEGER NOT NULL DEFAULT 0,
+    settled_steps  INTEGER NOT NULL DEFAULT 0,
+    overall_risk   TEXT
+  );
+  CREATE INDEX IF NOT EXISTS case_signals_by_time ON case_signals (created_at);
+  CREATE INDEX IF NOT EXISTS case_signals_by_thread ON case_signals (thread_id, created_at);
+
 CREATE TABLE IF NOT EXISTS page_cache (
   url          TEXT PRIMARY KEY,
   text         TEXT NOT NULL,

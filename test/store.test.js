@@ -327,3 +327,48 @@ test("the briefing covers both jurisdictions and flags what has not taken effect
   assert.ok(future.every((item) => item.date > "2026-07-31"));
   assert.equal(brief.rollup.pending, future.length);
 });
+
+test("what a run cost the reader outlives the run", async () => {
+  // threads and turns are a history feature and are bounded on purpose. The
+  // measurement of how well the system read the question is not history — it is
+  // the only thing that could improve the reading — and deleting it to make room
+  // for recent chat would throw away the one signal worth keeping.
+  const { saveCase, evolutionSignals } = await import("../src/case-store.js");
+  const { db } = await import("../src/data-layer/db.js");
+
+  const now = new Date().toISOString();
+  const make = (n, overrides = {}) => ({
+    id: `CASE-SIG${n}`, createdAt: now, mode: "grounded-demo", intent: "scenario_assessment",
+    agents: ["trade"], declaredFacts: {}, unavailableFacts: [],
+    analysisPath: { lanes: [{ lane: "trade", steps: [{ id: "identify_party", status: "evidence_needed" }, { id: "search_lists", status: "confirmed" }] }],
+      derivation: [{ lane: "trade", matchedBy: "question_terms" }] },
+    awaitingInput: { step: "identify_party" }, synthesis: null, ...overrides
+  });
+
+  await saveCase(make(1), "交易方 X 的受限方筛查", "zh", "TH-SIGA");
+  // A run where nothing matched, so every lane ran — the number that says how
+  // well the vocabulary covers how people actually write.
+  await saveCase(make(2, {
+    analysisPath: { lanes: [{ lane: "trade", steps: [{ id: "ownership", status: "evidence_needed" }] }],
+      derivation: [{ lane: "trade", matchedBy: "no_term_matched_all_lanes_run" }] },
+    declaredFacts: { eccn: "EAR99" }
+  }), "这个能做吗", "zh", "TH-SIGB");
+
+  const signals = evolutionSignals({ days: 1 });
+  assert.ok(signals.total >= 2);
+  assert.ok(signals.fallbackRate > 0, "a run that matched no term is counted as a fallback");
+  assert.ok(signals.askRate > 0, "a run that stopped to ask is counted");
+  assert.ok(signals.askedSteps.some((row) => row.name === "identify_party"));
+  // A field supplied only after being asked for is a field the composer could
+  // have asked for up front.
+  assert.ok(signals.lateFields.some((row) => row.name === "eccn"));
+
+  // The turn can be pruned; the signal may not be.
+  db().prepare("DELETE FROM turns WHERE case_id = ?").run("CASE-SIG1");
+  const after = evolutionSignals({ days: 1 });
+  assert.equal(after.total, signals.total, "pruning history must not delete the measurement");
+  assert.equal(db().prepare("SELECT count(*) AS n FROM case_signals WHERE case_id = 'CASE-SIG1'").get().n, 1);
+
+  db().prepare("DELETE FROM case_signals WHERE case_id LIKE 'CASE-SIG%'").run();
+  db().prepare("DELETE FROM threads WHERE thread_id LIKE 'TH-SIG%'").run();
+});

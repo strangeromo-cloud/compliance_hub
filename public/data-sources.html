@@ -53,6 +53,23 @@
       <div><strong id="disclosureTitle">当前边界</strong><p id="disclosureText">—</p></div>
     </aside>
 
+    <section class="evolution" id="evolutionPanel" hidden>
+      <div class="coverage-list-head">
+        <div><h2 id="evoTitle">提问覆盖</h2><p id="evoHelp">这套部署把用户的问题读得有多准。四项都可以在不动任何条文的前提下改进。</p></div>
+        <span id="evoTotal" class="count-badge">0</span>
+      </div>
+      <div class="evo-grid">
+        <article><strong id="evoFallback">—</strong><span id="evoFallbackLabel">未匹配关键词，三条线全跑</span></article>
+        <article><strong id="evoAsk">—</strong><span id="evoAskLabel">中途停下追问</span></article>
+        <article><strong id="evoTurns">—</strong><span id="evoTurnsLabel">平均轮数</span></article>
+        <article><strong id="evoOpen">—</strong><span id="evoOpenLabel">仍有未闭合步骤</span></article>
+      </div>
+      <div class="evo-lists">
+        <div><h3 id="evoStepsTitle">最常停下的步骤</h3><ul id="evoSteps"></ul></div>
+        <div><h3 id="evoFieldsTitle">被追问后才补上的字段</h3><ul id="evoFields"></ul></div>
+      </div>
+    </section>
+
     <section class="coverage-controls" aria-label="Data source filters">
       <label class="coverage-search"><span class="sr-only">搜索数据源</span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="sourceSearch" type="search" placeholder="搜索来源、机构或覆盖字段"></label>
       <div class="coverage-filters" role="group" aria-label="Module filter">
