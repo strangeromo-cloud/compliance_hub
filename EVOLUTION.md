@@ -107,5 +107,23 @@ means, and the existing stop-and-ask loop is the safety net if it is wrong. That
 is the only position in this system where a learned component can be wrong
 without being dangerous.
 
+### Verified, not assumed
+
+The on-premise path is a tested route (`test/local-model.test.js`), driven
+against a stand-in for `vllm serve`: an ordinary Chat Completions call with
+`model`, `messages` and two parameters that are dropped if refused. A server that
+400s on `response_format` — older vLLM and TGI do — is retried without it and the
+answer remembered per model, so the cost is one failed request rather than one
+per call. Streaming is plain SSE.
+
+One thing this turned up rather than confirmed. A reasoning model states its
+working before its answer, and Hermes wraps that in `<think>…</think>`. The
+working is prose about the problem, so it contains braces — the problem is about
+JSON. Matching the first `{` to the last `}` spliced the tail of the explanation
+onto the head of the answer and failed with a parse error that read like the
+model had malfunctioned. Reasoning blocks are stripped now and the object is
+found by balancing braces, quote-aware. Trailing prose after the object, the
+other half of the same habit, is covered by the same change.
+
 Both wait on data. A few hundred recorded cases is the floor, which is why the
 first work was recording them rather than training on them.

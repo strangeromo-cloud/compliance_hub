@@ -20,15 +20,46 @@ export function classifyModelError(error) {
   return { code: "model_unknown_error", providerStatus: null };
 }
 
+// A reasoning model states its working before its answer. Hermes and the other
+// open-weights models with a thinking mode wrap it in <think>…</think>, and that
+// working is prose about the problem — which means it contains braces, because
+// the problem is about JSON. Stripped before anything is parsed.
+const REASONING_BLOCK = /<(think|thinking|reasoning)>[\s\S]*?<\/\1>\s*/gi;
+
+// The first complete JSON object in the text, found by balancing braces rather
+// than by matching the first "{" to the last "}". The greedy version worked for
+// as long as nothing else in the response had a brace in it; the moment a model
+// explained itself first, it spliced the tail of the explanation onto the head of
+// the answer and produced a parse error that read like the model had malfunctioned.
+// Quotes and escapes are tracked because a brace inside a string is not a brace.
+function firstJsonObject(text) {
+  const start = text.indexOf("{");
+  if (start < 0) return null;
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let index = start; index < text.length; index += 1) {
+    const char = text[index];
+    if (escaped) { escaped = false; continue; }
+    if (char === "\\") { escaped = true; continue; }
+    if (char === '"') { inString = !inString; continue; }
+    if (inString) continue;
+    if (char === "{") depth += 1;
+    else if (char === "}" && (depth -= 1) === 0) return text.slice(start, index + 1);
+  }
+  return null;
+}
+
 function extractJson(text) {
   if (typeof text !== "string") return text;
+  const cleaned = text.replace(REASONING_BLOCK, "").trim();
   try {
-    return JSON.parse(text);
+    return JSON.parse(cleaned);
   } catch {
-    const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+    const fenced = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/i);
     if (fenced) return JSON.parse(fenced[1]);
-    const object = text.match(/\{[\s\S]*\}/);
-    if (object) return JSON.parse(object[0]);
+    const object = firstJsonObject(cleaned);
+    if (object) return JSON.parse(object);
     throw new Error("The model did not return valid JSON.");
   }
 }
