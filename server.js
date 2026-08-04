@@ -1,4 +1,5 @@
 import { createServer } from "node:http";
+import { cpus, totalmem } from "node:os";
 import { readFile, stat } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -197,7 +198,27 @@ const server = createServer(async (request, response) => {
   const url = new URL(request.url, `http://${request.headers.host || "localhost"}`);
   try {
     if (request.method === "GET" && url.pathname === "/health") {
-      return sendJson(response, 200, { ok: true, service: "compliance-hub", version: "0.1.0" });
+      // What this box actually is. Asked because "can this deployment host a
+      // model" kept being answered by guessing at the plan tier, and a container
+      // can report its own limits in one request. cgroup v2 is read directly
+      // because os.totalmem() reports the host's memory, not the container's —
+      // on a shared host those differ by two orders of magnitude.
+      let containerMemoryMb = null;
+      try {
+        const limit = (await readFile("/sys/fs/cgroup/memory.max", "utf8")).trim();
+        if (limit && limit !== "max") containerMemoryMb = Math.round(Number(limit) / 1048576);
+      } catch { /* not a cgroup v2 container */ }
+      return sendJson(response, 200, {
+        ok: true, service: "compliance-hub", version: "0.1.0",
+        node: process.version,
+        platform: `${process.platform}/${process.arch}`,
+        cpus: cpus().length,
+        hostMemoryMb: Math.round(totalmem() / 1048576),
+        containerMemoryMb,
+        // No GPU runtime is reachable from a Node process without native
+        // bindings, so this reports what can be said rather than guessing.
+        gpu: "not detectable from this process"
+      });
     }
 
     if (request.method === "GET" && url.pathname === "/api/runtime-capabilities") {
