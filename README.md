@@ -170,6 +170,44 @@ OPENAI_API_KEY=... npm run check-model -- --base https://<网关>/v1 --model <�
 
 密钥只从环境变量读，不接受命令行参数——那会写进 shell 历史和进程列表。
 
+### 换成自托管模型（开源权重）
+
+和上一节是同一条路：应用只调 `${baseUrl}/chat/completions`，所以任何 OpenAI 兼容的本地服务都能接。区别在于**为什么值得这么做**。
+
+输入框下面现在写着「请勿输入商业秘密或未公开交易数据」。这句话之所以必须在，是因为问题正文要发到外部端点。而一个不能喂真实交易的合规工具，永远只能发挥一部分价值——**这是自托管的主要理由，不是省钱。**
+
+用 vLLM 起服务（TGI、llama.cpp 的 server 同理，只要暴露 OpenAI 兼容接口）：
+
+```bash
+vllm serve NousResearch/Hermes-4-70B --host 0.0.0.0 --port 8000 --served-model-name hermes
+```
+
+然后三个环境变量：
+
+```
+OPENAI_BASE_URL=http://<内网地址>:8000/v1
+OPENAI_MODEL=hermes
+OPENAI_API_KEY=local-none
+```
+
+`OPENAI_API_KEY` 不能留空——服务器会无条件带上 `Authorization` 头，vLLM 默认不校验，填任意占位串即可。若用 `--api-key` 起了服务，就填那个值。
+
+接通后先验，用的是应用真实的两条调用路径：
+
+```bash
+OPENAI_API_KEY=local-none npm run check-model -- --base http://<内网地址>:8000/v1 --model hermes
+```
+
+三件事要看清楚：
+
+**`response_format` 可能被拒。** 较老的 vLLM 和 TGI 会对它返回 400。这不影响运行——`llm.js` 检测到之后会去掉该参数重试，并按模型记住，只付一次失败请求的代价——但此后只能靠提示词要求 JSON，话多的模型失败率会上升。能选支持它的版本就选。
+
+**推理模式会带 `<think>` 块。** Hermes 4 这类模型会先写思路再给答案，思路里几乎必然出现花括号（因为它在谈 JSON）。`extractJson` 会剥掉推理块、并用配平花括号的方式取第一个完整对象——这一条是接入时踩出来的，不是设计出来的，`test/local-model.test.js` 里有回归。
+
+**流式是不是真流式。** 有些部署会把 `stream: true` 当普通请求处理，回答一次性整块出现。不算坏（照样能读），但演示前值得知道。
+
+自托管之后，「请勿输入商业秘密」那句话要不要改，是一个需要显式做的决定——它是写死的界面文案，不会因为端点变了就自动消失。改之前先确认：模型服务确实在内网、没有出网回传、日志里不落问题正文。
+
 ### 构建必须用 Node 24
 
 `node:sqlite` 是 Node 24 才有的内置模块。三处都声明了这件事，**任何一处被绕过都会导致启动即崩溃**：
