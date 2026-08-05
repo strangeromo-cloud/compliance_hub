@@ -74,10 +74,27 @@ export const SETTLED_STATUS = new Set(["confirmed", "declared", "review_required
 //   review    only a person can close it
 //   pending   not reached yet
 
-export function stepState(item) {
+// One definition of "this step is still asking the reader something", used by the
+// body and by the rail.
+//
+// They had a copy each, and the rail's did not know about declined fields. So
+// after a reader clicked 暂无 on identity resolution, the body moved on to the
+// ownership step while the rail went on pointing at the one just passed over —
+// two different answers to the same question, three feet apart on screen.
+//
+// The declined fields are passed in rather than read from page state: this
+// module is shared with the coverage page and imported by tests, and a function
+// that reaches for a global is neither.
+export function isAskable(item, declined = []) {
+  if (item?.status !== "evidence_needed" || !item.inputs?.length) return false;
+  const passed = new Set(declined);
+  return !item.inputs.every((input) => passed.has(input.field));
+}
+
+export function stepState(item, declined = []) {
   if (!item) return "pending";
   if (item.status === "evidence_needed" && item.inputs?.length) {
-    return isAskable(item) ? "asking" : "skipped";
+    return isAskable(item, declined) ? "asking" : "skipped";
   }
   return {
     confirmed: "done", declared: "declared", not_applicable: "na",
@@ -115,5 +132,5 @@ export function currentStepId(path, options = {}) {
   // showed that lane working — two panels three feet apart disagreeing about
   // whether anything was happening. The rail points at the last step it actually
   // draws for that lane instead.
-  return runningLane.steps.filter((item) => !FOLDED.has(stepState(item))).at(-1)?.id || null;
+  return runningLane.steps.filter((item) => !FOLDED.has(stepState(item, options.declined))).at(-1)?.id || null;
 }

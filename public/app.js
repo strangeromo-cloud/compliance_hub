@@ -1,5 +1,5 @@
 import { GEMS, GEM_BY_ID, GEM_GROUPS, factCoverage, matchGems, toggleWorkspaceGem, workspaceGemIds } from "/gems.js";
-import { EVIDENCE_STATUS, FOLDED, SETTLED_STATUS, STEP_STATUS_VOCAB, currentStepId, label, stepState, tone } from "/status-vocabulary.js";
+import { EVIDENCE_STATUS, FOLDED, SETTLED_STATUS, STEP_STATUS_VOCAB, currentStepId, isAskable as askable, label, stepState as state_, tone } from "/status-vocabulary.js";
 import { judgeIntent } from "/intent.js";
 
 const i18n = {
@@ -843,7 +843,7 @@ function renderFlowPanel(path, options = {}) {
   // from rather than recomputing one from a path that has not caught up.
   if (state.resumingStep) options = { ...options, currentStep: state.resumingStep };
   const panel = $("flowPanel");
-  const markup = flowMarkup(path, { ...options, firstBlocked: path ? firstBlockedStep(path) : null });
+  const markup = flowMarkup(path, { ...options, declined: state.unavailableFacts, firstBlocked: path ? firstBlockedStep(path) : null });
   const steps = (path?.lanes || []).flatMap((lane) => lane.steps);
   const executed = steps.filter((item) => SETTLED_STATUS.has(item.status)).length;
   $("flowCount").textContent = steps.length ? `${executed}/${steps.length}` : "";
@@ -1003,18 +1003,11 @@ function stepInputsMarkup(item, { values = null, collapsed = false } = {}) {
 // the run moved past it, the page recomputed the same step from the path and asked
 // again, and declining did nothing for ever. The path carries the run's own answer
 // now, and this only fills in for a path that predates it.
-// One definition of "this step is still asking the reader something", used by
-// the body and by the rail.
-//
-// They had a copy each, and the rail's did not know about declined fields. So
-// after a reader clicked 暂无 on identity resolution, the body moved on to the
-// ownership step while the rail went on pointing at the one just passed over —
-// two different answers to the same question, three feet apart on screen.
-function isAskable(item) {
-  if (item?.status !== "evidence_needed" || !item.inputs?.length) return false;
-  const declined = new Set(state.unavailableFacts);
-  return !item.inputs.every((input) => declined.has(input.field));
-}
+// The shared rules, supplied with this page's declined fields. The rules live in
+// status-vocabulary.js so the rail, the body and the tests all read one
+// definition; what a given reader has passed over is this page's business.
+const isAskable = (item) => askable(item, state.unavailableFacts);
+const stepState = (item) => state_(item, state.unavailableFacts);
 
 function firstBlockedStep(path) {
   if (path?.awaitingInput?.step) return path.awaitingInput.step;

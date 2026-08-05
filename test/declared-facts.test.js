@@ -240,3 +240,27 @@ test("the rail marks the running lane even when its steps are already settled", 
   assert.equal(currentStepId(settled, { firstBlocked: "ownership" }), "ownership");
   assert.equal(currentStepId(settled, {}), null);
 });
+
+test("a step that is still asking is told apart from one that was passed over", async () => {
+  // This is the branch the rail crashed in: stepState reached for isAskable and
+  // the earlier test never got that far, because it always found an open step
+  // before the fallback ran. A step waiting on the reader and a step the reader
+  // declined look identical by status alone — the difference is which fields
+  // they have already passed over, which is why that has to be an argument
+  // rather than a global the module reaches for.
+  const { stepState, isAskable, currentStepId } = await import("../public/status-vocabulary.js");
+
+  const asking = { id: "identity_resolution", status: "evidence_needed", inputs: [{ field: "registrationNumber" }, { field: "address" }] };
+  assert.equal(stepState(asking, []), "asking");
+  assert.equal(stepState(asking, ["registrationNumber"]), "asking", "one field declined is not the step declined");
+  assert.equal(stepState(asking, ["registrationNumber", "address"]), "skipped");
+  assert.equal(isAskable(asking, []), true);
+  assert.equal(isAskable(asking, ["registrationNumber", "address"]), false);
+  assert.equal(isAskable({ status: "confirmed" }, []), false);
+
+  // And the fallback path that calls it, with a lane whose only open step was
+  // passed over — the rail must still point somewhere rather than throwing.
+  const path = { lanes: [{ lane: "trade", steps: [{ id: "search_lists", status: "confirmed" }, asking] }] };
+  assert.equal(currentStepId(path, { activeLane: "trade", declined: ["registrationNumber", "address"] }), "identity_resolution");
+  assert.doesNotThrow(() => currentStepId(path, { activeLane: "trade" }));
+});
