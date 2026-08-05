@@ -1385,6 +1385,7 @@ function createLiveMessage() {
       <div class="msg-meta" data-live-meta></div>
       <p class="live-steps" data-live-steps></p>
       <div data-live-path></div>
+      <div data-live-synthesis></div>
       <div class="live-agents" data-live-agents></div>
     </div>`;
   $("threadInner").appendChild(node);
@@ -1721,9 +1722,34 @@ async function analyze(event, options = {}) {
   // indistinguishable from two specialists running at once — the opposite of what
   // sequential execution is meant to show. Keeping a second copy was meant to make
   // the handover lossless; the label on the box already does that job.
+  // The synthesis writes below the path and above the conclusion it is producing,
+  // in a box of its own, created on demand so a run that never reaches synthesis
+  // leaves no empty frame behind.
+  function synthesisBox() {
+    // A resumed answer was rendered by answerMarkup and has no live scaffold, so
+    // the host is created next to the conclusion it is about to replace.
+    let host = live.querySelector("[data-live-synthesis]");
+    if (!host) {
+      const anchor = live.querySelector(".conclusion") || live.querySelector(".analysis-path");
+      if (!anchor) return null;
+      host = document.createElement("div");
+      host.setAttribute("data-live-synthesis", "");
+      anchor.parentNode.insertBefore(host, anchor);
+    }
+    if (!host.firstElementChild) host.innerHTML = streamBoxMarkup("data-synthesis-stream");
+    return host.firstElementChild;
+  }
+
   function streamInto(lane, who, text) {
-    const box = live.querySelector("[data-resume-stream]")
-      || live.querySelector(`[data-lane-stream="${CSS.escape(lane)}"]`);
+    // The closing summary is not about the step the reader just answered, so it
+    // does not go in that step's box. During a continuation everything else does
+    // — that box is where a continuation should be read — but writing the final
+    // conclusion inside "ownership aggregation" said the run was still working on
+    // a step it had finished with two turns earlier.
+    const box = lane === "review"
+      ? synthesisBox()
+      : live.querySelector("[data-resume-stream]")
+        || live.querySelector(`[data-lane-stream="${CSS.escape(lane)}"]`);
     setStream(box, who, text);
     // The box scrolls itself, so the page only follows while the reader is
     // already at the bottom of it.
@@ -1744,7 +1770,7 @@ async function analyze(event, options = {}) {
       // lane boxes are left alone rather than repopulated with finished text that
       // would read as a second stream still going.
       if (live.querySelector("[data-resume-stream]")) continue;
-      if (lane === progress.activeLane && progress.text[lane] !== undefined) {
+      if (lane !== "review" && lane === progress.activeLane && progress.text[lane] !== undefined) {
         setStream(laneNode.querySelector("[data-lane-stream]"), null, progress.text[lane]);
       }
     }
@@ -1805,7 +1831,7 @@ async function analyze(event, options = {}) {
     });
     // Only the lane being analysed shows a stream; a finished lane's text stays
     // out of the way so there is never more than one box writing.
-    if (progress.activeLane && progress.text[progress.activeLane] !== undefined) {
+    if (progress.activeLane && progress.activeLane !== "review" && progress.text[progress.activeLane] !== undefined) {
       setStream(host.querySelector(`[data-lane-stream="${CSS.escape(progress.activeLane)}"]`), null, progress.text[progress.activeLane]);
     }
     for (const lane of openLanes) host.querySelector(`[data-lane="${CSS.escape(lane)}"]`)?.setAttribute("data-open", "1");
@@ -1993,6 +2019,7 @@ async function analyze(event, options = {}) {
     // difference, so the page does not slide under the reader.
     const thread = $("thread");
     const before = live.getBoundingClientRect().top;
+    live.querySelector("[data-live-synthesis]")?.remove();
     if (resuming) patchAnswer(live, finished);
     else live.innerHTML = answerMarkup(finished);
     const shift = live.getBoundingClientRect().top - before;

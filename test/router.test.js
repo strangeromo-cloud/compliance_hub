@@ -388,3 +388,27 @@ test("a lookup's output is the panel, and leaves the thread alone", async () => 
   assert.match(app, /\$\("flowPanel"\)\.addEventListener\("click", onWorkspaceClick\)/);
   assert.match(app, /\$\("threadInner"\)\.addEventListener\("click", onWorkspaceClick\)/);
 });
+
+test("the closing summary is not written inside a step it is not about", async () => {
+  // A continuation streams into the box under the form the reader just
+  // submitted — that box is where a continuation should be read. But the closing
+  // summary is not about that step, and writing the final conclusion inside
+  // "ownership aggregation" said the run was still working on a step it had
+  // finished with two turns earlier.
+  const { readFile } = await import("node:fs/promises");
+  const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
+
+  assert.match(app, /const box = lane === "review"\n\s*\? synthesisBox\(\)/,
+    "the synthesis is routed to its own box before the resume box is considered");
+  assert.match(app, /function synthesisBox\(\)/);
+  // Created next to the conclusion it is producing, which is outside every step.
+  assert.match(app, /live\.querySelector\("\.conclusion"\) \|\| live\.querySelector\("\.analysis-path"\)/);
+
+  // And the closing lane must not receive the same text a second time: two boxes
+  // writing at once is indistinguishable from two things running at once.
+  assert.match(app, /lane !== "review" && lane === progress\.activeLane/);
+  assert.match(app, /progress\.activeLane !== "review" && progress\.text\[progress\.activeLane\]/);
+
+  // The scaffold goes when the finished answer replaces it.
+  assert.match(app, /live\.querySelector\("\[data-live-synthesis\]"\)\?\.remove\(\);/);
+});
