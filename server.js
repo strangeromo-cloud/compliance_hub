@@ -99,13 +99,15 @@ function requireAccess(request) {
   }
 }
 
-// Rules mode spends nothing, so it stays open and the app is never a dead end
-// without a code. A live call spends the server's model budget, so it needs one.
+// Every review now spends the model, so every review needs a code. There used
+// to be a rules mode that spent nothing and therefore stayed open; it is gone,
+// because a system with no model reachable has to say so rather than answer from
+// a template.
+//
 // With a server key and no ACCESS_PASSWORD there is no code that could be
 // checked, so the correct answer is to refuse rather than to serve the budget
 // openly — an operator who wants live answers sets the variable.
-function requireModelAccess(request, mock) {
-  if (mock) return;
+function requireModelAccess(request) {
   if (ACCESS_PASSWORD) return requireAccess(request);
   if (process.env.OPENAI_API_KEY) {
     throw Object.assign(new Error("Live-model calls are disabled because ACCESS_PASSWORD is not set on the server."), { status: 503, code: "access_code_unset" });
@@ -232,7 +234,8 @@ const server = createServer(async (request, response) => {
         liveModelConfigured: Boolean(process.env.OPENAI_API_KEY),
         accessPasswordRequired: Boolean(ACCESS_PASSWORD),
         // A server key with no access code cannot be used: say so here so the
-        // client shows rules mode rather than failing on the first question.
+        // client can say the model is unavailable rather than failing on the
+        // first question.
         liveModelBlocked: Boolean(process.env.OPENAI_API_KEY) && !ACCESS_PASSWORD,
         model: process.env.OPENAI_MODEL || null,
         demoMode: "grounded_rules",
@@ -307,13 +310,12 @@ const server = createServer(async (request, response) => {
       if (question.length < 5 || question.length > 5000) {
         throw Object.assign(new Error("Question must contain 5–5000 characters."), { status: 400 });
       }
-      const mock = Boolean(body.mock);
-      requireModelAccess(request, mock);
+      requireModelAccess(request);
       const config = cleanConfig(body.config);
-      if (!mock && !config.apiKey) throw Object.assign(new Error("API key is required for live-model mode."), { status: 400 });
+      if (!config.apiKey) throw Object.assign(new Error("A model must be configured: this system does not answer from templates when it cannot reach one."), { status: 400 });
       const locale = body.locale === "en" ? "en" : "zh";
       const declared = cleanDeclaredFacts(body.declaredFacts);
-      const result = await assessScenario({ question, locale, config, mock, gemId: body.gemId, declaredFacts: declared.facts, unavailableFacts: cleanUnavailable(body.unavailableFacts), history: cleanHistory(body.history) });
+      const result = await assessScenario({ question, locale, config, gemId: body.gemId, declaredFacts: declared.facts, unavailableFacts: cleanUnavailable(body.unavailableFacts), history: cleanHistory(body.history) });
       await saveCase(result, question, locale, body.threadId).catch(noteSaveFailure);
       return sendJson(response, 200, { ...result, ignoredDeclaredFacts: declared.ignored });
     }
@@ -327,10 +329,9 @@ const server = createServer(async (request, response) => {
       if (question.length < 5 || question.length > 5000) {
         throw Object.assign(new Error("Question must contain 5–5000 characters."), { status: 400 });
       }
-      const mock = Boolean(body.mock);
-      requireModelAccess(request, mock);
+      requireModelAccess(request);
       const config = cleanConfig(body.config);
-      if (!mock && !config.apiKey) throw Object.assign(new Error("API key is required for live-model mode."), { status: 400 });
+      if (!config.apiKey) throw Object.assign(new Error("A model must be configured: this system does not answer from templates when it cannot reach one."), { status: 400 });
 
       response.writeHead(200, {
         "Content-Type": "application/x-ndjson; charset=utf-8",
@@ -343,7 +344,7 @@ const server = createServer(async (request, response) => {
       try {
         const locale = body.locale === "en" ? "en" : "zh";
         const declared = cleanDeclaredFacts(body.declaredFacts);
-        const result = await assessScenario({ question, locale, config, mock, gemId: body.gemId, declaredFacts: declared.facts, unavailableFacts: cleanUnavailable(body.unavailableFacts), history: cleanHistory(body.history), onEvent: send });
+        const result = await assessScenario({ question, locale, config, gemId: body.gemId, declaredFacts: declared.facts, unavailableFacts: cleanUnavailable(body.unavailableFacts), history: cleanHistory(body.history), onEvent: send });
         result.ignoredDeclaredFacts = declared.ignored;
         // Persist before announcing completion, but a storage failure must not
         // discard an answer the user is already looking at.

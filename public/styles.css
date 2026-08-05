@@ -1153,7 +1153,6 @@ html[lang="en"] .step-needs::before { content: "NEEDS"; font-size: 8px; }
 .path-limits li { padding-left: 13px; position: relative; line-height: 1.6; }
 .path-limits li::before { content: ""; position: absolute; left: 0; top: 8px; width: 5px; height: 5px; border-radius: 1px; background: var(--risk-medium); }
 
-.path-templated { font-size: 11.5px; color: var(--risk-medium); padding: 7px 9px; border: 1px dashed color-mix(in srgb, var(--risk-medium) 45%, var(--border)); border-radius: var(--radius); margin-bottom: 10px; }
 .source-status.tone-ok { color: var(--accent-text); }
 .source-status.tone-warn { color: var(--risk-medium); }
 .source-status.tone-crit { color: var(--risk-high); }

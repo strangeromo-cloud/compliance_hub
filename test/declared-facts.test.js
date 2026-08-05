@@ -1,7 +1,16 @@
 import { strict as assert } from "node:assert";
 import { readFile } from "node:fs/promises";
-import test from "node:test";
+import test, { after, before } from "node:test";
 import { DECLARABLE_FIELDS, planAnalysisPath, resolveAnalysisPath } from "../src/analysis-path.js";
+import { startStubModel } from "./helpers/stub-model.js";
+
+// One stub endpoint for the file. These tests assert on what the deterministic
+// layers computed — routing, path resolution, declared facts, clearance — and
+// used to reach them with `mock: true`. That flag is gone, so what they need is
+// a model to be reachable, not a stand-in for its answer.
+let stub;
+before(async () => { stub = await startStubModel(); });
+after(async () => { await stub?.stop(); });
 
 const ALL_LANES = ["trade", "product", "tpdd"];
 
@@ -51,7 +60,7 @@ test("the run stops at the first question a user can answer", async () => {
   const { assessScenario } = await import("../src/orchestrator.js");
   const question = "我们计划向一家新加坡代理商出口高性能计算服务器，最终用户在中国，由一家咨询公司代为付款";
 
-  const stopped = await assessScenario({ question, locale: "zh", mock: true });
+  const stopped = await assessScenario({ question, locale: "zh", config: stub.config });
   assert.ok(stopped.awaitingInput, "a run with an unanswered question should be waiting");
   assert.equal(stopped.synthesis, null, "no conclusion is drawn over a gap the run stopped at");
   // The question was already knowable from retrieval, so no specialist was spent
@@ -68,7 +77,7 @@ test("answering every question lets the run reach a conclusion", async () => {
   const question = "我们计划向一家新加坡代理商出口高性能计算服务器，最终用户在中国，由一家咨询公司代为付款";
   const declaredFacts = Object.fromEntries(DECLARABLE_FIELDS.map((field) => [field, "已提供"]));
 
-  const done = await assessScenario({ question, locale: "zh", mock: true, declaredFacts });
+  const done = await assessScenario({ question, locale: "zh", config: stub.config, declaredFacts });
   assert.equal(done.awaitingInput, null, "nothing left to ask");
   assert.ok(done.synthesis, "a conclusion is drawn once the run finishes");
   assert.equal(done.results.length, 3, "every lane ran");
@@ -126,7 +135,7 @@ async function walk(question, { mode = "answer", cap = 20 } = {}) {
   const unavailableFacts = [];
   const asked = [];
   for (let round = 0; round < cap; round += 1) {
-    const result = await assessScenario({ question, locale: "zh", mock: true, declaredFacts, unavailableFacts });
+    const result = await assessScenario({ question, locale: "zh", config: stub.config, declaredFacts, unavailableFacts });
     if (!result.awaitingInput) return { asked, concluded: Boolean(result.synthesis), result };
     const steps = result.analysisPath.lanes.flatMap((lane) => lane.steps.map((step) => ({ step, lane: lane.lane })));
     const found = steps.find((item) => item.step.id === result.awaitingInput.step);
@@ -180,7 +189,7 @@ test("an informational question is answered rather than interrogated", async () 
   // on a question that had nothing to do with what was asked.
   for (const question of ["中国两用物项出口管制的法规依据是什么？", "H100 的 ECCN 是多少？"]) {
     const { assessScenario } = await import("../src/orchestrator.js");
-    const result = await assessScenario({ question, locale: "zh", mock: true });
+    const result = await assessScenario({ question, locale: "zh", config: stub.config });
     assert.equal(result.awaitingInput, null, `${question} should not stop to ask`);
     assert.ok(result.synthesis, `${question} should reach a conclusion`);
   }

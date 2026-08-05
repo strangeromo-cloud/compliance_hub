@@ -1,10 +1,18 @@
-import test from "node:test";
+import test, { after, before } from "node:test";
 import assert from "node:assert/strict";
 import { routeQuestion } from "../src/router.js";
-import { createMockAgentResult, createMockSynthesis } from "../src/mock.js";
 import { classifyQuestionIntent } from "../src/question-intent.js";
 import { collectGrounding } from "../src/grounding.js";
 import { sourcesForAgents } from "../src/sources.js";
+import { startStubModel } from "./helpers/stub-model.js";
+
+// One stub endpoint for the file. These tests assert on what the deterministic
+// layers computed — routing, path resolution, declared facts, clearance — and
+// used to reach them with `mock: true`. That flag is gone, so what they need is
+// a model to be reachable, not a stand-in for its answer.
+let stub;
+before(async () => { stub = await startStubModel(); });
+after(async () => { await stub?.stop(); });
 
 test("routes named restricted party to Trade Compliance", () => {
   assert.deepEqual(routeQuestion("我们能否与华为签订技术支持服务合同？"), ["trade"]);
@@ -33,37 +41,17 @@ test("router can defer fallback for conversational context", () => {
   assert.deepEqual(routeQuestion("那这种情况下呢？", false), []);
 });
 
-test("rules-demo output preserves risk and uses question-specific synthesis", () => {
-  const result = createMockAgentResult("trade", "zh");
-  const synthesis = createMockSynthesis([result], "zh");
-  assert.equal(result.agent, "trade");
-  assert.equal(result.riskLevel, "high");
-  assert.equal(synthesis.overallRisk, "high");
-  assert.equal(synthesis.headline, "交易方筛查");
-  assert.match(synthesis.executiveSummary, /受限交易方/);
-});
-
-test("China dual-use policy query returns concrete framework instead of default answer", async () => {
-  const question = "中国两用物项的policy是什么？";
-  const grounding = await collectGrounding(question, ["product"]);
-  const result = createMockAgentResult("product", "zh", question, grounding);
-  const synthesis = createMockSynthesis([result], "zh", question, grounding);
-  assert.equal(classifyQuestionIntent(question), "policy_lookup");
-  assert.match(result.summary, /统一清单/);
-  assert.match(result.findings[0].detail, /2024年12月1日/);
-  assert.match(result.findings[2].detail, /临时管制/);
-  assert.match(synthesis.headline, /统一清单/);
-  assert.doesNotMatch(synthesis.executiveSummary, /Prototype 已识别/);
-});
-
-test("product restriction query requests classification and transaction facts", () => {
-  const question = "这个工业控制器是否属于中国受限产品？";
-  const context = { intent: classifyQuestionIntent(question), facts: [], listMatches: [], limitations: [] };
-  const result = createMockAgentResult("product", "zh", question, context);
-  const synthesis = createMockSynthesis([result], "zh", question, context);
-  assert.equal(context.intent, "product_restriction");
-  assert.match(result.findings[0].detail, /技术指标/);
-  assert.match(synthesis.headline, /产品是否受限/);
+// What survives from three tests that asserted on the canned rules-mode text.
+// That text is gone, and with it the only thing those tests were checking about
+// it — but the intent classification underneath still decides how the question
+// is scoped, and it is not covered anywhere else.
+test("a policy question and a restriction question are scoped differently", async () => {
+  assert.equal(classifyQuestionIntent("中国两用物项的policy是什么？"), "policy_lookup");
+  assert.equal(classifyQuestionIntent("这个工业控制器是否属于中国受限产品？"), "product_restriction");
+  // A policy question still has to ground against something, or the scoping
+  // decision has nothing to apply to.
+  const grounding = await collectGrounding("中国两用物项的policy是什么？", ["product"]);
+  assert.equal(grounding.intent, "policy_lookup");
 });
 
 test("China policy sources are prioritized for a dual-use policy question", () => {
@@ -74,36 +62,40 @@ test("China policy sources are prioritized for a dual-use policy question", () =
   assert.match(sources.find((source) => source.id === "china-dual-use-license-directory").title, /2026/);
 });
 
-test("mock output adds scenario-specific findings", () => {
-  const encryption = createMockAgentResult("product", "zh", "含VPN和高强度加密设备出口印度");
-  const shellIndicators = createMockAgentResult("tpdd", "en", "Distributor uses a shared office and refuses UBO");
-  assert.equal(encryption.findings[0].title, "加密产品分类");
-  assert.equal(shellIndicators.findings[0].title, "Business-substance indicators");
-});
-
-test("H100 APP query gives model-specific TPP values instead of hiding the answer", () => {
-  const result = createMockAgentResult("product", "zh", "请告诉我英伟达H100的APP值是多少？");
-  const synthesis = createMockSynthesis([result], "zh", "请告诉我英伟达H100的APP值是多少？");
-  assert.equal(result.riskLevel, "unknown");
-  assert.match(result.findings[0].detail, /PCIe 为 12,224/);
-  assert.match(result.findings[0].detail, /NVL 为 14,144/);
-  assert.match(result.findings[0].detail, /SXM5 为 15,840/);
-  assert.match(synthesis.headline, /没有一个通用的 APP 值/);
-  assert.match(synthesis.executiveSummary, /4A090\.a/);
-});
-
-test("H100 ECCN query stays within classification scope and excludes route analysis", () => {
+// A narrow classification question is scoped to classification, and the scoping
+// is applied to whatever the model returned rather than to a canned answer. The
+// version of this test that read the canned answer went with rules mode; this
+// one hands the model's place a reply that wanders into route analysis and
+// checks it does not survive.
+test("a narrow classification question is scoped to classification", async () => {
   const question = "英伟达H100的ECCN值是多少？";
-  const context = { intent: classifyQuestionIntent(question), facts: [], listMatches: [], limitations: [] };
-  const result = createMockAgentResult("product", "zh", question, context);
-  const synthesis = createMockSynthesis([result], "zh", question, context);
-  const sourceIds = sourcesForAgents(["product"], question).map((source) => source.id);
-  assert.equal(context.intent, "product_metric");
-  assert.equal(result.findings.length, 1);
-  assert.match(result.summary, /4A090\.a/);
-  assert.match(synthesis.headline, /4A090\.a/);
-  assert.doesNotMatch(JSON.stringify(result), /运输路线|加拿大|墨西哥|最终用户|最终用途/);
-  assert.deepEqual(sourceIds, ["bis-classify", "nvidia-export"]);
+  assert.equal(classifyQuestionIntent(question), "product_metric");
+  assert.deepEqual(sourcesForAgents(["product"], question).map((source) => source.id),
+    ["bis-classify", "nvidia-export"]);
+
+  const wanders = await startStubModel({
+    answer: (body) => (/overallRisk/.test(JSON.stringify(body.messages))
+      ? { overallRisk: "unknown", headline: "4A090.a", executiveSummary: "stub", nextStep: "stub" }
+      : {
+        agent: "product", riskLevel: "high", summary: "分类为 4A090.a",
+        findings: [
+          { title: "分类", detail: "该型号对应 4A090.a", evidenceSourceIds: [] },
+          { title: "运输路线", detail: "经加拿大转运至墨西哥，最终用户未知", evidenceSourceIds: [] }
+        ],
+        missingInfo: ["最终用途"], recommendedActions: ["核对运输路线"]
+      })
+  });
+  try {
+    const { assessScenario } = await import("../src/orchestrator.js");
+    const result = await assessScenario({ question, locale: "zh", config: wanders.config });
+    const product = result.results.find((item) => item.agent === "product");
+    assert.ok(product, "the product lane ran");
+    // Route, destination and end-use belong to a transaction question. This one
+    // asked for a published field, and answering it with a transit analysis the
+    // user never asked about is what the scoping exists to stop.
+    assert.doesNotMatch(JSON.stringify(product.findings), /运输路线|加拿大|墨西哥/);
+    assert.equal(product.riskLevel, "unknown", "a factual lookup carries no risk verdict");
+  } finally { await wanders.stop(); }
 });
 
 const acceptanceScenarios = [
@@ -138,7 +130,7 @@ test("only an assessment carries a risk level", async () => {
     { gemId: "eccn-watch", question: "100-000000009 的 ECCN 是什么？" }
   ];
   for (const { gemId, question } of noRisk) {
-    const result = await assessScenario({ question, locale: "zh", mock: true, gemId });
+    const result = await assessScenario({ question, locale: "zh", config: stub.config, gemId });
     assert.ok(result.synthesis, `${gemId} must answer rather than ask`);
     assert.equal(result.synthesis.overallRisk, null, `${gemId} must state no risk level`);
     assert.ok(result.synthesis.headline, `${gemId} still answers`);
@@ -147,7 +139,7 @@ test("only an assessment carries a risk level", async () => {
   // A review gem still assesses, and still says so — the contrast is the point.
   const review = await assessScenario({
     question: "客户 Rhein Systeme GmbH，注册号 HRB 214553，德国杜塞尔多夫。直销一批办公笔记本，最终用途为该公司自身办公使用。",
-    locale: "zh", mock: true,
+    locale: "zh", config: stub.config,
     declaredFacts: {
       legalName: "Rhein Systeme GmbH", registrationNumber: "HRB 214553", country: "DE",
       address: "Kölner Str. 12, 40211 Düsseldorf, Germany",
@@ -171,7 +163,7 @@ test("a run says what it is doing before it does it", async () => {
   const seen = [];
   await assessScenario({
     question: "客户 Aveox Technologies (Shenzhen) Co., Ltd.，直销，请做受限方筛查",
-    locale: "zh", mock: true,
+    locale: "zh", config: stub.config,
     onEvent: (event) => seen.push(event.type === "stage" ? `stage:${event.key}` : event.type)
   });
 

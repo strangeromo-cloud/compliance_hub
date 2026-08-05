@@ -4,6 +4,15 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test, { after, before } from "node:test";
+import { startStubModel } from "./helpers/stub-model.js";
+
+// One stub endpoint for the file. These tests assert on what the deterministic
+// layers computed — routing, path resolution, declared facts, clearance — and
+// used to reach them with `mock: true`. That flag is gone, so what they need is
+// a model to be reachable, not a stand-in for its answer.
+let stub;
+before(async () => { stub = await startStubModel(); });
+after(async () => { await stub?.stop(); });
 
 // A database of this test's own, seeded with what a clear outcome requires.
 //
@@ -164,9 +173,12 @@ test("every scenario advertised as clearing actually clears", async () => {
     assert.ok(clearing.length, `${locale} should offer scenarios that clear`);
     for (const item of clearing) {
       assert.ok(item.facts, `${item.id} carries the declarations it depends on`);
-      const result = await assessScenario({ question: item.question, locale, mock: true, declaredFacts: item.facts });
+      const result = await assessScenario({ question: item.question, locale, config: stub.config, declaredFacts: item.facts });
       assert.equal(result.awaitingInput, null, `${locale} ${item.id} should not stop to ask`);
-      assert.equal(result.synthesis?.overallRisk, "low", `${locale} ${item.id} should reach a clear outcome`);
+      // On the clearance decision, not on the risk level. The risk level is the
+      // model's word for it and a stub has no opinion; whether every condition
+      // was met is computed here and is the thing the offer actually promises.
+      assert.equal(result.grounding?.clearance?.cleared, true, `${locale} ${item.id} should clear`);
     }
   }
 });
@@ -252,7 +264,7 @@ test("a lookup is answered, not put through a review", async () => {
 
   for (const question of ["100-000000009 这个AMD 的ECCN是什么？", "1C351 是什么", "4A090.a 是什么意思"]) {
     assert.ok(lookupSubject(question), `${question} should be recognised as a lookup`);
-    const result = await assessScenario({ question, locale: "zh", mock: true });
+    const result = await assessScenario({ question, locale: "zh", config: stub.config });
     assert.equal(result.intent, "data_lookup");
     assert.deepEqual(result.analysisPath.lanes.map((lane) => lane.lane), ["lookup"],
       "a lookup runs one lane and never reaches the closing step");
@@ -284,7 +296,7 @@ test("a lookup answers from the data and says what it searched", async () => {
   assert.match(missing.elsewhere, /厂商|BIS/, "and where the answer actually lives");
 
   const { assessScenario } = await import("../src/orchestrator.js");
-  const answer = await assessScenario({ question: "ZZ-999999999 的 ECCN 是什么", locale: "zh", mock: true });
+  const answer = await assessScenario({ question: "ZZ-999999999 的 ECCN 是什么", locale: "zh", config: stub.config });
   assert.ok(answer.grounding.limitations.some((line) => /未收录不等于不受管制/.test(line)));
 });
 
@@ -318,7 +330,7 @@ test("a source that could not be searched is named, not omitted", async () => {
       "and the source line must say it is a committed copy");
 
     const { assessScenario } = await import(`../src/orchestrator.js?no-amd`);
-    const answer = await assessScenario({ question: "100-000000009 这个AMD 的ECCN是什么？", locale: "zh", mock: true });
+    const answer = await assessScenario({ question: "100-000000009 这个AMD 的ECCN是什么？", locale: "zh", config: stub.config });
     assert.ok(answer.grounding.limitations.some((line) => /时点副本/.test(line)),
       "a point-in-time copy must never answer as though it were the current table");
   } finally {
@@ -399,7 +411,7 @@ test("a gem's kind decides whether a review procedure applies at all", async () 
 
   const brief = await assessScenario({
     question: "汇总最近 6 个月中国出口管制管控名单和两用物项公告的变化",
-    locale: "zh", mock: true, gemId: "reg-brief"
+    locale: "zh", config: stub.config, gemId: "reg-brief"
   });
   assert.deepEqual(brief.analysisPath.lanes.map((lane) => lane.lane), ["briefing"]);
   assert.equal(brief.awaitingInput, null, "a summary of published notices asks nobody anything");
@@ -407,13 +419,13 @@ test("a gem's kind decides whether a review procedure applies at all", async () 
   assert.ok(brief.grounding.limitations.some((line) => /属于审查而非汇总/.test(line)),
     "listing what was published is not the same as saying it applies");
 
-  const memo = await assessScenario({ question: "生成案件备忘录", locale: "zh", mock: true, gemId: "case-memo", history: [] });
+  const memo = await assessScenario({ question: "生成案件备忘录", locale: "zh", config: stub.config, gemId: "case-memo", history: [] });
   assert.deepEqual(memo.analysisPath.lanes.map((lane) => lane.lane), ["memo"]);
   assert.match(memo.synthesis.headline, /尚无可整理/, "a memo over nothing says so rather than inventing a document");
 
   // A review gem still gets the procedure.
   const review = await assessScenario({
-    question: "我们通过新加坡代理商向中国最终用户出口服务器", locale: "zh", mock: true, gemId: "screen-party"
+    question: "我们通过新加坡代理商向中国最终用户出口服务器", locale: "zh", config: stub.config, gemId: "screen-party"
   });
   assert.ok(review.analysisPath.lanes.some((lane) => lane.lane === "trade"));
 });
@@ -519,7 +531,7 @@ test("the English answer runs an English procedure", async () => {
   const CJK = /[一-鿿]/;
 
   const english = await assessScenario({
-    question: "We ship servers to a customer in Germany through a Singapore agent", locale: "en", mock: true
+    question: "We ship servers to a customer in Germany through a Singapore agent", locale: "en", config: stub.config
   });
   const steps = english.analysisPath.lanes.flatMap((lane) => lane.steps);
   assert.ok(steps.length);
@@ -530,7 +542,7 @@ test("the English answer runs an English procedure", async () => {
   // Chinese is untouched: the resolvers still write one language and only the
   // boundary translates.
   const chinese = await assessScenario({
-    question: "我们通过新加坡代理商向德国客户出口服务器", locale: "zh", mock: true
+    question: "我们通过新加坡代理商向德国客户出口服务器", locale: "zh", config: stub.config
   });
   assert.ok(chinese.analysisPath.lanes.every((lane) => CJK.test(lane.label)));
 
@@ -640,7 +652,7 @@ test("an English answer is English all the way down", async () => {
 
   const result = await assessScenario({
     question: "Customer Rhein Systeme GmbH, registration HRB 214553, Düsseldorf, Germany. Direct sale of EAR99 office laptops, no intermediary, for the customer's own office use.",
-    locale: "en", mock: true,
+    locale: "en", config: stub.config,
     declaredFacts: {
       legalName: "Rhein Systeme GmbH", registrationNumber: "HRB 214553", country: "DE",
       address: "Kölner Str. 12, 40211 Düsseldorf, Germany",
@@ -680,7 +692,7 @@ test("the five conditions reach the reader, met or not", async () => {
   const { assessScenario } = await import("../src/orchestrator.js");
   const IDS = ["screening", "classification", "destination", "third_party", "end_use"];
 
-  const bare = await assessScenario({ question: "我们要出口一批服务器", locale: "zh", mock: true });
+  const bare = await assessScenario({ question: "我们要出口一批服务器", locale: "zh", config: stub.config });
   const blocked = bare.grounding?.clearance;
   assert.ok(blocked, "a review carries the clearance projection");
   assert.deepEqual(blocked.checks.map((check) => check.id), IDS, "all five conditions, in order");
@@ -706,7 +718,7 @@ test("the five conditions reach the reader, met or not", async () => {
   // finished and is not.
   const met = await assessScenario({
     question: "我们直销一台 EAR99 笔记本给德国的长期客户，无中间商",
-    locale: "zh", mock: true,
+    locale: "zh", config: stub.config,
     declaredFacts: { eccn: "EAR99", destination: "德国", endUse: "客户自用办公，无转售，无军事或核相关用途" }
   });
   const all = met.grounding.clearance;
@@ -717,7 +729,7 @@ test("the five conditions reach the reader, met or not", async () => {
 
   const en = await assessScenario({
     question: "Direct sale of an EAR99 laptop to a long-standing customer in Germany, no intermediary",
-    locale: "en", mock: true,
+    locale: "en", config: stub.config,
     declaredFacts: { eccn: "EAR99", destination: "Germany", endUse: "the customer's own office use, no resale, no military or nuclear application" }
   });
   const CJK = /[一-鿿]/;

@@ -89,7 +89,7 @@ trustworthy in the first place.
 
 The specialists and the synthesis are the only two places this system calls a
 model — at most four calls per review, none at all for a briefing, a memo, a
-lookup, or in rules mode. Everything else is regex, provisions computed in code,
+lookup, or a memo. Everything else is regex, provisions computed in code,
 and database reads.
 
 That shape makes an open-weights model unusually attractive here, and not

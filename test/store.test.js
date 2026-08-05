@@ -2,7 +2,16 @@ import { strict as assert } from "node:assert";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import test, { after } from "node:test";
+import test, { after, before } from "node:test";
+import { startStubModel } from "./helpers/stub-model.js";
+
+// One stub endpoint for the file. These tests assert on what the deterministic
+// layers computed — routing, path resolution, declared facts, clearance — and
+// used to reach them with `mock: true`. That flag is gone, so what they need is
+// a model to be reachable, not a stand-in for its answer.
+let stub;
+before(async () => { stub = await startStubModel(); });
+after(async () => { await stub?.stop(); });
 
 // A database of its own, so these tests neither read nor disturb the one the
 // development server keeps. It has to be set before the module is imported,
@@ -274,7 +283,7 @@ test("the official screening API is optional and degrades to the local snapshot"
 
     // Screening still works, from the local snapshot, exactly as before.
     const { assessScenario } = await import("../src/orchestrator.js");
-    const result = await assessScenario({ question: "请对交易方 Huawei Technologies 做受限方筛查", locale: "zh", mock: true });
+    const result = await assessScenario({ question: "请对交易方 Huawei Technologies 做受限方筛查", locale: "zh", config: stub.config });
     assert.ok(result.grounding.screening?.screenedSources?.length, "the local screening is unaffected");
     assert.equal(result.grounding.screening.official, null);
   } finally {

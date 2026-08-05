@@ -103,7 +103,7 @@ const copy = {
       "左侧栏点击 Gem 直接使用，再点一次查看它的完整规格。",
       "「测试场景」提供 16 个预置情景。多数只填入输入框；C 开头的三个是完整卷宗，会同时把已声明事实填好，因此能一次跑到结论——它们是用来看「条件逐项满足时系统怎么说」的。",
       "左下角数据状态可进入数据覆盖页，查看每个来源的同步状态、记录数与校验和。",
-      "左上角可在规则模式（无需 API Key）与实时模型之间切换。"
+      "左上角显示模型是否已配置。分析全部由实时模型运行——没有模型时系统直接拒答，不会用模板凑出一个看起来像分析的结果。"
     ],
 
     demoLabel: "演示脚本", demoTitle: "同一套逻辑，两种结论",
@@ -238,7 +238,7 @@ const copy = {
       "Click a gem in the sidebar to use it; click again to see its full specification.",
       "Test scenarios offers 16 presets. Most only fill the composer; the three beginning with C are complete files that also fill in the declared facts, so they run through to a conclusion — they are there to show what the system says when every condition is met.",
       "The data status at the bottom left opens the coverage page: sync state, record counts and checksums per source.",
-      "The top bar switches between rules mode (no API key) and the live model."
+      "The top bar shows whether a model is configured. Every analysis runs on the live model: with none reachable the system refuses rather than assembling something that reads like one."
     ],
 
     demoLabel: "Demo script", demoTitle: "One logic, two outcomes",

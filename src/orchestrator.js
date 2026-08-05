@@ -8,7 +8,6 @@ import { localizePath, localizeLines, localizeLine } from "./path-i18n.js";
 import { buildBriefing } from "./briefing.js";
 import { GEM_KINDS } from "./gem-kinds.js";
 import { CAPABILITIES, invokeCapability } from "./agent-capabilities.js";
-import { createMockAgentResult, createMockSynthesis } from "./mock.js";
 import { collectGrounding, groundingContext } from "./grounding.js";
 import { buildActionPlan, planAnalysisPath, resolveAnalysisPath } from "./analysis-path.js";
 
@@ -237,10 +236,10 @@ const disclaimerFor = (locale) => (locale === "en"
 // inconclusive. None was attempted — these answer a question of fact, and the
 // risk of a transaction is not among the facts. The field is null and the
 // interface shows no badge.
-async function answerBriefing({ question, locale, mock, onEvent, gemId = null }) {
+async function answerBriefing({ question, locale, onEvent, gemId = null }) {
   const id = `CASE-${Date.now().toString(36).toUpperCase()}`;
   const isEn = locale === "en";
-  onEvent({ type: "routed", id, agents: ["briefing"], mode: mock ? "grounded-demo" : "live-model" });
+  onEvent({ type: "routed", id, agents: ["briefing"], mode: "live-model" });
   // Reading four notice sources is the slow part, and without a stage of its own
   // the page shows "retrieving official sources" and no clock for the whole of it.
   onEvent({ type: "stage", key: "briefing" });
@@ -269,7 +268,7 @@ async function answerBriefing({ question, locale, mock, onEvent, gemId = null })
   onEvent({ type: "grounding", intent: grounding.intent, grounding });
 
   let path = planAnalysisPath({ agents: ["briefing"], question });
-  path = resolveAnalysisPath(path, { question, grounding, results: [], declaredFacts: {}, templated: mock, final: true });
+  path = resolveAnalysisPath(path, { question, grounding, results: [], declaredFacts: {}, final: true });
   onEvent({ type: "path", path: localizePath(path, locale) });
 
   // What the period amounts to, before the notices that make it up. A reader
@@ -333,7 +332,7 @@ async function answerBriefing({ question, locale, mock, onEvent, gemId = null })
     id, createdAt: new Date().toISOString(), analysisPath: localizePath(path, locale), awaitingInput: null,
     unavailableFacts: [], actionPlan: [], declaredFacts: {},
     gemId,
-    mode: mock ? "grounded-demo" : "live-model",
+    mode: "live-model",
     intent: grounding.intent, grounding, agents: ["briefing"],
     synthesis, results: [], sources: [], disclaimer: disclaimerFor(locale)
   };
@@ -342,10 +341,10 @@ async function answerBriefing({ question, locale, mock, onEvent, gemId = null })
 // A memo records what was already decided. It is deliberately not a new
 // analysis: producing fresh judgements under the name "memo" would put
 // conclusions in a document that nothing on the path ever supported.
-async function answerMemo({ question, locale, history, mock, onEvent, gemId = null }) {
+async function answerMemo({ question, locale, history, onEvent, gemId = null }) {
   const id = `CASE-${Date.now().toString(36).toUpperCase()}`;
   const isEn = locale === "en";
-  onEvent({ type: "routed", id, agents: ["memo"], mode: mock ? "grounded-demo" : "live-model" });
+  onEvent({ type: "routed", id, agents: ["memo"], mode: "live-model" });
   onEvent({ type: "stage", key: "memo" });
 
   const priorTurns = (history || []).filter((item) => item.role === "assistant");
@@ -360,7 +359,7 @@ async function answerMemo({ question, locale, history, mock, onEvent, gemId = nu
   onEvent({ type: "grounding", intent: grounding.intent, grounding });
 
   let path = planAnalysisPath({ agents: ["memo"], question });
-  path = resolveAnalysisPath(path, { question, grounding, results: [], declaredFacts: {}, templated: mock, final: true });
+  path = resolveAnalysisPath(path, { question, grounding, results: [], declaredFacts: {}, final: true });
   onEvent({ type: "path", path: localizePath(path, locale) });
 
   const synthesis = priorTurns.length
@@ -384,16 +383,16 @@ async function answerMemo({ question, locale, history, mock, onEvent, gemId = nu
     id, createdAt: new Date().toISOString(), analysisPath: localizePath(path, locale), awaitingInput: null,
     unavailableFacts: [], actionPlan: [], declaredFacts: {},
     gemId,
-    mode: mock ? "grounded-demo" : "live-model",
+    mode: "live-model",
     intent: grounding.intent, grounding, agents: ["memo"],
     synthesis, results: [], sources: [], disclaimer: disclaimerFor(locale)
   };
 }
 
-async function answerLookup({ question, locale, lookup, mock, onEvent, gemId = null }) {
+async function answerLookup({ question, locale, lookup, onEvent, gemId = null }) {
   const id = `CASE-${Date.now().toString(36).toUpperCase()}`;
   const isEn = locale === "en";
-  onEvent({ type: "routed", id, agents: ["lookup"], mode: mock ? "grounded-demo" : "live-model" });
+  onEvent({ type: "routed", id, agents: ["lookup"], mode: "live-model" });
   onEvent({ type: "stage", key: "lookup" });
 
   const grounding = { intent: "data_lookup", lookup, facts: [], listMatches: [], internalParties: [], screening: null, limitations: [] };
@@ -426,7 +425,7 @@ async function answerLookup({ question, locale, lookup, mock, onEvent, gemId = n
   onEvent({ type: "grounding", intent: grounding.intent, grounding });
 
   let path = planAnalysisPath({ agents: ["lookup"], question });
-  path = resolveAnalysisPath(path, { question, grounding, results: [], declaredFacts: {}, templated: mock, final: true });
+  path = resolveAnalysisPath(path, { question, grounding, results: [], declaredFacts: {}, final: true });
   onEvent({ type: "path", path: localizePath(path, locale) });
 
   const synthesis = found.length
@@ -456,7 +455,7 @@ async function answerLookup({ question, locale, lookup, mock, onEvent, gemId = n
     id, createdAt: new Date().toISOString(), analysisPath: localizePath(path, locale), awaitingInput: null,
     unavailableFacts: [], actionPlan: [], declaredFacts: {},
     gemId,
-    mode: mock ? "grounded-demo" : "live-model",
+    mode: "live-model",
     intent: grounding.intent, grounding, agents: ["lookup"],
     synthesis, results: [], sources: [],
     disclaimer: disclaimerFor(locale)
@@ -480,7 +479,7 @@ function crossLaneAnswers(context) {
   return answers;
 }
 
-export async function assessScenario({ question, locale = "zh", config = {}, mock = false, history = [], gemId = null, declaredFacts = {}, unavailableFacts = [], onEvent = () => {} }) {
+export async function assessScenario({ question, locale = "zh", config = {}, history = [], gemId = null, declaredFacts = {}, unavailableFacts = [], onEvent = () => {} }) {
   // A question that asks for a stored value is answered, not reviewed. There is
   // no counterparty, no destination and no transaction in "what is this part's
   // ECCN", so there is nothing for a compliance procedure to work on — and
@@ -492,11 +491,11 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
   // it — the gem said which lane to open with and nothing said whether to open
   // any.
   const kind = GEM_KINDS[gemId] || null;
-  if (kind === "briefing") return await answerBriefing({ question, locale, mock, onEvent, gemId });
-  if (kind === "memo") return await answerMemo({ question, locale, history, mock, onEvent, gemId });
+  if (kind === "briefing") return await answerBriefing({ question, locale, onEvent, gemId });
+  if (kind === "memo") return await answerMemo({ question, locale, history, onEvent, gemId });
 
   const lookup = await resolveLookup(question).catch(() => null);
-  if (lookup) return await answerLookup({ question, locale, lookup, mock, onEvent, gemId });
+  if (lookup) return await answerLookup({ question, locale, lookup, onEvent, gemId });
 
   const directAgents = routeQuestion(question, false);
   const contextualQuestion = `${history.filter((item) => item.role === "user").map((item) => item.content).join("\n")}\n${question}`;
@@ -506,7 +505,7 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
   const agents = routedAgents.length ? routedAgents : (contextualAgents.length ? contextualAgents : ["trade", "product", "tpdd"]);
   const id = `CASE-${Date.now().toString(36).toUpperCase()}`;
 
-  onEvent({ type: "routed", id, agents, mode: mock ? "grounded-demo" : "live-model" });
+  onEvent({ type: "routed", id, agents, mode: "live-model" });
 
   // The plan goes out before any work: the user sees which steps this question
   // has to pass, and then watches them close.
@@ -567,7 +566,7 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
 
   // Screening steps can close once grounding is in; the rest wait for the
   // specialists rather than being guessed at.
-  analysisPath = resolveAnalysisPath(analysisPath, { question: contextualQuestion, grounding: groundingSummary, results: [], declaredFacts, templated: mock });
+  analysisPath = resolveAnalysisPath(analysisPath, { question: contextualQuestion, grounding: groundingSummary, results: [], declaredFacts });
   onEvent({ type: "path", path: localizePath(analysisPath, locale) });
 
   // The specialists run one after another, in the order the path lists them.
@@ -584,7 +583,7 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
   // then reported as never reached, so the page had a question the body could not
   // draw and the run could not move past.
   const askablePath = () => resolveAnalysisPath(analysisPath, {
-    question: contextualQuestion, grounding: groundingSummary, results, declaredFacts, templated: mock, final: true
+    question: contextualQuestion, grounding: groundingSummary, results, declaredFacts, final: true
   });
 
   // Whether the stated facts support a clear outcome, worked out once against
@@ -622,24 +621,14 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
       break;
     }
     onEvent({ type: "agent_start", agent });
-    if (mock) {
-      // Rules mode does no token generation, so there is nothing to reveal over
-      // time and pacing it would misrepresent what happened.
-      const result = createMockAgentResult(agent, locale, question, grounding);
-      const readable = readableProjection(JSON.stringify(result));
-      if (readable) onEvent({ type: "agent_delta", agent, text: readable });
-      results.push(result);
-      onEvent({ type: "agent", result });
-    } else {
-      const result = await runAgent(agent, question, locale, sources, config, history, grounding,
-        (text) => onEvent({ type: "agent_delta", agent, text }),
-        (meta) => onEvent({ type: "stream_mode", agent, ...meta }));
-      results.push(result);
-      onEvent({ type: "agent", result });
-    }
+    const result = await runAgent(agent, question, locale, sources, config, history, grounding,
+      (text) => onEvent({ type: "agent_delta", agent, text }),
+      (meta) => onEvent({ type: "stream_mode", agent, ...meta }));
+    results.push(result);
+    onEvent({ type: "agent", result });
     // This lane's steps close before the next lane starts, so the path fills in
     // the order it is read rather than all at once at the end.
-    analysisPath = resolveAnalysisPath(analysisPath, { question: contextualQuestion, grounding: groundingSummary, results, declaredFacts, templated: mock });
+    analysisPath = resolveAnalysisPath(analysisPath, { question: contextualQuestion, grounding: groundingSummary, results, declaredFacts });
     onEvent({ type: "path", path: localizePath(analysisPath, locale) });
 
     // A lane that ends with a question the user can answer stops the run there.
@@ -660,10 +649,6 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
     // a gap the analysis has just stopped at would be the thing it is trying not
     // to produce.
     synthesis = null;
-  } else if (mock) {
-    synthesis = createMockSynthesis(results, locale, question, grounding);
-    const synthText = readableProjection(JSON.stringify(synthesis));
-    if (synthText) onEvent({ type: "synthesis_delta", text: synthText });
   } else {
     synthesis = await synthesize(question, locale, results, config, history, grounding,
       (text) => onEvent({ type: "synthesis_delta", text }));
@@ -674,7 +659,7 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
   // could arrive as "pending" — which the page cannot draw, so the run stopped on
   // a question that was nowhere on screen. The run having stopped is carried by
   // awaitingInput, not by withholding the resolution.
-  analysisPath = resolveAnalysisPath(analysisPath, { question: contextualQuestion, grounding: groundingSummary, results, declaredFacts, templated: mock, final: true });
+  analysisPath = resolveAnalysisPath(analysisPath, { question: contextualQuestion, grounding: groundingSummary, results, declaredFacts, final: true });
   // Flagged so the client knows the sequence has finished and a step may now ask
   // the user for input; a form offered mid-run would be answered against a path
   // that is still moving.
@@ -697,7 +682,7 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
     actionPlan: buildActionPlan(localizedPath, results, locale),
     declaredFacts,
     gemId,
-    mode: mock ? "grounded-demo" : "live-model",
+    mode: "live-model",
     intent: grounding.intent,
     grounding: groundingSummary,
     agents,

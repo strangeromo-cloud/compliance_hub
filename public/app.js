@@ -28,7 +28,7 @@ const i18n = {
     derivMatch_gem: "由所选 Gem 指定为主检查", derivMatch_always: "每次分析都执行", derivMatch_direct_lookup: "直接查询，不进入审查程序", derivMatch_gem_kind: "该 Gem 的产出类型，不进入审查程序", derivMatch_question_terms: "问题中的关键词",
     derivMatch_no_term_matched_all_lanes_run: "问题未命中任何关键词，三条检查全部执行",
     derivKind_official: "官方程序", derivKind_derived: "系统规划",
-    derivFromStandard: "{n} 来自规范", derivFromSystem: "{n} 步由系统规划", laneRunning: "正在分析", pathTemplated: "规则模式：待补项来自内置模板，不是对本问题的分析结果。切换到实时模型可得到针对性判断。", pathDerivedNote: "本步骤无对应官方条文，由系统按问题结构补充", stConfirmed: "已确认", stEvidence: "需更多证据", stNotReached: "未进行", status_confirmed: "已确认", status_evidence_needed: "需更多证据", status_not_reached: "待前序步骤", status_review_required: "需人工复核", status_pending: "待执行", stPending: "待执行", status_declared: "已声明，待核验", stDeclared: "已声明", declareSubmit: "提交并继续", declareSkip: "暂无此信息", declareSkipped: "已跳过 — 该步骤仍需证据，右侧执行流程中保留为待补", declareSkippedLabel: "暂无", declareReopen: "重新填写", declareRedo: "重新填写", declarePlaceholder: "填写后提交", declareNote: "填写的内容记为声明信息，不等于已核验证据", declareEmpty: "请先填写至少一项", declarePrefix: "补充信息 — ", declaredAdded: "已提交", declareContinuing: "正在继续分析…", declareSkippedContinued: "已跳过，分析继续进行", resumeFailed: "继续分析失败，表单已恢复可编辑，可重新提交：", reasoningTrace: "比对明细", rsSearched: "已检索的名单来源", rsMatched: "名称命中", rsCompared: "身份要素比对", rsFacts: "已核验事实",
+    derivFromStandard: "{n} 来自规范", derivFromSystem: "{n} 步由系统规划", laneRunning: "正在分析", pathDerivedNote: "本步骤无对应官方条文，由系统按问题结构补充", stConfirmed: "已确认", stEvidence: "需更多证据", stNotReached: "未进行", status_confirmed: "已确认", status_evidence_needed: "需更多证据", status_not_reached: "待前序步骤", status_review_required: "需人工复核", status_pending: "待执行", stPending: "待执行", status_declared: "已声明，待核验", stDeclared: "已声明", declareSubmit: "提交并继续", declareSkip: "暂无此信息", declareSkipped: "已跳过 — 该步骤仍需证据，右侧执行流程中保留为待补", declareSkippedLabel: "暂无", declareReopen: "重新填写", declareRedo: "重新填写", declarePlaceholder: "填写后提交", declareNote: "填写的内容记为声明信息，不等于已核验证据", declareEmpty: "请先填写至少一项", declarePrefix: "补充信息 — ", declaredAdded: "已提交", declareContinuing: "正在继续分析…", declareSkippedContinued: "已跳过，分析继续进行", resumeFailed: "继续分析失败，表单已恢复可编辑，可重新提交：", reasoningTrace: "比对明细", rsSearched: "已检索的名单来源", rsMatched: "名称命中", rsCompared: "身份要素比对", rsFacts: "已核验事实",
     rsScore: "相似度", rsOpen: "查看原文", rsUnsynced: "未同步、本次未检索",
     el_country: "国别", el_registration_number: "注册号", el_address: "地址",
     st_agree: "一致", st_conflict: "冲突", st_unavailable: "缺失",
@@ -42,17 +42,17 @@ const i18n = {
     noStreamNotice: "当前模型未返回流式响应，分析文本会在每个 Agent 完成后一次性显示。", step_routed: "选择 Agent", step_sources: "检索官方来源", step_grounding: "名单筛查与结构化事实", step_agents: "专业 Agent 分析", step_synthesizing: "综合结论", step_briefing: "汇总已发布公告", step_memo: "整理本会话的分析", step_lookup: "在已接入数据中检索",
     groundingNote: "已筛查 {screened} 个名单来源 · {matches} 条潜在命中 · {internal} 条内部主数据关联",
     filterAll: "全部", filterTrade: "Trade", filterProduct: "Product", filterTpdd: "TPDD", filterCross: "跨域",
-    runtimeRules: "规则模式", runtimeReady: "实时模型", runtimeMissing: "未配置模型",
-    modeHint: "点击切换规则模式与实时模型",
+    runtimeReady: "实时模型", runtimeMissing: "未配置模型",
+    modeHint: "分析由实时模型运行；未配置模型时无法提问",
     routeLabel: "路由", intentReview: "合规审查", intentLookup: "直接查询", intentBriefing: "监管变化简报", intentMemo: "案件备忘录", intentNoReview: "不进入合规审查流程", intentAllLanes: "未匹配到关键词，三条线全跑", routedTo: "已路由至",
     overallAssessment: "总体判断", nextStep: "下一步", missingInfo: "仍需信息", actions: "建议行动", planSuggested: "专业 Agent 的其他建议", planSuggestedNote: "这些建议未对应分析路径上的某一步，供人工复核时参考", notClosed: "尚有 {n} 项未补齐", stepAsk: "请补充以下信息，分析将从这里继续", naCount: "{n} 项本次不适用或已跳过", stepTriggered: "由前一步的发现触发", flowFolded: "另有 {n} 项不适用或已跳过", laneFindings: "本条线的分析发现（专业 Agent 输出，非全案结论）", interimVerdict: "阶段性判断（基于现有信息，未结案）", noItems: "暂无", limitations: "结论边界与限制", clearanceTitle: "结案条件 · 五条", clearanceNote: "五个条件分属三条专业线，任何一条线都无法独自定案。沉默不算通过：未说明即为未满足。", clearanceCleared: "五条全部满足 —— 在所述事实下不产生许可要求，这不是批准，也不是放行。", clearanceBlocked: "尚有 {n} 条未满足，因此不出清晰结论。", clearanceOpen: "另有 {n} 个步骤仍在等证据；即使五条全过，未闭合的步骤同样阻断清晰结论。", clearanceMet: "已满足", clearanceUnmet: "未满足",
     sourceLive: "实时获取", sourceMetadata: "元数据", sourceUnavailable: "获取失败", sourceNotFetched: "未获取", sourceArchived: "已采集副本", sourceCitationOnly: "仅引用", sourceCached: "缓存", noQueryableSource: "暂无可直查的来源（需先同步）", sourceQueryHint: "@ 直查数据源", srcAuthority: "发布机构", srcCountry: "法域", srcUpdates: "更新频率", srcCaptured: "本地采集于", srcBoundary: "这里返回来源自己的记录，不是判定结论。", sourceQueryPlaceholder: "输入实体名、公告号或条文关键词（按相关性排序；留空则浏览全部）…",
     queryEmpty: "请输入查询内容", queryHits: "{total} 条命中", browseCount: "共 {total} 条", browseAll: "浏览全部", pagePrev: "上一页", pageNext: "下一页", relMatched: "命中", relMissed: "未命中", relPartial: "另有 {n} 条仅命中部分检索词，未列出", queryNoHit: "该来源中未找到匹配记录", queryTruncated: "显示前 {shown} 条，共 {total} 条",
     queryEscalate: "以此发起完整筛查 →", escalatePrefix: "请对 {q} 做完整合规筛查",
     queryDisclaimer: "直查返回的是来源原始记录，不是判定结论。", jumpSource: "在该来源中直查", lookupMode: "直查模式 · 不经 Agent 分析", sourceStale: "缓存（已过期）", evidenceCollapse: "收起证据栏", evidenceExpand: "展开证据栏",
-    mockLabel: "规则 + 公开数据", liveLabel: "实时模型 + 公开数据",
+    liveLabel: "实时模型 + 公开数据",
     riskLow: "低", riskMedium: "中", riskHigh: "高", riskUnknown: "待定",
-    accessPassword: "访问口令", accessRequired: "该部署需要访问口令，请先填写口令后再使用实时模型。", access_password_required: "访问口令不正确，实时模型未调用。", access_code_unset: "服务器未设置 ACCESS_PASSWORD，实时模型已停用；当前仅可使用规则模式。", keyFromServer: "服务器已配置模型，无需在此填写 API Key。", badResponse: "服务端未返回有效结果，通常是网关超时；请重试或缩短问题。", needKey: "请先在模型配置中填写 API Key，或使用规则模式。", invalidQuestion: "请先描述一个具体情景。", error: "分析失败",
+    accessPassword: "访问口令", accessRequired: "该部署需要访问口令，请先填写口令后再使用实时模型。", access_password_required: "访问口令不正确，实时模型未调用。", access_code_unset: "服务器未设置 ACCESS_PASSWORD，实时模型已停用，本部署当前无法作答。请让运维配置该变量。", keyFromServer: "服务器已配置模型，无需在此填写 API Key。", badResponse: "服务端未返回有效结果，通常是网关超时；请重试或缩短问题。", needKey: "请先在模型配置中填写 API Key —— 没有模型时本系统不作答。", invalidQuestion: "请先描述一个具体情景。", error: "分析失败",
     saved: "已保存到当前会话", testing: "正在测试连接……", connected: "连接成功。", connectionFailed: "连接失败，请检查配置。",
     gemInstruction: "指令", gemSources: "绑定数据源", gemFacts: "必填事实", gemOutput: "输出结构",
     gemAdd: "添加到工作区", gemRemove: "从工作区移除", gemUse: "使用此 Gem", gemAdded: "已添加到工作区", gemRemoved: "已从工作区移除",
@@ -86,7 +86,7 @@ const i18n = {
     derivMatch_gem: "set as the lead check by the selected gem", derivMatch_always: "runs on every analysis", derivMatch_direct_lookup: "a direct lookup; no review procedure applies", derivMatch_gem_kind: "what this gem produces; no review procedure applies", derivMatch_question_terms: "terms in the question",
     derivMatch_no_term_matched_all_lanes_run: "no term matched, so all three checks run",
     derivKind_official: "official", derivKind_derived: "system-planned",
-    derivFromStandard: "{n} from procedure", derivFromSystem: "{n} planned here", laneRunning: "analysing", pathTemplated: "Rules mode: the outstanding items come from built-in templates, not from analysing this question. Switch to the live model for a specific assessment.", pathDerivedNote: "No official provision for this step; added by the system", stConfirmed: "settled", stEvidence: "need evidence", stNotReached: "not reached", status_confirmed: "Settled", status_evidence_needed: "Evidence needed", status_not_reached: "Awaiting earlier step", status_review_required: "Human review", status_pending: "Planned", stPending: "planned", status_declared: "Declared, unverified", stDeclared: "declared", declareSubmit: "Submit and continue", declareSkip: "Not available", declareSkipped: "Skipped — this step still needs evidence and stays outstanding in the flow rail", declareSkippedLabel: "Not available", declareReopen: "Fill in", declareRedo: "Change this answer", declarePlaceholder: "Fill in, then submit", declareNote: "What you enter is recorded as a declaration, not as verified evidence", declareEmpty: "Fill in at least one field first", declarePrefix: "Additional information — ", declaredAdded: "Submitted", declareContinuing: "continuing the analysis…", declareSkippedContinued: "skipped; the analysis moved on", resumeFailed: "The continuation failed; the form is editable again so you can resubmit: ", reasoningTrace: "Comparison detail", rsSearched: "Lists searched", rsMatched: "Name matches", rsCompared: "Identity comparison", rsFacts: "Verified facts",
+    derivFromStandard: "{n} from procedure", derivFromSystem: "{n} planned here", laneRunning: "analysing", pathDerivedNote: "No official provision for this step; added by the system", stConfirmed: "settled", stEvidence: "need evidence", stNotReached: "not reached", status_confirmed: "Settled", status_evidence_needed: "Evidence needed", status_not_reached: "Awaiting earlier step", status_review_required: "Human review", status_pending: "Planned", stPending: "planned", status_declared: "Declared, unverified", stDeclared: "declared", declareSubmit: "Submit and continue", declareSkip: "Not available", declareSkipped: "Skipped — this step still needs evidence and stays outstanding in the flow rail", declareSkippedLabel: "Not available", declareReopen: "Fill in", declareRedo: "Change this answer", declarePlaceholder: "Fill in, then submit", declareNote: "What you enter is recorded as a declaration, not as verified evidence", declareEmpty: "Fill in at least one field first", declarePrefix: "Additional information — ", declaredAdded: "Submitted", declareContinuing: "continuing the analysis…", declareSkippedContinued: "skipped; the analysis moved on", resumeFailed: "The continuation failed; the form is editable again so you can resubmit: ", reasoningTrace: "Comparison detail", rsSearched: "Lists searched", rsMatched: "Name matches", rsCompared: "Identity comparison", rsFacts: "Verified facts",
     rsScore: "Similarity", rsOpen: "Open source", rsUnsynced: "Not synced, therefore not searched",
     el_country: "Country", el_registration_number: "Registration no.", el_address: "Address",
     st_agree: "agree", st_conflict: "conflict", st_unavailable: "missing",
@@ -100,17 +100,17 @@ const i18n = {
     noStreamNotice: "This model does not return a streamed response; each specialist\u2019s text appears once it finishes.", step_routed: "Select agents", step_sources: "Retrieve official sources", step_grounding: "Screening and structured facts", step_agents: "Specialist analysis", step_synthesizing: "Synthesis", step_briefing: "Summarising published notices", step_memo: "Assembling this session\u2019s analysis", step_lookup: "Searching the ingested data",
     groundingNote: "{screened} list sources screened · {matches} potential matches · {internal} internal records touched",
     filterAll: "All", filterTrade: "Trade", filterProduct: "Product", filterTpdd: "TPDD", filterCross: "Cross-domain",
-    runtimeRules: "Rules mode", runtimeReady: "Live model", runtimeMissing: "No model configured",
-    modeHint: "Toggle between rules mode and the live model",
+    runtimeReady: "Live model", runtimeMissing: "No model configured",
+    modeHint: "Analysis runs on the live model; without one configured, questions cannot be asked",
     routeLabel: "Route", intentReview: "Compliance review", intentLookup: "Direct lookup", intentBriefing: "Regulatory briefing", intentMemo: "Case memo", intentNoReview: "no review procedure runs", intentAllLanes: "no term matched, so all three run", routedTo: "Routed to",
     overallAssessment: "Overall assessment", nextStep: "Next step", missingInfo: "Missing information", actions: "Recommended actions", planSuggested: "Other suggestions from the specialists", planSuggestedNote: "These do not map onto a step in the analysis path; they are for the reviewer to weigh", notClosed: "{n} items still open", stepAsk: "Add these and the analysis continues from here", naCount: "{n} not applicable or skipped", stepTriggered: "triggered by an earlier finding", flowFolded: "{n} more not applicable or skipped", laneFindings: "What this lane found (specialist output, not the case conclusion)", interimVerdict: "Interim assessment (on incomplete facts, not a conclusion)", noItems: "None", limitations: "Limits on this conclusion", clearanceTitle: "Clearance conditions · five", clearanceNote: "The five conditions belong to three different lanes, so no lane can close a case on its own. Silence is not a pass: unstated is unmet.", clearanceCleared: "All five are met — no licence requirement arises on the stated facts. This is not an approval and not a release.", clearanceBlocked: "{n} not met, so no clear conclusion is drawn.", clearanceOpen: "{n} step(s) are still waiting on evidence. An open step blocks a clear conclusion even when all five conditions hold.", clearanceMet: "Met", clearanceUnmet: "Not met",
     sourceLive: "Live", sourceMetadata: "Metadata", sourceUnavailable: "Unavailable", sourceNotFetched: "Not fetched", sourceArchived: "Archived copy", sourceCitationOnly: "Cited only", sourceCached: "Cached", noQueryableSource: "No queryable source yet (sync one first)", sourceQueryHint: "@ query a source", srcAuthority: "Published by", srcCountry: "Jurisdiction", srcUpdates: "Updated", srcCaptured: "Captured locally", srcBoundary: "This returns the source's own records, not a determination.", sourceQueryPlaceholder: "Entity name, notice number or keyword — ranked by relevance; leave empty to browse all…",
     queryEmpty: "Enter something to look up", queryHits: "{total} matches", browseCount: "{total} records", browseAll: "Browse all", pagePrev: "Previous", pageNext: "Next", relMatched: "matched", relMissed: "not matched", relPartial: "{n} more records matched only part of the query and are not listed", queryNoHit: "No matching record in this source", queryTruncated: "Showing {shown} of {total}",
     queryEscalate: "Run a full screening on this →", escalatePrefix: "Run a full compliance screening on {q}",
     queryDisclaimer: "A lookup returns the source's own records, not a determination.", jumpSource: "Look this up in the source", lookupMode: "Lookup mode · does not run the agents", sourceStale: "Cached (stale)", evidenceCollapse: "Collapse evidence", evidenceExpand: "Expand evidence",
-    mockLabel: "Rules + public data", liveLabel: "Live model + public data",
+    liveLabel: "Live model + public data",
     riskLow: "Low", riskMedium: "Medium", riskHigh: "High", riskUnknown: "Unknown",
-    accessPassword: "Access password", accessRequired: "This deployment requires an access code. Enter it before using the live model.", access_password_required: "The access code is not correct; the live model was not called.", access_code_unset: "ACCESS_PASSWORD is not set on the server, so live-model calls are disabled. Rules mode is still available.", keyFromServer: "The server already provides a model; no API key is needed here.", badResponse: "The server did not return a valid result, usually a gateway timeout. Retry or shorten the question.", needKey: "Add an API key in Model settings, or stay in rules mode.", invalidQuestion: "Describe a specific scenario first.", error: "Analysis failed",
+    accessPassword: "Access password", accessRequired: "This deployment requires an access code. Enter it before using the live model.", access_password_required: "The access code is not correct; the live model was not called.", access_code_unset: "ACCESS_PASSWORD is not set on the server, so live-model calls are disabled and this deployment cannot answer. Ask an operator to set it.", keyFromServer: "The server already provides a model; no API key is needed here.", badResponse: "The server did not return a valid result, usually a gateway timeout. Retry or shorten the question.", needKey: "Add an API key in Model settings — without a model this system does not answer.", invalidQuestion: "Describe a specific scenario first.", error: "Analysis failed",
     saved: "Saved for this session", testing: "Testing…", connected: "Connected.", connectionFailed: "Connection failed. Check the settings.",
     gemInstruction: "Instruction", gemSources: "Bound sources", gemFacts: "Required facts", gemOutput: "Output",
     gemAdd: "Add to workspace", gemRemove: "Remove from workspace", gemUse: "Use this gem", gemAdded: "Added to workspace", gemRemoved: "Removed from workspace",
@@ -175,7 +175,6 @@ const state = {
   serverModel: null,
   accessPasswordRequired: false,
   liveModelBlocked: false,
-  rulesMode: true,
   coverage: null,
   cases: [],
   threadId: null,
@@ -1240,7 +1239,6 @@ function pathMarkup(path, grounding, options = {}) {
 
   return `
     <section class="analysis-path">
-      ${path.templated ? `<p class="path-templated">${esc(t("pathTemplated"))}</p>` : ""}
       ${derivationMarkup(path)}
       <div class="flow-inline">${flowMarkup(path, options)}</div>
       ${lanes.join("")}
@@ -1418,7 +1416,7 @@ function answerMarkup(data) {
       <div>
         <div class="msg-meta">
           <span class="tag">${esc(data.id)}</span><span class="sep">·</span>
-          <span>${data.mode === "live-model" ? t("liveLabel") : t("mockLabel")}</span><span class="sep">·</span>
+          <span>${t("liveLabel")}</span><span class="sep">·</span>
           <span>${t("routedTo")} ${data.agents.map(agentName).join(", ")}</span>
         </div>
 
@@ -1734,12 +1732,15 @@ async function analyze(event, options = {}) {
   if (!raw || raw.length < 5) return toast(t("invalidQuestion"));
   const gem = resuming ? GEMS.find((item) => item.id === resuming.dataset.gem) || null : state.activeGem;
   const config = getConfig();
-  const mock = state.rulesMode;
-  if (!mock && !config.apiKey && !state.serverModelConfigured) { toast(t("needKey")); return openSettings(); }
+  // No model, no answer. There used to be a rules mode to fall back to, which
+  // meant an unconfigured deployment still produced something that read like an
+  // analysis; refusing is the honest behaviour and the only one that cannot be
+  // mistaken for a result.
+  if (!config.apiKey && !state.serverModelConfigured) { toast(t("needKey")); return openSettings(); }
   // The code is checked before the request rather than after: a rejected live
   // call would otherwise land as a failed analysis in the thread.
-  if (!mock && state.liveModelBlocked) { toast(t("access_code_unset")); return; }
-  if (!mock && state.accessPasswordRequired && !accessHeaders()["x-access-password"]) { toast(t("accessRequired")); return openSettings(); }
+  if (state.liveModelBlocked) { toast(t("access_code_unset")); return; }
+  if (state.accessPasswordRequired && !accessHeaders()["x-access-password"]) { toast(t("accessRequired")); return openSettings(); }
 
   // The gem contributes its instruction and its bound-source whitelist; the
   // user's text stays verbatim so the transcript shows what was actually asked.
@@ -1908,7 +1909,7 @@ async function analyze(event, options = {}) {
       const meta = live.querySelector("[data-live-meta]");
       if (meta) meta.innerHTML =
         `<span class="tag">${esc(event.id)}</span><span class="sep">·</span>`
-        + `<span>${event.mode === "live-model" ? t("liveLabel") : t("mockLabel")}</span><span class="sep">·</span>`
+        + `<span>${t("liveLabel")}</span><span class="sep">·</span>`
         + `<span>${t("routedTo")} ${event.agents.map(agentName).join(", ")}</span>`;
       renderSteps(live, done, "sources");
     }
@@ -2026,14 +2027,15 @@ async function analyze(event, options = {}) {
   try {
     const response = await fetch("/api/assess/stream", {
       method: "POST", headers: { "Content-Type": "application/json", ...accessHeaders() },
-      body: JSON.stringify({ question, locale: state.locale, mock, config, history: priorHistory, threadId: ensureThreadId(), gemId: gem?.id || null, declaredFacts: state.declaredFacts, unavailableFacts: state.unavailableFacts })
+      body: JSON.stringify({ question, locale: state.locale, config, history: priorHistory, threadId: ensureThreadId(), gemId: gem?.id || null, declaredFacts: state.declaredFacts, unavailableFacts: state.unavailableFacts })
     });
     if (response.status === 401) { toast(t("accessRequired")); openSettings(); throw new Error(t("accessRequired")); }
     // The server refuses live calls when it has a key but no code to check it
-    // against; drop to rules mode so the user has a working path, not an error.
+    // against. There is nothing to drop into now, so this is a dead end that
+    // says why rather than a quiet downgrade — an operator has to set
+    // ACCESS_PASSWORD.
     if (response.status === 503) {
       state.liveModelBlocked = true;
-      state.rulesMode = true;
       updateModePill();
       toast(t("access_code_unset"));
       throw new Error(t("access_code_unset"));
@@ -2172,19 +2174,22 @@ function newConversation() {
 /* -------------------------------------------------------------- settings */
 
 // "Ready" means a live call would actually be accepted: a model to call, and
-// the access code the server will ask for. Anything less stays rules mode.
+// the access code the server will ask for. Anything less cannot run a question.
 function liveModelReady() {
   if (state.liveModelBlocked) return false;
   if (state.accessPasswordRequired && !localStorage.getItem("compliance-access-password")) return false;
   return state.serverModelConfigured || Boolean(sessionStorage.getItem("compliance-api-key"));
 }
 
+// A status light rather than a switch. It used to toggle between live and rules
+// mode; with nothing to toggle to, what is left to say is whether a question can
+// be answered at all — and if not, the click opens the place to fix it.
 function updateModePill() {
   const pill = $("modePill");
   const ready = liveModelReady();
-  pill.classList.toggle("live", !state.rulesMode && ready);
+  pill.classList.toggle("live", ready);
   pill.title = state.liveModelBlocked ? t("access_code_unset") : state.accessPasswordRequired && !ready ? t("accessRequired") : t("modeHint");
-  $("modePillText").textContent = state.rulesMode ? t("runtimeRules") : ready ? t("runtimeReady") : t("runtimeMissing");
+  $("modePillText").textContent = ready ? t("runtimeReady") : t("runtimeMissing");
 }
 
 function openSettings() {
@@ -2226,12 +2231,8 @@ function saveSettings(event) {
   if (password) localStorage.setItem("compliance-access-password", password);
   else localStorage.removeItem("compliance-access-password");
   const key = $("apiKeyInput").value.trim();
-  if (key) { sessionStorage.setItem("compliance-api-key", key); state.rulesMode = false; }
+  if (key) sessionStorage.setItem("compliance-api-key", key);
   else sessionStorage.removeItem("compliance-api-key");
-  // Supplying the code is what unlocks live mode on a server-key deployment,
-  // so it takes effect here rather than waiting for the pill to be clicked.
-  if (liveModelReady() && state.serverModelConfigured) state.rulesMode = false;
-  else if (!liveModelReady()) state.rulesMode = true;
   updateModePill();
   $("settingsDialog").close();
   toast(t("saved"));
@@ -2268,12 +2269,9 @@ async function loadRuntimeCapabilities() {
     // guess would be worse than silence.
     state.historyPersistent = capabilities.historyPersistent !== false;
     renderHistoryDurability();
-    // Live mode is only pre-selected when it can actually run: a server key
-    // behind a code the browser does not have yet still starts in rules mode.
-    if (state.serverModelConfigured && !state.liveModelBlocked && liveModelReady()) state.rulesMode = false;
     document.querySelector('#settingsBtn .side-label').textContent = t(state.serverModelConfigured ? "accessSettings" : "modelSettings");
     updateModePill();
-  } catch { /* Rules mode remains available when capability discovery fails. */ }
+  } catch { /* The pill stays on its default until discovery succeeds. */ }
 }
 
 /* ------------------------------------------------------------ scenarios */
@@ -2644,14 +2642,10 @@ document.addEventListener("click", (event) => {
 $("questionForm").addEventListener("submit", analyze);
 $("newChatBtn").addEventListener("click", newConversation);
 $("modePill").addEventListener("click", () => {
-  // Switching to live mode is refused where it cannot work, so the pill never
-  // claims a capability the next question would fail on.
-  if (state.rulesMode && !liveModelReady()) {
-    if (state.liveModelBlocked) return toast(t("access_code_unset"));
-    toast(t(state.accessPasswordRequired ? "accessRequired" : "needKey"));
-    return openSettings();
-  }
-  state.rulesMode = !state.rulesMode;
+  if (liveModelReady()) return;
+  if (state.liveModelBlocked) return toast(t("access_code_unset"));
+  toast(t(state.accessPasswordRequired ? "accessRequired" : "needKey"));
+  return openSettings();
   updateModePill();
 });
 $("zhBtn").addEventListener("click", () => applyLocale("zh"));
@@ -2690,7 +2684,6 @@ $("scenarioDialog").addEventListener("click", (event) => {
 });
 
 setTheme(localStorage.getItem("compliance-theme") || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark"));
-if (sessionStorage.getItem("compliance-api-key")) state.rulesMode = false;
 setRail(state.rail);
 setEvidenceCollapsed(state.evidenceCollapsed);
 setPanelTab(state.panelTab);
