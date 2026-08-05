@@ -56,6 +56,11 @@ export const SOURCE_PURPOSE = {
     en: "Japan's METI End User List — foreign entities of proliferation concern.",
     usedIn: ["search_lists", "name_match"]
   },
+  "ofac-ownership": {
+    zh: "OFAC 自己声明的所有权关系：谁持有谁、角色是什么。它回答不了 50% 规则——5,047 条边里没有一条带持股比例，也没有一条指向未被列名的公司，而那正是规则存在的原因。它的用处是解释一条命中为什么会被列名，以及给出该主体周围的结构。",
+    en: "Ownership as OFAC states it: who holds what, and in what role. It does not answer the 50 Percent Rule and cannot — none of its 5,047 edges carries a percentage and none points at a company that is not itself designated, which is the case the rule exists for. Its use is explaining why a matched party is listed, and showing the structure around it.",
+    usedIn: ["name_match", "ownership", "parent_screening"]
+  },
   "us-uflpa": {
     zh: "美国《维吾尔强迫劳动预防法》实体清单。命中意味着货物进入美国时被推定为强迫劳动产品，与出口管制并列但机制不同。",
     en: "The UFLPA entity list. A hit means goods are presumed to be forced-labour products on entry into the US — a separate mechanism from export control.",

@@ -113,8 +113,10 @@ npm run start:env
 `SYNC_ON_BOOT` 的推荐完整值——覆盖分析路径引用的全部官方流程条文，以及中国侧四个源：
 
 ```
-bis-ear,bis-ear-732,bis-ear-734,bis-ear-740,bis-ear-744,bis-country-chart,bis-ccl,nvidia-export,amd-export,us-federal-register,us-uflpa,us-dod-1260h,jp-meti-eul,tw-shtc,eu-fsf,jp-export-control,china-licence-catalogue,china-unreliable-entity,china-dual-use,china-control-entities,china-export-licence-goods,china-control-list
+bis-ear,bis-ear-732,bis-ear-734,bis-ear-740,bis-ear-744,bis-country-chart,bis-ccl,nvidia-export,amd-export,us-federal-register,us-uflpa,us-dod-1260h,ofac-ownership,jp-meti-eul,tw-shtc,eu-fsf,jp-export-control,china-licence-catalogue,china-unreliable-entity,china-dual-use,china-control-entities,china-export-licence-goods,china-control-list
 ```
+
+`ofac-ownership` 是 50 MB 的 FollowTheMoney 实体图，解析后只留 5,047 条所有权边。放在美国来源末尾：它比条文类的源大一个量级，但比 `trade-csl` 小，且解析后写入的记录很少。
 
 **id 是 `bis-ear`，不是 `bis-ear-736`**——Part 736（十项一般禁令）在注册表里的 id 就叫 `bis-ear`，写成 `bis-ear-736` 会得到 `Unknown data source.`，那一条根本不会同步。
 

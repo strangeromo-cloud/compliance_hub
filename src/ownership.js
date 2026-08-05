@@ -20,8 +20,9 @@
 // a name — and leaves "how much do they own" open, which is the question the
 // user still has to.
 
+import { readNormalized } from "./data-layer/storage.js";
 import { fetchPublicFile } from "./data-layer/http.js";
-import { nameVariants, scoreNameMatch } from "./entity-matching.js";
+import { nameVariants, normalizeEntityName, scoreNameMatch } from "./entity-matching.js";
 
 // The registry entry this resolver is the implementation of, so the coverage
 // page's claim that the ownership step reads it can be checked against code.
@@ -159,5 +160,55 @@ export async function resolveOwnership(name) {
     ultimateParent: relations["ultimate-parent"] || null,
     // Carried with the result so no caller has to remember it.
     meaning: "GLEIF 的母公司关系指会计合并母公司（由实体自行申报、发行机构校验），不含持股比例；OFAC 50% 规则需要的是合计持股，因此该链条是线索而非结论。"
+  };
+}
+
+// What OFAC itself says about who holds this party.
+//
+// GLEIF answers "who consolidates this company's accounts", which is a lead. This
+// answers a different and narrower question: has the Treasury stated an ownership
+// relationship involving this name. Where it has, that statement is the reason a
+// party is on the list, and a reader looking at a match deserves it without
+// running a second search.
+//
+// It cannot do the 50 Percent Rule and the caller must not present it as though
+// it could. Every edge in the source connects two parties that are already
+// designated, and none carries a share — the unlisted company held 50% by two
+// designated owners, which is the case the rule exists for, appears in no
+// sanctions list by construction.
+export async function statedOwnership(name) {
+  const query = String(name || "").trim();
+  if (query.length < 3) return null;
+  const { records } = await readNormalized("ofac-ownership").catch(() => ({ records: [] }));
+  if (!records?.length) return null;
+
+  const target = normalizeEntityName(query);
+  const hits = [];
+  for (const record of records) {
+    const asset = normalizeEntityName(record.entityName || "");
+    const owner = normalizeEntityName(record.ownerName || "");
+    // Both directions matter: a reader wants to know who holds this party and
+    // what this party holds, and one query should answer both.
+    const side = asset === target ? "owned_by" : owner === target ? "owns" : null;
+    if (!side) continue;
+    hits.push({
+      side,
+      owner: record.ownerName,
+      asset: record.entityName,
+      ownerDesignated: record.ownerDesignated,
+      assetDesignated: record.assetDesignated,
+      role: record.role,
+      percentage: record.percentage || null,
+      sourceUrl: record.sourceUrl
+    });
+    if (hits.length >= 8) break;
+  }
+  if (!hits.length) return null;
+  return {
+    queried: query,
+    hits,
+    // Carried with the result, because a relationship with no share attached is
+    // evidence of a relationship and nothing more.
+    meaning: "OFAC 声明的所有权关系不含持股比例，且其两端通常都已被列名；它说明一条命中为何存在，不能用来计算 50% 合计持股。"
   };
 }

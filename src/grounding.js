@@ -2,7 +2,7 @@ import { readNormalized } from "./data-layer/storage.js";
 import { classifyQuestionIntent, isChinaDualUseQuestion } from "./question-intent.js";
 import { findNamesMentioned, fuzzyPartyCandidates, matchParty } from "./entity-matching.js";
 import { findBom, findInternalParties, findProducts, manufacturerFactsFor } from "./internal-data.js";
-import { resolveOwnership } from "./ownership.js";
+import { resolveOwnership, statedOwnership } from "./ownership.js";
 import { bi } from "./path-i18n.js";
 import { isConfigured as cslApiConfigured, searchName } from "./data-layer/csl-search.js";
 
@@ -248,6 +248,10 @@ export async function collectGrounding(question, agents = [], declaredFacts = {}
     // counterparty outranks this system's guess at it.
     const subject = String(declaredFacts.legalName || "").trim() || grounding.partyCandidates[0]?.entityName || null;
     if (subject) grounding.ownership = await resolveOwnership(subject).catch(() => null);
+    // What the Treasury has said about this name, alongside what GLEIF says about
+    // its accounts. They answer different questions and neither answers the 50
+    // Percent Rule, so both are carried and both say what they are.
+    if (subject) grounding.statedOwnership = await statedOwnership(subject).catch(() => null);
 
     // The parent, screened in its own right. This is the whole point of
     // resolving the chain: a company owned in aggregate by designated parties is

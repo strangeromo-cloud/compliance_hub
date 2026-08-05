@@ -43,6 +43,21 @@ export const DATA_SOURCE_REGISTRY = [
     attribution: "Contains data from OpenSanctions (opensanctions.org), licensed CC-BY-NC 4.0. Non-commercial use only."
   },
   {
+    sourceId: "ofac-ownership", sourceName: "OFAC SDN Ownership Graph", module: "trade", country: "US", authority: "U.S. Treasury OFAC (via OpenSanctions)",
+    sourceType: "ownership_graph", officialSource: false, accessMethod: "Bulk FollowTheMoney JSON", fileFormat: "NDJSON",
+    automationStatus: "api_available", feasibility: "can_build_now", currentCoverage: "not_ingested", priority: 2, authenticationRequired: false, captchaPresent: false,
+    updateFrequency: "Daily", websiteUrl: "https://www.opensanctions.org/datasets/us_ofac_sdn/", apiUrl: "https://data.opensanctions.org/datasets/latest/us_ofac_sdn/entities.ftm.json",
+    dataCaptured: ["owner", "owned entity", "stated role", "whether each end is designated"], targetData: ["stated ownership between designated parties"],
+    // Said here rather than discovered later: this does not do the 50 Percent
+    // Rule and cannot. Of its 5,047 edges, none carries a percentage and none
+    // connects a designated owner to an entity that is not itself designated —
+    // which is the exact case the rule exists for, because such a company is
+    // blocked without ever being listed.
+    webSearchUse: "supplement_only", notes: "Ownership as OFAC states it, between parties already designated. No percentages and no unlisted subsidiaries, so it cannot compute aggregate holdings; it explains why a matched party is listed and shows the structure around it.",
+    licence: "CC-BY-NC 4.0", commercialUseBlocked: true,
+    attribution: "Contains data from OpenSanctions (opensanctions.org), licensed CC-BY-NC 4.0. Non-commercial use only."
+  },
+  {
     sourceId: "us-uflpa", sourceName: "UFLPA Entity List", module: "trade", country: "US", authority: "U.S. DHS (via OpenSanctions)",
     sourceType: "restricted_party_list", officialSource: false, accessMethod: "Bulk CSV", fileFormat: "CSV",
     automationStatus: "api_available", feasibility: "can_build_now", currentCoverage: "not_ingested", priority: 1, authenticationRequired: false, captchaPresent: false,

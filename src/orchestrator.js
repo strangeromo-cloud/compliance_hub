@@ -525,6 +525,7 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
     // had already been found.
     partyCandidates: grounding.partyCandidates || [],
     ownership: grounding.ownership || null,
+    statedOwnership: grounding.statedOwnership || null,
     parentScreening: grounding.parentScreening || null,
     limitations: localizeLines(grounding.limitations, locale),
     // The cross-lane answers, resolved once and shown to everyone who needs them.

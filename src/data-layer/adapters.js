@@ -6,6 +6,7 @@ import { CN_LIST_ADAPTERS } from "./adapters-cn-lists.js";
 import { JP_ADAPTERS } from "./adapters-jp.js";
 import { VENDOR_ADAPTERS } from "./adapters-vendor.js";
 import { FEDREG_ADAPTERS } from "./adapters-fedreg.js";
+import { OWNERSHIP_ADAPTERS } from "./adapters-ownership.js";
 
 const CSL_URL = "https://data.trade.gov/downloadable_consolidated_screening_list/v1/consolidated.json";
 const UK_URL = "https://sanctionslist.fcdo.gov.uk/docs/UK-Sanctions-List.csv";
@@ -320,6 +321,7 @@ async function syncEcfrPart(sourceId, part) {
 }
 
 export const ADAPTERS = {
+  ...OWNERSHIP_ADAPTERS,
   "trade-csl": { sync: syncCsl, mode: "full_download", credential: null },
   "ofac-sls": { sync: syncOfac, mode: "full_download", credential: null },
   "un-consolidated": { sync: syncUn, mode: "full_download", credential: null },

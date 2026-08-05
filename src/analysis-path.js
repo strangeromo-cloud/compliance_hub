@@ -594,6 +594,17 @@ function tradeSteps(question, grounding, results, declaredFacts = {}) {
     ]
     : [];
 
+  // What the Treasury has stated about this name, which is a different question
+  // from what GLEIF says about its accounts. A stated relationship is a finding —
+  // it usually explains why a party is listed at all — so it goes in the basis;
+  // what it cannot do goes in the needs, because both halves have to travel.
+  const stated = (grounding.statedOwnership?.hits || []).slice(0, 3).map((hit) => (hit.side === "owned_by"
+    ? bi(`OFAC 声明：${hit.owner} ${hit.role === "Owned or Controlled By" ? "持有或控制" : hit.role} ${hit.asset}${hit.percentage ? `（${hit.percentage}）` : "（未公布持股比例）"}`,
+      `OFAC states: ${hit.owner} — ${hit.role} — ${hit.asset}${hit.percentage ? ` (${hit.percentage})` : " (no share published)"}`)
+    : bi(`OFAC 声明：${hit.asset} 由 ${hit.owner} 持有或控制${hit.percentage ? `（${hit.percentage}）` : "（未公布持股比例）"}`,
+      `OFAC states: ${hit.asset} is held or controlled by ${hit.owner}${hit.percentage ? ` (${hit.percentage})` : " (no share published)"}`)));
+  chainLines.push(...stated);
+
   if (chainFound && !matches.length) {
     // A chain from the register, and no designated name anywhere in the case.
     // Nothing here is decided by a percentage nobody has, so the step reports the
