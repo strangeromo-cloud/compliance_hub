@@ -149,8 +149,14 @@ export function currentStepId(path, options = {}) {
 // still ahead is carried by the counts, which is where a number belongs.
 export function laneView(lane, { question = null, declined = [] } = {}) {
   const steps = lane?.steps || [];
-  const reached = steps.filter((item) =>
+  const touched = steps.filter((item) =>
     SETTLED_STATUS.has(item.status) || item.id === question || stepState(item, declined) === "skipped");
+  // Nothing has happened in this lane yet, so what there is to show is the plan.
+  // Showing nothing instead is how the rail went blank the moment a declaration
+  // was submitted: the run replans before it re-resolves, and for that moment
+  // every step is pending — which "show what has happened" reads as "show
+  // nothing", exactly when the reader most wants to see what is coming.
+  const reached = touched.length ? touched : steps;
   return {
     shown: reached.filter((item) => !FOLDED.has(stepState(item, declined))),
     folded: reached.filter((item) => FOLDED.has(stepState(item, declined))),
@@ -187,8 +193,10 @@ export function visibleLanes(path, { activeLane = null, declined = [], allowInpu
   const out = [];
   for (const lane of path?.lanes || []) {
     if (lane.lane === "review") {
-      // The closing step is only drawn once there is something to close.
-      if (!blocked && allowInput) out.push(lane);
+      // The closing step is only drawn once there is something to close, and
+      // never on its own — a rail holding nothing but "human review" describes a
+      // run that has not started as though it were nearly over.
+      if (!blocked && allowInput && out.length) out.push(lane);
       continue;
     }
     // The lane holding the question must be drawn even if nothing in it has run
@@ -198,5 +206,9 @@ export function visibleLanes(path, { activeLane = null, declined = [], allowInpu
       || lane.steps.some((item) => item.id === blocked)) out.push(lane);
     if (lane.steps.some((item) => isAskable(item, declined))) break;
   }
-  return out;
+  // A plan that has not been resolved yet has no settled step anywhere and no
+  // question — nothing qualifies, and both panels would draw an empty frame. The
+  // plan is what there is to show at that point, and showing it is the whole
+  // reason it is sent before any work is done.
+  return out.length ? out : (path?.lanes || []);
 }

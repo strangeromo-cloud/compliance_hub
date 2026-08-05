@@ -336,3 +336,44 @@ test("both panels draw the same lanes and the same steps, by construction", asyn
   // number rather than a list of steps nobody has reached.
   assert.equal(laneView(path.lanes[0], {}).total, 3);
 });
+
+test("a lane with nothing reached shows its plan rather than an empty frame", async () => {
+  // A continuation replans before it re-resolves, so for a moment every step is
+  // pending — and "show what has happened" reads that as "show nothing". The
+  // rail went blank the instant a declaration was submitted, which is exactly
+  // when the reader most wants to see what is coming.
+  const { laneView, visibleLanes } = await import("../public/status-vocabulary.js");
+
+  const plan = { lanes: [
+    { lane: "trade", steps: [{ id: "identify_party", status: "pending" }, { id: "search_lists", status: "pending" }] },
+    { lane: "review", steps: [{ id: "human_review", status: "pending" }] }
+  ] };
+  assert.deepEqual(laneView(plan.lanes[0], {}).shown.map((s) => s.id), ["identify_party", "search_lists"]);
+  assert.deepEqual(visibleLanes(plan, {}).map((l) => l.lane), ["trade", "review"],
+    "an unresolved plan is what there is to show, and showing it is why it is sent first");
+
+  // Once anything has happened, the rule goes back to what happened.
+  const started = { lanes: [
+    { lane: "trade", steps: [{ id: "identify_party", status: "confirmed" }, { id: "search_lists", status: "pending" }] }
+  ] };
+  assert.deepEqual(laneView(started.lanes[0], {}).shown.map((s) => s.id), ["identify_party"]);
+
+  // Closing is never drawn on its own: a rail holding only "human review"
+  // describes a run that has not started as though it were nearly over.
+  const onlyClosing = { lanes: [
+    { lane: "trade", steps: [{ id: "identify_party", status: "evidence_needed", inputs: [{ field: "legalName" }] }] },
+    { lane: "review", steps: [{ id: "human_review", status: "review_required" }] }
+  ] };
+  assert.deepEqual(visibleLanes(onlyClosing, {}).map((l) => l.lane), ["trade"]);
+});
+
+test("a continuation's bare replan never reaches either panel", async () => {
+  // The body ignored it and kept the path the reader was reading; the rail took
+  // it and reset to an unresolved plan until the resolved one arrived. Ignoring
+  // it outright matters because the stage handler read it back out of the
+  // collected path a moment later.
+  const { readFile } = await import("node:fs/promises");
+  const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
+  assert.match(app, /if \(resuming && event\.path\?\.planned\) return;\n\s*collected\.path = event\.path;/,
+    "the bare replan is dropped before anything downstream can pick it up");
+});

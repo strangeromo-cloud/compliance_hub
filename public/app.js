@@ -1846,6 +1846,14 @@ async function analyze(event, options = {}) {
     // A specialist gets its panel the moment it starts, so its reasoning can be
     // shown as it is written rather than appearing complete out of nowhere.
     if (event.type === "path") {
+      // A continuation replans before it re-resolves, so the first path of the
+      // turn is a bare plan with nothing settled in it. The body already ignored
+      // it and kept the path the reader was reading; the rail took it and reset
+      // to an unresolved plan until the resolved one arrived — the two panels
+      // showing different runs, briefly, which is the fault this pair has had in
+      // a dozen forms. Ignored outright, so nothing downstream can pick it up:
+      // the stage handler was reading it back out of collected.path.
+      if (resuming && event.path?.planned) return;
       collected.path = event.path;
       drawPath();
       // drawPath rebuilds the lane markup, so the waiting box has to be put back
