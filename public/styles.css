@@ -1380,6 +1380,38 @@ html[lang="en"] .step-needs::before { content: "NEEDS"; font-size: 8px; }
 .answer-extra li { padding-left: 13px; position: relative; line-height: 1.7; }
 .answer-extra li::before { content: ""; position: absolute; left: 0; top: 8px; width: 5px; height: 5px; border-radius: 1px; background: var(--border-strong); }
 .answer-extra.is-limits li::before { background: var(--risk-medium); }
+
+/* The clearance checklist. It carries its own list rather than reusing the
+   bullet list above, because each condition is four things — name, state, the
+   lane answering for it, and the provision — not one line of prose. */
+.answer-extra.is-clearance .ae-label { color: var(--text-2); }
+.cl-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 9px; }
+.cl-item { display: grid; grid-template-columns: 16px 1fr; gap: 7px; align-items: start; }
+/* Scoped through .answer-extra to outrank the bullet rule for the prose lists
+   above, which is a class plus an element and so wins against a bare .cl-item.
+   Left unscoped, every condition carried a grey square in front of its tick. */
+.answer-extra .cl-item { padding-left: 0; }
+.answer-extra .cl-item::before { content: none; }
+.cl-mark { font-size: 11px; line-height: 1.5; text-align: center; font-weight: 600; }
+.cl-item.met .cl-mark { color: var(--risk-low); }
+.cl-item.unmet .cl-mark { color: var(--risk-medium); }
+.cl-title { font-size: 11.5px; font-weight: 600; color: var(--text-1); margin-right: 6px; }
+/* State and lane read as metadata on the name, not as more sentence. */
+.cl-state, .cl-lane {
+  font-size: 9.5px; letter-spacing: .04em; padding: 1px 5px; border-radius: 3px;
+  border: 1px solid var(--border); color: var(--text-3); white-space: nowrap;
+}
+.cl-item.met .cl-state { color: var(--risk-low); border-color: color-mix(in srgb, var(--risk-low) 35%, transparent); }
+.cl-item.unmet .cl-state { color: var(--risk-medium); border-color: color-mix(in srgb, var(--risk-medium) 35%, transparent); }
+.cl-lane { margin-left: 4px; }
+.cl-because { margin: 4px 0 0; font-size: 11.5px; line-height: 1.7; color: var(--text-2); }
+/* The provision is what makes the condition checkable, so it is present and
+   quiet rather than absent. */
+.cl-cite { margin: 2px 0 0; font-size: 10.5px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.cl-verdict, .cl-open { margin: 10px 0 0; font-size: 11.5px; line-height: 1.7; }
+.cl-verdict.ok { color: var(--risk-low); }
+.cl-verdict.blocked { color: var(--risk-medium); }
+.cl-open { color: var(--text-3); }
 /* Inside the collapsed interim there is no frame, so it aligns with its text. */
 /* Removed: this stripped the horizontal padding from the extras. It was written
    for the collapsed interim block, which supplied its own inset; once the

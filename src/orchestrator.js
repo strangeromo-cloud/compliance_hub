@@ -129,6 +129,31 @@ async function runAgent(agent, question, locale, sources, config, history, groun
 // clean, so the same conditions decide both. The model is given the finding, not
 // asked to re-derive it, and is still told it may not invent a conclusion the
 // specialists did not support.
+// The five conditions, in the language the reader is reading.
+//
+// They decided the conclusion from the start and never left this process: the
+// model was told which ones held, and the page was told nothing. So a case that
+// did not clear said so without saying which condition stopped it — the one
+// thing a reader can act on. Rules mode listed the met ones and live mode listed
+// none, which is a difference in what the reader can see that has nothing to do
+// with what was computed.
+function localizeClearance(clearance, locale) {
+  return {
+    cleared: clearance.cleared,
+    openSteps: clearance.openSteps,
+    checks: clearance.checks.map((check) => ({
+      id: check.id,
+      met: check.met,
+      lanes: check.lanes || [],
+      title: localizeLine(check.title, locale),
+      // Only a met condition rests on a provision. An unmet one has no cite
+      // because there is nothing yet for a provision to attach to.
+      cite: check.cite ? localizeLine(check.cite, locale) : null,
+      because: localizeLine(check.because, locale)
+    }))
+  };
+}
+
 function clearanceBrief(clearance) {
   if (!clearance) return "";
   if (clearance.cleared) {
@@ -575,6 +600,9 @@ export async function assessScenario({ question, locale = "zh", config = {}, moc
     path: askablePath()
   });
   grounding.clearance = clearance;
+  // Onto the summary, which is the object the client actually receives — putting
+  // it on `grounding` alone is why it never reached the page.
+  groundingSummary.clearance = localizeClearance(clearance, locale);
   // A clear conclusion has to carry its own conditions, or it reads as an
   // approval. They go in the limitations block the page already renders, next to
   // the conclusion rather than at the end of a document nobody scrolls to.

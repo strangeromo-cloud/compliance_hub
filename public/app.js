@@ -1,6 +1,6 @@
 import { GEMS, GEM_BY_ID, GEM_GROUPS, factCoverage, matchGems, toggleWorkspaceGem, workspaceGemIds } from "/gems.js";
 import { EVIDENCE_STATUS, FOLDED, SETTLED_STATUS, STEP_STATUS_VOCAB, currentStepId, firstBlockedStep as blockedStep, isAskable as askable, label, laneView, stepState as state_, tone, visibleLanes } from "/status-vocabulary.js";
-import { judgeIntent } from "/intent.js";
+import { AGENT_META, judgeIntent } from "/intent.js";
 
 const i18n = {
   zh: {
@@ -45,7 +45,7 @@ const i18n = {
     runtimeRules: "规则模式", runtimeReady: "实时模型", runtimeMissing: "未配置模型",
     modeHint: "点击切换规则模式与实时模型",
     routeLabel: "路由", intentReview: "合规审查", intentLookup: "直接查询", intentBriefing: "监管变化简报", intentMemo: "案件备忘录", intentNoReview: "不进入合规审查流程", intentAllLanes: "未匹配到关键词，三条线全跑", routedTo: "已路由至",
-    overallAssessment: "总体判断", nextStep: "下一步", missingInfo: "仍需信息", actions: "建议行动", planSuggested: "专业 Agent 的其他建议", planSuggestedNote: "这些建议未对应分析路径上的某一步，供人工复核时参考", notClosed: "尚有 {n} 项未补齐", stepAsk: "请补充以下信息，分析将从这里继续", naCount: "{n} 项本次不适用或已跳过", stepTriggered: "由前一步的发现触发", flowFolded: "另有 {n} 项不适用或已跳过", laneFindings: "本条线的分析发现（专业 Agent 输出，非全案结论）", interimVerdict: "阶段性判断（基于现有信息，未结案）", noItems: "暂无", limitations: "结论边界与限制",
+    overallAssessment: "总体判断", nextStep: "下一步", missingInfo: "仍需信息", actions: "建议行动", planSuggested: "专业 Agent 的其他建议", planSuggestedNote: "这些建议未对应分析路径上的某一步，供人工复核时参考", notClosed: "尚有 {n} 项未补齐", stepAsk: "请补充以下信息，分析将从这里继续", naCount: "{n} 项本次不适用或已跳过", stepTriggered: "由前一步的发现触发", flowFolded: "另有 {n} 项不适用或已跳过", laneFindings: "本条线的分析发现（专业 Agent 输出，非全案结论）", interimVerdict: "阶段性判断（基于现有信息，未结案）", noItems: "暂无", limitations: "结论边界与限制", clearanceTitle: "结案条件 · 五条", clearanceNote: "五个条件分属三条专业线，任何一条线都无法独自定案。沉默不算通过：未说明即为未满足。", clearanceCleared: "五条全部满足 —— 在所述事实下不产生许可要求，这不是批准，也不是放行。", clearanceBlocked: "尚有 {n} 条未满足，因此不出清晰结论。", clearanceOpen: "另有 {n} 个步骤仍在等证据；即使五条全过，未闭合的步骤同样阻断清晰结论。", clearanceMet: "已满足", clearanceUnmet: "未满足",
     sourceLive: "实时获取", sourceMetadata: "元数据", sourceUnavailable: "获取失败", sourceNotFetched: "未获取", sourceArchived: "已采集副本", sourceCitationOnly: "仅引用", sourceCached: "缓存", noQueryableSource: "暂无可直查的来源（需先同步）", sourceQueryHint: "@ 直查数据源", srcAuthority: "发布机构", srcCountry: "法域", srcUpdates: "更新频率", srcCaptured: "本地采集于", srcBoundary: "这里返回来源自己的记录，不是判定结论。", sourceQueryPlaceholder: "输入实体名、公告号或条文关键词（按相关性排序；留空则浏览全部）…",
     queryEmpty: "请输入查询内容", queryHits: "{total} 条命中", browseCount: "共 {total} 条", browseAll: "浏览全部", pagePrev: "上一页", pageNext: "下一页", relMatched: "命中", relMissed: "未命中", relPartial: "另有 {n} 条仅命中部分检索词，未列出", queryNoHit: "该来源中未找到匹配记录", queryTruncated: "显示前 {shown} 条，共 {total} 条",
     queryEscalate: "以此发起完整筛查 →", escalatePrefix: "请对 {q} 做完整合规筛查",
@@ -103,7 +103,7 @@ const i18n = {
     runtimeRules: "Rules mode", runtimeReady: "Live model", runtimeMissing: "No model configured",
     modeHint: "Toggle between rules mode and the live model",
     routeLabel: "Route", intentReview: "Compliance review", intentLookup: "Direct lookup", intentBriefing: "Regulatory briefing", intentMemo: "Case memo", intentNoReview: "no review procedure runs", intentAllLanes: "no term matched, so all three run", routedTo: "Routed to",
-    overallAssessment: "Overall assessment", nextStep: "Next step", missingInfo: "Missing information", actions: "Recommended actions", planSuggested: "Other suggestions from the specialists", planSuggestedNote: "These do not map onto a step in the analysis path; they are for the reviewer to weigh", notClosed: "{n} items still open", stepAsk: "Add these and the analysis continues from here", naCount: "{n} not applicable or skipped", stepTriggered: "triggered by an earlier finding", flowFolded: "{n} more not applicable or skipped", laneFindings: "What this lane found (specialist output, not the case conclusion)", interimVerdict: "Interim assessment (on incomplete facts, not a conclusion)", noItems: "None", limitations: "Limits on this conclusion",
+    overallAssessment: "Overall assessment", nextStep: "Next step", missingInfo: "Missing information", actions: "Recommended actions", planSuggested: "Other suggestions from the specialists", planSuggestedNote: "These do not map onto a step in the analysis path; they are for the reviewer to weigh", notClosed: "{n} items still open", stepAsk: "Add these and the analysis continues from here", naCount: "{n} not applicable or skipped", stepTriggered: "triggered by an earlier finding", flowFolded: "{n} more not applicable or skipped", laneFindings: "What this lane found (specialist output, not the case conclusion)", interimVerdict: "Interim assessment (on incomplete facts, not a conclusion)", noItems: "None", limitations: "Limits on this conclusion", clearanceTitle: "Clearance conditions · five", clearanceNote: "The five conditions belong to three different lanes, so no lane can close a case on its own. Silence is not a pass: unstated is unmet.", clearanceCleared: "All five are met — no licence requirement arises on the stated facts. This is not an approval and not a release.", clearanceBlocked: "{n} not met, so no clear conclusion is drawn.", clearanceOpen: "{n} step(s) are still waiting on evidence. An open step blocks a clear conclusion even when all five conditions hold.", clearanceMet: "Met", clearanceUnmet: "Not met",
     sourceLive: "Live", sourceMetadata: "Metadata", sourceUnavailable: "Unavailable", sourceNotFetched: "Not fetched", sourceArchived: "Archived copy", sourceCitationOnly: "Cited only", sourceCached: "Cached", noQueryableSource: "No queryable source yet (sync one first)", sourceQueryHint: "@ query a source", srcAuthority: "Published by", srcCountry: "Jurisdiction", srcUpdates: "Updated", srcCaptured: "Captured locally", srcBoundary: "This returns the source's own records, not a determination.", sourceQueryPlaceholder: "Entity name, notice number or keyword — ranked by relevance; leave empty to browse all…",
     queryEmpty: "Enter something to look up", queryHits: "{total} matches", browseCount: "{total} records", browseAll: "Browse all", pagePrev: "Previous", pageNext: "Next", relMatched: "matched", relMissed: "not matched", relPartial: "{n} more records matched only part of the query and are not listed", queryNoHit: "No matching record in this source", queryTruncated: "Showing {shown} of {total}",
     queryEscalate: "Run a full screening on this →", escalatePrefix: "Run a full compliance screening on {q}",
@@ -1288,6 +1288,53 @@ function stepDetailMarkup(item, grounding) {
   return "";
 }
 
+// The five conditions, drawn from what was computed rather than from what a
+// model said about it.
+//
+// This is the one block on the page that does not depend on a model having run:
+// clearance is decided in code, before the lanes start, and each condition
+// carries the provision it rests on. Showing it is what lets a reader check the
+// conclusion instead of taking it — and, when a case does not clear, see which
+// condition stopped it rather than being told the file is incomplete.
+// The lane in the reader's language. agentName() is the short English tag the
+// route chips use; inside a Chinese answer body "Product" is the wrong register
+// and, more to the point, does not match the name the same lane carries in the
+// flow rail two panels away.
+const laneLabel = (lane) =>
+  (state.locale === "en" ? AGENT_META[lane]?.name : AGENT_META[lane]?.nameZh) || agentName(lane);
+
+function clearanceMarkup(clearance) {
+  if (!clearance?.checks?.length) return "";
+  const unmet = clearance.checks.filter((check) => !check.met);
+  const open = clearance.openSteps?.length || 0;
+  // Unmet first. A reader opening this is looking for what to do next, and that
+  // is never in the list of things already settled.
+  const ordered = [...unmet, ...clearance.checks.filter((check) => check.met)];
+  const verdict = clearance.cleared
+    ? t("clearanceCleared")
+    : unmet.length ? t("clearanceBlocked").replace("{n}", unmet.length) : "";
+  return `
+    <div class="answer-extra is-clearance">
+      <div class="ae-label">${esc(t("clearanceTitle"))}</div>
+      <p class="ae-note">${esc(t("clearanceNote"))}</p>
+      <ol class="cl-list">
+        ${ordered.map((check) => `
+          <li class="cl-item ${check.met ? "met" : "unmet"}">
+            <span class="cl-mark" aria-hidden="true">${check.met ? "✓" : "!"}</span>
+            <div>
+              <span class="cl-title">${esc(check.title)}</span>
+              <span class="cl-state">${esc(check.met ? t("clearanceMet") : t("clearanceUnmet"))}</span>
+              ${check.lanes.map((lane) => `<span class="cl-lane">${esc(laneLabel(lane))}</span>`).join("")}
+              <p class="cl-because">${formatInline(check.because)}</p>
+              ${check.cite ? `<p class="cl-cite">${esc(check.cite)}</p>` : ""}
+            </div>
+          </li>`).join("")}
+      </ol>
+      ${verdict ? `<p class="cl-verdict ${clearance.cleared ? "ok" : "blocked"}">${esc(verdict)}</p>` : ""}
+      ${open ? `<p class="cl-open">${esc(t("clearanceOpen").replace("{n}", open))}</p>` : ""}
+    </div>`;
+}
+
 // An outstanding item means the analysis is not finished, so it does not present
 // a conclusion as if it were. The verdict on incomplete facts is still shown —
 // withholding it would hide the reasoning that has been done — but it is labelled
@@ -1315,6 +1362,10 @@ function conclusionMarkup(data) {
     </div>` : "");
   const limitsBlock = block(t("limitations"), "", limits, "is-limits");
   const suggestedBlock = () => block(t("planSuggested"), t("planSuggestedNote"), suggested, "is-suggested");
+  // Above the limits and below the verdict: it is the working behind the verdict,
+  // not a caveat on it. Absent for a briefing, a lookup or a memo, which have no
+  // clearance to assess and never carry the field.
+  const clearanceBlock = clearanceMarkup(data.grounding?.clearance);
 
   // Only an assessment carries a risk level. A briefing, a lookup or a memo
   // answers a question of fact, and stamping "待定" on it claims an assessment
@@ -1335,6 +1386,7 @@ function conclusionMarkup(data) {
   if (!outstanding.length) {
     return `<section class="conclusion"><section class="answer">${verdict}
       ${suggestedBlock()}
+      ${clearanceBlock}
       ${limitsBlock}
     </section></section>`;
   }
@@ -1353,6 +1405,7 @@ function conclusionMarkup(data) {
       <p class="interim-flag">${esc(t("interimVerdict"))} · ${esc(t("notClosed").replace("{n}", outstanding.length))}</p>
       ${verdict}
       ${suggestedBlock()}
+      ${clearanceBlock}
       ${limitsBlock}
     </section></section>`;
 }

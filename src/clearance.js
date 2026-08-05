@@ -102,6 +102,22 @@ function destinationOf(facts) {
 // the conclusion rather than a silent gap; the conclusion names them.
 const REQUIRED_LISTS = ["trade-csl"];
 
+// What each condition is called, and which lane answers for it.
+//
+// Both are for the reader. The five conditions were computed here and then only
+// ever reached the model — the interface could say a case did not clear and not
+// which condition stopped it, which is the one thing a person needs in order to
+// act. And the lanes are what make this the master agent's decision rather than
+// a lane's: no single specialist holds all five, so none of them can close a
+// case alone.
+const CONDITION_META = {
+  screening: { title: bi("名单筛查", "List screening"), lanes: ["trade"] },
+  classification: { title: bi("物项分类", "Item classification"), lanes: ["product"] },
+  destination: { title: bi("最终目的地", "Final destination"), lanes: ["product"] },
+  third_party: { title: bi("第三方参与", "Third-party involvement"), lanes: ["tpdd"] },
+  end_use: { title: bi("最终用途", "End use"), lanes: ["product", "tpdd"] }
+};
+
 // Each returns either a met condition, with the provision it rests on, or the
 // reason it is not met. The reason is what the answer shows when a case does not
 // clear, so it has to name the missing fact rather than say "insufficient".
@@ -150,7 +166,10 @@ function conditions({ question, facts, grounding }) {
     ? { id: "end_use", met: true, cite: "§ 744 General Prohibition Five", because: bi(`最终用途已声明为「${endUse}」，未落入 § 744 列举的禁止用途`, `The end use is declared as “${endUse}”, which is not among the uses prohibited by § 744`) }
     : { id: "end_use", met: false, because: endUse ? bi(`声明的最终用途「${endUse}」触及 § 744 列举的敏感用途，需要单独判断`, `The declared end use “${endUse}” touches a sensitive use listed in § 744 and has to be assessed on its own`) : bi("尚未声明最终用户与最终用途", "No end user or end use has been declared") });
 
-  return checks;
+  // Attached once at the end rather than repeated in each branch: a condition's
+  // name and the lane answering for it do not change with whether it was met,
+  // and writing them twice is how the two copies come to disagree.
+  return checks.map((check) => ({ ...check, ...CONDITION_META[check.id] }));
 }
 
 // A clear outcome only where every condition is met and nothing on the path is

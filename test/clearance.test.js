@@ -671,3 +671,58 @@ test("an English answer is English all the way down", async () => {
 
   assert.deepEqual(leaks, [], `English answer still carries Chinese:\n${leaks.join("\n")}`);
 });
+
+test("the five conditions reach the reader, met or not", async () => {
+  // They decided the conclusion from the start and only ever reached the model.
+  // A case that did not clear said so without saying which condition stopped it,
+  // which is the one thing a reader can act on — so the projection the page
+  // renders is checked here, in both directions.
+  const { assessScenario } = await import("../src/orchestrator.js");
+  const IDS = ["screening", "classification", "destination", "third_party", "end_use"];
+
+  const bare = await assessScenario({ question: "我们要出口一批服务器", locale: "zh", mock: true });
+  const blocked = bare.grounding?.clearance;
+  assert.ok(blocked, "a review carries the clearance projection");
+  assert.deepEqual(blocked.checks.map((check) => check.id), IDS, "all five conditions, in order");
+  assert.equal(blocked.cleared, false, "a question with no facts in it cannot clear");
+  assert.ok(blocked.checks.some((check) => !check.met), "and says which ones are unmet");
+  for (const check of blocked.checks) {
+    assert.ok(check.title, `${check.id} is named`);
+    assert.ok(check.because, `${check.id} says why, rather than "insufficient"`);
+    assert.ok(check.lanes.length, `${check.id} names the lane answering for it`);
+    // A provision attaches to a condition that holds. An unmet one has nothing
+    // yet for a provision to attach to, and inventing one would be a citation
+    // for a finding that was not made.
+    if (check.met) assert.ok(check.cite, `${check.id} carries the provision it rests on`);
+  }
+  // Three lanes across five conditions is what makes this the master agent's
+  // decision. If they ever collapsed onto one lane, that lane could close a case
+  // alone and the synthesis step would be decoration.
+  assert.equal(new Set(blocked.checks.flatMap((check) => check.lanes)).size, 3);
+
+  // All five met and still not cleared. This is the sixth gate, and it is the
+  // one most likely to be quietly dropped by someone tidying up later: five
+  // green ticks against an open step is exactly the shape of a file that looks
+  // finished and is not.
+  const met = await assessScenario({
+    question: "我们直销一台 EAR99 笔记本给德国的长期客户，无中间商",
+    locale: "zh", mock: true,
+    declaredFacts: { eccn: "EAR99", destination: "德国", endUse: "客户自用办公，无转售，无军事或核相关用途" }
+  });
+  const all = met.grounding.clearance;
+  assert.ok(all.checks.every((check) => check.met), "every condition is met on these facts");
+  assert.ok(all.checks.every((check) => check.cite), "and each carries the provision it rests on");
+  assert.ok(all.openSteps.length, "but steps are still waiting on evidence");
+  assert.equal(all.cleared, false, "so the file does not clear — an open step blocks it");
+
+  const en = await assessScenario({
+    question: "Direct sale of an EAR99 laptop to a long-standing customer in Germany, no intermediary",
+    locale: "en", mock: true,
+    declaredFacts: { eccn: "EAR99", destination: "Germany", endUse: "the customer's own office use, no resale, no military or nuclear application" }
+  });
+  const CJK = /[一-鿿]/;
+  const leaks = en.grounding.clearance.checks
+    .flatMap((check) => [check.title, check.because, check.cite])
+    .filter((line) => line && CJK.test(line));
+  assert.deepEqual(leaks, [], `English clearance still carries Chinese:\n${leaks.join("\n")}`);
+});
