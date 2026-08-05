@@ -1565,7 +1565,16 @@ html[lang="en"] .step-needs::before { content: "NEEDS"; font-size: 8px; }
    and the record of having passed it over is part of the file. */
 .fl-step.skipped .fl-node { border-style: dashed; color: var(--text-3); }
 .fl-step.skipped .fl-text { color: var(--text-3); }
+/* The fold names what is inside it, like the body's does. A count with no way to
+   see what it counts is the reader being told a number and refused the list. */
 .fl-folded { margin: 4px 0 0 2px; font-size: 10.5px; color: var(--text-3); }
+.fl-folded > summary { cursor: pointer; list-style: none; padding: 2px 0; }
+.fl-folded > summary::-webkit-details-marker { display: none; }
+.fl-folded > summary::before { content: "▸"; display: inline-block; width: 11px; color: var(--text-3); }
+.fl-folded[open] > summary::before { content: "▾"; }
+.fl-folded > summary:hover { color: var(--text-2); }
+/* Muted, because these are steps the procedure is not waiting on. */
+.fl-folded .fl-steps { margin-top: 4px; opacity: .72; }
 /* The overview list: a bold term followed by its explanation on the same line. */
 .auto-list li > b { display: block; margin-bottom: 2px; color: var(--text); font-weight: 600; }
 /* An optional publisher API on an existing source: another way of matching the

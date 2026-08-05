@@ -1,5 +1,5 @@
 import { GEMS, GEM_BY_ID, GEM_GROUPS, factCoverage, matchGems, toggleWorkspaceGem, workspaceGemIds } from "/gems.js";
-import { EVIDENCE_STATUS, FOLDED, SETTLED_STATUS, STEP_STATUS_VOCAB, currentStepId, isAskable as askable, label, stepState as state_, tone } from "/status-vocabulary.js";
+import { EVIDENCE_STATUS, FOLDED, SETTLED_STATUS, STEP_STATUS_VOCAB, currentStepId, firstBlockedStep as blockedStep, isAskable as askable, label, laneView, stepState as state_, tone, visibleLanes } from "/status-vocabulary.js";
 import { judgeIntent } from "/intent.js";
 
 const i18n = {
@@ -857,6 +857,30 @@ function renderFlowPanel(path, options = {}) {
   document.querySelectorAll(".flow-inline").forEach((host) => { host.innerHTML = markup; hydrateBars(host); });
 }
 
+// One row, so the folded list and the open one cannot describe the same step
+// differently. The rail's fold used to be a dead count line while the body's was
+// expandable and named what was inside — a reader who skipped ownership could
+// see it named on the left and had no way to reach it on the right.
+function flowStepRow(item, { asking, options, muted = false } = {}) {
+  const view = stepState(item);
+  const shape = FLOW_STATE[view] || FLOW_STATE[item.status] || FLOW_STATE.pending;
+  const current = !muted && item.id === asking;
+  // "Running" used to mean only "a continuation is in flight", so during an
+  // ordinary run — the whole of retrieval, screening and the specialists — the
+  // rail marked a step as current and said nothing about whether anything was
+  // happening to it. A reader watching a static rail cannot tell work from a hang.
+  const isRunning = current && Boolean(options?.currentStep || options?.activeLane || options?.stage);
+  const title = [label(STEP_STATUS_VOCAB, item.status, state.locale), item.needs?.[0] || item.basis?.[0] || ""]
+    .filter(Boolean).join(" — ");
+  return `
+    <li class="fl-step ${shape.cls} ${current ? "current" : ""} ${isRunning ? "is-running" : ""}">
+      <button type="button" data-flow-step="${esc(item.id)}" title="${esc(title)}">
+        <span class="fl-node" aria-hidden="true">${shape.mark}</span>
+        <span class="fl-text">${esc(item.title)}</span>
+      </button>
+    </li>`;
+}
+
 function flowMarkup(path, options = {}) {
   if (!path?.lanes?.length) return "";
   const steps = path.lanes.flatMap((lane) => lane.steps);
@@ -881,36 +905,26 @@ function flowMarkup(path, options = {}) {
     <div class="flow-bar" role="img" aria-label="${executed}/${steps.length}">
       <span class="fb-fill" data-bar="${percent}"></span>
     </div>
-    ${path.lanes.map((lane) => {
-      const laneSteps = lane.steps;
-      const laneDone = laneSteps.filter((item) => SETTLED_STATUS.has(item.status)).length;
-      const laneFolded = laneSteps.filter((item) => FOLDED.has(stepState(item)));
+    ${visibleLanes(path, {
+      activeLane: options.activeLane, declined: options.declined,
+      allowInput: true, analysed: options.analysed || []
+    }).map((lane) => {
+      // The same view the body draws, from the same rule, so the two panels
+      // cannot list different steps for one run.
+      const view = laneView(lane, { question: asking, declined: options.declined });
+      const laneFolded = view.folded;
       const running = options.activeLane === lane.lane;
       return `
       <section class="flow-lane ${running ? "running" : ""}">
         <div class="fl-head">
           <span class="fl-label">${esc(lane.label)}</span>
-          <span class="fl-progress">${laneDone}/${laneSteps.length}</span>
+          <span class="fl-progress">${view.settled}/${view.total}</span>
         </div>
-        <ol class="fl-steps">${laneSteps.filter((item) => !FOLDED.has(stepState(item))).map((item) => {
-          const view = stepState(item);
-          const shape = FLOW_STATE[view] || FLOW_STATE[item.status] || FLOW_STATE.pending;
-          const current = item.id === asking;
-          // "Running" used to mean only "a continuation is in flight", so during
-          // an ordinary run — the whole of retrieval, screening and the
-          // specialists — the rail marked a step as current and then said nothing
-          // about whether anything was happening to it. A reader watching a
-          // static rail cannot tell work from a hang.
-          const isRunning = current && Boolean(options.currentStep || options.activeLane || options.stage);
-          return `
-          <li class="fl-step ${shape.cls} ${current ? "current" : ""} ${isRunning ? "is-running" : ""}">
-            <button type="button" data-flow-step="${esc(item.id)}" title="${esc([label(STEP_STATUS_VOCAB, item.status, state.locale), item.needs?.[0] || item.basis?.[0] || ""].filter(Boolean).join(" — "))}">
-              <span class="fl-node" aria-hidden="true">${shape.mark}</span>
-              <span class="fl-text">${esc(item.title)}</span>
-            </button>
-          </li>`;
-        }).join("")}</ol>
-        ${laneFolded.length ? `<p class="fl-folded">${esc(t("flowFolded").replace("{n}", laneFolded.length))}</p>` : ""}
+        <ol class="fl-steps">${view.shown.map((item) => flowStepRow(item, { asking, options })).join("")}</ol>
+        ${laneFolded.length ? `<details class="fl-folded">
+          <summary>${esc(t("flowFolded").replace("{n}", laneFolded.length))}</summary>
+          <ol class="fl-steps">${laneFolded.map((item) => flowStepRow(item, { asking, options, muted: true })).join("")}</ol>
+        </details>` : ""}
       </section>`;
     }).join("")}
     <div class="flow-legend">
@@ -1009,16 +1023,7 @@ function stepInputsMarkup(item, { values = null, collapsed = false } = {}) {
 const isAskable = (item) => askable(item, state.unavailableFacts);
 const stepState = (item) => state_(item, state.unavailableFacts);
 
-function firstBlockedStep(path) {
-  if (path?.awaitingInput?.step) return path.awaitingInput.step;
-  if (path?.awaitingInput === null && path?.final) return null;
-  for (const lane of path?.lanes || []) {
-    for (const item of lane.steps) {
-      if (isAskable(item)) return item.id;
-    }
-  }
-  return null;
-}
+const firstBlockedStep = (path) => blockedStep(path, state.unavailableFacts);
 
 // "Why these steps" answered from data the plan already carries: which words in
 // the question selected the check, which published procedure supplies its steps,
@@ -1148,31 +1153,22 @@ function pathMarkup(path, grounding, options = {}) {
   // open, Product is not on the page at all, however much of it retrieval happened
   // to settle. How much is left overall is the flow rail's job, which is why the
   // rail always shows every lane.
-  const laneOpen = (lane) => lane.steps.some(askable);
-  const ordered = [];
-  for (const lane of path.lanes) {
-    if (lane.lane === "review") {
-      // The closing step is only drawn once there is something to close.
-      if (!blocked && options.allowInput !== false) ordered.push(lane);
-      continue;
-    }
-    // The lane holding the question must be drawn even if nothing in it has run
-    // yet — questions are asked before their lane is analysed.
-    if (analysed.has(lane.lane) || lane.lane === activeLane
-      || lane.steps.some(settled) || lane.steps.some((item) => item.id === blocked)) ordered.push(lane);
-    if (laneOpen(lane)) break;
-  }
+  const ordered = visibleLanes(path, {
+    activeLane, declined: state.unavailableFacts,
+    allowInput: options.allowInput !== false, analysed: [...analysed]
+  });
 
   const lanes = ordered
     .map((lane) => {
       const question = laneQuestion(lane);
-      const visible = lane.steps.filter((item) => settled(item) || item.id === question || stepState(item) === "skipped");
       // A step whose conditions never arose is finished business: it needs no
       // reading and no action. Kept, because why it did not arise is part of the
       // record, but folded into one line so it does not sit at full height among
-      // the steps that did happen.
-      const notApplicable = visible.filter((item) => FOLDED.has(stepState(item)));
-      const steps = visible.filter((item) => !FOLDED.has(stepState(item)));
+      // the steps that did happen. The rule is shared with the rail, so the two
+      // panels cannot list different steps for one run.
+      const view = laneView(lane, { question, declined: state.unavailableFacts });
+      const notApplicable = view.folded;
+      const steps = view.shown;
       const result = results.find((item) => item.agent === lane.lane);
       const running = lane.lane === activeLane;
       if (!steps.length && !result && !running) return "";

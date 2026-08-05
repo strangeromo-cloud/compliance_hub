@@ -264,3 +264,75 @@ test("a step that is still asking is told apart from one that was passed over", 
   assert.equal(currentStepId(path, { activeLane: "trade", declined: ["registrationNumber", "address"] }), "identity_resolution");
   assert.doesNotThrow(() => currentStepId(path, { activeLane: "trade" }));
 });
+
+test("both panels fold the same steps, and both let you see them", async () => {
+  // The body's fold was a disclosure that named what was inside; the rail's was
+  // a dead count line. A reader who skipped ownership could see it named on the
+  // left and had no way to reach it on the right — the two sides agreeing on the
+  // number while disagreeing about whether you may look.
+  const { readFile } = await import("node:fs/promises");
+  const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
+
+  assert.match(app, /<details class="fl-folded">/, "the rail's fold has to open");
+  assert.match(app, /laneFolded\.map\(\(item\) => flowStepRow\(item, \{ asking, options, muted: true \}\)\)/,
+    "and hold the same rows the open list holds");
+
+  // One row template for both, because a fold that describes a step differently
+  // from the list is the same fault in a new place.
+  assert.equal([...app.matchAll(/<li class="fl-step /g)].length, 1,
+    "there must be exactly one step-row template");
+  assert.match(app, /function flowStepRow\(item, \{ asking, options, muted = false \} = \{\}\) \{/);
+
+  // A folded step is not the step the run is waiting on, so it must never be
+  // marked current inside the fold.
+  assert.match(app, /const current = !muted && item\.id === asking;/);
+});
+
+test("both panels draw the same lanes and the same steps, by construction", async () => {
+  // Sharing the step rule was not enough. The body also revealed lane by lane —
+  // closing is not drawn while a question is outstanding, nothing past the lane
+  // holding that question is drawn at all — while the rail drew every lane
+  // always. So the two lists still differed by whole sections, which is what a
+  // reader sees when they say the panels do not match.
+  const { laneView, visibleLanes, firstBlockedStep } = await import("../public/status-vocabulary.js");
+
+  const path = {
+    lanes: [
+      { lane: "trade", steps: [
+        { id: "identify_party", status: "confirmed" },
+        { id: "identity_resolution", status: "evidence_needed", inputs: [{ field: "registrationNumber" }] },
+        { id: "ownership", status: "not_reached" }
+      ] },
+      { lane: "product", steps: [{ id: "identify_item", status: "not_reached" }] },
+      { lane: "review", steps: [{ id: "human_review", status: "review_required" }] }
+    ]
+  };
+
+  // A question is outstanding, so nothing past its lane is drawn and closing
+  // waits for something to close.
+  assert.deepEqual(visibleLanes(path, {}).map((lane) => lane.lane), ["trade"]);
+  assert.equal(firstBlockedStep(path, []), "identity_resolution");
+  assert.deepEqual(laneView(path.lanes[0], { question: "identity_resolution" }).shown.map((s) => s.id),
+    ["identify_party", "identity_resolution"], "a step nobody has reached says nothing about this question");
+
+  // Declining it moves the run on: the step folds and the lane opens up.
+  const declined = ["registrationNumber"];
+  const view = laneView(path.lanes[0], { question: "ownership", declined });
+  assert.deepEqual(view.folded.map((s) => s.id), ["identity_resolution"]);
+  // The step being asked is drawn even though its lane has not run — a question
+  // is put before the work that would answer it.
+  assert.deepEqual(view.shown.map((s) => s.id), ["identify_party", "ownership"]);
+
+  // With nothing outstanding, closing is drawn and every lane with settled work
+  // appears — the shape a finished run has on both sides.
+  const done = { lanes: [
+    { lane: "trade", steps: [{ id: "identify_party", status: "confirmed" }] },
+    { lane: "product", steps: [{ id: "identify_item", status: "declared" }] },
+    { lane: "review", steps: [{ id: "human_review", status: "review_required" }] }
+  ], awaitingInput: null, final: true };
+  assert.deepEqual(visibleLanes(done, {}).map((lane) => lane.lane), ["trade", "product", "review"]);
+
+  // And the counts stay over the whole lane, because "what is still ahead" is a
+  // number rather than a list of steps nobody has reached.
+  assert.equal(laneView(path.lanes[0], {}).total, 3);
+});
