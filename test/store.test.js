@@ -381,3 +381,33 @@ test("what a run cost the reader outlives the run", async () => {
   db().prepare("DELETE FROM case_signals WHERE case_id LIKE 'CASE-SIG%'").run();
   db().prepare("DELETE FROM threads WHERE thread_id LIKE 'TH-SIG%'").run();
 });
+
+test("the scheduled sweep can never reach a source that needs a person", async () => {
+  // The sweep fetches every source that has an adapter, on a timer, with nobody
+  // watching. What keeps it away from the captcha-gated registries is that they
+  // have no adapter — not a second list of exclusions that someone has to keep
+  // in step with this one. That is only a guard while it stays true.
+  const { ADAPTERS } = await import("../src/data-layer/adapters.js");
+  const { DATA_SOURCE_REGISTRY } = await import("../src/data-source-registry.js");
+  // The sweep set: adapters that can take a snapshot. An entry without sync() is
+  // a live_query source, asked at question time and never stored.
+  const swept = new Set(Object.entries(ADAPTERS).filter(([, adapter]) => adapter.sync).map(([id]) => id));
+
+  const manual = DATA_SOURCE_REGISTRY.filter((source) => source.automationStatus === "manual_only");
+  assert.ok(manual.length, "the registry still marks sources as manual-only");
+  assert.deepEqual(manual.filter((source) => swept.has(source.sourceId)).map((source) => source.sourceId), [],
+    "a manual-only source must not have an adapter, or the timer would fetch it");
+
+  // An adapter for a captcha-protected source is allowed only where the
+  // automation goes somewhere else — china-dual-use reads the site's own column
+  // API and leaves the protected query UI alone. Anything else added here needs
+  // the same justification written down before it is swept unattended.
+  const captchaSwept = DATA_SOURCE_REGISTRY
+    .filter((source) => source.captchaPresent && swept.has(source.sourceId))
+    .map((source) => source.sourceId);
+  assert.deepEqual(captchaSwept, ["china-dual-use"]);
+
+  // Every adapter names a source the registry knows about, so a sweep cannot
+  // fetch something the coverage page will not account for.
+  assert.deepEqual([...swept].filter((id) => !DATA_SOURCE_REGISTRY.some((source) => source.sourceId === id)), []);
+});

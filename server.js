@@ -12,6 +12,7 @@ import { describeCapabilities } from "./src/agent-capabilities.js";
 import { closeDb, DB_PATH, REQUIRED_NODE_MAJOR } from "./src/data-layer/db.js";
 import { importLegacyStore } from "./src/data-layer/import-legacy.js";
 import { readSnapshotMeta, readSyncStatus } from "./src/data-layer/storage.js";
+import { ADAPTERS } from "./src/data-layer/adapters.js";
 
 const ROOT = fileURLToPath(new URL(".", import.meta.url));
 const PUBLIC_DIR = join(ROOT, "public");
@@ -477,6 +478,75 @@ async function syncOnBoot() {
   }
 }
 
+// Keeping the lists current without anyone pressing a button.
+//
+// Until now a snapshot was fetched at boot or when an operator asked, so a
+// deployment left running for a month screened against month-old lists while the
+// coverage page reported them as synced. The freshness of a designation list is
+// not a maintenance detail here: the whole conclusion rests on it, and "we
+// searched" means nothing without "we searched something current".
+//
+// Off unless SYNC_INTERVAL_HOURS is set. An interval that downloads tens of
+// megabytes from official endpoints is the operator's decision, not a default
+// this imposes on every deployment.
+const SYNC_INTERVAL_MS = (() => {
+  const raw = Number(process.env.SYNC_INTERVAL_HOURS);
+  return Number.isFinite(raw) && raw > 0 ? raw * 3_600_000 : 0;
+})();
+
+let sweeping = false;
+
+// Every source whose adapter can take a snapshot, which is exactly the set that
+// can be fetched without a person. The captcha-gated registries have no adapter
+// at all and so cannot appear here — that boundary is enforced by the registry
+// rather than by a list kept in step with it by hand.
+//
+// An adapter entry without a sync() is a live_query source: it is asked at the
+// moment a question needs it and never snapshotted, so sweeping it would fail on
+// every interval forever and fill the log with a fact about the design.
+const SNAPSHOT_SOURCES = Object.entries(ADAPTERS).filter(([, adapter]) => adapter.sync).map(([id]) => id);
+
+async function syncSweep() {
+  // A sweep that overran its interval must not have a second one started on top
+  // of it: syncSource() de-duplicates per source, but two sweeps would still
+  // interleave and double the load on every endpoint.
+  if (sweeping || shuttingDown) return;
+  sweeping = true;
+  const started = Date.now();
+  const tally = { synced: 0, fresh: 0, failed: 0 };
+  try {
+    // Serial, deliberately. Thirty concurrent downloads of official datasets is
+    // hostile to the endpoints and holds thirty parses in memory at once.
+    for (const sourceId of SNAPSHOT_SOURCES) {
+      if (shuttingDown) break;
+      // The same freshness rule boot sync uses, so a source an operator synced
+      // by hand an hour ago is not re-downloaded because a timer fired.
+      if (await isStoredAndFresh(sourceId)) { tally.fresh += 1; continue; }
+      try {
+        await syncSource(sourceId);
+        tally.synced += 1;
+      } catch (error) {
+        // One source failing is not the sweep failing. The failure is already
+        // recorded against that source in sync_status, and the coverage page is
+        // where it belongs — stopping here would leave the rest stale for a
+        // whole interval because one endpoint had a bad afternoon.
+        tally.failed += 1;
+        console.log(`Scheduled sync ${sourceId}: failed - ${describeSyncError(error).slice(0, 160)}`);
+      }
+    }
+    console.log(`Scheduled sync: ${tally.synced} refreshed, ${tally.fresh} already fresh, ${tally.failed} failed in ${Math.round((Date.now() - started) / 1000)}s`);
+  } finally {
+    sweeping = false;
+  }
+}
+
+function startSyncSchedule() {
+  if (!SYNC_INTERVAL_MS) return;
+  console.log(`Scheduled sync every ${SYNC_INTERVAL_MS / 3_600_000}h across ${SNAPSHOT_SOURCES.length} snapshot sources`);
+  // unref so a pending timer cannot be the reason the process will not exit.
+  setInterval(() => { syncSweep(); }, SYNC_INTERVAL_MS).unref();
+}
+
 // The kernel applies no default signal disposition to PID 1, so a container
 // process without an explicit handler simply ignores SIGTERM and the platform
 // hangs in "Stopping" until it gives up. Handling it is not optional here.
@@ -530,5 +600,13 @@ server.listen(...(HOST ? [PORT, HOST] : [PORT]), async () => {
   await openStore();
   // Deferred so the platform's first health check lands on an idle process
   // rather than competing with several source downloads.
-  setTimeout(syncOnBoot, 3000).unref();
+  //
+  // The boot sync runs first and the schedule starts after it, rather than both
+  // being armed at once: the first scheduled sweep would otherwise be able to
+  // fire while boot sync is still downloading, and the two would be fetching the
+  // same endpoints from the same process.
+  setTimeout(async () => {
+    await syncOnBoot();
+    startSyncSchedule();
+  }, 3000).unref();
 });
