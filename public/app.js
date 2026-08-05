@@ -28,7 +28,7 @@ const i18n = {
     derivMatch_gem: "由所选 Gem 指定为主检查", derivMatch_always: "每次分析都执行", derivMatch_direct_lookup: "直接查询，不进入审查程序", derivMatch_gem_kind: "该 Gem 的产出类型，不进入审查程序", derivMatch_question_terms: "问题中的关键词",
     derivMatch_no_term_matched_all_lanes_run: "问题未命中任何关键词，三条检查全部执行",
     derivKind_official: "官方程序", derivKind_derived: "系统规划",
-    derivFromStandard: "{n} 来自规范", derivFromSystem: "{n} 步由系统规划", laneRunning: "正在分析", pathTemplated: "规则模式：待补项来自内置模板，不是对本问题的分析结果。切换到实时模型可得到针对性判断。", pathDerivedNote: "本步骤无对应官方条文，由系统按问题结构补充", stConfirmed: "已确认", stEvidence: "需更多证据", stNotReached: "未进行", status_confirmed: "已确认", status_evidence_needed: "需更多证据", status_not_reached: "待前序步骤", status_review_required: "需人工复核", status_pending: "待执行", stPending: "待执行", status_declared: "已声明，待核验", stDeclared: "已声明", declareSubmit: "提交并继续", declareSkip: "暂无此信息", declareSkipped: "已跳过 — 该步骤仍需证据，右侧执行流程中保留为待补", declareSkippedLabel: "暂无", declareReopen: "重新填写", declareRedo: "重新填写", declarePlaceholder: "填写后提交", declareNote: "填写的内容记为声明信息，不等于已核验证据", declareEmpty: "请先填写至少一项", declarePrefix: "补充信息 — ", declaredAdded: "已提交", declareContinuing: "正在继续分析…", resumeFailed: "继续分析失败，表单已恢复可编辑，可重新提交：", reasoningTrace: "比对明细", rsSearched: "已检索的名单来源", rsMatched: "名称命中", rsCompared: "身份要素比对", rsFacts: "已核验事实",
+    derivFromStandard: "{n} 来自规范", derivFromSystem: "{n} 步由系统规划", laneRunning: "正在分析", pathTemplated: "规则模式：待补项来自内置模板，不是对本问题的分析结果。切换到实时模型可得到针对性判断。", pathDerivedNote: "本步骤无对应官方条文，由系统按问题结构补充", stConfirmed: "已确认", stEvidence: "需更多证据", stNotReached: "未进行", status_confirmed: "已确认", status_evidence_needed: "需更多证据", status_not_reached: "待前序步骤", status_review_required: "需人工复核", status_pending: "待执行", stPending: "待执行", status_declared: "已声明，待核验", stDeclared: "已声明", declareSubmit: "提交并继续", declareSkip: "暂无此信息", declareSkipped: "已跳过 — 该步骤仍需证据，右侧执行流程中保留为待补", declareSkippedLabel: "暂无", declareReopen: "重新填写", declareRedo: "重新填写", declarePlaceholder: "填写后提交", declareNote: "填写的内容记为声明信息，不等于已核验证据", declareEmpty: "请先填写至少一项", declarePrefix: "补充信息 — ", declaredAdded: "已提交", declareContinuing: "正在继续分析…", declareSkippedContinued: "已跳过，分析继续进行", resumeFailed: "继续分析失败，表单已恢复可编辑，可重新提交：", reasoningTrace: "比对明细", rsSearched: "已检索的名单来源", rsMatched: "名称命中", rsCompared: "身份要素比对", rsFacts: "已核验事实",
     rsScore: "相似度", rsOpen: "查看原文", rsUnsynced: "未同步、本次未检索",
     el_country: "国别", el_registration_number: "注册号", el_address: "地址",
     st_agree: "一致", st_conflict: "冲突", st_unavailable: "缺失",
@@ -86,7 +86,7 @@ const i18n = {
     derivMatch_gem: "set as the lead check by the selected gem", derivMatch_always: "runs on every analysis", derivMatch_direct_lookup: "a direct lookup; no review procedure applies", derivMatch_gem_kind: "what this gem produces; no review procedure applies", derivMatch_question_terms: "terms in the question",
     derivMatch_no_term_matched_all_lanes_run: "no term matched, so all three checks run",
     derivKind_official: "official", derivKind_derived: "system-planned",
-    derivFromStandard: "{n} from procedure", derivFromSystem: "{n} planned here", laneRunning: "analysing", pathTemplated: "Rules mode: the outstanding items come from built-in templates, not from analysing this question. Switch to the live model for a specific assessment.", pathDerivedNote: "No official provision for this step; added by the system", stConfirmed: "settled", stEvidence: "need evidence", stNotReached: "not reached", status_confirmed: "Settled", status_evidence_needed: "Evidence needed", status_not_reached: "Awaiting earlier step", status_review_required: "Human review", status_pending: "Planned", stPending: "planned", status_declared: "Declared, unverified", stDeclared: "declared", declareSubmit: "Submit and continue", declareSkip: "Not available", declareSkipped: "Skipped — this step still needs evidence and stays outstanding in the flow rail", declareSkippedLabel: "Not available", declareReopen: "Fill in", declareRedo: "Change this answer", declarePlaceholder: "Fill in, then submit", declareNote: "What you enter is recorded as a declaration, not as verified evidence", declareEmpty: "Fill in at least one field first", declarePrefix: "Additional information — ", declaredAdded: "Submitted", declareContinuing: "continuing the analysis…", resumeFailed: "The continuation failed; the form is editable again so you can resubmit: ", reasoningTrace: "Comparison detail", rsSearched: "Lists searched", rsMatched: "Name matches", rsCompared: "Identity comparison", rsFacts: "Verified facts",
+    derivFromStandard: "{n} from procedure", derivFromSystem: "{n} planned here", laneRunning: "analysing", pathTemplated: "Rules mode: the outstanding items come from built-in templates, not from analysing this question. Switch to the live model for a specific assessment.", pathDerivedNote: "No official provision for this step; added by the system", stConfirmed: "settled", stEvidence: "need evidence", stNotReached: "not reached", status_confirmed: "Settled", status_evidence_needed: "Evidence needed", status_not_reached: "Awaiting earlier step", status_review_required: "Human review", status_pending: "Planned", stPending: "planned", status_declared: "Declared, unverified", stDeclared: "declared", declareSubmit: "Submit and continue", declareSkip: "Not available", declareSkipped: "Skipped — this step still needs evidence and stays outstanding in the flow rail", declareSkippedLabel: "Not available", declareReopen: "Fill in", declareRedo: "Change this answer", declarePlaceholder: "Fill in, then submit", declareNote: "What you enter is recorded as a declaration, not as verified evidence", declareEmpty: "Fill in at least one field first", declarePrefix: "Additional information — ", declaredAdded: "Submitted", declareContinuing: "continuing the analysis…", declareSkippedContinued: "skipped; the analysis moved on", resumeFailed: "The continuation failed; the form is editable again so you can resubmit: ", reasoningTrace: "Comparison detail", rsSearched: "Lists searched", rsMatched: "Name matches", rsCompared: "Identity comparison", rsFacts: "Verified facts",
     rsScore: "Similarity", rsOpen: "Open source", rsUnsynced: "Not synced, therefore not searched",
     el_country: "Country", el_registration_number: "Registration no.", el_address: "Address",
     st_agree: "agree", st_conflict: "conflict", st_unavailable: "missing",
@@ -843,7 +843,10 @@ function renderFlowPanel(path, options = {}) {
   // from rather than recomputing one from a path that has not caught up.
   if (state.resumingStep) options = { ...options, currentStep: state.resumingStep };
   const panel = $("flowPanel");
-  const markup = flowMarkup(path, { ...options, declined: state.unavailableFacts, firstBlocked: path ? firstBlockedStep(path) : null });
+  // Same fields into both, or the rail nominates a step the reader has already
+  // declined as the one blocking the run.
+  const declined = state.unavailableFacts;
+  const markup = flowMarkup(path, { ...options, declined, firstBlocked: path ? firstBlockedStep(path, declined) : null });
   const steps = (path?.lanes || []).flatMap((lane) => lane.steps);
   const executed = steps.filter((item) => SETTLED_STATUS.has(item.status)).length;
   $("flowCount").textContent = steps.length ? `${executed}/${steps.length}` : "";
@@ -862,7 +865,10 @@ function renderFlowPanel(path, options = {}) {
 // expandable and named what was inside — a reader who skipped ownership could
 // see it named on the left and had no way to reach it on the right.
 function flowStepRow(item, { asking, options, muted = false } = {}) {
-  const view = stepState(item);
+  // The declined fields have to reach here too. Without them the fold said "2
+  // skipped" and every row inside it drew the "!" of a live question, because the
+  // enclosing laneView knew about the declined fields and the row did not.
+  const view = stepState(item, options?.declined);
   const shape = FLOW_STATE[view] || FLOW_STATE[item.status] || FLOW_STATE.pending;
   const current = !muted && item.id === asking;
   // "Running" used to mean only "a continuation is in flight", so during an
@@ -1113,7 +1119,10 @@ function setStream(box, who, text) {
 
 function pathMarkup(path, grounding, options = {}) {
   if (!path?.lanes?.length) return "";
-  const blocked = options.allowInput === false ? null : firstBlockedStep(path);
+  // The declined fields belong in here as much as in laneView below. Left out,
+  // the final render re-offered the very step the reader had said they had
+  // nothing for, as the one thing blocking the run.
+  const blocked = options.allowInput === false ? null : firstBlockedStep(path, state.unavailableFacts);
   const activeLane = options.activeLane || null;
   const doneLanes = options.doneLanes || new Set();
   const results = options.results || [];
@@ -2415,12 +2424,22 @@ const onWorkspaceClick = (event) => {
       // been passed over, and holding the rail there left it pointing at a step
       // the body had already moved past and marking it as running.
       state.resumingStep = null;
+      // No resume stream box here, and this is the same distinction as the line
+      // above rather than a separate one. A submitted answer makes its own step
+      // the live surface — the reader just wrote something there and the run is
+      // working on it. A declined step is being walked past, so parking the live
+      // stream and a ticking clock inside it said "ownership aggregation, 40s,
+      // trade 1/1" about a step the rail on the right had already greyed out as
+      // skipped. The two panels were describing different runs again.
+      //
+      // With no box to prefer, streamInto falls through to the lane's own panel,
+      // which is where the work actually is, and followRunning carries the reader
+      // to it — so the click still visibly does something, just not here.
       host.insertAdjacentHTML("beforeend", `<div class="si-done">
         <span class="sis-label">${esc(t("declareSkippedLabel"))}</span>
-        <span class="sis-state">${esc(t("declareContinuing"))}</span>
-        <span class="sis-elapsed"></span>
-      </div>${streamBoxMarkup("data-resume-stream")}`);
-      tickUntilDetached(host.querySelector(".si-done .sis-elapsed"));
+        <span class="sis-state">${esc(t("declareSkippedContinued"))}</span>
+      </div>`);
+      renderFlowPanel(null, {});
       return analyze(null, { continueIn: answer });
     }
     return;
