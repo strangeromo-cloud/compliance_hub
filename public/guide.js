@@ -59,10 +59,12 @@ const copy = {
     statusTitle: "证据状态的五种含义",
     statuses: [
       ["实时获取", "本次请求真实抓取到的页面正文", "ok"],
-      ["已采集副本", "实时抓取失败，回落到此前采集的官方文本，带采集日期", "warn"],
+      ["缓存命中", "距上次抓取不足 24 小时，直接用缓存，完全不出网；带缓存时长", "ok"],
+      ["已采集副本", "实时抓取失败，回落到此前抓过的正文，带采集日期并标注为过期", "warn"],
+      ["入库存档", "缓存也没有，回落到已同步记录里存的同一篇官方文本", "warn"],
       ["仅引用", "该发布方拒绝自动访问（如 OECD 返回 403），只引用不抓取", "muted"],
       ["元数据", "只有来源标题与说明，没有正文", "muted"],
-      ["获取失败", "既抓不到也没有采集副本", "crit"]
+      ["获取失败", "既抓不到、也没有缓存和存档 —— 明说没取到，不用摘要冒充原文", "crit"]
     ],
 
     procLabel: "审查程序", procTitle: "一共五套程序，四套是别人定的",
@@ -121,6 +123,52 @@ const copy = {
     ],
     demoNote: "两者都不是终局判定。疑似误报仍要求人工用注册证据确认，系统不会自动放行；建议升级也不等于确认命中。",
 
+    clearLabel: "结案", clearTitle: "五个条件，分属三条线",
+    clearLead: "「可以结案」不是模型的判断，是代码算出来的。五个条件写在 src/clearance.js 里，每条都必须被问题或声明里真实说出的事实满足，每条都带它依据的条文。它们在三条专业线开跑之前就算完了，而且不进三条线——直接给主 Agent 综合，并约束它给出的风险等级：五条全过时「低风险」才成立，没过时不允许写「低」。",
+    clearHeads: ["条件", "怎样才算满足", "依据", "谁负责"],
+    clearItems: [
+      ["名单筛查", "已筛过官方名单（必含美国综合筛查名单）且零命中", "§ 732.3(g) · Supp. No. 3 to Part 732", "贸易线"],
+      ["物项分类", "EAR99，或受控美国原产内容低于 de minimis 门槛", "Part 774 CCL · § 738.3 · § 734.4", "产品线"],
+      ["最终目的地", "已声明，且落在免许可目的地白名单内（19 个国家）", "Part 738 Country Chart · Part 740", "产品线"],
+      ["第三方参与", "问题明确说明是直接交易，无代理、经销或中间方", "DOJ ECCP — Third-Party Management", "尽调线"],
+      ["最终用途", "已声明，且不落入 § 744 列举的敏感用途", "§ 744 General Prohibition Five", "产品线 + 尽调线"]
+    ],
+    clearGateTitle: "还有第六道闸",
+    clearGateBody: "五条全过，但路径上还留着任何一个在等证据的步骤，依然不出清晰结论。五个绿勾配一个开着的步骤，正是一份「看起来完成了但没有」的卷宗。",
+    clearPoints: [
+      "沉默永远不算通过。没说目的地不等于目的地没问题；没提中间商不等于没有中间商——界面上写的就是「未提及不等于没有」。",
+      "免许可目的地是白名单，不是黑名单。没人写规则的国家不会漏成「没问题」。",
+      "「不确定 / 未知 / 待定 / n/a / TBD」这类占位符不算已声明，否则一个占位符就能换来一次放行。",
+      "否定句能被读懂：「无军事或核相关用途」是否认，不会被当成提到了军事用途；但「不转售，用于导弹项目」的后半句照样命中。",
+      "五个条件会逐条显示在答案里：满足 / 未满足、原因、负责的条线，满足的带条文出处。未满足的不带——还没有成立的事实供条文附着。",
+      "「可结案」的含义是「在这些事实、这些条文下不产生许可要求」，永远不是「批准」。人工复核那一步照常在，本系统不做交易放行。"
+    ],
+
+    memLabel: "记忆与进化", memTitle: "系统记住什么，又怎样自己变好",
+    memLead: "两件常被混为一谈的事：一次会话里的上下文，和跨会话留下的案件记录。前者进模型，后者不进。",
+    memPoints: [
+      "会话内：最近 6 轮对话连同这次的问题一起发给模型，专业线和综合各一份。",
+      "跨会话：案件历史存在 threads 与 turns 两张表里，上限 100 个会话、每个会话 30 轮，超出按最近使用裁剪。",
+      "重开一个历史案件时，恢复的是案件编号与已声明的事实，对话本身不恢复——模型看不到上次的措辞，只看到这次的事实，旧表述带不偏新结论。",
+      "声明的事实一路累积。停下问人、填完从断点续跑，走的就是这条路径，不是把整个问题重问一遍。",
+      "历史能否活过重新部署取决于有没有挂持久卷。容器文件系统是临时的，数据覆盖页会如实说明当前是哪一种。"
+    ],
+    evoTitle: "案件信号：每次运行留一行",
+    evoBody: "每次运行还会写一行结构化信号，和裁剪写在同一个事务里，但被刻意排除在裁剪之外——案件历史是给人看的，可以过期；信号是用来度量系统本身的，一裁剪趋势就断了。信号记的是结构不是原文：意图、开了哪几条线、路由词有没有命中、停在哪一步、补了哪些字段、还剩几步未闭合。",
+    evoMetricsTitle: "四个指标，两张表",
+    evoMetrics: [
+      ["兜底率", "问题里没有任何路由词命中、三条线全开的比例。衡量词表覆盖不覆盖得住人真实的写法。"],
+      ["打断率", "运行中途停下来问人的比例。"],
+      ["每案轮次", "一个案件平均来回几次。"],
+      ["未闭合结案", "结束时仍留有等证据步骤的次数。"]
+    ],
+    evoTablesNote: "另有两张表直接指出下一步改哪里：最常卡住的步骤，以及被问了才补的字段——后者每一项都是输入框本可以一开始就问的。",
+    evoLineTitle: "可以自动改的，和绝不自动改的",
+    evoLine: [
+      ["可以", "路由词表、Gem 的必需字段、匹配阈值（只许向召回放宽）、同步频率、探针语料"],
+      ["绝不", "五个结案条件、触发门与它们的条文、跨线依赖边、任何能力的条文出处、「声明不等于已核验证据」"]
+    ],
+    evoNote: "右边每一项都指向一条法规，而法规不会因为模型认为该改就改。自动化的产出是提案不是提交：包含改动、哪些案例为证、一个改前失败改后通过的测试，以及全套测试结果，由人合并。另外，每案轮次绝不能单独优化——一个被奖励「少问几轮」的模型会学会少问，未闭合步骤是它的对手项。",
     limitLabel: "边界", limitTitle: "必须知道的限制",
     limits: [
       "不构成法律意见，不做交易放行。输出仅用于研究与风险分流，最终结论需要 Compliance / Legal 人工审查。",
@@ -132,7 +180,7 @@ const copy = {
     todos: [
       "国别矩阵已解析出 203 行国别与管制理由，但「目的地与管制理由」一步目前只引用条文编号，尚未自动读取该矩阵。",
       "中国侧没有公布编号决策树，因此物项线的步骤序列取自 EAR Part 732；中国问题走同一序列，检索的是中国清单与公告，步骤标题读起来是美国口径。",
-      "34 个数据源中有 14 个当前不被任何分析步骤读取——验证码限制、条文类、或编码口径不匹配。数据覆盖页逐个标注了是哪一种。",
+      "36 个数据源中有 14 个当前不被任何分析步骤读取——验证码限制、条文类、或编码口径不匹配。数据覆盖页逐个标注了是哪一种。",
       "韩国战略物资清单没有可自动获取的途径，只能人工查阅。",
       "官方的 ECCN ↔ 欧盟／瓦森纳对照表并不存在，跨制度比对只能按管制编号结构推导，属于参考而非查表。",
       "中国海关总署（HS 编码、税则）全线返回 412 反爬，单一窗口有验证码，均不在自动化范围内。",
@@ -194,10 +242,12 @@ const copy = {
     statusTitle: "What each evidence state means",
     statuses: [
       ["Live", "Page text actually retrieved during this request", "ok"],
-      ["Archived copy", "Live retrieval failed; falls back to previously captured official text, with its capture date", "warn"],
+      ["Cached", "Fetched less than 24 hours ago, so the network is not touched at all; the age is shown", "ok"],
+      ["Stale copy", "Live retrieval failed; the previously fetched text is used and labelled as out of date", "warn"],
+      ["Archived", "No cache either, so the same official text is taken from the synced records", "warn"],
       ["Cited only", "The publisher refuses automated access (OECD answers 403), so it is cited without fetching", "muted"],
       ["Metadata", "Title and description only, no body text", "muted"],
-      ["Unavailable", "Neither reachable nor previously captured", "crit"]
+      ["Unavailable", "Neither reachable, cached nor archived — said plainly, never papered over with a summary", "crit"]
     ],
 
     procLabel: "Procedures", procTitle: "Five procedures, four of them somebody else's",
@@ -256,6 +306,52 @@ const copy = {
     ],
     demoNote: "Neither is a final determination. A likely false positive still requires human confirmation against registration evidence; an escalation is not a confirmed match.",
 
+    clearLabel: "Clearance", clearTitle: "Five conditions, across three lanes",
+    clearLead: "\u201cThis clears\u201d is not the model\u0027s judgement; it is computed in code. The five conditions live in src/clearance.js, each has to be met by something the question or the declarations actually state, and each carries the provision it rests on. They are worked out before any specialist runs, and they do not go to the specialists at all \u2014 they go straight to the master agent\u0027s synthesis, where they bound the risk level it may give: low is only available when all five hold, and forbidden when they do not.",
+    clearHeads: ["Condition", "What meets it", "Provision", "Lane answerable"],
+    clearItems: [
+      ["List screening", "Official lists searched (the US Consolidated Screening List among them) with no match", "\u00a7 732.3(g) \u00b7 Supp. No. 3 to Part 732", "Trade"],
+      ["Item classification", "EAR99, or controlled US-origin content below the de minimis threshold", "Part 774 CCL \u00b7 \u00a7 738.3 \u00b7 \u00a7 734.4", "Product"],
+      ["Final destination", "Stated, and on the licence-free destination list (19 countries)", "Part 738 Country Chart \u00b7 Part 740", "Product"],
+      ["Third party", "The question states a direct transaction with no agent, distributor or intermediary", "DOJ ECCP \u2014 Third-Party Management", "TPDD"],
+      ["End use", "Stated, and not among the uses prohibited by \u00a7 744", "\u00a7 744 General Prohibition Five", "Product + TPDD"]
+    ],
+    clearGateTitle: "And a sixth gate",
+    clearGateBody: "All five met, with any step on the path still waiting on evidence, still does not clear. Five green ticks against an open step is exactly the shape of a file that looks finished and is not.",
+    clearPoints: [
+      "Silence is never a pass. An unstated destination is not a safe destination; an unmentioned intermediary is not an absent one \u2014 the reason the interface gives is literally \u201cnot mentioned is not an answer\u201d.",
+      "Licence-free destinations are an allow-list, not a block-list. A country nobody wrote a rule for cannot fall through into \u201cfine\u201d.",
+      "Placeholders \u2014 unknown, TBD, n/a \u2014 do not count as stated, or a placeholder would buy a clearance.",
+      "Denials are read as denials: \u201cno military or nuclear application\u201d does not count as mentioning a military use, while \u201cno resale, for a missile programme\u201d still matches on its second half.",
+      "The five are shown one by one in the answer: met or not, why, which lane answers for it, and the provision where one holds. An unmet condition carries none \u2014 there is nothing yet for a provision to attach to.",
+      "Cleared means \u201cno licence requirement arises on these facts under these provisions\u201d, never \u201capproved\u201d. The human review step stands; this system does not release transactions."
+    ],
+
+    memLabel: "Memory & evolution", memTitle: "What it remembers, and how it improves",
+    memLead: "Two things that get conflated: context within one session, and the case record that outlives it. The first goes to the model; the second does not.",
+    memPoints: [
+      "Within a session: the last six exchanges go to the model alongside the current question, once for each specialist and once for the synthesis.",
+      "Across sessions: case history lives in threads and turns \u2014 100 threads, 30 turns each, pruned by least recently used.",
+      "Reopening a case restores the case id and the facts already declared, not the conversation. The model sees this run\u0027s facts rather than last run\u0027s wording, so an old phrasing cannot pull a new conclusion.",
+      "Declared facts accumulate. Stopping to ask and resuming from the break uses that, rather than re-asking the whole question.",
+      "Whether history survives a redeploy depends on a mounted volume. The container filesystem is ephemeral, and the coverage page says which one is in force."
+    ],
+    evoTitle: "Case signals: one row per run",
+    evoBody: "Each run also writes one structured row, in the same transaction as the pruning and deliberately outside it \u2014 case history is for people and may expire, signals measure the system itself and a pruned trend is no trend. Signals record structure, not prose: the intent, which lanes opened, whether any routing term matched, where it stopped, which fields were supplied, how many steps were left open.",
+    evoMetricsTitle: "Four numbers, two lists",
+    evoMetrics: [
+      ["Fallback rate", "Runs where nothing in the question matched a routing term and every lane ran. The headline number for how well the vocabulary covers how people write."],
+      ["Ask rate", "How often a run stopped and interrupted the reader."],
+      ["Rounds per thread", "How many exchanges a case takes."],
+      ["Open at close", "Cases that ended still holding a step waiting on evidence."]
+    ],
+    evoTablesNote: "Two lists say where to look next: which steps most often stop a run, and which fields were supplied only after being asked for. Every entry in the second is a field the composer could have asked for up front.",
+    evoLineTitle: "What may change itself, and what may not",
+    evoLine: [
+      ["May", "Routing vocabulary, a gem\u0027s required facts, match thresholds (toward recall only), sync cadence, the probe corpus"],
+      ["Never", "The five clearance conditions, the triage gates and their citations, cross-lane dependency edges, any capability\u0027s provision, \u201ca declaration is not verified evidence\u201d"]
+    ],
+    evoNote: "Everything on the right points at a provision, and provisions do not change because a model concluded they should. What automation produces is a proposal, not a commit: the diff, which recorded cases are the evidence, a test that fails before and passes after, and the result of the existing suite \u2014 merged by a person. And rounds per thread must never be optimised alone: a model rewarded for fewer rounds learns to ask for less, and open-at-close is the counterweight.",
     limitLabel: "Limits", limitTitle: "What you must know",
     limits: [
       "Not legal advice and not a transaction clearance. Output is for research and triage; conclusions require human compliance or legal review.",
@@ -267,7 +363,7 @@ const copy = {
     todos: [
       "The Country Chart is parsed to 203 country rows, but the destination step still cites the provision rather than reading the chart automatically.",
       "China publishes no numbered decision tree, so the item lane takes its sequence from EAR Part 732. A PRC question runs that sequence against PRC lists, which means those step titles read in US terms.",
-      "Fourteen of the thirty-four sources are read by no analysis step \u2014 CAPTCHA-gated, provision text, or organised on a different code system. The coverage page says which for each.",
+      "Fourteen of the thirty-six sources are read by no analysis step \u2014 CAPTCHA-gated, provision text, or organised on a different code system. The coverage page says which for each.",
       "Korea's strategic goods list has no automatable route; it stays a manual lookup.",
       "No official ECCN-to-EU or ECCN-to-Wassenaar crosswalk exists. Cross-regime comparison is derived from the control-number structure and is advisory, not a lookup.",
       "China Customs (HS codes, tariff) answers non-browser clients with 412, and Single Window is CAPTCHA-gated. Both are out of scope rather than pending.",
@@ -517,6 +613,40 @@ function render() {
 
     ${proceduresSection()}
     ${capabilitiesSection()}
+
+    <section class="guide-reg">
+      <div class="guide-gutter">${esc(t.clearLabel)}</div>
+      <div class="guide-body">
+        <h2>${esc(t.clearTitle)}</h2>
+        <p>${esc(t.clearLead)}</p>
+        <div class="table-wrap"><table>
+          <thead><tr>${t.clearHeads.map((h) => `<th>${esc(h)}</th>`).join("")}</tr></thead>
+          <tbody>${t.clearItems.map((row) => `<tr>${row.map((cell) => `<td>${esc(cell)}</td>`).join("")}</tr>`).join("")}</tbody>
+        </table></div>
+        <h3>${esc(t.clearGateTitle)}</h3>
+        <p>${esc(t.clearGateBody)}</p>
+        <ul class="guide-list">${t.clearPoints.map((line) => `<li>${esc(line)}</li>`).join("")}</ul>
+      </div>
+    </section>
+
+    <section class="guide-reg">
+      <div class="guide-gutter">${esc(t.memLabel)}</div>
+      <div class="guide-body">
+        <h2>${esc(t.memTitle)}</h2>
+        <p>${esc(t.memLead)}</p>
+        <ul class="guide-list">${t.memPoints.map((line) => `<li>${esc(line)}</li>`).join("")}</ul>
+
+        <h3>${esc(t.evoTitle)}</h3>
+        <p>${esc(t.evoBody)}</p>
+        <h3>${esc(t.evoMetricsTitle)}</h3>
+        <dl class="guide-defs">${t.evoMetrics.map(([term, body]) => `<dt>${esc(term)}</dt><dd>${esc(body)}</dd>`).join("")}</dl>
+        <p class="guide-note">${esc(t.evoTablesNote)}</p>
+
+        <h3>${esc(t.evoLineTitle)}</h3>
+        <dl class="guide-defs">${t.evoLine.map(([term, body]) => `<dt>${esc(term)}</dt><dd>${esc(body)}</dd>`).join("")}</dl>
+        <p class="guide-note">${esc(t.evoNote)}</p>
+      </div>
+    </section>
 
     <section class="guide-reg">
       <div class="guide-gutter">${esc(t.demoLabel)}</div>

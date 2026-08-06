@@ -1541,6 +1541,21 @@ html[lang="en"] .step-needs::before { content: "NEEDS"; font-size: 8px; }
 /* .table-wrap was in the guide markup but never styled, so a wide table pushed
    the whole page sideways instead of scrolling inside itself. */
 .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* Term-and-explanation pairs, for the metrics and the may/never line. A table
+   would put two words in a column sized for a sentence; a list would bury the
+   term it is defining. */
+.guide-defs { margin: 10px 0 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 14px; align-items: baseline; }
+.guide-defs dt { font-size: 12px; font-weight: 600; color: var(--text-1); white-space: nowrap; }
+.guide-defs dd { margin: 0; font-size: 12px; line-height: 1.75; color: var(--text-2); }
+/* The note after a definition list is a comment on it, not another entry. */
+.guide-defs + .guide-note { margin-top: 10px; }
+@media (max-width: 640px) {
+  /* At this width the term column starves the explanation, so they stack. */
+  .guide-defs { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .guide-defs dd { margin-bottom: 8px; }
+}
+
 .table-wrap > table { min-width: 100%; }
 
 /* Procedures section: dense tables that have to stay readable on a phone, so
