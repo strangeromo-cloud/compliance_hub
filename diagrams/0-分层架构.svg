@@ -1,6 +1,6 @@
-<svg width="1220" height="1086" viewBox="0 0 1220 1086" xmlns="http://www.w3.org/2000/svg" role="img">
+<svg width="1220" height="1070" viewBox="0 0 1220 1070" xmlns="http://www.w3.org/2000/svg" role="img">
 <title>Compliance Hub 分层架构</title>
-<desc>两个入口：界面与服务给人用，MCP 给机器用，后者只到共用能力层。◆ 标出全部四处大模型调用：三条专业 Agent 各一次，主 Agent 综合一次。其余全是规则与数据库读写。</desc>
+<desc>两个入口：界面与服务给人用，MCP 给机器用，后者只到共用能力层。中间左右并排：主 Agent 与它的四种产出，以及合规审查内部的三个专业 Agent。底下是数据与来源。</desc>
 <style>
   svg { background: #ffffff; }
   text { font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", -apple-system, "Segoe UI", sans-serif; }
@@ -8,7 +8,6 @@
   .sub { font-size: 12.5px; font-weight: 600; }
   .ts { font-size: 12px; font-weight: 400; }
   .tn { font-size: 11px; font-weight: 400; }
-  .llm { font-size: 11px; font-weight: 600; fill: #B4460F; }
   .note { font-size: 12px; fill: #5F5E5A; }
   .side { font-size: 11px; fill: #888780; }
   .arr { stroke: #888780; stroke-width: 1.5; fill: none; }
@@ -20,14 +19,8 @@
   .c-gray .layer, .c-gray .sub { fill: #2C2C2A; } .c-gray .ts, .c-gray .tn { fill: #5F5E5A; }
   .c-purple rect { fill: #EEEDFE; stroke: #534AB7; stroke-width: 0.5; }
   .c-purple .layer, .c-purple .sub { fill: #26215C; } .c-purple .ts, .c-purple .tn { fill: #534AB7; }
-  /* A model call gets a heavier border, so the four places are findable without
-     reading: the badge says how many, the border says where. */
-  .c-agent rect { fill: #EEEDFE; stroke: #B4460F; stroke-width: 1.6; }
-  .c-agent .sub { fill: #26215C; } .c-agent .tn { fill: #534AB7; }
   .c-amber rect { fill: #FAEEDA; stroke: #854F0B; stroke-width: 1; }
   .c-amber .layer, .c-amber .sub { fill: #412402; } .c-amber .ts, .c-amber .tn { fill: #854F0B; }
-  .c-master rect { fill: #FAEEDA; stroke: #B4460F; stroke-width: 1.6; }
-  .c-master .sub { fill: #412402; } .c-master .tn { fill: #854F0B; }
   .c-teal rect { fill: #E1F5EE; stroke: #0F6E56; stroke-width: 0.5; }
   .c-teal .layer, .c-teal .sub { fill: #04342C; } .c-teal .ts, .c-teal .tn { fill: #0F6E56; }
 </style>
@@ -36,7 +29,7 @@
 <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#854F0B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>
 </defs>
 
-<text class="side" x="40" y="34">Compliance Hub · 分层架构　　两个入口，一套内核。<tspan class="llm">◆ 与红框标出全部用到大模型的地方，全系统只有 4 处</tspan>；其余全是规则匹配与数据库读写。</text>
+<text class="side" x="40" y="34">Compliance Hub · 分层架构　　两个入口，一套内核。紫色是做判断的地方，琥珀色是主 Agent 与它的交接，其余是管道与数据。</text>
 
 <text class="side" x="40" y="56">给人用</text>
 <g class="c-gray"><rect x="40" y="64" width="830" height="116" rx="5"/>
@@ -60,15 +53,15 @@
 <path class="arr-mcp" d="M1035 180 V196 H1196 V466 H1160" marker-end="url(#a)"/>
 <text class="side" x="1100" y="192">只到能力层</text>
 
-<rect class="band" x="40" y="210" width="490" height="636" rx="6" stroke="#C08A3E"/>
+<rect class="band" x="40" y="210" width="490" height="620" rx="6" stroke="#C08A3E"/>
 <text class="layer" x="60" y="231" fill="#854F0B">主 Agent 层</text>
 
-<rect class="band" x="580" y="210" width="600" height="636" rx="6" stroke="#8B84D8"/>
+<rect class="band" x="580" y="210" width="600" height="620" rx="6" stroke="#8B84D8"/>
 <text class="layer" x="600" y="231" fill="#26215C">合规审查内部</text>
 
-<g class="c-master"><rect x="60" y="246" width="450" height="116" rx="4"/>
+<g class="c-amber"><rect x="60" y="246" width="450" height="116" rx="4"/>
 <text class="sub" x="78" y="270">主 Agent —— 全系统只有一个</text>
-<text class="tn" x="78" y="291">判断意图与调度：<tspan font-weight="600">规则匹配，0 次模型</tspan>　｜　综合：<tspan class="llm">◆ 大模型 × 1</tspan></text>
+<text class="tn" x="78" y="291">判断意图与调度：<tspan font-weight="600">规则匹配，0 次模型</tspan>；综合：1 次模型调用</text>
 <text class="tn" x="78" y="308">进出都是它，不是两个角色；条文结论一律由专业 Agent 给出</text>
 <text class="tn" x="78" y="329">三种进入方式：直接描述交易 · / 选 Gem · @ 直查数据源</text>
 <text class="tn" x="78" y="346">Gem 8 个：4 个审查 · 2 个直查 · 1 个简报 · 1 个备忘录，各自声明必需字段</text></g>
@@ -129,55 +122,52 @@
 <path class="arr" d="M879 562 V574" marker-end="url(#a)"/>
 <path class="arr" d="M1069 562 V574" marker-end="url(#a)"/>
 
-<g class="c-agent"><rect x="600" y="574" width="178" height="174" rx="4"/>
+<g class="c-purple"><rect x="600" y="574" width="178" height="156" rx="4"/>
 <text class="sub" x="614" y="596">⑤ 贸易合规 Agent</text>
-<text class="llm" x="614" y="613">◆ 大模型调用 × 1</text>
-<text class="tn" x="614" y="634">① 确定法律实体</text>
-<text class="tn" x="614" y="651">② 名单筛查</text>
-<text class="tn" x="614" y="668">③ 名称匹配 · 用管辖</text>
-<text class="tn" x="614" y="685">④ 身份要素消歧</text>
-<text class="tn" x="614" y="702">⑤ 所有权穿透</text>
-<text class="tn" x="614" y="719">⑥ 母公司筛查</text>
-<text class="tn" x="614" y="739">负责：名单状态</text></g>
+<text class="tn" x="614" y="617">① 确定法律实体</text>
+<text class="tn" x="614" y="634">② 名单筛查</text>
+<text class="tn" x="614" y="651">③ 名称匹配 · 用管辖</text>
+<text class="tn" x="614" y="668">④ 身份要素消歧</text>
+<text class="tn" x="614" y="685">⑤ 所有权穿透</text>
+<text class="tn" x="614" y="702">⑥ 母公司筛查</text>
+<text class="tn" x="614" y="722">负责：名单状态</text></g>
 
-<g class="c-agent"><rect x="790" y="574" width="178" height="174" rx="4"/>
+<g class="c-purple"><rect x="790" y="574" width="178" height="156" rx="4"/>
 <text class="sub" x="804" y="596">⑤ 产品出口管制 Agent</text>
-<text class="llm" x="804" y="613">◆ 大模型调用 × 1</text>
-<text class="tn" x="804" y="634">① 物项识别</text>
-<text class="tn" x="804" y="651">② 是否受 EAR 管辖</text>
-<text class="tn" x="804" y="668">③ 分类（ECCN）</text>
-<text class="tn" x="804" y="685">④ 国别矩阵</text>
-<text class="tn" x="804" y="702">⑤ 十项禁令 · 用付款</text>
-<text class="tn" x="804" y="719">⑥ 许可例外 · 用名单</text>
-<text class="tn" x="804" y="739">负责：管辖、分类</text></g>
+<text class="tn" x="804" y="617">① 物项识别</text>
+<text class="tn" x="804" y="634">② 是否受 EAR 管辖</text>
+<text class="tn" x="804" y="651">③ 分类（ECCN）</text>
+<text class="tn" x="804" y="668">④ 国别矩阵</text>
+<text class="tn" x="804" y="685">⑤ 十项禁令 · 用付款</text>
+<text class="tn" x="804" y="702">⑥ 许可例外 · 用名单</text>
+<text class="tn" x="804" y="722">负责：管辖、分类</text></g>
 
-<g class="c-agent"><rect x="980" y="574" width="180" height="174" rx="4"/>
+<g class="c-purple"><rect x="980" y="574" width="180" height="156" rx="4"/>
 <text class="sub" x="994" y="596">⑤ 第三方尽调 Agent</text>
-<text class="llm" x="994" y="613">◆ 大模型调用 × 1</text>
-<text class="tn" x="994" y="634">① 商业合理性 · 用分类</text>
-<text class="tn" x="994" y="651">② 主体存续</text>
-<text class="tn" x="994" y="668">③ 受益所有权</text>
-<text class="tn" x="994" y="685">④ 付款路径</text>
-<text class="tn" x="994" y="702">⑤ 持续监控</text>
-<text class="tn" x="994" y="739">负责：付款风险</text></g>
+<text class="tn" x="994" y="617">① 商业合理性 · 用分类</text>
+<text class="tn" x="994" y="634">② 主体存续</text>
+<text class="tn" x="994" y="651">③ 受益所有权</text>
+<text class="tn" x="994" y="668">④ 付款路径</text>
+<text class="tn" x="994" y="685">⑤ 持续监控</text>
+<text class="tn" x="994" y="722">负责：付款风险</text></g>
 
-<text class="tn" x="600" y="766" fill="#534AB7">三条线各拿到：<tspan font-weight="600">法条原文（取材）＋ 交易事实（取证）＋ 4 条能力答案</tspan></text>
-<text class="tn" x="600" y="783" fill="#534AB7">步骤与状态由代码算；Agent 只写分析、发现与还缺什么，<tspan font-weight="600">不设置任何状态</tspan></text>
-<text class="tn" x="600" y="800" fill="#534AB7">一条线跑完先闭合它的步骤，再决定下一条跑不跑 —— 缺证据就<tspan font-weight="600">停下问人</tspan>，填完从断点续跑</text>
+<text class="tn" x="600" y="748" fill="#534AB7">三条线各拿到：<tspan font-weight="600">法条原文（取材）＋ 交易事实（取证）＋ 4 条能力答案</tspan>，各跑一次模型</text>
+<text class="tn" x="600" y="765" fill="#534AB7">步骤与状态由代码算；Agent 只写分析、发现与还缺什么，<tspan font-weight="600">不设置任何状态</tspan></text>
+<text class="tn" x="600" y="782" fill="#534AB7">一条线跑完先闭合它的步骤，再决定下一条跑不跑 —— 缺证据就<tspan font-weight="600">停下问人</tspan>，填完从断点续跑</text>
 
-<path class="arr" d="M689 748 V816"/>
-<path class="arr" d="M879 748 V816"/>
-<path class="arr" d="M1069 748 V816"/>
-<path class="arr-hand" d="M1069 816 H510" marker-end="url(#ah)"/>
-<text class="lbl-hand" x="520" y="808">⑥ 三条线的结果交回综合</text>
+<path class="arr" d="M689 730 V798"/>
+<path class="arr" d="M879 730 V798"/>
+<path class="arr" d="M1069 730 V798"/>
+<path class="arr-hand" d="M1069 798 H510" marker-end="url(#ah)"/>
+<text class="lbl-hand" x="520" y="790">⑥ 三条线的结果交回综合</text>
 
 <path class="arr-hand" d="M600 504 H556 V624 H510" marker-end="url(#ah)"/>
 <text class="lbl-hand" x="520" y="616">③ 直接进综合</text>
 
 <path class="arr-hand" d="M60 324 H50 V700 H60" marker-end="url(#ah)"/>
 
-<g class="c-master"><rect x="60" y="550" width="450" height="278" rx="4"/>
-<text class="sub" x="78" y="574">⑦ 答案 —— 由主 Agent 综合后给出　<tspan class="llm">◆ 大模型 × 1</tspan></text>
+<g class="c-amber"><rect x="60" y="550" width="450" height="262" rx="4"/>
+<text class="sub" x="78" y="574">⑦ 答案 —— 由主 Agent 综合后给出</text>
 <text class="tn" x="78" y="597">综合时只拿到两样：<tspan font-weight="600">三条线的结果 ＋ 五个结案条件</tspan></text>
 <text class="tn" x="78" y="614">不得推翻专业线的结论；风险等级受结案条件约束</text>
 <text class="tn" x="78" y="638">沉默永远不算通过；本系统不做交易放行，人工复核那一步照常在</text>
@@ -189,19 +179,19 @@
 <text class="tn" x="78" y="754">信号用于进化：只改路由词表这类东西，只产出提案，由人合并</text>
 <text class="tn" x="78" y="778">结案条件、条文出处、依赖边这些指向法规的东西，永远不自动改</text></g>
 
-<path class="arr" d="M285 846 V878" marker-end="url(#a)"/>
-<path class="arr" d="M880 846 V878" marker-end="url(#a)"/>
-<text class="tn" x="298" y="868" fill="#0F6E56">直查读记录</text>
-<text class="tn" x="893" y="868" fill="#0F6E56">取证读记录、取材读原文</text>
+<path class="arr" d="M285 830 V862" marker-end="url(#a)"/>
+<path class="arr" d="M880 830 V862" marker-end="url(#a)"/>
+<text class="tn" x="298" y="852" fill="#0F6E56">直查读记录</text>
+<text class="tn" x="893" y="852" fill="#0F6E56">取证读记录、取材读原文</text>
 
-<g class="c-teal"><rect x="40" y="878" width="1140" height="112" rx="5"/>
-<text class="layer" x="62" y="910">数据与来源</text>
-<text class="ts" x="210" y="908">36 个官方来源：美国 16 · 中国 10 · 其他 10（欧盟 / 英国 / 联合国 / 日本 / 台湾 / GLEIF / 厂商分类）</text>
-<text class="ts" x="210" y="928">30 个适配器自动同步：手动触发 · 启动时 · 定时；取原文 → 解析归一 → 一次事务写入并记 SHA-256</text>
-<text class="ts" x="210" y="948">3 个有验证码的源没有适配器，明确只人工 —— 不绕验证码，缺了就说缺了</text>
-<text class="ts" x="210" y="968">落到单个 SQLite 文件 · 9 张表 · 89,659 条记录：名单记录 · 原始快照 · 页面缓存 · 案件历史 · 案件信号</text></g>
+<g class="c-teal"><rect x="40" y="862" width="1140" height="112" rx="5"/>
+<text class="layer" x="62" y="894">数据与来源</text>
+<text class="ts" x="210" y="892">36 个官方来源：美国 16 · 中国 10 · 其他 10（欧盟 / 英国 / 联合国 / 日本 / 台湾 / GLEIF / 厂商分类）</text>
+<text class="ts" x="210" y="912">30 个适配器自动同步：手动触发 · 启动时 · 定时；取原文 → 解析归一 → 一次事务写入并记 SHA-256</text>
+<text class="ts" x="210" y="932">3 个有验证码的源没有适配器，明确只人工 —— 不绕验证码，缺了就说缺了</text>
+<text class="ts" x="210" y="952">落到单个 SQLite 文件 · 9 张表 · 89,659 条记录：名单记录 · 原始快照 · 页面缓存 · 案件历史 · 案件信号</text></g>
 
-<text class="note" x="40" y="1022"><tspan class="llm">◆ 全系统只有 4 处大模型调用</tspan>：三条专业 Agent 各一次，主 Agent 综合一次。简报、备忘录、直查、MCP 都是 0 次。</text>
-<text class="note" x="40" y="1044">规则匹配全在代码里（意图路由 · 名称比对 · 名单筛查 · 触发门 · 步骤状态 · 4 条能力 · 5 个结案条件）；模型只用来写分析与综合。</text>
-<text class="note" x="40" y="1066">每个结论都能追到一条法规和一份带时间戳的数据。没有可用模型时直接拒答，不存在用模板凑一个像分析的结果的模式。</text>
+<text class="note" x="40" y="1006">一次合规审查最多 <tspan font-weight="600">4 次</tspan>模型调用：三条专业 Agent 各一次，主 Agent 综合一次。简报、备忘录、直查、MCP 都是 0 次。</text>
+<text class="note" x="40" y="1028">规则匹配全在代码里（意图路由 · 名称比对 · 名单筛查 · 触发门 · 步骤状态 · 4 条能力 · 5 个结案条件）；模型只用来写分析与综合。</text>
+<text class="note" x="40" y="1050">每个结论都能追到一条法规和一份带时间戳的数据。没有可用模型时直接拒答，不存在用模板凑一个像分析的结果的模式。</text>
 </svg>
