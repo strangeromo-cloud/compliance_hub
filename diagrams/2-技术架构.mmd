@@ -1,0 +1,41 @@
+flowchart TD
+
+B1["<b>index.html</b> · app.js 工作台<br/>流式消费 NDJSON"]
+B2["<b>data-sources.html</b><br/>覆盖 · 同步 · 直查 · 提问覆盖指标"]
+B3["<b>guide.html</b><br/>程序 · Gem · 能力，目录实时拉取"]
+
+SH["<b>三份前后端共享模块</b>（同一份规则，不许有第二份拷贝）<br/>intent.js 路由规则 · gems.js Gem 目录 · status-vocabulary.js 步骤状态"]
+
+B1 --- SH
+B2 --- SH
+B3 --- SH
+
+SH --> SRV["<b>server.js · Node 24 · 依赖 0 个 · node_modules 0 个</b><br/>13 条路由；/api/assess/stream 是 NDJSON 长连接，其余是普通 JSON<br/>服务端配了模型 key 时完全忽略前端传来的 baseUrl —— 防止把密钥送到任意主机"]
+
+SRV --> DET["<b>确定性部分 · 不调模型</b><br/>intent 路由 · triage 触发门 · clearance 五条件<br/>analysis-path 规划与解析 · lane-dependencies<br/>grounding 名单筛查 · entity-matching 名称比对<br/>ownership 穿透 · lookup · briefing<br/>简报 / 备忘录 / 直查：0 次模型"]
+
+SRV --> LLM["<b>调模型的两处，一次审查最多 4 次</b><br/>runAgent —— 每条专业线一次<br/>synthesize —— 主 Agent 综合一次<br/>llm.js：OpenAI 兼容，参数被拒即降级并记住<br/>剥离 think 块，配平花括号取 JSON<br/>没有可用模型时直接拒答，不存在规则模式"]
+
+DET --> CAP["<b>agent-capabilities.js · 4 条具名能力</b><br/>纯函数，必带条文出处，不碰模型也不碰网络<br/>describeCapabilities() 产出目录，可原样发布为 MCP 工具"]
+
+CAP -.-> MCP["<b>mcp-server.js</b><br/>stdio JSON-RPC · npm run mcp<br/>不暴露任何能跑审查、存案件或碰模型的东西"]
+
+CAP --> DB["<b>数据层 · 单个 SQLite 文件 · node:sqlite · WAL</b><br/>9 张表：snapshots · records · snapshot_log · sync_status<br/>threads · turns · page_cache · case_signals · sqlite_sequence<br/>89,659 条记录 · 28 个源已入库；编排层只读"]
+
+SYNC["<b>同步 · 30 个适配器，28 个可快照</b><br/>手动触发 · 启动时 SYNC_ON_BOOT · 定时 SYNC_INTERVAL_HOURS（串行，默认关闭）<br/>官方来源取原文 → 解析归一 → 一次事务写入并记 SHA-256<br/>验证码源没有适配器，定时任务碰不到；这是数据层唯一的写入方"]
+
+SYNC --> DB
+
+LIVE["<b>运行时实时请求（不入库）</b><br/>引文摘录 · GLEIF 母公司链 · 官方 CSL 匹配器"]
+LIVE -.-> DET
+
+classDef master fill:#FAEEDA,stroke:#854F0B,stroke-width:1px,color:#412402
+classDef agent  fill:#EEEDFE,stroke:#534AB7,stroke-width:1px,color:#26215C
+classDef plain  fill:#F1EFE8,stroke:#5F5E5A,stroke-width:1px,color:#2C2C2A
+classDef data   fill:#E1F5EE,stroke:#0F6E56,stroke-width:1px,color:#04342C
+
+class SRV master
+class LLM master
+class DET,CAP agent
+class B1,B2,B3,SH,MCP plain
+class DB,SYNC,LIVE data

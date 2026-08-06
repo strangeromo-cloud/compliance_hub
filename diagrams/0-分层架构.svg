@@ -1,0 +1,193 @@
+<svg width="1220" height="1032" viewBox="0 0 1220 1032" xmlns="http://www.w3.org/2000/svg" role="img">
+<title>Compliance Hub 分层架构</title>
+<desc>两个入口：界面与服务给人用，MCP 给机器用，后者只到共用能力层。中间左右并排：主 Agent 与它的四种产出，以及合规审查内部。底下是数据与来源。</desc>
+<style>
+  svg { background: #ffffff; }
+  text { font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", -apple-system, "Segoe UI", sans-serif; }
+  .layer { font-size: 15px; font-weight: 600; }
+  .sub { font-size: 12.5px; font-weight: 600; }
+  .ts { font-size: 12px; font-weight: 400; }
+  .tn { font-size: 11px; font-weight: 400; }
+  .note { font-size: 12px; fill: #5F5E5A; }
+  .side { font-size: 11px; fill: #888780; }
+  .arr { stroke: #888780; stroke-width: 1.5; fill: none; }
+  .arr-hand { stroke: #854F0B; stroke-width: 1.8; fill: none; }
+  .arr-mcp { stroke: #5F5E5A; stroke-width: 1.5; fill: none; stroke-dasharray: 5 4; }
+  .lbl-hand { font-size: 11.5px; font-weight: 500; fill: #854F0B; }
+  .band { fill: none; stroke-width: 1; stroke-dasharray: 5 4; }
+  .c-gray rect { fill: #F1EFE8; stroke: #5F5E5A; stroke-width: 0.5; }
+  .c-gray .layer, .c-gray .sub { fill: #2C2C2A; } .c-gray .ts, .c-gray .tn { fill: #5F5E5A; }
+  .c-purple rect { fill: #EEEDFE; stroke: #534AB7; stroke-width: 0.5; }
+  .c-purple .layer, .c-purple .sub { fill: #26215C; } .c-purple .ts, .c-purple .tn { fill: #534AB7; }
+  .c-amber rect { fill: #FAEEDA; stroke: #854F0B; stroke-width: 1; }
+  .c-amber .layer, .c-amber .sub { fill: #412402; } .c-amber .ts, .c-amber .tn { fill: #854F0B; }
+  .c-teal rect { fill: #E1F5EE; stroke: #0F6E56; stroke-width: 0.5; }
+  .c-teal .layer, .c-teal .sub { fill: #04342C; } .c-teal .ts, .c-teal .tn { fill: #0F6E56; }
+</style>
+<defs>
+<marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#888780" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+<marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#854F0B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>
+</defs>
+
+<text class="side" x="40" y="34">Compliance Hub · 分层架构　　两个入口，一套内核。紫色是做判断的地方，琥珀色是主 Agent 与它的交接，其余是管道与数据。</text>
+
+<text class="side" x="40" y="56">给人用</text>
+<g class="c-gray"><rect x="40" y="64" width="830" height="116" rx="5"/>
+<text class="layer" x="62" y="94">界面与服务</text>
+<text class="ts" x="200" y="92">工作台 index.html · 数据覆盖 data-sources.html · 使用说明 guide.html</text>
+<text class="ts" x="200" y="112">三份模块前后端共用，同一份规则不许有第二份拷贝：intent.js · gems.js · status-vocabulary.js</text>
+<text class="ts" x="200" y="132">server.js · Node 24 · 第三方依赖 0 个 · 13 条路由；合规审查走 NDJSON 流式，边跑边出</text>
+<text class="ts" x="200" y="152">服务端配了模型 key 时完全忽略前端传来的 baseUrl —— 防止把密钥送到任意主机</text>
+<text class="ts" x="200" y="172">浏览器直接跑，无构建步骤；没有可用模型时直接拒答</text></g>
+
+<text class="side" x="890" y="56">给机器用</text>
+<g class="c-gray"><rect x="890" y="64" width="290" height="116" rx="5"/>
+<text class="sub" x="908" y="88">MCP · mcp-server.js</text>
+<text class="tn" x="908" y="107">stdio JSON-RPC 2.0 · npm run mcp</text>
+<text class="tn" x="908" y="124">发布右边那 4 条能力，工具名把点</text>
+<text class="tn" x="908" y="141">换成双下划线；入参 schema 由能力</text>
+<text class="tn" x="908" y="158">自己声明的 input 生成，不另写一份</text>
+<text class="tn" x="908" y="175"><tspan font-weight="600">不暴露跑审查、存案件、碰模型的东西</tspan></text></g>
+
+<path class="arr" d="M285 180 V246" marker-end="url(#a)"/>
+<path class="arr-mcp" d="M1035 180 V196 H1196 V466 H1160" marker-end="url(#a)"/>
+<text class="side" x="1100" y="192">只到能力层</text>
+
+<rect class="band" x="40" y="210" width="490" height="580" rx="6" stroke="#C08A3E"/>
+<text class="layer" x="60" y="231" fill="#854F0B">主 Agent 层</text>
+
+<rect class="band" x="580" y="210" width="600" height="580" rx="6" stroke="#8B84D8"/>
+<text class="layer" x="600" y="231" fill="#26215C">合规审查内部</text>
+
+<g class="c-amber"><rect x="60" y="246" width="450" height="116" rx="4"/>
+<text class="sub" x="78" y="270">主 Agent —— 全系统只有一个</text>
+<text class="tn" x="78" y="291">判断意图 → 调度 → 综合，进出都是它，不是两个角色</text>
+<text class="tn" x="78" y="308">条文结论一律由专业 Agent 给出，它自己不下</text>
+<text class="tn" x="78" y="329">三种进入方式：直接描述交易 · / 选 Gem · @ 直查数据源</text>
+<text class="tn" x="78" y="346">Gem 8 个：4 个审查 · 2 个直查 · 1 个简报 · 1 个备忘录，各自声明必需字段</text></g>
+
+<path class="arr" d="M171 362 V386" marker-end="url(#a)"/>
+<path class="arr" d="M403 362 V386" marker-end="url(#a)"/>
+
+<g class="c-gray"><rect x="60" y="386" width="222" height="42" rx="4"/>
+<text class="sub" x="74" y="405">监管简报</text><text class="tn" x="74" y="420">读已同步公告，按生效日排 · 0 次模型</text></g>
+<g class="c-gray"><rect x="60" y="435" width="222" height="42" rx="4"/>
+<text class="sub" x="74" y="454">案件备忘录</text><text class="tn" x="74" y="469">整理本会话已有结论 · 0 次模型</text></g>
+<g class="c-gray"><rect x="60" y="484" width="222" height="42" rx="4"/>
+<text class="sub" x="74" y="503">直接查询 @</text><text class="tn" x="74" y="518">按料号 / 编码 / 名单翻库 · 0 次模型</text></g>
+
+<g class="c-purple"><rect x="296" y="386" width="214" height="140" rx="4"/>
+<text class="sub" x="312" y="408">合规审查</text>
+<text class="tn" x="312" y="429">只开被选中的专业线</text>
+<text class="tn" x="312" y="446">每条线一次模型调用</text>
+<text class="tn" x="312" y="463">一次审查最多 4 次</text>
+<text class="tn" x="312" y="488">怎么跑 →</text>
+<text class="tn" x="312" y="505">交给右边的四个步骤</text></g>
+
+<path class="arr-hand" d="M510 424 H556 V286 H600" marker-end="url(#ah)"/>
+<text class="lbl-hand" transform="rotate(-90 536 486)" x="536" y="486" text-anchor="middle">① 判为合规审查，交出去</text>
+
+<g class="c-purple"><rect x="600" y="246" width="560" height="112" rx="4"/>
+<text class="sub" x="616" y="269">② 取证与取材 grounding · retrieval</text>
+<text class="tn" x="616" y="290">向数据层检索已入库记录，加上用户当次声明的事实；配了官方 CSL 接口时再实时查一次作对照</text>
+<text class="tn" x="616" y="307">合成一份共用事实：下面三条线读的是同一份，不各查各的</text>
+<text class="tn" x="616" y="324">条文原文按 24 小时缓存 + ETag 条件请求；304 就把原文原样写回，只刷新时间戳</text>
+<text class="tn" x="616" y="346">未同步到的来源如实报告「本次未筛查」——来源缺失不等于无风险</text></g>
+
+<text class="tn" x="600" y="374" fill="#534AB7"><tspan font-weight="600">下面这两样都在三条线开跑之前一次算完</tspan>，但去向不同：能力答案发给三条线，结案条件直接进综合</text>
+
+<g class="c-purple"><rect x="600" y="382" width="265" height="168" rx="4"/>
+<text class="sub" x="614" y="405">③ 结案条件 · 5 条</text>
+<text class="tn" x="614" y="425">不进三条线，直接给主 Agent 综合</text>
+<text class="tn" x="614" y="445">1 名单筛查 零命中　贸易线</text>
+<text class="tn" x="614" y="462">2 物项分类 EAR99 / de minimis</text>
+<text class="tn" x="614" y="479">3 最终目的地 在白名单内（19 国）</text>
+<text class="tn" x="614" y="496">4 第三方 明确为直接交易　尽调线</text>
+<text class="tn" x="614" y="513">5 最终用途 不落入 § 744</text>
+<text class="tn" x="614" y="536">第六道闸：不得留有未闭合步骤</text></g>
+
+<g class="c-purple"><rect x="885" y="382" width="275" height="168" rx="4"/>
+<text class="sub" x="899" y="405">④ 共用能力层 · 4 条纯函数</text>
+<text class="tn" x="899" y="425">发给下面每一条线，一份相同的答案</text>
+<text class="tn" x="899" y="445">party_status　名单状态　贸易线负责</text>
+<text class="tn" x="899" y="462">item_jurisdiction　管辖　产品线负责</text>
+<text class="tn" x="899" y="479">classification_status　分类　产品线负责</text>
+<text class="tn" x="899" y="496">payment_risk　付款风险　尽调线负责</text>
+<text class="tn" x="899" y="519">每条带条文出处；三条线彼此不通信，</text>
+<text class="tn" x="899" y="536">标「用 X」的步骤就是消费这里的答案</text></g>
+
+<path class="arr" d="M1022 550 V562"/>
+<path class="arr" d="M689 562 H1069"/>
+<path class="arr" d="M689 562 V574" marker-end="url(#a)"/>
+<path class="arr" d="M879 562 V574" marker-end="url(#a)"/>
+<path class="arr" d="M1069 562 V574" marker-end="url(#a)"/>
+
+<g class="c-purple"><rect x="600" y="574" width="178" height="156" rx="4"/>
+<text class="sub" x="614" y="596">⑤ 贸易合规</text>
+<text class="tn" x="614" y="617">① 确定法律实体</text>
+<text class="tn" x="614" y="634">② 名单筛查</text>
+<text class="tn" x="614" y="651">③ 名称匹配 · 用管辖</text>
+<text class="tn" x="614" y="668">④ 身份要素消歧</text>
+<text class="tn" x="614" y="685">⑤ 所有权穿透</text>
+<text class="tn" x="614" y="702">⑥ 母公司筛查</text>
+<text class="tn" x="614" y="722">负责：名单状态</text></g>
+
+<g class="c-purple"><rect x="790" y="574" width="178" height="156" rx="4"/>
+<text class="sub" x="804" y="596">⑤ 产品出口管制</text>
+<text class="tn" x="804" y="617">① 物项识别</text>
+<text class="tn" x="804" y="634">② 是否受 EAR 管辖</text>
+<text class="tn" x="804" y="651">③ 分类（ECCN）</text>
+<text class="tn" x="804" y="668">④ 国别矩阵</text>
+<text class="tn" x="804" y="685">⑤ 十项禁令 · 用付款</text>
+<text class="tn" x="804" y="702">⑥ 许可例外 · 用名单</text>
+<text class="tn" x="804" y="722">负责：管辖、分类</text></g>
+
+<g class="c-purple"><rect x="980" y="574" width="180" height="156" rx="4"/>
+<text class="sub" x="994" y="596">⑤ 第三方尽调</text>
+<text class="tn" x="994" y="617">① 商业合理性 · 用分类</text>
+<text class="tn" x="994" y="634">② 主体存续</text>
+<text class="tn" x="994" y="651">③ 受益所有权</text>
+<text class="tn" x="994" y="668">④ 付款路径</text>
+<text class="tn" x="994" y="685">⑤ 持续监控</text>
+<text class="tn" x="994" y="722">负责：付款风险</text></g>
+
+<text class="tn" x="600" y="748" fill="#534AB7">上面的步骤与它们的状态<tspan font-weight="600">由代码算</tspan>；Agent 读已算好的事实，写这条线的分析、发现与还缺什么，<tspan font-weight="600">不设置任何状态</tspan></text>
+
+<path class="arr" d="M689 730 V766"/>
+<path class="arr" d="M879 730 V766"/>
+<path class="arr" d="M1069 730 V766"/>
+<path class="arr-hand" d="M1069 766 H510" marker-end="url(#ah)"/>
+<text class="lbl-hand" x="520" y="758">⑥ 三条线的结果交回综合</text>
+
+<path class="arr-hand" d="M600 504 H556 V624 H510" marker-end="url(#ah)"/>
+<text class="lbl-hand" x="520" y="616">③ 直接进综合</text>
+
+<path class="arr-hand" d="M60 324 H50 V694 H60" marker-end="url(#ah)"/>
+
+<g class="c-amber"><rect x="60" y="550" width="450" height="228" rx="4"/>
+<text class="sub" x="78" y="574">⑦ 答案 —— 由主 Agent 综合后给出</text>
+<text class="tn" x="78" y="595">沉默永远不算通过；本系统不做交易放行，人工复核那一步照常在</text>
+<text class="tn" x="78" y="612">含义是「在这些事实、这些条文下不产生许可要求」，不是「批准」</text>
+<text class="tn" x="78" y="629">带证据链、结论边界、未闭合步骤与人工复核要求</text>
+<text class="tn" x="78" y="651">五个结案条件逐条显示：满足 / 未满足、原因、负责的条线、条文出处</text>
+<text class="tn" x="78" y="668">跨线结论注明是哪条线负责</text>
+<text class="tn" x="78" y="690">跑完写入案件历史与案件信号；信号从不被历史上限裁剪</text>
+<text class="tn" x="78" y="707">信号用于进化：只改路由词表这类东西，且只产出提案，由人合并</text>
+<text class="tn" x="78" y="726">结案条件、条文出处、依赖边这些指向法规的东西，永远不自动改</text></g>
+
+<path class="arr" d="M285 790 V822" marker-end="url(#a)"/>
+<path class="arr" d="M880 790 V822" marker-end="url(#a)"/>
+<text class="tn" x="298" y="812" fill="#0F6E56">直查读记录</text>
+<text class="tn" x="893" y="812" fill="#0F6E56">取证读记录、取材读原文</text>
+
+<g class="c-teal"><rect x="40" y="822" width="1140" height="112" rx="5"/>
+<text class="layer" x="62" y="854">数据与来源</text>
+<text class="ts" x="210" y="852">36 个官方来源：美国 16 · 中国 10 · 其他 10（欧盟 / 英国 / 联合国 / 日本 / 台湾 / GLEIF / 厂商分类）</text>
+<text class="ts" x="210" y="872">30 个适配器自动同步：手动触发 · 启动时 · 定时；取原文 → 解析归一 → 一次事务写入并记 SHA-256</text>
+<text class="ts" x="210" y="892">3 个有验证码的源没有适配器，明确只人工 —— 不绕验证码，缺了就说缺了</text>
+<text class="ts" x="210" y="912">落到单个 SQLite 文件 · 9 张表 · 89,659 条记录：名单记录 · 原始快照 · 页面缓存 · 案件历史 · 案件信号</text></g>
+
+<text class="note" x="40" y="966">一次合规审查最多 <tspan font-weight="600">4 次</tspan>模型调用：每条专业线一次，主 Agent 综合一次。简报、备忘录、直查都是 0 次。</text>
+<text class="note" x="40" y="988">规则匹配全在代码里（名称比对 · 名单筛查 · 触发门 · 步骤状态 · 4 条能力 · 5 个结案条件）；模型只用来写分析与综合。</text>
+<text class="note" x="40" y="1010">每个结论都能追到一条法规和一份带时间戳的数据。主 Agent 综合时不得推翻专业线的结论，风险等级受结案条件约束。</text>
+</svg>

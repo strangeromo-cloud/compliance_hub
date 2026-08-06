@@ -1,0 +1,190 @@
+<svg width="1220" height="1665" viewBox="0 0 1220 1665" xmlns="http://www.w3.org/2000/svg" role="img">
+<title>Compliance Hub 功能架构</title>
+<desc>全系统只有一个主 Agent。数据层有三个消费者：取证与名单筛查、直接查询、以及专业 Agent 的取材；共用能力层不碰数据层，它读的是取证已经取到的事实。三条线之间的四个提问是「哪一步需要哪条线的答案」，不是运行时通信。</desc>
+<style>
+  svg { background: #ffffff; }
+  text { font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", -apple-system, "Segoe UI", sans-serif; }
+  .th { font-size: 14px; font-weight: 500; fill: #2C2C2A; }
+  .ts { font-size: 12px; font-weight: 400; fill: #5F5E5A; }
+  .tn { font-size: 11px; font-weight: 400; fill: #5F5E5A; }
+  .cap { font-size: 10.5px; font-weight: 500; fill: #534AB7; }
+  .arr { stroke: #888780; stroke-width: 1.5; fill: none; }
+  .arr-cap { stroke: #7A72C4; stroke-width: 1.5; fill: none; }
+  .arr-data { stroke: #0F6E56; stroke-width: 1.5; fill: none; }
+  .arr-loop { stroke: #854F0B; stroke-width: 1.8; fill: none; }
+  .lbl-loop { font-size: 11.5px; font-weight: 500; fill: #854F0B; }
+  .lbl-data { font-size: 10.5px; font-weight: 500; fill: #0F6E56; }
+  .arr-evo { stroke: #6B6A64; stroke-width: 1.5; fill: none; stroke-dasharray: 6 4; }
+  .lbl-evo { font-size: 11.5px; font-weight: 500; fill: #5F5E5A; }
+  .c-gray rect { fill: #F1EFE8; stroke: #5F5E5A; stroke-width: 0.5; }
+  .c-gray .th { fill: #2C2C2A; } .c-gray .ts, .c-gray .tn { fill: #5F5E5A; }
+  .c-purple rect { fill: #EEEDFE; stroke: #534AB7; stroke-width: 0.5; }
+  .c-purple .th { fill: #26215C; } .c-purple .ts, .c-purple .tn { fill: #534AB7; }
+  .c-amber rect { fill: #FAEEDA; stroke: #854F0B; stroke-width: 1.2; }
+  .c-amber .th { fill: #412402; } .c-amber .ts, .c-amber .tn { fill: #854F0B; }
+  .c-teal rect { fill: #E1F5EE; stroke: #0F6E56; stroke-width: 0.5; }
+  .c-teal .th { fill: #04342C; } .c-teal .ts, .c-teal .tn { fill: #0F6E56; }
+</style>
+<defs>
+<marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#888780" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+<marker id="ac" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#7A72C4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+<marker id="ad" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#0F6E56" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+<marker id="ae" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#6B6A64" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+<marker id="al" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#854F0B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>
+</defs>
+
+<text class="ts" x="110" y="28">怎么提问</text>
+<g class="c-gray"><rect x="110" y="36" width="336" height="64" rx="4"/><text class="th" x="126" y="58">直接描述交易</text><text class="ts" x="126" y="76">按命中词决定开哪几条线</text><text class="ts" x="126" y="92">词没命中就三条全开</text></g>
+<g class="c-gray"><rect x="467" y="36" width="336" height="64" rx="4"/><text class="th" x="483" y="58">/ 选 Gem · 8 个</text><text class="ts" x="483" y="76">提交前标出还缺哪几项</text><text class="ts" x="483" y="92">限定只用哪些来源作依据</text></g>
+<g class="c-gray"><rect x="824" y="36" width="336" height="64" rx="4"/><text class="th" x="840" y="58">@ 直查数据源</text><text class="ts" x="840" y="76">翻 89,659 条已入库记录</text><text class="ts" x="840" y="92">绕过主 Agent，不作判断</text></g>
+
+<path class="arr" d="M278 100 V120 H532 V140" marker-end="url(#a)"/>
+<path class="arr" d="M635 100 V120 H532 V140" marker-end="url(#a)"/>
+<path class="arr" d="M1072 100 V275" marker-end="url(#a)"/>
+
+<g class="c-amber"><rect x="110" y="140" width="845" height="95" rx="5"/>
+<text class="th" x="130" y="166">主 Agent —— 全系统只有这一个</text>
+<text class="ts" x="130" y="186">进来时判断这是什么问题并决定交给谁做；跑完后回到这里综合。两件事是同一个角色，不是两个 Agent</text>
+<text class="ts" x="130" y="204">只做意图判断、调度与综合 —— 条文结论一律由专业 Agent 给出，它自己不下</text>
+<text class="ts" x="130" y="222">输入框和后台读同一份规则、同一个结论；没有可用模型时直接拒答，不存在退回模板的模式</text></g>
+
+<path class="arr" d="M211 235 V275" marker-end="url(#a)"/>
+<path class="arr" d="M431 235 V275" marker-end="url(#a)"/>
+<path class="arr" d="M651 235 V275" marker-end="url(#a)"/>
+<path class="arr" d="M955 200 H970 V315 H985" marker-end="url(#a)"/>
+
+<g class="c-purple"><rect x="110" y="275" width="202" height="80" rx="4"/><text class="th" x="124" y="297">合规审查</text><text class="tn" x="124" y="315">只开被选中的专业线</text><text class="tn" x="124" y="331">每条线一次模型调用</text><text class="tn" x="124" y="347">最多 4 次</text></g>
+<g class="c-gray"><rect x="330" y="275" width="202" height="80" rx="4"/><text class="th" x="344" y="297">监管简报</text><text class="tn" x="344" y="315">读已同步公告排期</text><text class="tn" x="344" y="331">按生效日排序</text><text class="tn" x="344" y="347">0 次模型调用</text></g>
+<g class="c-gray"><rect x="550" y="275" width="202" height="80" rx="4"/><text class="th" x="564" y="297">案件备忘录</text><text class="tn" x="564" y="315">整理本会话结论</text><text class="tn" x="564" y="331">不产生新判断</text><text class="tn" x="564" y="347">0 次模型调用</text></g>
+<g class="c-gray"><rect x="985" y="275" width="175" height="80" rx="4"/><text class="th" x="999" y="297">直接查询</text><text class="tn" x="999" y="315">按料号或编码翻库</text><text class="tn" x="999" y="331">出记录，不出结论</text><text class="tn" x="999" y="347">0 次模型调用</text></g>
+
+<path class="arr" d="M211 355 V395" marker-end="url(#a)"/>
+
+<g class="c-gray"><rect x="110" y="395" width="590" height="150" rx="4"/>
+<text class="th" x="130" y="420">① 取证与名单筛查 grounding · 每次审查开跑前做一次</text>
+<text class="ts" x="130" y="444">向数据层检索已入库记录，加上用户当次声明的事实</text>
+<text class="ts" x="130" y="462">配了官方 CSL 接口时，再实时查一次作为对照</text>
+<text class="ts" x="130" y="480">合成一份共用事实：下面三条线读的是同一份，不各查各的</text>
+<text class="ts" x="130" y="506">没有同步到的来源如实报告「本次未筛查」——</text>
+<text class="ts" x="130" y="524">来源缺失不等于无风险，不会被写成「无命中」</text></g>
+
+<g class="c-teal"><rect x="720" y="395" width="440" height="150" rx="4"/>
+<text class="th" x="738" y="420">数据层 · 36 个官方来源 · 28 个已入库 · 89,659 条</text>
+<text class="tn" x="738" y="439">单个 SQLite 文件，编排层只读；按条线分：贸易 16 · 产品 13 · 尽调 7</text>
+<text class="tn" x="738" y="461">美国 16：BIS EAR / CCL / 国别矩阵 · OFAC SDN 与所有权图</text>
+<text class="tn" x="738" y="478">　　　　CSL 综合筛查名单 · UFLPA · DoD 1260H · 联邦公报</text>
+<text class="tn" x="738" y="495">中国 10：两用物项清单 · 许可目录 · 管控名单 · 不可靠实体</text>
+<text class="tn" x="738" y="512">其他 10：欧盟 · 英国 · 联合国 · 日本 · 台湾 · GLEIF · 厂商分类</text>
+<text class="tn" x="738" y="534">30 个适配器自动同步；3 个有验证码的源没有适配器，明确只人工</text></g>
+
+<path class="arr-data" d="M720 470 H700" marker-end="url(#ad)"/>
+<text class="lbl-data" x="710" y="462" text-anchor="middle">读记录</text>
+<path class="arr-data" d="M1072 395 V355" marker-end="url(#ad)"/>
+<text class="lbl-data" x="1090" y="378">读记录</text>
+<path class="arr-data" d="M900 545 V575" marker-end="url(#ad)"/>
+<text class="lbl-data" x="918" y="566">取原文 · 存回正文与 ETag</text>
+
+<path class="arr" d="M375 545 V575" marker-end="url(#a)"/>
+
+<g class="c-gray"><rect x="110" y="575" width="530" height="125" rx="4"/>
+<text class="th" x="128" y="598">② 共用能力层 agent-capabilities.js · 4 条具名能力</text>
+<text class="tn" x="128" y="618">纯函数，0 次模型调用，也不碰数据层</text>
+<text class="tn" x="128" y="635">它读的是 ① 已经取到的事实，不自己再查一次</text>
+<text class="tn" x="128" y="652">在专业 Agent 开跑之前一次算完，同一份发给三条线</text>
+<text class="tn" x="128" y="674">下面四个箭头是「哪一步需要哪条线的答案」，不是运行时的</text>
+<text class="tn" x="128" y="691">消息：Agent 之间从不读对方的模型输出</text></g>
+
+<g class="c-teal"><rect x="660" y="575" width="500" height="125" rx="4"/>
+<text class="th" x="678" y="598">③ 取材 retrieval · 每条线只拿本线相关的官方条文</text>
+<text class="tn" x="678" y="618">缓存未过期（默认 24 小时）→ 直接用，完全不出网</text>
+<text class="tn" x="678" y="635">过期 → 带上次的 ETag 再问一次：304 就把原文原样写回，只刷新时间戳</text>
+<text class="tn" x="678" y="652">200 → 存下新正文与新 ETag；请求失败 → 用旧版本，标注为过期</text>
+<text class="tn" x="678" y="674">再失败 → 用存档记录标注为存档；都拿不到 → 标注「未取到」</text>
+<text class="tn" x="678" y="691">绝不用注册表摘要冒充原文，那会让缺失看起来像证据</text></g>
+
+<path class="arr" d="M375 700 V716"/>
+<path class="arr" d="M910 700 V716"/>
+<path class="arr" d="M241 716 H1027"/>
+<path class="arr" d="M241 716 V745" marker-end="url(#a)"/>
+<path class="arr" d="M634 716 V745" marker-end="url(#a)"/>
+<path class="arr" d="M1027 716 V745" marker-end="url(#a)"/>
+
+<g class="c-purple"><rect x="110" y="745" width="263" height="182" rx="4"/>
+<text class="th" x="126" y="768">④ 贸易合规 Agent</text><text class="tn" x="126" y="787">范围：交易方是谁</text>
+<text class="tn" x="126" y="812">① 确定法律实体　② 名单筛查</text><text class="tn" x="126" y="829">③ 名称匹配　④ 身份要素消歧</text><text class="tn" x="126" y="846">⑤ 所有权穿透　⑥ 母公司筛查</text>
+<text class="tn" x="126" y="873">本线负责：交易方名单状态</text><text class="tn" x="126" y="890">§ 732.3(g) · OFAC 50% Rule</text><text class="tn" x="126" y="912">不读别的 Agent 的输出</text></g>
+
+<g class="c-purple"><rect x="503" y="745" width="263" height="182" rx="4"/>
+<text class="th" x="519" y="768">④ 产品出口管制 Agent</text><text class="tn" x="519" y="787">范围：物项本身受什么管</text>
+<text class="tn" x="519" y="812">① 物项识别　② 是否受 EAR 管辖</text><text class="tn" x="519" y="829">③ 分类（ECCN）　④ 国别矩阵</text><text class="tn" x="519" y="846">⑤ 十项一般禁令　⑥ 许可例外</text>
+<text class="tn" x="519" y="873">本线负责：物项管辖、物项分类</text><text class="tn" x="519" y="890">§ 734.3 · § 734.4 · Part 774</text><text class="tn" x="519" y="912">不读别的 Agent 的输出</text></g>
+
+<g class="c-purple"><rect x="896" y="745" width="263" height="182" rx="4"/>
+<text class="th" x="912" y="768">④ 第三方尽调 Agent</text><text class="tn" x="912" y="787">范围：中间人与付款安排</text>
+<text class="tn" x="912" y="812">① 商业合理性　② 主体存续</text><text class="tn" x="912" y="829">③ 受益所有权　④ 付款路径</text><text class="tn" x="912" y="846">⑤ 持续监控</text>
+<text class="tn" x="912" y="873">本线负责：付款路径风险信号</text><text class="tn" x="912" y="890">DOJ ECCP — Controls / Payment</text><text class="tn" x="912" y="912">不读别的 Agent 的输出</text></g>
+
+<text class="cap" x="438" y="779" text-anchor="middle">贸易 ③ 名称匹配 问 →</text>
+<text class="cap" x="438" y="793" text-anchor="middle">物项是否受 EAR 管辖</text>
+<line class="arr-cap" x1="373" y1="805" x2="503" y2="805" marker-end="url(#ac)"/>
+<text class="cap" x="438" y="865" text-anchor="middle">← 问 产品 ⑥ 许可例外</text>
+<text class="cap" x="438" y="879" text-anchor="middle">交易方名单状态</text>
+<line class="arr-cap" x1="503" y1="891" x2="373" y2="891" marker-end="url(#ac)"/>
+
+<text class="cap" x="831" y="779" text-anchor="middle">产品 ⑤ 十项禁令 问 →</text>
+<text class="cap" x="831" y="793" text-anchor="middle">付款路径风险信号</text>
+<line class="arr-cap" x1="766" y1="805" x2="896" y2="805" marker-end="url(#ac)"/>
+<text class="cap" x="831" y="865" text-anchor="middle">← 问 尽调 ① 商业合理性</text>
+<text class="cap" x="831" y="879" text-anchor="middle">物项分类是否成立</text>
+<line class="arr-cap" x1="896" y1="891" x2="766" y2="891" marker-end="url(#ac)"/>
+
+<path class="arr" d="M241 927 V962" marker-end="url(#a)"/>
+<path class="arr" d="M634 927 V962" marker-end="url(#a)"/>
+<path class="arr" d="M1027 927 V962" marker-end="url(#a)"/>
+
+<g class="c-purple"><rect x="110" y="962" width="1050" height="180" rx="4"/>
+<text class="th" x="130" y="985">⑤ 结案条件 · 五条，分属三条线，所以没有任何一条线能独自定案</text>
+<text class="ts" x="130" y="1007">1　名单筛查 —— 已筛过官方名单且零命中　§ 732.3(g)　贸易线</text>
+<text class="ts" x="130" y="1025">2　物项分类 —— EAR99，或美国原产受控内容低于 de minimis　Part 774 · § 734.4　产品线</text>
+<text class="ts" x="130" y="1043">3　最终目的地 —— 已声明，且在免许可目的地白名单内（19 国）　Part 738　产品线</text>
+<text class="ts" x="130" y="1061">4　第三方参与 —— 明确说明是直接交易，无代理或经销　DOJ ECCP　尽调线</text>
+<text class="ts" x="130" y="1079">5　最终用途 —— 已声明，且不落入 § 744 敏感用途　产品线 + 尽调线</text>
+<text class="ts" x="130" y="1105">另有第六道闸：路径上不得留有任何未闭合步骤。五条全过但还有一步在等证据 → 依然不出清晰结论</text>
+<text class="ts" x="130" y="1125">这五条会逐条显示给读者：满足 / 未满足、原因、负责的条线、满足的带条文出处；由代码算出，不依赖模型说了什么</text></g>
+
+<path class="arr-loop" d="M110 1052 H78 V188 H110" marker-end="url(#al)"/>
+<text class="lbl-loop" transform="rotate(-90 62 660)" x="62" y="660" text-anchor="middle">⑥ 结案条件算完后，回到同一个主 Agent 综合</text>
+
+<path class="arr-loop" d="M110 212 H40 V1217 H110" marker-end="url(#al)"/>
+<text class="lbl-loop" transform="rotate(-90 24 660)" x="24" y="660" text-anchor="middle">⑦ 综合后的答案，由同一个主 Agent 给出</text>
+
+<g class="c-amber"><rect x="110" y="1172" width="1050" height="90" rx="5"/>
+<text class="th" x="130" y="1195">答案</text>
+<text class="ts" x="130" y="1215">沉默永远不算通过；本系统不做交易放行，人工复核那一步照常在</text>
+<text class="ts" x="130" y="1233">含义是「在这些事实、这些条文下不产生许可要求」，不是「批准」</text>
+<text class="ts" x="130" y="1251">带证据链、结论边界、未闭合步骤与人工复核要求；跨线结论注明是哪条线负责</text></g>
+
+<path class="arr" d="M634 1262 V1292" marker-end="url(#a)"/>
+
+<g class="c-teal"><rect x="110" y="1292" width="1050" height="120" rx="4"/>
+<text class="th" x="130" y="1315">⑧ 历史记录与案件信号 · 一次运行结束时，和答案写在同一个事务里</text>
+<text class="ts" x="130" y="1337">threads 97 条 · turns 166 条：完整案件历史，有条数上限，超出后按最近使用裁剪</text>
+<text class="ts" x="130" y="1355">case_signals 49 条：每次运行一行，写在执行裁剪的同一个事务里，但被<tspan font-weight="600">刻意排除在裁剪之外</tspan></text>
+<text class="ts" x="130" y="1373">信号记的是结构不是原文：意图 · 开了哪几条线 · 路由词有没有命中 · 停在哪一步 · 补了哪些字段 · 还剩几步未闭合</text>
+<text class="ts" x="130" y="1395">历史能否活过重新部署取决于有没有挂 Volume —— 容器文件系统是临时的，页面会如实说明当前是哪种</text></g>
+
+<path class="arr" d="M634 1412 V1442" marker-end="url(#a)"/>
+
+<g class="c-gray"><rect x="110" y="1442" width="1050" height="180" rx="4"/>
+<text class="th" x="130" y="1465">⑨ 靠这些信号进化 —— 两个方向，只有一个可以自动化</text>
+<text class="ts" x="130" y="1487">四个指标（当前样本仅 49 条）：兜底率 2.1% · 打断率 79.6% · 每案轮次 2.1 · 结案时仍有未闭合步骤 40 次</text>
+<text class="ts" x="130" y="1505">最常卡住的步骤：所有权穿透 14 · 身份消歧 14 · 物项识别 7　　被问了才补的字段：注册号 12 · 股权 2 · ECCN 1</text>
+<text class="ts" x="130" y="1523">一个「被问了才补」的字段，就是输入框本可以一开始就问的字段 —— 这张表直接指出下一步该改哪里</text>
+<text class="ts" x="130" y="1549">可以自动进化：路由词表 intent.js · Gem 的必需字段 · 匹配阈值（只许向召回放宽）· 同步频率 · 探针语料</text>
+<text class="ts" x="130" y="1567">绝不：五个结案条件 · 触发门与其条文 · 跨线依赖边 · 任何能力的条文出处 ·「声明不等于已核验证据」</text>
+<text class="ts" x="130" y="1585">右边每一项都指向一条法规。法规不会因为模型认为该改就改 —— 这条界线是这套系统唯一比通用助手强的地方</text>
+<text class="ts" x="130" y="1607">产出是提案不是 commit：diff + 哪些案例为证 + 一个改前失败改后通过的测试 + 全套测试结果，由人合并</text></g>
+
+<path class="arr-evo" d="M1160 1530 H1185 V16 H810 V140" marker-end="url(#ae)"/>
+<text class="lbl-evo" transform="rotate(-90 1202 760)" x="1202" y="760" text-anchor="middle">⑩ 只改路由词表这类东西，且只产出提案，由人合并</text>
+</svg>

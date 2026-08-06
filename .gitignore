@@ -9,3 +9,12 @@ node_modules/
 
 # Internal source material - not for the public repository
 docs/
+
+# Fetched on demand by diagrams/render-mermaid.mjs, not committed: 3.5 MB of
+# vendor bundle that the script re-downloads if it is missing.
+diagrams/mermaid.min.js
+
+# The SVGs are the source and open anywhere; the rasters are derived, weigh 3 MB
+# together, and do not diff — committing them would add that much to history on
+# every re-render. diagrams/README.md says how to make one.
+diagrams/*.png
