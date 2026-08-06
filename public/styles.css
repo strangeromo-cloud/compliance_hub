@@ -1448,6 +1448,21 @@ html[lang="en"] .step-needs::before { content: "NEEDS"; font-size: 8px; }
   50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 0%, transparent); }
 }
 @media (prefers-reduced-motion: reduce) { .path-step.asking .step-mark { animation: none; } }
+/* The step being worked on, which is not the same as the step asking for
+   something. The page now scrolls to follow it, so it has to be visible on
+   arrival — landing on an unmarked step reads as the page having jumped for no
+   reason. Quieter than .asking: that one wants an answer, this one is just
+   where the run has got to. */
+.path-step.running:not(.asking) .step-mark {
+  border-color: var(--accent);
+  color: var(--accent);
+  animation: running-step 1.8s ease-in-out infinite;
+}
+@keyframes running-step {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .45; }
+}
+@media (prefers-reduced-motion: reduce) { .path-step.running .step-mark { animation: none; } }
 /* And the same step in the rail, so the two panels point at one place. The ring
    is a glow around the dot, not part of it: at 3px it added enough apparent
    width that the running step read as a larger circle than its neighbours. */

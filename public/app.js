@@ -1122,6 +1122,10 @@ function pathMarkup(path, grounding, options = {}) {
   // the final render re-offered the very step the reader had said they had
   // nothing for, as the one thing blocking the run.
   const blocked = options.allowInput === false ? null : firstBlockedStep(path, state.unavailableFacts);
+  // The same step the rail marks, from the same rule. Two panels naming
+  // different steps as current is the fault this pair has had in a dozen forms,
+  // and it is also what left the body with nothing to scroll to.
+
   const activeLane = options.activeLane || null;
   const doneLanes = options.doneLanes || new Set();
   const results = options.results || [];
@@ -1150,8 +1154,15 @@ function pathMarkup(path, grounding, options = {}) {
     if (!edge) return null;
     return { note: `${state.locale === "en" ? edge.en : edge.zh}${edge.because ? `（${edge.because}）` : ""}${edge.cite ? ` — ${edge.cite}` : ""}` };
   };
+  // The same step the rail marks, from the same rule. Two panels naming
+  // different steps as current is the fault this pair has had in a dozen forms,
+  // and it is also what left the body with nothing to scroll to.
+  const runningStep = currentStepId(path, { ...options, declined: state.unavailableFacts, firstBlocked: blocked });
   const laneQuestion = (lane) => {
     if (blocked && lane.steps.some((item) => item.id === blocked)) return blocked;
+    // The step the run is on, so the lane being analysed shows its frontier
+    // rather than stopping at the last thing it finished.
+    if (runningStep && lane.steps.some((item) => item.id === runningStep)) return runningStep;
     return lane.steps.find(askable)?.id || null;
   };
   const analysed = new Set(results.map((item) => item.agent));
@@ -1197,7 +1208,7 @@ function pathMarkup(path, grounding, options = {}) {
             const mark = STEP_STATUS_VOCAB[item.status]?.mark || "·";
             const asking = item.id === blocked;   // one form at a time, path order
             return `
-            <li class="path-step tone-${stepTone} open ${asking ? "asking" : ""}" data-step-id="${esc(item.id)}">
+            <li class="path-step tone-${stepTone} open ${asking ? "asking" : ""} ${item.id === runningStep ? "running" : ""}" data-step-id="${esc(item.id)}">
               <span class="step-mark" aria-hidden="true">${mark}</span>
               <div class="step-body">
                 <button type="button" class="step-head" data-step-toggle aria-expanded="true">
@@ -1866,9 +1877,14 @@ async function analyze(event, options = {}) {
   // back, and a lane already visible is left exactly where it is. Scrolling on
   // every event would take the page away from a reader who is reading.
   function followRunning() {
+    // The step, not the lane. Following the lane worked while a lane was shorter
+    // than the viewport; at six steps the header scrolls into view once, the
+    // guard below then reports "already visible", and the frontier walks off the
+    // bottom of the screen with nothing bringing it back.
     const lane = progress.activeLane || collected.path?.lanes?.[0]?.lane;
-    if (!lane) return;
-    const node = live.querySelector(`.path-lane[data-lane="${CSS.escape(lane)}"]`);
+    const node = live.querySelector(".path-step.running")
+      || live.querySelector(".path-step.asking")
+      || (lane ? live.querySelector(`.path-lane[data-lane="${CSS.escape(lane)}"]`) : null);
     if (!node) return;
     const box = node.getBoundingClientRect();
     const view = $("thread").getBoundingClientRect();
@@ -1890,7 +1906,8 @@ async function analyze(event, options = {}) {
     if (!host) return markLanes();
     const openLanes = [...host.querySelectorAll(".path-lane")].filter((lane) => lane.dataset.open === "1").map((lane) => lane.dataset.lane);
     host.innerHTML = pathMarkup(collected.path, collected.grounding, {
-      allowInput: false, activeLane: progress.activeLane, doneLanes: progress.doneLanes, results: collected.agents
+      allowInput: false, activeLane: progress.activeLane, doneLanes: progress.doneLanes,
+      results: collected.agents, stage: progress.stage, currentStep: state.resumingStep
     });
     // Only the lane being analysed shows a stream; a finished lane's text stays
     // out of the way so there is never more than one box writing.
@@ -1950,6 +1967,11 @@ async function analyze(event, options = {}) {
       // sign that anything is happening.
       showStageWaiting();
       renderFlowPanel(event.path, { activeLane: progress.activeLane, stage: progress.stage });
+      // Steps close here, one at a time, so this is the event where the running
+      // step moves. Scrolling only on stage and agent_start meant the page
+      // followed a lane starting and then sat still through everything the lane
+      // actually did.
+      followRunning();
     }
     // A path with no specialists — a lookup, a briefing, a memo — used to sit on
     // "retrieving official sources" for the whole of its work, with no clock and
