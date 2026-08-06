@@ -738,3 +738,44 @@ test("the five conditions reach the reader, met or not", async () => {
     .filter((line) => line && CJK.test(line));
   assert.deepEqual(leaks, [], `English clearance still carries Chinese:\n${leaks.join("\n")}`);
 });
+
+test("clearance does not depend on when it is computed", async () => {
+  // It runs before the lanes. That is only safe while a step's status is decided
+  // by the facts and the grounding alone — lane output reaches the resolver
+  // through needsMatching, which appends to `needs` and must never move
+  // `status`. If that ever changes, clearance computed early becomes a different
+  // answer from clearance computed late, and the earlier one is the one the
+  // reader is shown.
+  const { assessScenario } = await import("../src/orchestrator.js");
+  const { assessClearance } = await import("../src/clearance.js");
+
+  // A stub that floods every lane with the missingInfo strings needsMatching
+  // looks for: if lane output could move a status, this is what would do it.
+  const loud = await startStubModel({
+    answer: (body) => (/overallRisk/.test(JSON.stringify(body.messages))
+      ? { overallRisk: "medium", headline: "stub", executiveSummary: "stub", nextStep: "stub" }
+      : {
+        agent: ["trade", "product", "tpdd"].find((lane) => new RegExp(`"agent":\\s*"${lane}"`).test(JSON.stringify(body.messages))) || "trade",
+        riskLevel: "medium", summary: "stub", findings: [{ title: "f", detail: "d", evidenceSourceIds: [] }],
+        missingInfo: ["法律实体全称", "准确型号 part number", "受控原产含量 de minimis", "关键技术参数 eccn",
+          "最终目的地 国别矩阵", "最终用户与最终用途 禁令", "受益所有 股权 ubo"],
+        recommendedActions: ["a"]
+      })
+  });
+  try {
+    // The case that would expose it: every condition met, steps still open. A
+    // file with unmet conditions is blocked by those and never reaches the
+    // question of when the open steps were counted.
+    const question = "我们直销一台 EAR99 设备给德国的长期客户，无中间商、无代理商。";
+    const declaredFacts = { eccn: "EAR99", destination: "德国", endUse: "客户自用办公，无转售，无军事或核相关用途" };
+    const result = await assessScenario({ question, locale: "zh", config: loud.config, declaredFacts });
+
+    const early = result.grounding.clearance;
+    assert.ok(early.checks.every((check) => check.met), "the five conditions all hold on these facts");
+    assert.ok(early.openSteps.length, "and steps are still open, which is the case that matters");
+
+    const late = assessClearance({ question, facts: result.declaredFacts, grounding: result.grounding, path: result.analysisPath });
+    assert.equal(early.cleared, late.cleared, "the verdict must not depend on when it was computed");
+    assert.deepEqual(early.openSteps, late.openSteps, "nor must the open steps");
+  } finally { await loud.stop(); }
+});

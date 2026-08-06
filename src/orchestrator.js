@@ -587,9 +587,20 @@ export async function assessScenario({ question, locale = "zh", config = {}, his
   });
 
   // Whether the stated facts support a clear outcome, worked out once against
-  // the resolution the reader will see. It is computed before the lanes run so a
-  // clean file is reported as clean by each lane, rather than each lane
-  // reporting the template for a file that has problems.
+  // the resolution the reader will see.
+  //
+  // Computed before the lanes, and that is safe rather than merely convenient:
+  // resolveAnalysisPath with final:true decides a step's status from the facts
+  // and the grounding alone. Lane output reaches it only through needsMatching,
+  // which appends text to `needs` and never touches `status`. So running this
+  // after the lanes would produce the same five verdicts and the same open
+  // steps — checked in the test below, because it is an invariant of the
+  // resolver rather than something obvious from here.
+  //
+  // The reason it used to be here no longer exists: rules mode read
+  // clearance.cleared per lane so a clean file was not answered with the
+  // template for a problem file, and rules mode is gone. Nothing in a lane's
+  // prompt carries clearance now — only the synthesis brief does.
   const laneOrder = analysisPath.lanes.map((group) => group.lane).filter((lane) => agents.includes(lane));
   const results = [];
   const clearance = assessClearance({
