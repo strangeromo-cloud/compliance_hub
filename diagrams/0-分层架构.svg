@@ -1,6 +1,6 @@
-<svg width="1220" height="1070" viewBox="0 0 1220 1070" xmlns="http://www.w3.org/2000/svg" role="img">
+<svg width="1220" height="1250" viewBox="0 0 1220 1250" xmlns="http://www.w3.org/2000/svg" role="img">
 <title>Compliance Hub 分层架构</title>
-<desc>两个入口：界面与服务给人用，MCP 给机器用，后者只到共用能力层。中间左右并排：主 Agent 与它的四种产出，以及合规审查内部的三个专业 Agent。底下是数据与来源。</desc>
+<desc>两个入口：界面与服务给人用，MCP 给机器用，后者只到共用能力层。中间左右并排：主 Agent 与它的四种产出，以及合规审查内部的三个专业 Agent。底下是数据与来源，再底下是用户记忆与系统进化。</desc>
 <style>
   svg { background: #ffffff; }
   text { font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", -apple-system, "Segoe UI", sans-serif; }
@@ -36,7 +36,7 @@
 <text class="layer" x="62" y="94">界面与服务</text>
 <text class="ts" x="200" y="92">工作台 index.html · 数据覆盖 data-sources.html · 使用说明 guide.html</text>
 <text class="ts" x="200" y="112">三份模块前后端共用，同一份规则不许有第二份拷贝：intent.js · gems.js · status-vocabulary.js</text>
-<text class="ts" x="200" y="132">server.js · Node 24 · 第三方依赖 0 个 · 13 条路由；合规审查走 NDJSON 流式，边跑边出</text>
+<text class="ts" x="200" y="132">server.js · Node 24 · 第三方依赖 0 个 · 14 条路由 + 静态文件；合规审查走 NDJSON 流式，边跑边出</text>
 <text class="ts" x="200" y="152">服务端配了模型 key 时完全忽略前端传来的 baseUrl —— 防止把密钥送到任意主机</text>
 <text class="ts" x="200" y="172">浏览器直接跑，无构建步骤；没有可用模型时直接拒答</text></g>
 
@@ -53,10 +53,10 @@
 <path class="arr-mcp" d="M1035 180 V196 H1196 V466 H1160" marker-end="url(#a)"/>
 <text class="side" x="1100" y="192">只到能力层</text>
 
-<rect class="band" x="40" y="210" width="490" height="620" rx="6" stroke="#C08A3E"/>
+<rect class="band" x="40" y="210" width="490" height="638" rx="6" stroke="#C08A3E"/>
 <text class="layer" x="60" y="231" fill="#854F0B">主 Agent 层</text>
 
-<rect class="band" x="580" y="210" width="600" height="620" rx="6" stroke="#8B84D8"/>
+<rect class="band" x="580" y="210" width="600" height="638" rx="6" stroke="#8B84D8"/>
 <text class="layer" x="600" y="231" fill="#26215C">合规审查内部</text>
 
 <g class="c-amber"><rect x="60" y="246" width="450" height="116" rx="4"/>
@@ -123,50 +123,50 @@
 <path class="arr" d="M1069 562 V574" marker-end="url(#a)"/>
 
 <g class="c-purple"><rect x="600" y="574" width="178" height="156" rx="4"/>
-<text class="sub" x="614" y="596">⑤ 贸易合规 Agent</text>
+<text class="sub" x="614" y="596">⑤ 贸易合规 Agent · 5 步</text>
 <text class="tn" x="614" y="617">① 确定法律实体</text>
-<text class="tn" x="614" y="634">② 名单筛查</text>
+<text class="tn" x="614" y="634">② 检索受限方名单</text>
 <text class="tn" x="614" y="651">③ 名称匹配 · 用管辖</text>
 <text class="tn" x="614" y="668">④ 身份要素消歧</text>
-<text class="tn" x="614" y="685">⑤ 所有权穿透</text>
-<text class="tn" x="614" y="702">⑥ 母公司筛查</text>
-<text class="tn" x="614" y="722">负责：名单状态</text></g>
+<text class="tn" x="614" y="685">⑤ 所有权穿透（50% 聚合）</text>
+<text class="tn" x="614" y="706">＋ 母公司筛查（依赖触发）</text>
+<text class="tn" x="614" y="723">负责：名单状态</text></g>
 
 <g class="c-purple"><rect x="790" y="574" width="178" height="156" rx="4"/>
-<text class="sub" x="804" y="596">⑤ 产品出口管制 Agent</text>
-<text class="tn" x="804" y="617">① 物项识别</text>
+<text class="sub" x="804" y="596">⑤ 产品出口管制 Agent · 6 步</text>
+<text class="tn" x="804" y="617">① 确定物项（型号）</text>
 <text class="tn" x="804" y="634">② 是否受 EAR 管辖</text>
 <text class="tn" x="804" y="651">③ 分类（ECCN）</text>
-<text class="tn" x="804" y="668">④ 国别矩阵</text>
-<text class="tn" x="804" y="685">⑤ 十项禁令 · 用付款</text>
+<text class="tn" x="804" y="668">④ 目的地与管制理由</text>
+<text class="tn" x="804" y="685">⑤ 十项一般禁令 · 用付款</text>
 <text class="tn" x="804" y="702">⑥ 许可例外 · 用名单</text>
-<text class="tn" x="804" y="722">负责：管辖、分类</text></g>
+<text class="tn" x="804" y="723">负责：管辖、分类</text></g>
 
 <g class="c-purple"><rect x="980" y="574" width="180" height="156" rx="4"/>
-<text class="sub" x="994" y="596">⑤ 第三方尽调 Agent</text>
-<text class="tn" x="994" y="617">① 商业合理性 · 用分类</text>
-<text class="tn" x="994" y="634">② 主体存续</text>
+<text class="sub" x="994" y="596">⑤ 第三方尽调 Agent · 5 步</text>
+<text class="tn" x="994" y="617">① 商业合理性与费用 · 用分类</text>
+<text class="tn" x="994" y="634">② 主体存续与注册信息</text>
 <text class="tn" x="994" y="651">③ 受益所有权</text>
-<text class="tn" x="994" y="668">④ 付款路径</text>
-<text class="tn" x="994" y="685">⑤ 持续监控</text>
-<text class="tn" x="994" y="722">负责：付款风险</text></g>
+<text class="tn" x="994" y="668">④ 收款主体与付款路径</text>
+<text class="tn" x="994" y="685">⑤ 持续监控与再评估</text>
+<text class="tn" x="994" y="723">负责：付款风险</text></g>
 
-<text class="tn" x="600" y="748" fill="#534AB7">三条线各拿到：<tspan font-weight="600">法条原文（取材）＋ 交易事实（取证）＋ 4 条能力答案</tspan>，各跑一次模型</text>
-<text class="tn" x="600" y="765" fill="#534AB7">步骤与状态由代码算；Agent 只写分析、发现与还缺什么，<tspan font-weight="600">不设置任何状态</tspan></text>
-<text class="tn" x="600" y="782" fill="#534AB7">一条线跑完先闭合它的步骤，再决定下一条跑不跑 —— 缺证据就<tspan font-weight="600">停下问人</tspan>，填完从断点续跑</text>
+<text class="tn" x="600" y="748" fill="#534AB7">三条线各拿到：<tspan font-weight="600">法条原文 ＋ 交易事实 ＋ 4 条能力答案</tspan>，各跑一次模型</text>
+<text class="tn" x="600" y="765" fill="#534AB7">步骤与状态由代码算，Agent 不设置任何状态；缺证据就<tspan font-weight="600">停下问人</tspan>，填完从断点续跑</text>
+<text class="tn" x="600" y="782" fill="#534AB7">路径上还有<tspan font-weight="600">第四条线「结案」</tspan>，一步：Compliance / Legal 人工复核，不跑 Agent</text>
 
-<path class="arr" d="M689 730 V798"/>
-<path class="arr" d="M879 730 V798"/>
-<path class="arr" d="M1069 730 V798"/>
-<path class="arr-hand" d="M1069 798 H510" marker-end="url(#ah)"/>
-<text class="lbl-hand" x="520" y="790">⑥ 三条线的结果交回综合</text>
+<path class="arr" d="M689 730 V816"/>
+<path class="arr" d="M879 730 V816"/>
+<path class="arr" d="M1069 730 V816"/>
+<path class="arr-hand" d="M1069 816 H510" marker-end="url(#ah)"/>
+<text class="lbl-hand" x="520" y="808">⑥ 三条线的结果交回综合</text>
 
 <path class="arr-hand" d="M600 504 H556 V624 H510" marker-end="url(#ah)"/>
 <text class="lbl-hand" x="520" y="616">③ 直接进综合</text>
 
 <path class="arr-hand" d="M60 324 H50 V700 H60" marker-end="url(#ah)"/>
 
-<g class="c-amber"><rect x="60" y="550" width="450" height="262" rx="4"/>
+<g class="c-amber"><rect x="60" y="550" width="450" height="280" rx="4"/>
 <text class="sub" x="78" y="574">⑦ 答案 —— 由主 Agent 综合后给出</text>
 <text class="tn" x="78" y="597">综合时只拿到两样：<tspan font-weight="600">三条线的结果 ＋ 五个结案条件</tspan></text>
 <text class="tn" x="78" y="614">不得推翻专业线的结论；风险等级受结案条件约束</text>
@@ -175,23 +175,44 @@
 <text class="tn" x="78" y="672">带证据链、结论边界、未闭合步骤与人工复核要求</text>
 <text class="tn" x="78" y="696">五个结案条件逐条显示：满足 / 未满足、原因、负责的条线、条文出处</text>
 <text class="tn" x="78" y="713">跨线结论注明是哪条线负责</text>
-<text class="tn" x="78" y="737">跑完写入案件历史与案件信号；信号从不被历史上限裁剪</text>
-<text class="tn" x="78" y="754">信号用于进化：只改路由词表这类东西，只产出提案，由人合并</text>
-<text class="tn" x="78" y="778">结案条件、条文出处、依赖边这些指向法规的东西，永远不自动改</text></g>
+<text class="tn" x="78" y="737">同一个事务里写下：案件历史（给人看）＋ 案件信号（给进化用）</text>
+<text class="tn" x="78" y="754">用户填的一律标注「声明，未核验」，不会变成已核验事实</text>
+<text class="tn" x="78" y="778">结案条件、条文出处、依赖边这些指向法规的东西，永远不自动改</text>
+<text class="tn" x="78" y="800">继续追问时，本会话最近 6 轮连同问题一起发给模型</text></g>
 
-<path class="arr" d="M285 830 V862" marker-end="url(#a)"/>
-<path class="arr" d="M880 830 V862" marker-end="url(#a)"/>
-<text class="tn" x="298" y="852" fill="#0F6E56">直查读记录</text>
-<text class="tn" x="893" y="852" fill="#0F6E56">取证读记录、取材读原文</text>
+<path class="arr" d="M285 848 V880" marker-end="url(#a)"/>
+<path class="arr" d="M880 848 V880" marker-end="url(#a)"/>
+<text class="tn" x="298" y="870" fill="#0F6E56">直查读记录</text>
+<text class="tn" x="893" y="870" fill="#0F6E56">取证读记录、取材读原文</text>
 
-<g class="c-teal"><rect x="40" y="862" width="1140" height="112" rx="5"/>
-<text class="layer" x="62" y="894">数据与来源</text>
-<text class="ts" x="210" y="892">36 个官方来源：美国 16 · 中国 10 · 其他 10（欧盟 / 英国 / 联合国 / 日本 / 台湾 / GLEIF / 厂商分类）</text>
-<text class="ts" x="210" y="912">30 个适配器自动同步：手动触发 · 启动时 · 定时；取原文 → 解析归一 → 一次事务写入并记 SHA-256</text>
-<text class="ts" x="210" y="932">3 个有验证码的源没有适配器，明确只人工 —— 不绕验证码，缺了就说缺了</text>
-<text class="ts" x="210" y="952">落到单个 SQLite 文件 · 9 张表 · 89,659 条记录：名单记录 · 原始快照 · 页面缓存 · 案件历史 · 案件信号</text></g>
+<g class="c-teal"><rect x="40" y="880" width="1140" height="112" rx="5"/>
+<text class="layer" x="62" y="912">数据与来源</text>
+<text class="ts" x="210" y="910">36 个官方来源：美国 16 · 中国 10 · 其他 10（欧盟 / 英国 / 联合国 / 日本 / 台湾 / GLEIF / 厂商分类）</text>
+<text class="ts" x="210" y="930">30 个适配器自动同步：手动触发 · 启动时 · 定时；取原文 → 解析归一 → 一次事务写入并记 SHA-256</text>
+<text class="ts" x="210" y="950">3 个有验证码的源没有适配器，明确只人工 —— 不绕验证码，缺了就说缺了</text>
+<text class="ts" x="210" y="970">落到单个 SQLite 文件 · 9 张表 · 89,659 条记录：名单记录 · 原始快照 · 页面缓存 · 案件历史 · 案件信号</text></g>
 
-<text class="note" x="40" y="1006">一次合规审查最多 <tspan font-weight="600">4 次</tspan>模型调用：三条专业 Agent 各一次，主 Agent 综合一次。简报、备忘录、直查、MCP 都是 0 次。</text>
-<text class="note" x="40" y="1028">规则匹配全在代码里（意图路由 · 名称比对 · 名单筛查 · 触发门 · 步骤状态 · 4 条能力 · 5 个结案条件）；模型只用来写分析与综合。</text>
-<text class="note" x="40" y="1050">每个结论都能追到一条法规和一份带时间戳的数据。没有可用模型时直接拒答，不存在用模板凑一个像分析的结果的模式。</text>
+<path class="arr" d="M300 992 V1024" marker-end="url(#a)"/>
+<path class="arr" d="M880 992 V1024" marker-end="url(#a)"/>
+
+<g class="c-teal"><rect x="40" y="1024" width="560" height="152" rx="5"/>
+<text class="sub" x="60" y="1048">用户记忆 · 案件历史　threads · turns</text>
+<text class="tn" x="60" y="1069">会话内：最近 6 轮对话随问题一起发给模型（专业线与综合各一份）</text>
+<text class="tn" x="60" y="1086">跨会话：threads 上限 100 个，每个 thread 的 turns 上限 30 条，超出按最近使用裁剪</text>
+<text class="tn" x="60" y="1108">重开一个案件时，恢复的是 threadId 与已声明的事实，<tspan font-weight="600">对话不恢复</tspan></text>
+<text class="tn" x="60" y="1125">　模型看不到上次的措辞，只看到这次的事实 —— 旧表述带不偏新结论</text>
+<text class="tn" x="60" y="1147">声明的事实一路累积；停下问人、填完从断点续跑走的就是这条</text>
+<text class="tn" x="60" y="1164">历史能否活过重新部署，取决于有没有挂 Volume；页面会如实说明当前是哪种</text></g>
+
+<g class="c-gray"><rect x="620" y="1024" width="560" height="152" rx="5"/>
+<text class="sub" x="640" y="1048">系统进化 · case_signals → /api/evolution</text>
+<text class="tn" x="640" y="1069">每次运行写一行信号，和裁剪写在<tspan font-weight="600">同一个事务</tspan>里，但被<tspan font-weight="600">刻意排除在裁剪之外</tspan></text>
+<text class="tn" x="640" y="1086">记的是结构不是原文：意图 · 开了哪几条线 · 路由词有没有命中 · 停在哪一步 · 补了哪些字段</text>
+<text class="tn" x="640" y="1108">四个指标：兜底率 · 打断率 · 每案轮次 · 结案时仍有未闭合步骤；展示在数据覆盖页</text>
+<text class="tn" x="640" y="1125">两张表指出下一步改哪里：最常卡住的步骤 · 被问了才补的字段</text>
+<text class="tn" x="640" y="1147">可自动进化：<tspan font-weight="600">路由词表 intent.js</tspan>（最上面那一层）· Gem 必需字段 · 匹配阈值（只许放宽召回）· 同步频率</text>
+<text class="tn" x="640" y="1164">绝不：结案条件 · 触发门与条文 · 依赖边 · 能力的条文出处。<tspan font-weight="600">只产出提案，由人合并</tspan></text></g>
+
+<text class="note" x="40" y="1208">一次合规审查最多 <tspan font-weight="600">4 次</tspan>模型调用：三条专业 Agent 各一次，主 Agent 综合一次。简报、备忘录、直查、MCP 都是 0 次。</text>
+<text class="note" x="40" y="1230">规则匹配全在代码里（意图路由 · 名称比对 · 名单筛查 · 触发门 · 步骤状态 · 4 条能力 · 5 个结案条件）；模型只用来写分析与综合。</text>
 </svg>
