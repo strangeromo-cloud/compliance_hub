@@ -1072,6 +1072,12 @@ html[lang="en"] .step-needs::before { content: "NEEDS"; font-size: 8px; }
 .si-choice { height: 26px; padding: 0 10px; font: 500 11.5px/1 var(--mono); border: 1px solid var(--border-strong); border-radius: var(--radius); background: var(--surface); color: var(--text-2); cursor: pointer; }
 .si-choice:hover { border-color: var(--accent); color: var(--text); }
 .si-choice.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+/* Register records to choose between, not a country code. The names are
+   identical, so the option has to carry the country, the city and the
+   identifier — which does not fit on a 26px chip. One per line, left aligned,
+   readable end to end. */
+.si-choices-long { flex-direction: column; align-items: stretch; gap: 5px; }
+.si-choices-long .si-choice { height: auto; min-height: 26px; padding: 6px 10px; line-height: 1.45; text-align: left; white-space: normal; word-break: break-word; }
 .si-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 2px; }
 .si-note { font-size: 10.5px; color: var(--risk-medium); }
 .si-skipped { display: none; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 11.5px; color: var(--text-3); }

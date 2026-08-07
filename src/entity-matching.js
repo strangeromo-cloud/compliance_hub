@@ -8,7 +8,22 @@
 const LEGAL_SUFFIXES = [
   "incorporated", "inc", "corporation", "corp", "company", "co", "limited", "ltd", "llc", "llp", "lp", "plc",
   "gmbh", "ag", "kg", "mbh", "bv", "nv", "sa", "sas", "sarl", "srl", "spa", "ab", "as", "oy", "pte", "pty",
-  "pvt", "kk", "kabushiki", "kaisha", "holdings", "holding", "group"
+  "pvt", "kk", "kabushiki", "kaisha", "holdings", "holding", "group",
+  // Legal forms the list did not know, which is not a cosmetic gap: an unknown
+  // form stays in the name, so the name never reduces to the company. "Nokia
+  // Oyj" kept its Oyj and therefore did not reduce to "nokia", which let a
+  // Portuguese entity registered under the bare word be the only exact match and
+  // be resolved to silently as the Nokia in a compliance file.
+  //
+  // Measured against the 25,617 distinct names in the Consolidated Screening
+  // List before adding them: 111 new groups collapse, and every one inspected is
+  // the same designated entity listed twice under two spellings of its form —
+  // RADIOTESTER OOO with RADIOTESTER LLC, Kalinin Machine Plant JSC with
+  // KALININ MACHINE PLANT JSC. For screening that is recall, not a false merge.
+  //
+  // Deliberately not included: "sp" and "dd", which are too short to be reliably
+  // a legal form rather than a word.
+  "oyj", "asa", "aps", "oao", "ooo", "zao", "pjsc", "ojsc", "jsc", "sro", "kft", "doo", "tov"
 ];
 
 const CHINESE_SUFFIXES = ["有限公司", "股份有限公司", "有限责任公司", "集团有限公司", "集团", "公司", "株式会社"];

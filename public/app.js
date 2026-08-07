@@ -989,10 +989,10 @@ function stepInputsMarkup(item, { values = null, collapsed = false } = {}) {
   const filled = (field) => (values ? String(values[field] ?? "") : "");
   return `
     <div class="step-inputs${collapsed ? " si-collapsed" : ""}" data-step="${esc(item.id)}">
-      ${item.inputs.map((input) => input.kind === "choice"
+      ${item.inputs.filter((input) => input.kind !== "choice" || input.options?.length).map((input) => input.kind === "choice"
         ? `<div class="si-row">
              <span class="si-label">${esc(input.label)}</span>
-             <div class="si-choices">${input.options.map((option) => `
+             <div class="si-choices${input.options.some((option) => option.length > 20) ? " si-choices-long" : ""}">${input.options.map((option) => `
                <button type="button" class="si-choice${filled(input.field) === option ? " on" : ""}" data-field="${esc(input.field)}" data-value="${esc(option)}">${esc(option)}</button>`).join("")}</div>
            </div>`
         : `<div class="si-row">

@@ -99,7 +99,14 @@ const LANE_PLANS = {
         { field: "country", kind: "choice", label: "注册国别", options: ["CN", "US", "DE", "SG", "JP", "IN", "MX", "NL"] },
         { field: "address", kind: "text", label: "注册地址" }
       ], { cite: "Supplement No. 3 to Part 732", note: "以身份要素而非名称字符串区分真实命中与误报" }],
-      ["ownership", "所有权穿透（50% 聚合）", { field: "ownership", kind: "text", label: "股权结构（如：A 持股 30%、B 持股 25%）" },
+      ["ownership", "所有权穿透（50% 聚合）", [
+        // Which register record the counterparty is. The field is declared here
+        // because the plan decides what a step may ask; the options cannot be,
+        // because they are whatever the register returned for this name, so
+        // resolution supplies them. Asked only when several records carry the
+        // name and nothing in the register separates them.
+        { field: "ownershipSubject", kind: "choice", label: "登记主体（GLEIF 中同名的几条记录）", options: [] },
+        { field: "ownership", kind: "text", label: "股权结构（如：A 持股 30%、B 持股 25%）" }],
         { cite: "OFAC 50 Percent Rule FAQ 401", methodology: "ofac50", note: "间接与合计持股需穿透计算，名单检索不解决" }]
     ]
   },
@@ -353,8 +360,10 @@ const PART_NUMBER = /\b[A-Z]{2}-\d{4}-[A-Z0-9]{2}\b/;
 const LEGAL_SUFFIX = /(co\.?,?\s*ltd|corporation|corp\.?|inc\.?|gmbh|s\.?a\.?r\.?l|pte\.?\s*ltd|b\.?v\.?|a\.?s\.?|有限公司|股份有限公司|集团)/i;
 const PERCENT = /\d+(?:\.\d+)?\s*%/;
 
-function step(id, title, status, { basis = [], needs = [] } = {}) {
-  return { id, title, status, basis, needs };
+function step(id, title, status, { basis = [], needs = [], inputOptions = null } = {}) {
+  // inputOptions fills in the choices for a field the plan declared. Resolution
+  // never adds a field; it only answers "which values are on offer this time".
+  return { id, title, status, basis, needs, ...(inputOptions ? { inputOptions } : {}) };
 }
 
 // Missing-information lines the specialists produced, filtered to the ones that
@@ -606,7 +615,23 @@ function tradeSteps(question, grounding, results, declaredFacts = {}) {
   // established by someone.
   const chain = grounding.ownership;
   const chainFound = chain?.subject && (chain.directParent || chain.ultimateParent);
-  const chainLines = chainFound
+
+  // Several register records carry this name and the register ranks none above
+  // the others, so the step asks which one instead of walking whichever the API
+  // returned first. Country, city and identifier are on every option because the
+  // names are identical after normalisation — there is nothing in the name left
+  // to choose on.
+  const NONE_OF_THESE = "以上都不是 / 不确定";
+  const ambiguousSubject = chain?.ambiguous ? chain.candidates : null;
+  const subjectOptions = ambiguousSubject
+    ? [...ambiguousSubject.map((item) => [item.name, [item.country, item.city].filter(Boolean).join(" "), `LEI ${item.lei}`]
+      .filter(Boolean).join("｜")), NONE_OF_THESE]
+    : null;
+  // Written whenever a register record was settled on, not only when it had a
+  // parent. "Which company this is, and it declares no parent" is a result;
+  // showing nothing said neither, and after the reviewer had just picked the
+  // record by hand it read as though the choice had been discarded.
+  const chainLines = chain?.subject
     ? [
       bi(`GLEIF 登记主体：${chain.subject.name}（LEI ${chain.subject.lei}${chain.subject.country ? `，${chain.subject.country}` : ""}）`,
         `GLEIF record: ${chain.subject.name} (LEI ${chain.subject.lei}${chain.subject.country ? `, ${chain.subject.country}` : ""})`),
@@ -658,7 +683,11 @@ function tradeSteps(question, grounding, results, declaredFacts = {}) {
     chainLines.push(...holderHits.map((entry) => bi(
       `已申报持有人 ${entry.holder.name}（${entry.holder.percentOfClass}%）在 ${entry.hits[0].sourceId} 中潜在命中「${entry.hits[0].entityName}」（相似度 ${entry.hits[0].matchScore}）`,
       `Reported holder ${entry.holder.name} (${entry.holder.percentOfClass}%) draws a potential match on "${entry.hits[0].entityName}" in ${entry.hits[0].sourceId} (score ${entry.hits[0].matchScore})`)));
-  } else if (filed?.notSynced) {
+  } else if (chain?.identifiedBy === "user") {
+    chainLines.unshift(bi(`登记主体由审查人从 GLEIF 同名记录中指定：${chain.subject.name}（LEI ${chain.subject.lei}${chain.subject.country ? `，${chain.subject.country}` : ""}）`,
+      `The register record was picked by the reviewer from several carrying this name: ${chain.subject.name} (LEI ${chain.subject.lei}${chain.subject.country ? `, ${chain.subject.country}` : ""})`));
+  }
+  if (filed?.notSynced) {
     chainLines.push(bi("SEC EDGAR 发行人索引尚未同步，本次未检索已申报的 5% 以上持有人。",
       "The SEC EDGAR issuer index is not synced, so filed holders above 5% were not retrieved."));
   }
@@ -677,8 +706,25 @@ function tradeSteps(question, grounding, results, declaredFacts = {}) {
       { basis: [...chainLines, "本次未命中任何受限方名单，因此不存在需要计算合计持股的被列名主体"] }));
   } else {
     steps.push(step("ownership", "所有权穿透（OFAC 50% 聚合）", "evidence_needed", {
+      ...(subjectOptions ? { inputOptions: { ownershipSubject: subjectOptions } } : {}),
       basis: chainLines,
       needs: [
+        ...(ambiguousSubject
+          ? [bi(`GLEIF 中有 ${ambiguousSubject.length}${chain.moreCandidates ? ` 条以上` : " 条"}记录使用该名称，登记表未区分优劣；归一化会去掉法定形式，因此 GmbH、Company Limited、Holding GmbH 会归为同一个名称。需指明是哪一家，否则无法确定要沿哪条链穿透`,
+            `${ambiguousSubject.length}${chain.moreCandidates ? " or more" : ""} register records carry this name and the register ranks none above the others. Normalisation removes the legal form, so a GmbH, a Company Limited and a Holding GmbH reduce to one name. Which company it is has to be stated, or there is no chain to walk`)]
+          : []),
+        ...(chain?.noneOfTheCandidates
+          ? [bi("审查人已确认 GLEIF 中的同名记录均非该交易方，母公司链条需另行取得",
+            "The reviewer confirmed that none of the identically named register records is this counterparty, so the parent chain has to come from elsewhere")]
+          : []),
+        ...(chain?.tooGeneric
+          ? [bi(`该名称在 GLEIF 中被 ${chain.tooGeneric} 个实体包含，宽泛到无法识别一家公司；需提供法定全称（含法定形式，如 Oyj、GmbH、AG）`,
+            `${chain.tooGeneric} register entities contain this name, which is too generic to identify a company. The full legal name, including its legal form, is needed`)]
+          : []),
+        ...(chain?.suggestions?.length
+          ? [bi(`GLEIF 中无完全同名的记录，但有 ${chain.suggestions.length} 条包含该名称：${chain.suggestions.map((item) => `${item.name}（${item.country}）`).join("、")}。如其中之一即该交易方，请以法定全称重新填写`,
+            `No register record carries this name exactly, but ${chain.suggestions.length} contain it: ${chain.suggestions.map((item) => `${item.name} (${item.country})`).join(", ")}. If one of them is the counterparty, give its full legal name`)]
+          : []),
         ...(holderHits.length
           ? [bi(`已申报的 5% 以上持有人中有 ${holderHits.length} 名在受限方名单中潜在命中，需先确认主体身份，再按 OFAC 50% 规则合计其直接与间接持股；申报值为 13d-3 受益所有权，关联申报人重复计入同一批股份，不能直接相加`,
             `${holderHits.length} reported holder(s) above 5% drew a potential match on a restricted-party list. Confirm identity, then aggregate their direct and indirect holdings under the 50 Percent Rule — the filed figures are Rule 13d-3 beneficial ownership and affiliated filers report the same shares twice, so they cannot simply be added`)]
@@ -687,7 +733,11 @@ function tradeSteps(question, grounding, results, declaredFacts = {}) {
           ? bi("名单存在潜在命中，需按 OFAC 50% 规则计算被列名主体的直接与间接合计持股；GLEIF 不公布持股比例，Schedule 13D/G 只覆盖美国注册发行人 5% 以上的受益所有权",
             "A list matched, so the designated party's direct and indirect holdings must be aggregated under the 50 Percent Rule. GLEIF publishes no percentages, and Schedule 13D/G covers only beneficial ownership above 5% in a US registered issuer")
           : "完整股权结构与受益所有权证据；名单检索不解决间接或合计持股",
-        ...(chain?.noConfidentMatch ? [(() => {
+        // Guarded on the rejected list rather than on the flag: "no confident
+        // match" is now reached more than one way, and the reviewer saying none
+        // of the candidates is theirs carries no rejected search results to
+        // report.
+        ...(chain?.rejected?.length ? [(() => {
           const rejected = chain.rejected.map((item) => item.name).slice(0, 2);
           return bi(`GLEIF 中未找到与该名称完全一致的登记实体（返回但未采信：${rejected.join("、")}）`,
             `No GLEIF record matches this name exactly (returned but not used: ${rejected.join(", ")})`);
@@ -853,7 +903,22 @@ export function resolveAnalysisPath(plan, { question, grounding, results = [], d
         if (!item) return planned;
         // Provenance belongs to the plan. Resolution decides status only, so the
         // citation must survive it rather than being rebuilt by each resolver.
-        const keep = { inputs: planned.inputs || [], cite: planned.cite, citeNote: planned.citeNote, methodology: planned.methodology };
+        // The plan decides which fields a step may ask for; resolution may fill
+        // in the choices for one, because some of them are not knowable until a
+        // register has been read. A field the resolver offers no options for is
+        // left exactly as planned, and a choice field with no options is not
+        // asked at all.
+        const keep = {
+          inputs: (planned.inputs || [])
+            .map((input) => (item.inputOptions?.[input.field]
+              ? { ...input, options: item.inputOptions[input.field] }
+              : input))
+            // A choice with nothing to choose from is not a question. Dropped
+            // here, once, so neither the asker nor the interface has to know
+            // that some fields only exist on some runs.
+            .filter((input) => input.kind !== "choice" || input.options?.length),
+          cite: planned.cite, citeNote: planned.citeNote, methodology: planned.methodology
+        };
         // A step appended by a dependency has no inputs, and the path is resolved
         // more than once — so on the second pass that step arrives here as a
         // planned one. Nothing may assume the plan's shape.

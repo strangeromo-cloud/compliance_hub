@@ -89,6 +89,8 @@ const TERMS = {
   "注册国别": "Country of registration",
   "注册地址": "Registered address",
   "股权结构（如：A 持股 30%、B 持股 25%）": "Shareholding structure (e.g. A holds 30%, B holds 25%)",
+  "登记主体（GLEIF 中同名的几条记录）": "Register record (several in GLEIF carry this name)",
+  "以上都不是 / 不确定": "None of these / not sure",
   "准确型号 / part number": "Exact model / part number",
   "受控美国原产内容占比": "Controlled US-origin content",
   "已知的 ECCN 或中国管制编码": "Known ECCN or PRC control code",

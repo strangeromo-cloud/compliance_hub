@@ -281,7 +281,19 @@ export async function collectGrounding(question, agents = [], declaredFacts = {}
     // name is preferred over a matched candidate: the user naming their own
     // counterparty outranks this system's guess at it.
     const subject = String(declaredFacts.legalName || "").trim() || grounding.partyCandidates[0]?.entityName || null;
-    if (subject) grounding.ownership = await resolveOwnership(subject).catch(() => null);
+    // Which register record the reviewer said this is. Several entities can
+    // carry one name once the legal form is normalised away, and where the
+    // register separates them by nothing but country the choice is not this
+    // system's to make. The answer arrives as the option text, so the identifier
+    // is read back out of it — a 20-character LEI is unmistakable in a sentence,
+    // and picking "none of these" leaves none to find, which is also an answer.
+    const declaredSubject = String(declaredFacts.ownershipSubject || "").trim();
+    if (subject) {
+      grounding.ownership = await resolveOwnership(subject, {
+        chosenLei: declaredSubject.match(/\b[A-Z0-9]{20}\b/)?.[0] || null,
+        answered: Boolean(declaredSubject)
+      }).catch(() => null);
+    }
     // What the Treasury has said about this name, alongside what GLEIF says about
     // its accounts. They answer different questions and neither answers the 50
     // Percent Rule, so both are carried and both say what they are.
