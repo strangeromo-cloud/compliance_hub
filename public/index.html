@@ -110,8 +110,12 @@
             <div class="composer-foot">
               <div class="route-hint" id="routeHint"></div>
               <span class="slash-hint"><kbd>/</kbd> <span data-i18n="slashHint">Gem</span></span>
+              <!-- One button, two jobs. While a run is going the only thing
+                   worth offering here is stopping it, and a greyed-out send
+                   button offered nothing at all. -->
               <button class="send-btn" id="submitBtn" type="submit" aria-label="发送">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 14-7-4 14-3-6-7-1Z"/></svg>
+                <svg class="send-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 14-7-4 14-3-6-7-1Z"/></svg>
+                <svg class="stop-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5"/></svg>
               </button>
             </div>
           </div>

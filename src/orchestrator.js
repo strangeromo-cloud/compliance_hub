@@ -479,7 +479,13 @@ function crossLaneAnswers(context) {
   return answers;
 }
 
-export async function assessScenario({ question, locale = "zh", config = {}, history = [], gemId = null, declaredFacts = {}, unavailableFacts = [], onEvent = () => {} }) {
+// A run nobody is reading should not keep spending model calls, and it must
+// never be filed. `shouldStop` is asked at the lane boundaries and before
+// synthesis — the points where the next expensive thing is about to start.
+// Whatever call is already in flight finishes, because cancelling it would mean
+// threading a signal through the timeout controllers in llm.js, and those decide
+// how a failure is classified.
+export async function assessScenario({ question, locale = "zh", config = {}, history = [], gemId = null, declaredFacts = {}, unavailableFacts = [], onEvent = () => {}, shouldStop = () => false }) {
   // A question that asks for a stored value is answered, not reviewed. There is
   // no counterparty, no destination and no transaction in "what is this part's
   // ECCN", so there is nothing for a compliance procedure to work on — and
@@ -620,7 +626,11 @@ export async function assessScenario({ question, locale = "zh", config = {}, his
   let synthesis = null;
   let awaiting = null;
 
+  let stopped = false;
   for (const agent of laneOrder) {
+    // Checked before the specialist runs rather than after, so stopping saves
+    // the call rather than discarding its result.
+    if (shouldStop()) { stopped = true; break; }
     // Asked before the lane runs, not only after. Most questions come from the
     // path itself once retrieval has landed — they are not findings a specialist
     // produced — so running one to arrive at a question that was already known
@@ -654,6 +664,17 @@ export async function assessScenario({ question, locale = "zh", config = {}, his
     }
   }
 
+  if (stopped || shouldStop()) {
+    // The caller discards this. It is returned rather than thrown so a stop is
+    // not reported as a failure, and it carries the flag so nothing downstream
+    // can mistake a run that was abandoned for one that concluded.
+    //
+    // Named with the same vocabulary as the full result — synthesis is the
+    // conclusion, results are what the specialists said — so nothing has to
+    // learn a second shape to read it. Both are the honest values: no conclusion
+    // was reached, and this is how far it got.
+    return { stopped: true, synthesis: null, awaitingInput: null, results, analysisPath, grounding: groundingSummary };
+  }
   if (!awaiting) onEvent({ type: "synthesizing" });
   if (awaiting) {
     // No conclusion is drawn while a question is open. An assessment written over

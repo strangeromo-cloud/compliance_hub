@@ -435,7 +435,16 @@ details.trace.limits > summary { color: var(--risk-medium); }
 .slash-hint { font-size: 10.5px; color: var(--text-3); white-space: nowrap; }
 .send-btn { width: 28px; height: 28px; display: grid; place-items: center; flex: 0 0 auto; border: 0; border-radius: 8px; background: var(--accent); color: #fff; cursor: pointer; }
 .send-btn:disabled { opacity: .4; cursor: default; }
-.send-btn svg { width: 14px; height: 14px; }
+.send-btn svg { width: 14px; height: 14px; grid-area: 1 / 1; }
+/* Stopping is the live action, so it stays fully enabled and reads as one — the
+   run is going and this ends it. */
+.send-btn .stop-icon { display: none; fill: currentColor; stroke: none; }
+.send-btn.is-running { background: var(--risk-high); opacity: 1; cursor: pointer; }
+.send-btn.is-running .send-icon { display: none; }
+.send-btn.is-running .stop-icon { display: block; }
+/* Said on the message itself, not only in a toast that fades: a partial
+   analysis that looks finished is the one outcome stopping must not produce. */
+.run-stopped { margin: 8px 0 0; font-size: 11.5px; line-height: 1.6; color: var(--text-3); }
 .composer-note { max-width: 800px; margin: 7px auto 0; font-size: 10.5px; color: var(--text-3); text-align: center; }
 
 /* --------------------------------------------------------- slash palette */

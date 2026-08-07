@@ -342,10 +342,20 @@ const server = createServer(async (request, response) => {
         "X-Accel-Buffering": "no"
       });
       const send = (event) => { if (!response.writableEnded) response.write(`${JSON.stringify(event)}\n`); };
+      // The reader pressed stop, or their connection dropped. Either way nobody
+      // is reading this run, and it must not go on spending model calls or end
+      // up in the case history — a stopped analysis that files itself as a
+      // finished one is the audit trail lying about what happened.
+      let clientGone = false;
+      response.on("close", () => { if (!response.writableEnded) clientGone = true; });
       try {
         const locale = body.locale === "en" ? "en" : "zh";
         const declared = cleanDeclaredFacts(body.declaredFacts);
-        const result = await assessScenario({ question, locale, config, gemId: body.gemId, declaredFacts: declared.facts, unavailableFacts: cleanUnavailable(body.unavailableFacts), history: cleanHistory(body.history), onEvent: send });
+        const result = await assessScenario({ question, locale, config, gemId: body.gemId, declaredFacts: declared.facts, unavailableFacts: cleanUnavailable(body.unavailableFacts), history: cleanHistory(body.history), onEvent: send, shouldStop: () => clientGone });
+        if (result.stopped || clientGone) {
+          console.log(`Assessment stopped by the client after ${result.agents?.length ?? 0} of the specialists ran; nothing was saved.`);
+          return response.end();
+        }
         result.ignoredDeclaredFacts = declared.ignored;
         // Persist before announcing completion, but a storage failure must not
         // discard an answer the user is already looking at.
