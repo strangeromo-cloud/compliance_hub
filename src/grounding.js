@@ -1,6 +1,6 @@
 import { readNormalized } from "./data-layer/storage.js";
 import { classifyQuestionIntent, isChinaDualUseQuestion } from "./question-intent.js";
-import { findNamesMentioned, fuzzyPartyCandidates, matchParty } from "./entity-matching.js";
+import { findNamesMentioned, fuzzyPartyCandidates, matchParty, normalizeEntityName } from "./entity-matching.js";
 import { findBom, findInternalParties, findProducts, manufacturerFactsFor } from "./internal-data.js";
 import { resolveOwnership, statedOwnership } from "./ownership.js";
 import { beneficialOwners } from "./sec-edgar.js";
@@ -35,6 +35,9 @@ import { isConfigured as cslApiConfigured, searchName } from "./data-layer/csl-s
 // Real transliteration variants land clear of them: Gasprom Neft reaches Gazprom
 // Neft at 0.69, Rosnjeft reaches Rosneft at 0.71. The floor goes in the gap.
 const HOLDER_SPELLING_FLOOR = 0.65;
+
+// Han characters, plus the kana that appear in Japanese company names.
+const CJK_NAME = /[一-鿿぀-ヿ]/;
 
 // Exported so the boundary can be pinned to the names that set it rather than
 // re-derived from a number in a diff.
@@ -278,6 +281,25 @@ export async function collectGrounding(question, agents = [], declaredFacts = {}
       grounding.limitations.push(`ITA 官方检索接口本次不可用（${screening.official.unavailable[0]}），已回落到本机快照比对。`);
     }
     grounding.partyCandidates = await resolveCounterparties(question, screening.sources || []);
+    // Screened again under the name the register holds in the other language.
+    //
+    // The US lists are entirely in Latin script, so a Chinese question could
+    // never reach them however the matching was tuned — and returned nothing,
+    // which reads as a clean party. GLEIF publishes the entity's own declared
+    // alternative-language legal name, so the counterparty can be screened under
+    // both without translating anything.
+    const screenAlso = async (names, sources) => {
+      const found = [];
+      for (const name of names) {
+        for (const source of sources) {
+          for (const hit of matchParty(name, source.records, { limit: 3, threshold: 0.75 })) {
+            found.push({ ...hit, sourceId: source.sourceId, sourceLabel: source.label, viaName: name });
+          }
+        }
+      }
+      return found;
+    };
+
     // The corporate chain for whoever the party step settled on. A declared legal
     // name is preferred over a matched candidate: the user naming their own
     // counterparty outranks this system's guess at it.
@@ -355,6 +377,38 @@ export async function collectGrounding(question, agents = [], declaredFacts = {}
         grounding.limitations.push(bi(
           "已申报的 5% 以上持有人中出现受限方名单潜在命中：必须完成 OFAC 50% 合计持股计算。申报的是 13d-3 受益所有权而非股权比例，且关联申报人会就同一批股份各报一次，不能直接相加。",
           "A reported holder above five per cent drew a potential match on a restricted-party list. The 50 Percent Rule aggregation has to be completed. What is filed is Rule 13d-3 beneficial ownership, not equity, and affiliated filers report the same shares more than once — the figures cannot simply be added."));
+      }
+    }
+
+    // The register's other-language name for this counterparty, screened in its
+    // own right and merged into the case's matches. A hit reached this way is a
+    // hit — it is the same legal entity under the name its own register records
+    // — so it carries which name found it rather than appearing as though the
+    // question had contained it.
+    // Read off the resolution as a whole, not off a resolved subject: both of
+    // SMIC's register records are lapsed, so there is no subject to walk and the
+    // English legal name is still exactly what the screening needs.
+    const bridgeNames = (grounding.ownership?.otherNames || [])
+      .filter((name) => normalizeEntityName(name) && normalizeEntityName(name) !== normalizeEntityName(subject || ""));
+    if (bridgeNames.length && screening.sources?.length) {
+      const viaOtherName = await screenAlso(bridgeNames, screening.sources);
+      if (viaOtherName.length) {
+        grounding.listMatches = [...grounding.listMatches, ...viaOtherName];
+        grounding.limitations.push(bi(
+          `该交易方在 GLEIF 登记的另一语言法定名称为「${bridgeNames.join("、")}」，以该名称另行筛查命中 ${viaOtherName.length} 条：${[...new Set(viaOtherName.map((hit) => hit.entityName))].slice(0, 3).join("、")}。美国各名单均无中文条目，仅以中文名提问无法比对到它们。`,
+          `The register holds this counterparty's declared alternative-language legal name as "${bridgeNames.join(", ")}". Screening under that name returned ${viaOtherName.length} match(es): ${[...new Set(viaOtherName.map((hit) => hit.entityName))].slice(0, 3).join(", ")}. The US lists carry no Chinese entries, so a question written in Chinese alone cannot reach them.`));
+      }
+    }
+
+    // A question in a script the lists do not use, and nothing found. That is
+    // not a clean party — it is a comparison that could not be made, and the two
+    // must never arrive at the reader looking the same.
+    if (!grounding.listMatches.length && CJK_NAME.test(String(subject || question))) {
+      const latinOnly = screening.sources.filter((source) => !source.records.some((record) => CJK_NAME.test(record.entityName || "")));
+      if (latinOnly.length) {
+        grounding.limitations.push(bi(
+          `本次以中文名称筛查，但以下来源不含任何中文条目，因此对它们而言这次比对没有实际发生：${latinOnly.map((source) => source.sourceId).join("、")}。未命中不等于未被列名，需以该主体的英文法定名称重新筛查。`,
+          `The screening ran on a Chinese name, and these sources contain no Chinese entries at all, so against them no comparison actually took place: ${latinOnly.map((source) => source.sourceId).join(", ")}. No match is not evidence of no listing; re-screen under the party's English legal name.`));
       }
     }
 

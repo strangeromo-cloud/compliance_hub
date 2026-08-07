@@ -30,15 +30,6 @@ export const SOURCE_ID = "gleif-lei";
 const API = "https://api.gleif.org/api/v1/lei-records";
 const ACCEPT = "application/vnd.api+json";
 
-// Which registrations may be used, stated as what is allowed rather than as what
-// is forbidden.
-//
-// It was a deny-list — DUPLICATE, ANNULLED, MERGED, RETIRED, TRANSFERRED — and
-// LAPSED was not on it, so a lapsed registration passed as usable. Asking for
-// "Ericsson" resolved to Ericsson Limited in Hong Kong, whose LEI had lapsed,
-// and its parents were then reported as this counterparty's chain. Anything the
-// register invents next would have been let through the same way; a list of what
-// counts cannot fail open.
 const MEANING = "GLEIF 的母公司关系指会计合并母公司（由实体自行申报、发行机构校验），不含持股比例；OFAC 50% 规则需要的是合计持股，因此该链条是线索而非结论。";
 
 // How many records a person can usefully be shown at once. Past this the list
@@ -48,6 +39,15 @@ const MAX_CHOICES = 6;
 // Containment — the register holds a name that has this one inside it.
 const NEAR_ENOUGH_TO_OFFER = 0.85;
 
+// Which registrations may be used, stated as what is allowed rather than as what
+// is forbidden.
+//
+// It was a deny-list — DUPLICATE, ANNULLED, MERGED, RETIRED, TRANSFERRED — and
+// LAPSED was not on it, so a lapsed registration passed as usable. Asking for
+// "Ericsson" resolved to Ericsson Limited in Hong Kong, whose LEI had lapsed,
+// and its parents were then reported as this counterparty's chain. Anything the
+// register invents next would have been let through the same way; a list of what
+// counts cannot fail open.
 const USABLE_REGISTRATION = new Set(["ISSUED", "PENDING_TRANSFER", "PENDING_ARCHIVAL"]);
 const registrationOf = (item) => String(item.registrationStatus || "").toUpperCase();
 const usableRegistration = (item) => USABLE_REGISTRATION.has(registrationOf(item));
@@ -77,10 +77,35 @@ async function gleif(url) {
   return JSON.parse(file.bytes.toString("utf8"));
 }
 
+// The same company's name in the other language, as the register holds it.
+//
+// This is the bridge between a Chinese question and an English list, and there
+// is no other: the US Consolidated Screening List carries 25,921 entities and
+// not one Chinese character, OFAC's 19,662 likewise. Asking about
+// 中芯国际集成电路制造有限公司 matched nothing and read as a clean party, while
+// asking about Semiconductor Manufacturing International Corporation returned
+// three hits — the same company.
+//
+// Only ALTERNATIVE_LANGUAGE_LEGAL_NAME is taken. It is the entity's own declared
+// legal name in another language, validated by the issuing LOU, which is what
+// makes it usable in a screening file. The register also carries
+// AUTO_ASCII_TRANSLITERATED_LEGAL_NAME — "hua wei ji shu you xian gong si" — and
+// that is machine-generated pinyin. Screening on it would manufacture hits that
+// no publisher stands behind.
+const OTHER_LEGAL_NAME = /ALTERNATIVE_LANGUAGE_LEGAL_NAME/i;
+
+export function otherLegalNames(entity) {
+  return [...new Set((entity.otherNames || [])
+    .filter((item) => OTHER_LEGAL_NAME.test(item?.type || ""))
+    .map((item) => item?.name)
+    .filter((name) => typeof name === "string" && name.trim()))];
+}
+
 const describe = (record) => {
   const entity = record?.attributes?.entity || {};
   const address = entity.legalAddress || {};
   return {
+    otherNames: otherLegalNames(entity),
     lei: record?.id || null,
     name: entity.legalName?.name || null,
     country: address.country || null,
@@ -211,7 +236,31 @@ export async function resolveOwnership(name, { chosenLei = null, answered = fals
   // the first was a coin toss reported as a lookup. Where the register cannot
   // separate them, neither can this, and the answer is to ask rather than to
   // pick — the reviewer knows which company they are trading with.
-  const scored = returned.map((item) => ({ ...item, match: scoreNameMatch(legalName, item.name) }));
+  // Scored against every name the register holds for the entity, not only the
+  // one it files under. 华为技术有限公司 is the legal name and "Huawei
+  // Technologies Co., Ltd." is the declared alternative — a reviewer who types
+  // either is naming the same company, and matching only the first meant one of
+  // them resolved and the other did not.
+  const scored = returned.map((item) => {
+    const best = [item.name, ...(item.otherNames || [])]
+      .map((name) => ({ name, match: scoreNameMatch(legalName, name) }))
+      .sort((left, right) => right.match.score - left.match.score)[0];
+    return { ...item, match: best?.match || { score: 0, basis: "no_comparable_name" }, matchedName: best?.name || null };
+  });
+  // The other-language name is gathered before standing is considered, and
+  // deliberately so. Walking a lapsed registration's parent chain would be
+  // reporting stale ownership as current; reading the English legal name off it
+  // is nothing of the kind — a lapsed LEI does not unname the company. Both of
+  // SMIC's records are LAPSED, and excluding them from the bridge as well left a
+  // Chinese question unable to reach an English list at all.
+  //
+  // This is the same line the rest of the system draws: resolution has to be
+  // sure which entity it is, screening only has to be sure which names to
+  // compare.
+  const otherNames = [...new Set(scored
+    .filter((item) => item.match.basis === "normalized_name_identical")
+    .flatMap((item) => item.otherNames || []))];
+
   const candidates = scored
     .filter((item) => item.match.basis === "normalized_name_identical")
     .filter(usableRegistration)
@@ -236,6 +285,7 @@ export async function resolveOwnership(name, { chosenLei = null, answered = fals
     return {
       queried: legalName,
       candidates: [],
+      otherNames,
       noConfidentMatch: true,
       ...(near.length && near.length <= MAX_CHOICES
         ? { suggestions: near.map(present) }
@@ -262,11 +312,12 @@ export async function resolveOwnership(name, { chosenLei = null, answered = fals
   // send the question round again, nor quietly fall back to walking the first
   // candidate, which is the coin toss the question was asked to avoid.
   if (contenders.length > 1 && answered) {
-    return { queried: legalName, candidates: [], noConfidentMatch: true, noneOfTheCandidates: true };
+    return { queried: legalName, candidates: [], otherNames, noConfidentMatch: true, noneOfTheCandidates: true };
   }
   if (contenders.length > 1) {
     return {
       queried: legalName,
+      otherNames,
       ambiguous: true,
       // Country, city and identifier, because the names are identical after
       // normalisation and there is nothing in the name left to choose on.
@@ -284,6 +335,7 @@ export async function resolveOwnership(name, { chosenLei = null, answered = fals
   return {
     queried: legalName,
     subject,
+    otherNames,
     identifiedBy: "name",
     otherCandidates: candidates.slice(1),
     directParent: relations["direct-parent"] || null,

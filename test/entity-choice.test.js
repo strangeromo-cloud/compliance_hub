@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { normalizeEntityName, scoreNameMatch } from "../src/entity-matching.js";
 import { planAnalysisPath, resolveAnalysisPath } from "../src/analysis-path.js";
+import { otherLegalNames } from "../src/ownership.js";
 
 // A register record as GLEIF describes one, reduced to what the choice turns on.
 const record = (name, country, city, registrationStatus = "ISSUED", status = "ACTIVE") =>
@@ -91,4 +92,31 @@ test("choosing none of the candidates ends the question rather than repeating it
   assert.equal(item.inputs.some((input) => input.field === "ownershipSubject"), false, "asking again would loop forever");
   const needs = item.needs.map((line) => (typeof line === "string" ? line : line.zh)).join("\n");
   assert.match(needs, /均非该交易方/, needs);
+});
+
+// The bridge between a Chinese question and an English list, and there is no
+// other one: the Consolidated Screening List carries 25,921 entities and not one
+// Chinese character, OFAC's 19,662 likewise. No tuning of the matcher can cross
+// that; only a second name can.
+test("a company's other-language legal name is taken, and machine pinyin is not", () => {
+  // GLEIF's real payload for 华为技术有限公司.
+  const names = otherLegalNames({
+    otherNames: [
+      { name: "Huawei Technologies Co., Ltd.", type: "ALTERNATIVE_LANGUAGE_LEGAL_NAME", language: "en" },
+      { name: "Huawei", type: "TRADING_OR_OPERATING_NAME", language: "en" }
+    ],
+    transliteratedOtherNames: [{ name: "hua wei ji shu you xian gong si", type: "AUTO_ASCII_TRANSLITERATED_LEGAL_NAME" }]
+  });
+
+  // The declared alternative legal name is validated by the issuing LOU, which
+  // is what makes it usable in a screening file.
+  assert.deepEqual(names, ["Huawei Technologies Co., Ltd."]);
+
+  // The register also publishes machine-generated pinyin. Screening on it would
+  // manufacture hits no publisher stands behind, so it is deliberately excluded
+  // — and a trading name is not a legal name either.
+  assert.equal(names.some((name) => /hua wei ji shu/.test(name)), false);
+  assert.equal(names.includes("Huawei"), false);
+
+  assert.deepEqual(otherLegalNames({}), [], "an entity that declared none yields none, not a crash");
 });

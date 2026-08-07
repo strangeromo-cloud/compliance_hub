@@ -122,7 +122,13 @@ kbd { font-family: var(--mono); border: 1px solid var(--border-strong); border-r
   background: var(--surface);
 }
 
-.sidebar-brand { height: var(--bar-h); display: flex; align-items: center; gap: 9px; padding: 0 12px; border-bottom: 1px solid var(--border); }
+/* flex: 0 0 auto, or the declared height is only a suggestion. The sidebar is a
+   flex column and this is a flex item, so with the default flex-shrink the brand
+   bar was compressed to 41.8px against the workspace bar's 48px — the two header
+   bars carry a border along the top of the page and their borders did not meet.
+   The workspace bar had the guard; this one did not, which is why they agreed in
+   the stylesheet and disagreed on screen. */
+.sidebar-brand { height: var(--bar-h); flex: 0 0 auto; display: flex; align-items: center; gap: 9px; padding: 0 12px; border-bottom: 1px solid var(--border); }
 .brand-mark { width: 24px; height: 24px; border-radius: 5px; display: grid; place-items: center; color: #fff; background: var(--accent); flex: 0 0 auto; }
 .brand-mark svg { width: 14px; height: 14px; }
 .brand-text { min-width: 0; flex: 1; }
