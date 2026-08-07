@@ -373,6 +373,16 @@ function step(id, title, status, { basis = [], needs = [], inputOptions = null }
 // containing "token_overlap" — and the key is the wrong unit anyway: a reader
 // deciding whether two names are one party needs to know it was a spelling
 // resemblance rather than the same words in a different order.
+// What a percentage in the aggregate is a percentage of. Carried on every line
+// of the total, because the reader is being shown numbers from four publishers
+// that measure four different things.
+const MEASURE_LABEL = {
+  stated_control: bi("OFAC 声明的所有权或控制关系", "ownership or control stated by OFAC"),
+  accounting_consolidation: bi("GLEIF 会计合并母公司", "GLEIF accounting consolidating parent"),
+  beneficial_13d3: bi("SEC 13D/G 受益所有权", "SEC 13D/G beneficial ownership"),
+  declared: bi("用户填报，未核验", "declared by the user, unverified")
+};
+
 const MATCH_BASIS = {
   normalized_name_identical: bi("规范化后名称完全一致", "identical after normalisation"),
   one_normalized_name_contains_the_other: bi("一个名称包含另一个", "one name contains the other"),
@@ -687,6 +697,30 @@ function tradeSteps(question, grounding, results, declaredFacts = {}) {
     chainLines.unshift(bi(`登记主体由审查人从 GLEIF 同名记录中指定：${chain.subject.name}（LEI ${chain.subject.lei}${chain.subject.country ? `，${chain.subject.country}` : ""}）`,
       `The register record was picked by the reviewer from several carrying this name: ${chain.subject.name} (LEI ${chain.subject.lei}${chain.subject.country ? `, ${chain.subject.country}` : ""})`));
   }
+  // The aggregate itself, which is the thing the step is named after and has
+  // never actually reported. Every line says which measure it came from, because
+  // a total built from filed beneficial ownership and a typed structure is not a
+  // total any publisher stands behind.
+  const sum = grounding.ownershipAggregate;
+  if (sum?.via?.length || sum?.missing?.length) {
+    chainLines.push(bi(
+      `OFAC 50% 合计（已知部分）：${sum.known}%${sum.verdict === "blocked" ? "，已达到 50% 门槛" : "，未达 50% 门槛"}`,
+      `50 Percent Rule aggregate, on what is known: ${sum.known}%${sum.verdict === "blocked" ? ", at or above the threshold" : ", below the threshold"}`));
+    chainLines.push(...sum.via.map((item) => bi(
+      `　计入：${item.owner} ${item.percent}%（${MEASURE_LABEL[item.measure]?.zh || item.measure}${item.asOf ? `，${item.asOf}` : ""}）`,
+      `　counted: ${item.owner} ${item.percent}% (${MEASURE_LABEL[item.measure]?.en || item.measure}${item.asOf ? `, ${item.asOf}` : ""})`)));
+    if (sum.doubleCountRisk) {
+      chainLines.push(bi("　注意：合计中包含多份 13D/G 申报，关联申报人会就同一批股份各报一次，相加前须确认申报人之间无关联",
+        "　note: more than one Schedule 13D/G contributes to this total, and affiliated filers each report the same shares — confirm the filers are unrelated before adding them"));
+    }
+    if (sum.mixedMeasures) {
+      chainLines.push(bi("　注意：该合计由不同口径的比例相加得出（受益所有权与填报股权并非同一口径）",
+        "　note: this total adds percentages of different things — beneficial ownership and a declared shareholding are not the same measure"));
+    }
+    chainLines.push(bi(sum.meaning,
+      "The total covers the ownership relationships this system knows about. A figure below 50% is not an exclusion: the edge set is not known to be complete, and neither GLEIF nor OFAC publishes percentages."));
+  }
+
   if (filed?.notSynced) {
     chainLines.push(bi("SEC EDGAR 发行人索引尚未同步，本次未检索已申报的 5% 以上持有人。",
       "The SEC EDGAR issuer index is not synced, so filed holders above 5% were not retrieved."));
@@ -697,7 +731,11 @@ function tradeSteps(question, grounding, results, declaredFacts = {}) {
   // compute. A designated name among the holders is the opposite — it is the
   // case the rule exists for — so it reopens the step even when the question's
   // own parties came back clean.
-  if ((chainFound || owners.length > 0) && !matches.length && !holderHits.length) {
+  // An aggregate that reaches the threshold, or an established relationship with
+  // no size to it, is the case the rule exists for. Neither may close the step,
+  // whatever the name checks came back clean on.
+  const aggregateSettled = !sum || sum.verdict === "not_established";
+  if ((chainFound || owners.length > 0) && aggregateSettled && !matches.length && !holderHits.length) {
     // A chain from the register, and no designated name anywhere in the case.
     // Nothing here is decided by a percentage nobody has, so the step reports the
     // chain and says what it does not establish rather than demanding a
@@ -709,6 +747,17 @@ function tradeSteps(question, grounding, results, declaredFacts = {}) {
       ...(subjectOptions ? { inputOptions: { ownershipSubject: subjectOptions } } : {}),
       basis: chainLines,
       needs: [
+        // The whole point of aggregating: where the rule is already reached,
+        // there is nothing left to ask; where it is not, the question is one
+        // number rather than a shareholding structure from memory.
+        ...(sum?.verdict === "blocked"
+          ? [bi(`已知合计持股 ${sum.known}% 已达 OFAC 50% 门槛，该交易方本身即受限。需核实各持股主体身份与申报口径后据此处置，不需要再补充完整股权结构`,
+            `Designated parties are known to hold ${sum.known}%, at or above the 50 Percent Rule threshold, so the counterparty is itself restricted. Confirm the holders' identities and the basis of each figure and act on it — the full structure is no longer what is missing`)]
+          : []),
+        ...(sum?.verdict === "undetermined"
+          ? [bi(`已确认存在但缺少持股比例的关系共 ${sum.missing.length} 条，补齐其中任意一条即可能决定是否达到 50%：${sum.missing.slice(0, 3).map((item) => `${item.owner} → ${item.asset}（${MEASURE_LABEL[item.measure]?.zh || item.measure}）`).join("；")}。已知合计 ${sum.known}%`,
+            `${sum.missing.length} ownership relationship(s) are established but carry no percentage, and any one of them could decide whether the threshold is reached: ${sum.missing.slice(0, 3).map((item) => `${item.owner} → ${item.asset} (${MEASURE_LABEL[item.measure]?.en || item.measure})`).join("; ")}. Known aggregate ${sum.known}%`)]
+          : []),
         ...(ambiguousSubject
           ? [bi(`GLEIF 中有 ${ambiguousSubject.length}${chain.moreCandidates ? ` 条以上` : " 条"}记录使用该名称，登记表未区分优劣；归一化会去掉法定形式，因此 GmbH、Company Limited、Holding GmbH 会归为同一个名称。需指明是哪一家，否则无法确定要沿哪条链穿透`,
             `${ambiguousSubject.length}${chain.moreCandidates ? " or more" : ""} register records carry this name and the register ranks none above the others. Normalisation removes the legal form, so a GmbH, a Company Limited and a Holding GmbH reduce to one name. Which company it is has to be stated, or there is no chain to walk`)]

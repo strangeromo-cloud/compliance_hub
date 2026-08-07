@@ -4,6 +4,7 @@ import { findNamesMentioned, fuzzyPartyCandidates, matchParty } from "./entity-m
 import { findBom, findInternalParties, findProducts, manufacturerFactsFor } from "./internal-data.js";
 import { resolveOwnership, statedOwnership } from "./ownership.js";
 import { beneficialOwners } from "./sec-edgar.js";
+import { aggregateOwnership, buildOwnershipGraph } from "./ownership-graph.js";
 import { bi } from "./path-i18n.js";
 import { isConfigured as cslApiConfigured, searchName } from "./data-layer/csl-search.js";
 
@@ -354,6 +355,34 @@ export async function collectGrounding(question, agents = [], declaredFacts = {}
         grounding.limitations.push(bi(
           "已申报的 5% 以上持有人中出现受限方名单潜在命中：必须完成 OFAC 50% 合计持股计算。申报的是 13d-3 受益所有权而非股权比例，且关联申报人会就同一批股份各报一次，不能直接相加。",
           "A reported holder above five per cent drew a potential match on a restricted-party list. The 50 Percent Rule aggregation has to be completed. What is filed is Rule 13d-3 beneficial ownership, not equity, and affiliated filers report the same shares more than once — the figures cannot simply be added."));
+      }
+    }
+
+    // The four sources, composed and aggregated the way the rule works, rather
+    // than read one hop each and left for the reader to combine. This is where a
+    // designated party three levels up becomes visible, and where "supply the
+    // shareholding structure" turns into "this one percentage would settle it".
+    if (subject) {
+      // An unsynced source resolves to null rather than rejecting, so the
+      // absence has to be read off the value and not caught.
+      const stated = await readNormalized("ofac-ownership").catch(() => null);
+      const graph = buildOwnershipGraph({
+        statedEdges: stated?.records || [],
+        chain: grounding.ownership,
+        filed: grounding.beneficialOwners,
+        declaredText: declaredFacts.ownership || "",
+        subject
+      });
+      grounding.ownershipAggregate = aggregateOwnership(graph, subject, {
+        // Names this case's own screening hits as designated, so a party matched
+        // on a list in this run counts in the aggregate even where OFAC's
+        // published graph has never mentioned it.
+        designated: (grounding.listMatches || []).map((match) => match.entityName).filter(Boolean)
+      });
+      if (grounding.ownershipAggregate.verdict === "blocked") {
+        grounding.limitations.push(bi(
+          `按 OFAC 50% 规则合计，已知被列名主体对该交易方的持股达到 ${grounding.ownershipAggregate.known}%，达到或超过 50% 的门槛：该主体本身即受限，无需另行列名。`,
+          `Aggregated under the 50 Percent Rule, designated parties are known to hold ${grounding.ownershipAggregate.known}% of this counterparty, at or above the threshold. The entity is itself restricted without needing to be listed.`));
       }
     }
 
