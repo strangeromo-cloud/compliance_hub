@@ -329,13 +329,22 @@ test("both panels draw the same lanes and the same steps, by construction", asyn
   assert.deepEqual(laneView(path.lanes[0], { question: "identity_resolution" }).shown.map((s) => s.id),
     ["identify_party", "identity_resolution"], "a step nobody has reached says nothing about this question");
 
-  // Declining it moves the run on: the step folds and the lane opens up.
+  // Declining it moves the run on, and the step stays where it is. It is not the
+  // same as a step the procedure never reached for: the reader was asked, said
+  // they did not have it, and the gap is still open. Folding it away would hide
+  // a gap the reader had just created, behind a line that reads like tidying up.
   const declined = ["registrationNumber"];
   const view = laneView(path.lanes[0], { question: "ownership", declined });
-  assert.deepEqual(view.folded.map((s) => s.id), ["identity_resolution"]);
-  // The step being asked is drawn even though its lane has not run — a question
-  // is put before the work that would answer it.
-  assert.deepEqual(view.shown.map((s) => s.id), ["identify_party", "ownership"]);
+  assert.deepEqual(view.shown.map((s) => s.id), ["identify_party", "identity_resolution", "ownership"],
+    "a declined step stays in place, styled as skipped");
+  assert.deepEqual(view.folded.map((s) => s.id), [], "and nothing folds that the reader decided about");
+
+  // What does fold is a step whose conditions never arose. It needs no reading
+  // and no action, so it keeps its place in the record without keeping its
+  // height — and it must still fold on both panels.
+  const withNa = { lane: "trade", steps: [...path.lanes[0].steps, { id: "parent_screening", status: "not_applicable" }] };
+  const naView = laneView(withNa, { question: "ownership", declined });
+  assert.deepEqual(naView.folded.map((s) => s.id), ["parent_screening"]);
 
   // With nothing outstanding, closing is drawn and every lane with settled work
   // appears — the shape a finished run has on both sides.

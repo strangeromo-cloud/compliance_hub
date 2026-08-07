@@ -1638,6 +1638,15 @@ html[lang="en"] .step-needs::before { content: "NEEDS"; font-size: 8px; }
    and the record of having passed it over is part of the file. */
 .fl-step.skipped .fl-node { border-style: dashed; color: var(--text-3); }
 .fl-step.skipped .fl-text { color: var(--text-3); }
+
+/* A step the reader passed over, in the body. It is no longer folded away —
+   the gap is still open and hiding it made a decision they had just taken look
+   like housekeeping — so it needs to read as decided rather than as still
+   waiting for an answer. Dashed, muted, and out of the warn colour that means
+   "this is what is blocking you". */
+.path-step.passed-over .step-mark { border-style: dashed; color: var(--text-3); }
+.path-step.passed-over .step-head strong { color: var(--text-2); font-weight: 500; }
+.path-step.passed-over .step-status { color: var(--text-3); }
 /* The fold names what is inside it, like the body's does. A count with no way to
    see what it counts is the reader being told a number and refused the list. */
 .fl-folded { margin: 4px 0 0 2px; font-size: 10.5px; color: var(--text-3); }

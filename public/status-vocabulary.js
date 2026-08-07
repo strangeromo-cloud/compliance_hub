@@ -103,7 +103,15 @@ export function stepState(item, declined = []) {
   }[item.status] || "pending";
 }
 
-export const FOLDED = new Set(["na", "skipped"]);
+// Only what never arose. A step the procedure did not reach for is finished
+// business: it needs no reading and no action, and folding it keeps it in the
+// record without giving it the height of a step that happened.
+//
+// A skipped step is not that. The reader was asked, said they did not have it,
+// and the step stays outstanding — the vocabulary above says so. Folding the two
+// together hid a gap the reader had just created, behind a line that read like
+// housekeeping. It stays in place now, styled as skipped, on both panels.
+export const FOLDED = new Set(["na"]);
 
 // Which step the rail should mark. One definition, because there are three
 // meanings of "current" here and picking the wrong one is how the two panels
