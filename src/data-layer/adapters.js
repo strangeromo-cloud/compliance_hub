@@ -7,6 +7,7 @@ import { JP_ADAPTERS } from "./adapters-jp.js";
 import { VENDOR_ADAPTERS } from "./adapters-vendor.js";
 import { FEDREG_ADAPTERS } from "./adapters-fedreg.js";
 import { OWNERSHIP_ADAPTERS } from "./adapters-ownership.js";
+import { beneficialOwners } from "../sec-edgar.js";
 
 const CSL_URL = "https://data.trade.gov/downloadable_consolidated_screening_list/v1/consolidated.json";
 const UK_URL = "https://sanctionslist.fcdo.gov.uk/docs/UK-Sanctions-List.csv";
@@ -307,6 +308,46 @@ export function parseEcfrPart(xml, { sourceId, part, versionDate = null, sourceU
   };
 }
 
+// The register's own index of every company with a ticker: CIK, symbol and the
+// name EDGAR files it under. It holds no ownership at all — it is what turns a
+// counterparty name into the key the Schedule 13D/G lookup needs, and it is
+// synced rather than queried because resolving a name against a remote search
+// endpoint would put someone else's matching between the question and the
+// answer.
+const SEC_TICKERS = "https://www.sec.gov/files/company_tickers.json";
+
+function normalizeSecCompany(item, index) {
+  return {
+    sourceId: "sec-edgar",
+    // A company with two share classes appears once per ticker under one CIK,
+    // so the symbol has to be part of the key or the second row overwrites the
+    // first.
+    recordId: `${item.cik_str}-${item.ticker || index}`,
+    cik: item.cik_str,
+    ticker: item.ticker || null,
+    entityName: item.title || null,
+    recordType: "registered_issuer",
+    sourceUrl: `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${item.cik_str}`,
+    rawRecord: { snapshotRecordIndex: index }
+  };
+}
+
+async function syncSecEdgar() {
+  const file = await fetchPublicFile(SEC_TICKERS, { accept: "application/json", maxBytes: 16 * 1024 * 1024 });
+  const payload = JSON.parse(file.bytes.toString("utf8"));
+  const rows = Object.values(payload).filter((item) => item?.cik_str && item?.title);
+  if (!rows.length) throw new Error("SEC company ticker index returned no rows.");
+  return {
+    extension: "json",
+    file,
+    records: rows.map(normalizeSecCompany),
+    // Named for what it is, so nobody reads a synced record count as holdings
+    // coverage: the index is the issuers, the shareholdings are fetched per case.
+    syncScope: "us_registered_issuer_index_use_live_query_for_shareholdings",
+    sourceUpdatedAt: file.lastModified
+  };
+}
+
 async function syncEcfrPart(sourceId, part) {
   let file;
   let versionDate;
@@ -327,6 +368,7 @@ export const ADAPTERS = {
   "un-consolidated": { sync: syncUn, mode: "full_download", credential: null },
   "uk-sanctions": { sync: syncUk, mode: "full_download", credential: null },
   "gleif-lei": { sync: syncGleifSample, mode: "sample_plus_live_query", credential: null },
+  "sec-edgar": { sync: syncSecEdgar, mode: "issuer_index_plus_live_query", credential: null },
   "bis-ear": { sync: () => syncEcfrPart("bis-ear", 736), mode: "versioned_snapshot", credential: null },
   "bis-ear-732": { sync: () => syncEcfrPart("bis-ear-732", 732), mode: "versioned_snapshot", credential: null },
   "bis-ear-734": { sync: () => syncEcfrPart("bis-ear-734", 734), mode: "versioned_snapshot", credential: null },
@@ -349,6 +391,31 @@ export async function queryRemoteSource(sourceId, query) {
     const url = `https://api.gleif.org/api/v1/lei-records?filter%5Bentity.legalName%5D=${encodeURIComponent(query)}&page%5Bsize%5D=10`;
     const file = await fetchPublicFile(url, { accept: "application/vnd.api+json", maxBytes: 2 * 1024 * 1024 });
     return (JSON.parse(file.bytes.toString("utf8")).data || []).map(normalizeGleif);
+  }
+  if (sourceId === "sec-edgar") {
+    const result = await beneficialOwners(query);
+    if (result?.notSynced) throw Object.assign(new Error("SEC EDGAR 的发行人索引尚未同步，无法把名称解析成 CIK。"), { status: 409, code: "sync_required" });
+    if (result?.unavailable) throw Object.assign(new Error(result.unavailable), { status: 502 });
+    // No registered class of equity means no Schedule 13 exists, which is an
+    // empty answer rather than a failed one.
+    return (result?.holders || []).map((holder) => ({
+      sourceId: "sec-edgar",
+      recordId: `${result.issuer.cik}-${holder.name}`,
+      recordType: "beneficial_owner",
+      entityName: holder.name,
+      issuerName: result.issuer.name,
+      issuerCik: result.issuer.cik,
+      percentOfClass: holder.percentOfClass,
+      shares: holder.shares,
+      securityClass: holder.securityClass,
+      reportingPersonType: holder.personType,
+      form: holder.form,
+      filedAt: holder.filedAt,
+      sourceUrl: holder.sourceUrl,
+      // Travels on every record, because a percentage with no measure attached
+      // is the one thing a reader will misuse.
+      basisOfMeasure: "rule_13d-3_beneficial_ownership_per_class_not_equity_share"
+    }));
   }
   if (sourceId === "sam-exclusions") {
     const key = process.env.SAM_GOV_API_KEY;

@@ -3,8 +3,42 @@ import { classifyQuestionIntent, isChinaDualUseQuestion } from "./question-inten
 import { findNamesMentioned, fuzzyPartyCandidates, matchParty } from "./entity-matching.js";
 import { findBom, findInternalParties, findProducts, manufacturerFactsFor } from "./internal-data.js";
 import { resolveOwnership, statedOwnership } from "./ownership.js";
+import { beneficialOwners } from "./sec-edgar.js";
 import { bi } from "./path-i18n.js";
 import { isConfigured as cslApiConfigured, searchName } from "./data-layer/csl-search.js";
+
+// A reported shareholder is screened on the name it filed under, and only an
+// agreeing name counts.
+//
+// Everywhere else in this file screening scans free text, where a partial name
+// has to be accepted because that is how a name appears in a sentence. A
+// Schedule 13D/G holder is not free text — it is a legal name in a filed field,
+// and a designated party holding five per cent of a US issuer files under its
+// own name, which the lists also carry. So the two names have to agree after
+// normalisation, or differ only in spelling.
+//
+// Containment is deliberately not enough here. "VANGUARD" is a real entry on the
+// Consolidated Screening List, and the general-purpose matcher reports it inside
+// "Vanguard Capital Management" — which is the shareholder of record of most of
+// the S&P 500. A screening line that fires on almost every US-listed company
+// teaches the reader to skip it, and then it is worse than absent.
+// A spelling variant counts, but not one claimed at the bottom of the band.
+//
+// The character tier scores a near-twin from 0.55 up. At the floor the claim is
+// only "these differ by one character in six", which for a short list entry is
+// arithmetic rather than evidence: across 36 real shareholder names taken from
+// ten US issuers, the only thing it produced was NOMURA HOLDINGS matching OURA
+// at 0.56. Two more sit just above it and are equally wrong — Rostech to PROTEH
+// at 0.59, Aeroflot to Aerofalcon at 0.61.
+//
+// Real transliteration variants land clear of them: Gasprom Neft reaches Gazprom
+// Neft at 0.69, Rosnjeft reaches Rosneft at 0.71. The floor goes in the gap.
+const HOLDER_SPELLING_FLOOR = 0.65;
+
+// Exported so the boundary can be pinned to the names that set it rather than
+// re-derived from a number in a diff.
+export const holderMatches = (hit) => hit.matchBasis === "normalized_name_identical"
+  || (hit.matchBasis === "character_similarity" && hit.matchScore >= HOLDER_SPELLING_FLOOR);
 
 // Every synchronized restricted-party source is screened, so adding an adapter
 // widens screening coverage without touching this file.
@@ -252,6 +286,12 @@ export async function collectGrounding(question, agents = [], declaredFacts = {}
     // its accounts. They answer different questions and neither answers the 50
     // Percent Rule, so both are carried and both say what they are.
     if (subject) grounding.statedOwnership = await statedOwnership(subject).catch(() => null);
+    // The only public source that attaches a number to a holding. GLEIF says who
+    // sits above the company and OFAC says a relationship exists; neither states
+    // a share, so the aggregate the 50 Percent Rule turns on had to be typed in
+    // by hand. A Schedule 13D/G states it in a field — for a US registered
+    // issuer, above five per cent, as beneficial ownership rather than equity.
+    if (subject) grounding.beneficialOwners = await beneficialOwners(subject).catch(() => null);
 
     // The parent, screened in its own right. This is the whole point of
     // resolving the chain: a company owned in aggregate by designated parties is
@@ -274,6 +314,37 @@ export async function collectGrounding(question, agents = [], declaredFacts = {}
           "A parent company drew a potential match on a restricted-party list. Where aggregate ownership reaches 50%, the subsidiary is restricted too, and the aggregation has to be completed."));
       }
     }
+    // The five-per-cent holders, screened in their own right. This is the point
+    // of retrieving them: a designated party holding a stated share of the
+    // counterparty is the input to the 50 Percent Rule, and until now it was a
+    // search someone had to run by hand against a structure they had typed.
+    const owners = grounding.beneficialOwners?.holders || [];
+    if (owners.length && screening.sources?.length) {
+      grounding.holderScreening = owners.map((holder) => ({
+        holder,
+        hits: screening.sources.flatMap((source) =>
+          // The basis set is what filters, not the score: a spelling variant
+          // scores 0.55–0.75 by design, so a high threshold would drop the
+          // Gazprom/Gasprom case this is meant to catch before the basis is
+          // ever looked at.
+          // Filtered before it is cut down, never after. Containment scores 0.85
+          // and a spelling variant 0.69, so asking for the top two and then
+          // dropping the containment matches returns nothing while the real hit
+          // sits at rank five — "Gasprom Neft" found "Gazprom Neft" and lost it
+          // to two names that merely contained a word.
+          matchParty(holder.name, source.records, { limit: 40, threshold: 0.55 })
+            .filter(holderMatches)
+            .slice(0, 2)
+            .map((hit) => ({ ...hit, sourceId: source.sourceId, sourceLabel: source.label }))),
+        screened: screening.sources.map((source) => source.sourceId)
+      }));
+      if (grounding.holderScreening.some((entry) => entry.hits.length)) {
+        grounding.limitations.push(bi(
+          "已申报的 5% 以上持有人中出现受限方名单潜在命中：必须完成 OFAC 50% 合计持股计算。申报的是 13d-3 受益所有权而非股权比例，且关联申报人会就同一批股份各报一次，不能直接相加。",
+          "A reported holder above five per cent drew a potential match on a restricted-party list. The 50 Percent Rule aggregation has to be completed. What is filed is Rule 13d-3 beneficial ownership, not equity, and affiliated filers report the same shares more than once — the figures cannot simply be added."));
+      }
+    }
+
     if (screening.unsyncedSources.length) {
       grounding.limitations.push(bi(
         `以下名单来源尚未同步，本次未筛查：${screening.unsyncedSources.join("、")}。来源缺失不等于无风险。`,

@@ -633,7 +633,42 @@ function tradeSteps(question, grounding, results, declaredFacts = {}) {
       `OFAC states: ${hit.asset} is held or controlled by ${hit.owner}${hit.percentage ? ` (${hit.percentage})` : " (no share published)"}`)));
   chainLines.push(...stated);
 
-  if (chainFound && !matches.length) {
+  // The filed shareholdings, which is the half GLEIF and OFAC both leave open.
+  // Reported as filed — per class, as beneficial ownership, one line per filer —
+  // and never summed here: three of 1-800-Flowers' filers report the same 9.21%
+  // because a fund and its two managers each disclose the same shares.
+  const filed = grounding.beneficialOwners;
+  const owners = filed?.holders || [];
+  const holderHits = (grounding.holderScreening || []).filter((entry) => entry.hits.length);
+  if (owners.length) {
+    const top = owners.slice(0, 6);
+    chainLines.push(bi(
+      `SEC Schedule 13D/G 申报的 5% 以上受益所有人（${filed.issuer.name}，CIK ${filed.issuer.cik}，读取 ${filed.filingsRead} 份申报）：`
+      + top.map((holder) => `${holder.name} ${holder.percentOfClass}%（${holder.securityClass}，${holder.filedAt}）`).join("；")
+      + (owners.length > top.length ? `；另有 ${owners.length - top.length} 名` : ""),
+      `Beneficial owners above 5% from SEC Schedule 13D/G (${filed.issuer.name}, CIK ${filed.issuer.cik}, ${filed.filingsRead} filings read): `
+      + top.map((holder) => `${holder.name} ${holder.percentOfClass}% (${holder.securityClass}, ${holder.filedAt})`).join("; ")
+      + (owners.length > top.length ? `; and ${owners.length - top.length} more` : "")));
+    chainLines.push(bi(filed.meaning,
+      "A Schedule 13D/G reports Rule 13d-3 beneficial ownership — voting or dispositive power — per class of security, not an equity share, and affiliated filers each report the same shares. It is the input to the 50 Percent Rule aggregation, not the result of it. Two kinds of holder are absent: anyone below 5%, who need not file, and anyone who filed before December 2024 and has had no material change since, who need not amend — so a short or empty list is not an absence of large shareholders."));
+    if (!filed.windowCoversStructuredEra) {
+      chainLines.push(bi("该发行人申报频繁，本次可读取的申报窗口未回溯到结构化申报起始日，持有人清单可能不完整。",
+        "This issuer files often enough that the readable window does not reach back to the start of structured filing, so the holder list may be incomplete."));
+    }
+    chainLines.push(...holderHits.map((entry) => bi(
+      `已申报持有人 ${entry.holder.name}（${entry.holder.percentOfClass}%）在 ${entry.hits[0].sourceId} 中潜在命中「${entry.hits[0].entityName}」（相似度 ${entry.hits[0].matchScore}）`,
+      `Reported holder ${entry.holder.name} (${entry.holder.percentOfClass}%) draws a potential match on "${entry.hits[0].entityName}" in ${entry.hits[0].sourceId} (score ${entry.hits[0].matchScore})`)));
+  } else if (filed?.notSynced) {
+    chainLines.push(bi("SEC EDGAR 发行人索引尚未同步，本次未检索已申报的 5% 以上持有人。",
+      "The SEC EDGAR issuer index is not synced, so filed holders above 5% were not retrieved."));
+  }
+
+  // Filed shareholdings settle the step on the same terms the parent chain does:
+  // with no designated party anywhere in the case there is no aggregate to
+  // compute. A designated name among the holders is the opposite — it is the
+  // case the rule exists for — so it reopens the step even when the question's
+  // own parties came back clean.
+  if ((chainFound || owners.length > 0) && !matches.length && !holderHits.length) {
     // A chain from the register, and no designated name anywhere in the case.
     // Nothing here is decided by a percentage nobody has, so the step reports the
     // chain and says what it does not establish rather than demanding a
@@ -644,9 +679,13 @@ function tradeSteps(question, grounding, results, declaredFacts = {}) {
     steps.push(step("ownership", "所有权穿透（OFAC 50% 聚合）", "evidence_needed", {
       basis: chainLines,
       needs: [
-        chainFound
-          ? bi("名单存在潜在命中，需按 OFAC 50% 规则计算被列名主体的直接与间接合计持股；GLEIF 不公布持股比例",
-            "A list matched, so the designated party's direct and indirect holdings must be aggregated under the 50 Percent Rule; GLEIF publishes no percentages")
+        ...(holderHits.length
+          ? [bi(`已申报的 5% 以上持有人中有 ${holderHits.length} 名在受限方名单中潜在命中，需先确认主体身份，再按 OFAC 50% 规则合计其直接与间接持股；申报值为 13d-3 受益所有权，关联申报人重复计入同一批股份，不能直接相加`,
+            `${holderHits.length} reported holder(s) above 5% drew a potential match on a restricted-party list. Confirm identity, then aggregate their direct and indirect holdings under the 50 Percent Rule — the filed figures are Rule 13d-3 beneficial ownership and affiliated filers report the same shares twice, so they cannot simply be added`)]
+          : []),
+        chainFound || owners.length
+          ? bi("名单存在潜在命中，需按 OFAC 50% 规则计算被列名主体的直接与间接合计持股；GLEIF 不公布持股比例，Schedule 13D/G 只覆盖美国注册发行人 5% 以上的受益所有权",
+            "A list matched, so the designated party's direct and indirect holdings must be aggregated under the 50 Percent Rule. GLEIF publishes no percentages, and Schedule 13D/G covers only beneficial ownership above 5% in a US registered issuer")
           : "完整股权结构与受益所有权证据；名单检索不解决间接或合计持股",
         ...(chain?.noConfidentMatch ? [(() => {
           const rejected = chain.rejected.map((item) => item.name).slice(0, 2);
@@ -654,6 +693,11 @@ function tradeSteps(question, grounding, results, declaredFacts = {}) {
             `No GLEIF record matches this name exactly (returned but not used: ${rejected.join(", ")})`);
         })()] : []),
         ...(chain?.notInRegister ? ["该名称在 GLEIF 中无登记记录；未持有 LEI 的实体需另行取得股权证据"] : []),
+        // Absence of a US listing is why nothing came back, not a gap to be
+        // chased — saying which one it is stops the reader re-running a search
+        // that cannot succeed.
+        ...(filed?.notRegistered ? [bi("该主体不在 SEC 注册发行人索引内（无美国注册证券），因此没有 Schedule 13D/G 可读，持股比例需另行取得",
+          "The party is not in the SEC registered-issuer index — no US registered security — so no Schedule 13D/G exists to read and the percentages have to come from elsewhere")] : []),
         ...needsMatching(results, null, /ubo|受益所有|股权|所有权|持股/i)
       ]
     }));

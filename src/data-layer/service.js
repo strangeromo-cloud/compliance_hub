@@ -85,7 +85,7 @@ export async function getDataSourceCoverage() {
         "SHA-256 content checksum",
         ...(snapshotIsSample ? ["sample only; use live query for case lookup"] : [])
       ] : source.dataCaptured,
-      adapter: adapter ? { implemented: true, syncable: Boolean(adapter.sync), queryable: adapter.mode === "live_query" || source.sourceId === "gleif-lei", mode: adapter.mode, credential: adapter.credential, credentialConfigured } : { implemented: false, syncable: false, queryable: false, mode: null, credential: null, credentialConfigured: true },
+      adapter: adapter ? { implemented: true, syncable: Boolean(adapter.sync), queryable: String(adapter.mode || "").includes("live_query"), mode: adapter.mode, credential: adapter.credential, credentialConfigured } : { implemented: false, syncable: false, queryable: false, mode: null, credential: null, credentialConfigured: true },
       fallback,
       // A bundled fallback is reported as its own state, never as "success".
       // Rolling it into success would present a point-in-time list copy as the
@@ -236,7 +236,11 @@ export async function queryDataSource(sourceId, query, limit = 20, offset = 0) {
   const from = Math.max(0, Math.min(100_000, Number(offset) || 0));
 
   const adapter = ADAPTERS[sourceId];
-  if (adapter?.mode === "live_query" || sourceId === "gleif-lei") {
+  // Whether a source answers case lookups live is a property of its adapter, not
+  // a list of source ids kept in two files. A source whose local snapshot is an
+  // index or a sample says so in its mode, and both halves of the name — the
+  // index part and the live part — stay readable.
+  if (String(adapter?.mode || "").includes("live_query")) {
     // A remote API answers a query; there is no local corpus to page through.
     if (!cleanQuery) throw Object.assign(new Error("This source answers live queries, so it needs search terms."), { status: 400, code: "query_required" });
     return { sourceId, mode: "live", records: await queryRemoteSource(sourceId, cleanQuery) };
