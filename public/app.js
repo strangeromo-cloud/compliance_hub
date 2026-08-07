@@ -983,16 +983,55 @@ function comparisonTable(comparisons) {
 // mistyped registration number could only be fixed by asking the whole question
 // again. The form is re-offered carrying what was declared, so a correction is
 // an edit rather than a restart.
+// A choice between register records is not a value to pick off a list of eight
+// country codes, and it was being drawn as one: a full-width bordered box of
+// monospace text, sitting directly above a real text input that had the same
+// border, the same radius and the same width. It read as a second field to type
+// into.
+//
+// The option carries its own structure — name｜country city｜LEI — so it is laid
+// out as a record: the name leads, the things that distinguish it follow in
+// smaller type, and a radio mark says the row is to be chosen rather than filled
+// in. data-value keeps the whole original string, because that is what the
+// answer is parsed back out of.
+const RECORD_PARTS = /\s*｜\s*/;
+
+function choiceMarkup(option, field, selected, asRecord) {
+  const attrs = `data-field="${esc(field)}" data-value="${esc(option)}"`;
+  // A country code or a percentage band is a value, and a chip is the right
+  // shape for it.
+  if (!asRecord) {
+    return `<button type="button" class="si-choice${selected ? " on" : ""}" ${attrs}>${esc(option)}</button>`;
+  }
+  // Every option in a record group is drawn as a record, including "none of
+  // these" — it is one of the same mutually exclusive answers, and rendering it
+  // as a chip left it stretched across the group and centred while everything
+  // above it was left aligned. It simply has no second line.
+  const [title, ...meta] = option.split(RECORD_PARTS);
+  return `<button type="button" class="si-choice si-record${selected ? " on" : ""}" ${attrs}>
+            <span class="si-radio" aria-hidden="true"></span>
+            <span class="si-record-text">
+              <span class="si-record-title">${esc(title)}</span>
+              ${meta.length ? `<span class="si-record-meta">${esc(meta.join(" · "))}</span>` : ""}
+            </span>
+          </button>`;
+}
+
 function stepInputsMarkup(item, { values = null, collapsed = false } = {}) {
   const filled = (field) => (values ? String(values[field] ?? "") : "");
   return `
     <div class="step-inputs${collapsed ? " si-collapsed" : ""}" data-step="${esc(item.id)}">
       ${item.inputs.filter((input) => input.kind !== "choice" || input.options?.length).map((input) => input.kind === "choice"
-        ? `<div class="si-row">
+        ? (() => {
+          // One option carrying a separator makes the whole group a record
+          // choice, so the group is laid out one way rather than per option.
+          const asRecords = input.options.some((option) => RECORD_PARTS.test(option));
+          return `<div class="si-row">
              <span class="si-label">${esc(input.label)}</span>
-             <div class="si-choices${input.options.some((option) => option.length > 20) ? " si-choices-long" : ""}">${input.options.map((option) => `
-               <button type="button" class="si-choice${filled(input.field) === option ? " on" : ""}" data-field="${esc(input.field)}" data-value="${esc(option)}">${esc(option)}</button>`).join("")}</div>
-           </div>`
+             <div class="si-choices${asRecords ? " si-choices-records" : ""}">${input.options.map((option) =>
+              choiceMarkup(option, input.field, filled(input.field) === option, asRecords)).join("")}</div>
+           </div>`;
+        })()
         : `<div class="si-row">
              <span class="si-label">${esc(input.label)}</span>
              <input class="si-text" type="text" data-field="${esc(input.field)}" maxlength="300" value="${esc(filled(input.field))}" placeholder="${esc(t("declarePlaceholder"))}">

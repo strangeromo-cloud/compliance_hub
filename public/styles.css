@@ -25,6 +25,7 @@
   --risk-low: #3d9970;
   --risk-unknown: #6b757d;
 
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Roboto, sans-serif;
   --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
   --rail-w: 240px;
   --panel-w: 380px;
@@ -81,7 +82,7 @@ html[data-theme="light"] {
 html, body {
   margin: 0; height: 100%; overflow: hidden;
   background: var(--bg); color: var(--text);
-  font: 400 13px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Roboto, sans-serif;
+  font: 400 13px/1.6 var(--sans);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -132,8 +133,12 @@ kbd { font-family: var(--mono); border: 1px solid var(--border-strong); border-r
 .brand-mark { width: 24px; height: 24px; border-radius: 5px; display: grid; place-items: center; color: #fff; background: var(--accent); flex: 0 0 auto; }
 .brand-mark svg { width: 14px; height: 14px; }
 .brand-text { min-width: 0; flex: 1; }
-.brand-text strong { display: block; font-size: 12.5px; font-weight: 600; letter-spacing: -.01em; white-space: nowrap; }
-.brand-text em { font-style: normal; font-size: 9px; color: var(--text-3); letter-spacing: .08em; text-transform: uppercase; }
+/* Both lines set their own line-height. They inherited the body's 1.6, which is
+   right for a paragraph and far too loose for a two-line label — it put roughly
+   nine pixels of air between the name and the word under it, so they read as two
+   separate things rather than one lockup. */
+.brand-text strong { display: block; font-size: 12.5px; line-height: 1.25; font-weight: 600; letter-spacing: -.01em; white-space: nowrap; }
+.brand-text em { display: block; font-style: normal; font-size: 9px; line-height: 1.2; color: var(--text-3); letter-spacing: .08em; text-transform: uppercase; }
 .rail-toggle { width: 24px; height: 24px; display: grid; place-items: center; border: 0; background: transparent; color: var(--text-3); cursor: pointer; border-radius: 4px; flex: 0 0 auto; }
 .rail-toggle:hover { color: var(--text); background: var(--surface-2); }
 .rail-toggle svg { width: 15px; height: 15px; }
@@ -1080,11 +1085,32 @@ html[lang="en"] .step-needs::before { content: "NEEDS"; font-size: 8px; }
 .si-choice:hover { border-color: var(--accent); color: var(--text); }
 .si-choice.on { background: var(--accent); border-color: var(--accent); color: #fff; }
 /* Register records to choose between, not a country code. The names are
-   identical, so the option has to carry the country, the city and the
-   identifier — which does not fit on a 26px chip. One per line, left aligned,
-   readable end to end. */
-.si-choices-long { flex-direction: column; align-items: stretch; gap: 5px; }
-.si-choices-long .si-choice { height: auto; min-height: 26px; padding: 6px 10px; line-height: 1.45; text-align: left; white-space: normal; word-break: break-word; }
+   identical after normalisation, so the option has to carry the country, the
+   city and the identifier — which does not fit on a 26px chip.
+
+   Drawn as records rather than as boxes. A full-width bordered rectangle of
+   monospace text sitting above a real text input is a text input, whatever it
+   does on click: the radio mark is what says this row is chosen and not filled
+   in, and splitting the name off the identifiers is what stops it reading as one
+   long value. */
+.si-choices-records { flex-direction: column; align-items: stretch; gap: 4px; }
+.si-record {
+  height: auto; display: grid; grid-template-columns: 14px minmax(0, 1fr); gap: 9px; align-items: start;
+  padding: 7px 10px; text-align: left; white-space: normal; background: var(--surface);
+}
+.si-radio { width: 13px; height: 13px; margin-top: 1px; border: 1px solid var(--border-strong); border-radius: 50%; background: var(--surface); }
+.si-record:hover .si-radio { border-color: var(--accent); }
+.si-record-text { min-width: 0; display: grid; gap: 1px; }
+/* Sans, not mono: the name is a name. The identifiers below stay mono, which is
+   what a reader compares character by character against a register page. */
+.si-record-title { font: 500 12px/1.4 var(--sans); color: var(--text); word-break: break-word; }
+.si-record-meta { font-size: 10.5px; line-height: 1.45; color: var(--text-3); font-family: var(--mono); word-break: break-word; }
+
+/* Selected reads as chosen, not as filled. A whole card flooded with the accent
+   colour buries the identifiers the choice was made on. */
+.si-record.on { background: var(--accent-soft); border-color: var(--accent); color: inherit; }
+.si-record.on .si-record-title { color: var(--text); }
+.si-record.on .si-radio { border-color: var(--accent); background: var(--accent); box-shadow: inset 0 0 0 2px var(--surface); }
 .si-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 2px; }
 .si-note { font-size: 10.5px; color: var(--risk-medium); }
 .si-skipped { display: none; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 11.5px; color: var(--text-3); }
@@ -1322,12 +1348,17 @@ html[lang="en"] .step-needs::before { content: "NEEDS"; font-size: 8px; }
    the top and the warning-toned edge — a reader should be able to see the
    conclusion and see that it is not final in the same glance. */
 .answer.is-interim { border-color: color-mix(in srgb, var(--risk-medium) 34%, var(--border)); }
+/* No border and no corners of its own. The card it sits in already carries an
+   amber edge for exactly this reason, so outlining the banner as well drew two
+   tinted lines a few pixels apart. And the card has no padding, so this is a
+   full-bleed strip: a 6px radius on it cut notches at the bottom and fought the
+   card's 12px at the top, which the card's overflow already clips. The tint and
+   the colour say what it is; the card's edge is the frame. */
 .interim-flag {
-  margin: 0 0 10px; padding: 5px 9px; border-radius: var(--radius);
+  margin: 0 0 10px; padding: 5px 12px; border-radius: 0;
   font-size: 11px; line-height: 1.5; font-weight: 500;
   color: var(--risk-medium);
   background: color-mix(in srgb, var(--risk-medium) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--risk-medium) 26%, transparent);
 }
 .is-interim .answer-head h3 { font-size: 14px; }
 
