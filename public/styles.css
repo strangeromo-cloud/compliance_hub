@@ -137,8 +137,19 @@ kbd { font-family: var(--mono); border: 1px solid var(--border-strong); border-r
    right for a paragraph and far too loose for a two-line label — it put roughly
    nine pixels of air between the name and the word under it, so they read as two
    separate things rather than one lockup. */
-.brand-text strong { display: block; font-size: 12.5px; line-height: 1.25; font-weight: 600; letter-spacing: -.01em; white-space: nowrap; }
-.brand-text em { display: block; font-style: normal; font-size: 9px; line-height: 1.2; color: var(--text-3); letter-spacing: .08em; text-transform: uppercase; }
+/* One lockup, wherever it appears. The workbench had its own — a 9px uppercase
+   letter-spaced "Prototype" — while the guide and the coverage page carried a
+   10px "合规情报原型", so the same corner of the same product read as two
+   different marks depending on which page you were on.
+   The single rule is the tightened one: both pages inherited the body's 1.6
+   line-height, which stacked 22px of type into 36 and made the two lines read
+   as two separate things. */
+.brand-text strong, .coverage-page .brand strong {
+  display: block; font-size: 12.5px; line-height: 1.25; font-weight: 600; letter-spacing: -.01em; white-space: nowrap;
+}
+.brand-text small, .coverage-page .brand small {
+  display: block; font-size: 10px; line-height: 1.3; color: var(--text-3);
+}
 .rail-toggle { width: 24px; height: 24px; display: grid; place-items: center; border: 0; background: transparent; color: var(--text-3); cursor: pointer; border-radius: 4px; flex: 0 0 auto; }
 .rail-toggle:hover { color: var(--text); background: var(--surface-2); }
 .rail-toggle svg { width: 15px; height: 15px; }
@@ -591,8 +602,6 @@ dialog::backdrop { background: rgba(0,0,0,.55); }
   background: var(--surface); position: sticky; top: 0; z-index: 20;
 }
 .coverage-page .brand { display: flex; align-items: center; gap: 9px; text-decoration: none; color: inherit; }
-.coverage-page .brand strong { display: block; font-size: 12.5px; font-weight: 600; }
-.coverage-page .brand small { display: block; font-size: 10px; color: var(--text-3); }
 .coverage-page .top-actions { display: flex; align-items: center; gap: 7px; }
 .settings-button, .coverage-back {
   height: 28px; display: inline-flex; align-items: center; gap: 6px; padding: 0 11px;

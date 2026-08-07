@@ -4,7 +4,7 @@ import { AGENT_META, judgeIntent } from "/intent.js";
 
 const i18n = {
   zh: {
-    prototype: "Prototype", skipLink: "跳到工作区", workbench: "出口管制工作台", newChat: "新对话",
+    prototype: "合规情报原型", skipLink: "跳到工作区", workbench: "出口管制工作台", newChat: "新对话",
     scenarioLibrary: "测试场景", guideLink: "使用说明", scenarioHelp: "场景只填入输入框，不会新建对话。",
     startTitle: "描述交易，或用 / 选择一个 Gem",
     startLead: "范围为美国与中国的出口管制。Master Agent 自动路由到贸易、产品和第三方尽调 Agent，返回一份带证据链的统一答案。",
@@ -61,7 +61,7 @@ const i18n = {
     model_auth_error: "认证失败（401）：API Key 无效或不属于该服务。", model_permission_error: "权限被拒绝（403）。", model_endpoint_or_name_not_found: "接口或模型不存在（404）：检查 Base URL 是否含 /v1。", model_quota_or_rate_limit: "被限流或额度不足（429）。", model_invalid_request: "接口拒绝了请求（400/422）。", model_invalid_response: "响应不是兼容的 Chat Completions JSON。", model_timeout: "连接超时。", model_network_error: "无法连接模型接口。", model_provider_error: "模型服务异常。", model_unknown_error: "连接失败。"
   },
   en: {
-    prototype: "Prototype", skipLink: "Skip to workspace", workbench: "Export control workbench", newChat: "New",
+    prototype: "Compliance intelligence", skipLink: "Skip to workspace", workbench: "Export control workbench", newChat: "New",
     scenarioLibrary: "Test scenarios", guideLink: "Guide", scenarioHelp: "Scenarios only fill the composer; they do not start a new thread.",
     startTitle: "Describe the transaction, or press / for a gem",
     startLead: "Scope is US and PRC export control. The Master Agent routes to the trade, product and third-party diligence agents and returns one answer with its evidence chain.",
