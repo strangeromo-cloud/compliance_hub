@@ -180,7 +180,6 @@ kbd { font-family: var(--mono); border: 1px solid var(--border-strong); border-r
 .side-label { font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .side-label b { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
 
-.sidebar-controls { display: flex; align-items: center; gap: 6px; padding: 6px 7px 0; }
 .seg { display: flex; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
 .seg button { width: 28px; height: 24px; border: 0; background: transparent; color: var(--text-3); cursor: pointer; font-size: 11px; }
 .seg button.active { background: var(--surface-3); color: var(--text); }
@@ -193,7 +192,7 @@ html[data-theme="light"] .moon-icon { display: block; }
 
 /* Rail mode: labels collapse, icons stay. */
 .app.rail .brand-text, .app.rail .rail-label, .app.rail .side-label,
-.app.rail .gem-nav .gem-name, .app.rail .sidebar-controls { display: none; }
+.app.rail .gem-nav .gem-name { display: none; }
 /* In rail mode the toggle is hidden for space, so the brand mark itself becomes
    the way back out — otherwise collapsing the sidebar is a one-way trip. */
 .app.rail .sidebar-brand { justify-content: center; padding: 0 8px; cursor: pointer; }
@@ -207,10 +206,12 @@ html[data-theme="light"] .moon-icon { display: block; }
 .workspace-bar { height: var(--bar-h); flex: 0 0 auto; display: flex; align-items: center; gap: 9px; padding: 0 16px; border-bottom: 1px solid var(--border); background: var(--surface); }
 .workspace-bar h1 { font-size: 12.5px; font-weight: 600; color: var(--text-2); white-space: nowrap; }
 .drawer-btn { display: none; }
-.mode-pill { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-2); border: 1px solid var(--border); border-radius: 20px; padding: 2px 9px 2px 7px; background: var(--surface-2); cursor: pointer; white-space: nowrap; }
-.mode-pill .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--risk-medium); }
-.mode-pill.live .dot { background: var(--accent-text); }
-.mode-pill:hover { border-color: var(--border-strong); color: var(--text); }
+/* Language and theme sit in the header where the mode pill used to. The pill was
+   a leftover: it switched between live and rules mode, rules mode is gone, and
+   there is nothing left to choose. What it still reported — whether a model is
+   configured at all — moved to the settings entry in the sidebar foot, which is
+   both where the other deployment-state lights are and where the fix is. */
+.workspace-bar .seg button { height: 24px; }
 .text-btn { height: 26px; display: inline-flex; align-items: center; gap: 6px; padding: 0 10px; border: 1px solid var(--border); border-radius: var(--radius); background: transparent; color: var(--text-2); cursor: pointer; font-size: 12px; white-space: nowrap; }
 .text-btn:hover { border-color: var(--border-strong); color: var(--text); background: var(--surface-2); }
 .text-btn svg { width: 14px; height: 14px; }
