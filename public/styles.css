@@ -1348,14 +1348,19 @@ html[lang="en"] .step-needs::before { content: "NEEDS"; font-size: 8px; }
    the top and the warning-toned edge — a reader should be able to see the
    conclusion and see that it is not final in the same glance. */
 .answer.is-interim { border-color: color-mix(in srgb, var(--risk-medium) 34%, var(--border)); }
-/* No border and no corners of its own. The card it sits in already carries an
-   amber edge for exactly this reason, so outlining the banner as well drew two
-   tinted lines a few pixels apart. And the card has no padding, so this is a
-   full-bleed strip: a 6px radius on it cut notches at the bottom and fought the
-   card's 12px at the top, which the card's overflow already clips. The tint and
-   the colour say what it is; the card's edge is the frame. */
+/* Inset, and with no border of its own.
+
+   Two things were wrong and they are easy to conflate. It drew its own tinted
+   border a few pixels inside the tinted border the card already carries for the
+   same reason — two lines saying one thing. And it had no horizontal margin
+   while the card has no padding, so the banner ran edge to edge and sat against
+   that border, the only thing in the card that did: .answer-head and
+   .answer-extra both inset their content by 16px.
+
+   So the border goes and the margin matches theirs. The banner now lines up with
+   the headline beneath it, and the card's edge is the only frame. */
 .interim-flag {
-  margin: 0 0 10px; padding: 5px 12px; border-radius: 0;
+  margin: 12px 16px 0; padding: 5px 9px; border-radius: var(--radius);
   font-size: 11px; line-height: 1.5; font-weight: 500;
   color: var(--risk-medium);
   background: color-mix(in srgb, var(--risk-medium) 12%, transparent);
@@ -1376,7 +1381,6 @@ html[lang="en"] .step-needs::before { content: "NEEDS"; font-size: 8px; }
 .live-elapsed { margin-left: auto; font: 400 10.5px/1 var(--mono); color: var(--text-3); }
 /* The waiting step is the focal point of an open analysis. */
 .step-ask { margin: 8px 0 6px; font-size: 12px; font-weight: 500; color: var(--accent-text); }
-.interim-flag { margin-bottom: 8px; }
 
 /* ---- streamed reasoning: one component, wherever it appears ----
    Sits clear of the content above it, never grows past a readable height, and
