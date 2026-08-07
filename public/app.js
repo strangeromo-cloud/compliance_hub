@@ -2212,7 +2212,11 @@ async function analyze(event, options = {}) {
       live.classList.remove("resuming");
       live.querySelectorAll("[data-resume-stream]").forEach((node) => node.remove());
       live.querySelectorAll(".step-inputs.submitted").forEach((host) => host.classList.remove("submitted"));
-      live.insertAdjacentHTML("beforeend", `<p class="run-stopped">${esc(t("runStopped"))}</p>`);
+      // Into the content column, not onto the message. An assistant message is a
+      // 24px avatar column beside the body, so appending to the message itself
+      // put the line in the avatar column and wrapped it one character wide.
+      const body = live.querySelector(":scope > div") || live;
+      body.insertAdjacentHTML("beforeend", `<p class="run-stopped">${esc(t("runStopped"))}</p>`);
       return;
     }
     // A failure part-way through a continuation must not discard the answer the
