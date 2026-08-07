@@ -779,3 +779,75 @@ test("clearance does not depend on when it is computed", async () => {
     assert.deepEqual(early.openSteps, late.openSteps, "nor must the open steps");
   } finally { await loud.stop(); }
 });
+
+test("a name that differs by a letter is still recalled", async () => {
+  // Token overlap compares whole words, so a name misspelled by one character
+  // has nothing in common with its target and scored zero. That is the wrong
+  // answer for the case a screening list exists to catch: Gazprom and Gasprom,
+  // Rosneft and Rosnefft are one party transliterated twice, and Cyrillic,
+  // Arabic and Chinese each romanise more than one way.
+  const { scoreNameMatch } = await import("../src/entity-matching.js");
+
+  for (const [typo, real] of [["Gasprom Neft", "Gazprom Neft"], ["Rosnefft", "Rosneft"], ["Huawie Technologies", "Huawei Technologies"]]) {
+    const result = scoreNameMatch(typo, real);
+    assert.equal(result.basis, "character_similarity", `${typo} should be recalled on spelling`);
+    assert.ok(result.score >= 0.55, `${typo} must clear the screening threshold`);
+    // Capped below the token tier on purpose. A spelling resemblance is a reason
+    // to put two names in front of a person, never a reason to treat them as one
+    // party — identity resolution is what settles it.
+    assert.ok(result.score < 0.8, `${typo} must stay weaker than a token match`);
+  }
+
+  // What it must not do. An abbreviation is not a misspelling; a partial name is
+  // containment and scores higher through its own tier; and one character in
+  // Chinese is usually a different name rather than a typo, so CJK is excluded.
+  assert.equal(scoreNameMatch("ZTE", "Zhongxing Telecom").basis, "no_overlap");
+  assert.equal(scoreNameMatch("华为技术", "华力技术").basis, "no_overlap");
+  assert.equal(scoreNameMatch("Huawei", "Huawei Marine").basis, "one_normalized_name_contains_the_other");
+  // The tiers above it are untouched.
+  assert.equal(scoreNameMatch("Huawei Technologies Co., Ltd.", "Huawei Technologies").score, 1);
+  assert.equal(scoreNameMatch("Technologies Huawei", "Huawei Technologies").basis, "token_overlap");
+});
+
+test("every hit carries its own verdict, in the reader's language", async () => {
+  // Two names coming back from one search are two claims about two entities. A
+  // list reporting only scores invites reading them as one finding with two
+  // rows — and the basis was printed as the matcher's own key, so a Chinese
+  // answer contained "token_overlap".
+  //
+  // Built from a constructed grounding rather than the synced snapshot: what is
+  // under test is how a hit is rendered, and a test that needs a particular list
+  // to have been downloaded fails on a fresh checkout for reasons of its own.
+  const { planAnalysisPath, resolveAnalysisPath } = await import("../src/analysis-path.js");
+
+  const hit = (entityName, matchBasis, matchDisposition, matchScore) => ({
+    sourceId: "trade-csl", recordId: entityName, entityName, matchedName: entityName,
+    matchScore, matchBasis, matchDisposition, identityComparisons: []
+  });
+  const question = "交易方 Gazprom Neft";
+  const grounding = {
+    intent: "party_screening",
+    listMatches: [
+      hit("Gazprom Neft", "normalized_name_identical", "potential_match_requires_identity_review", 1),
+      hit("Gasprom Neft PAO", "character_similarity", "weak_potential_match_requires_identity_review", 0.69)
+    ],
+    screening: { screenedSources: [{ sourceId: "trade-csl", recordCount: 25921 }], unsyncedSources: [] },
+    partyCandidates: [], internalParties: [], limitations: []
+  };
+
+  const path = resolveAnalysisPath(planAnalysisPath({ agents: ["trade"], question }),
+    { question, grounding, results: [], declaredFacts: {}, final: true });
+  const nameMatch = path.lanes.flatMap((lane) => lane.steps).find((step) => step.id === "name_match");
+  const lines = nameMatch.basis.map((line) => (typeof line === "string" ? line : line.zh)).filter((line) => /相似度/.test(line));
+
+  assert.equal(lines.length, 2, "both hits are reported");
+  for (const line of lines) {
+    assert.match(line, / — /, "each hit states its own verdict");
+    assert.doesNotMatch(line, /token_overlap|character_similarity|normalized_name_identical|requires_identity_review/,
+      "the matcher's keys must not reach the reader");
+  }
+  // And the two are told apart: one is the same name, the other only looks like it.
+  assert.match(lines[0], /规范化后名称完全一致/);
+  assert.match(lines[1], /拼写相近/, "a spelling resemblance says so, rather than reading as a name match");
+  assert.match(lines[1], /弱命中/, "and carries the weaker verdict of its own");
+});

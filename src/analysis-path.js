@@ -360,6 +360,29 @@ function step(id, title, status, { basis = [], needs = [] } = {}) {
 // Missing-information lines the specialists produced, filtered to the ones that
 // plausibly belong to a given step. The agents already say what they lack; this
 // routes those statements to the step they block rather than inventing new ones.
+// What the matcher found, in words. It emitted its own keys — a Chinese answer
+// containing "token_overlap" — and the key is the wrong unit anyway: a reader
+// deciding whether two names are one party needs to know it was a spelling
+// resemblance rather than the same words in a different order.
+const MATCH_BASIS = {
+  normalized_name_identical: bi("规范化后名称完全一致", "identical after normalisation"),
+  one_normalized_name_contains_the_other: bi("一个名称包含另一个", "one name contains the other"),
+  token_overlap: bi("词元重叠（同样的词，次序或数量不同）", "token overlap (same words, different order or count)"),
+  character_similarity: bi("拼写相近（疑似转写或拼写变体）", "close spelling (possible transliteration or spelling variant)"),
+  weak_token_overlap: bi("弱词元重叠", "weak token overlap"),
+  no_overlap: bi("无重叠", "no overlap"),
+  no_comparable_name: bi("无可比对名称", "no comparable name")
+};
+
+// The per-hit verdict, so two hits read as two claims rather than one list.
+const MATCH_DISPOSITION = {
+  strong_potential_match_escalate_for_human_confirmation: bi("身份要素一致，建议升级人工确认", "identity elements agree; escalate for human confirmation"),
+  potential_match_requires_identity_review: bi("需人工核对身份要素", "identity elements need human review"),
+  weak_potential_match_requires_identity_review: bi("弱命中，需人工核对", "weak hit; identity elements need human review"),
+  likely_false_positive_identity_elements_conflict: bi("身份要素冲突，疑似误报", "identity elements conflict; likely false positive"),
+  below_review_threshold: bi("低于复核阈值", "below the review threshold")
+};
+
 function needsMatching(results, agent, pattern) {
   const seen = new Set();
   for (const result of results || []) {
@@ -511,11 +534,16 @@ function tradeSteps(question, grounding, results, declaredFacts = {}) {
       matches.length
         ? { basis: matches.slice(0, 3).map((match) => {
           const name = match.entityName || match.matchedName;
-          const identical = match.matchBasis === "normalized_name_identical";
+          const how = MATCH_BASIS[match.matchBasis] || bi(match.matchBasis, match.matchBasis);
+          const verdict = MATCH_DISPOSITION[match.matchDisposition];
           const notice = match.noticeNumber ? `，${match.noticeNumber}` : "";
           const noticeEn = match.noticeNumber ? `, ${match.noticeNumber}` : "";
-          return bi(`${name}：相似度 ${match.matchScore}，${identical ? "规范化后名称完全一致" : match.matchBasis}${notice}`,
-            `${name}: score ${match.matchScore}, ${identical ? "identical after normalisation" : match.matchBasis}${noticeEn}`);
+          // Each hit carries its own verdict. Two names coming back from one
+          // search are two separate claims about two separate entities, and a
+          // list that reports only scores invites reading them as one finding
+          // with two rows.
+          return bi(`${name}：相似度 ${match.matchScore}，${localizeLine(how, "zh")}${notice}${verdict ? ` — ${localizeLine(verdict, "zh")}` : ""}`,
+            `${name}: score ${match.matchScore}, ${localizeLine(how, "en")}${noticeEn}${verdict ? ` — ${localizeLine(verdict, "en")}` : ""}`);
         }).concat(jurisdiction ? [jurisdiction.line] : []) }
         : { basis: [(() => {
           const total = screened.reduce((n, s) => n + s.recordCount, 0).toLocaleString();

@@ -85,6 +85,72 @@ function jaccard(left, right) {
   return shared / (left.size + right.size - shared);
 }
 
+const CJK_TOKEN = /[\u4e00-\u9fff\u3040-\u30ff]/;
+
+// Character-level similarity, for the one thing token overlap cannot see.
+//
+// Everything above compares whole words: a name that differs by one letter has
+// no token in common and scores zero. That is the wrong answer for the case a
+// screening list exists to catch — Gazprom and Gasprom, Rosneft and Rosnefft are
+// the same party transliterated twice, and Cyrillic, Arabic and Chinese all
+// romanise more than one way.
+//
+// Jaro-Winkler rather than raw edit distance because it weights a shared prefix,
+// which is how transliteration variants actually differ: they agree at the front
+// and drift later.
+function jaroWinkler(left, right) {
+  if (left === right) return 1;
+  if (!left.length || !right.length) return 0;
+  const window = Math.max(0, Math.floor(Math.max(left.length, right.length) / 2) - 1);
+  const leftFlags = new Array(left.length).fill(false);
+  const rightFlags = new Array(right.length).fill(false);
+  let matches = 0;
+  for (let i = 0; i < left.length; i += 1) {
+    const from = Math.max(0, i - window);
+    const to = Math.min(i + window + 1, right.length);
+    for (let j = from; j < to; j += 1) {
+      if (rightFlags[j] || left[i] !== right[j]) continue;
+      leftFlags[i] = rightFlags[j] = true;
+      matches += 1;
+      break;
+    }
+  }
+  if (!matches) return 0;
+  let transpositions = 0;
+  let k = 0;
+  for (let i = 0; i < left.length; i += 1) {
+    if (!leftFlags[i]) continue;
+    while (!rightFlags[k]) k += 1;
+    if (left[i] !== right[k]) transpositions += 1;
+    k += 1;
+  }
+  const jaro = (matches / left.length + matches / right.length + (matches - transpositions / 2) / matches) / 3;
+  let prefix = 0;
+  while (prefix < 4 && prefix < left.length && prefix < right.length && left[prefix] === right[prefix]) prefix += 1;
+  return jaro + prefix * 0.1 * (1 - jaro);
+}
+
+// A misspelling is a word-for-word correspondence, not a partial one: every word
+// on each side has to have a near-twin on the other. Requiring both directions
+// stops "Huawei" from reading as a misspelling of "Huawei Marine Networks" —
+// that is containment, which scores higher and is already handled above.
+//
+// CJK is excluded deliberately. A one-character difference in Chinese is usually
+// a different name rather than a typo, and character-level similarity there
+// produces noise rather than recall.
+const NEAR_TWIN = 0.88;
+function spellingSimilarity(left, right) {
+  const a = [...left].filter((token) => !CJK_TOKEN.test(token));
+  const b = [...right].filter((token) => !CJK_TOKEN.test(token));
+  if (!a.length || !b.length || a.length !== b.length) return 0;
+  const best = (from, to) => from.map((token) => Math.max(...to.map((other) => jaroWinkler(token, other))));
+  const forward = best(a, b);
+  const backward = best(b, a);
+  if (Math.min(...forward, ...backward) < NEAR_TWIN) return 0;
+  const all = [...forward, ...backward];
+  return all.reduce((sum, value) => sum + value, 0) / all.length;
+}
+
 export function scoreNameMatch(query, candidate) {
   const normalizedQuery = normalizeEntityName(query);
   const normalizedCandidate = normalizeEntityName(candidate);
@@ -95,6 +161,14 @@ export function scoreNameMatch(query, candidate) {
   }
   const overlap = jaccard(nameTokens(query), nameTokens(candidate));
   if (overlap >= 0.5) return { score: Math.min(0.8, 0.45 + overlap * 0.4), basis: "token_overlap" };
+  // Below the token tier, and deliberately capped below it: a spelling
+  // resemblance is a reason to put two names in front of a person, never a
+  // reason to treat them as the same party. It clears the recall threshold and
+  // nothing more, so identity resolution is what settles it.
+  const spelling = spellingSimilarity(nameTokens(query), nameTokens(candidate));
+  if (spelling >= NEAR_TWIN) {
+    return { score: Math.round((0.55 + (spelling - NEAR_TWIN) * (0.2 / (1 - NEAR_TWIN))) * 100) / 100, basis: "character_similarity" };
+  }
   return { score: overlap, basis: overlap ? "weak_token_overlap" : "no_overlap" };
 }
 
