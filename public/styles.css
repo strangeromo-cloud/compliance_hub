@@ -1211,6 +1211,18 @@ html[lang="en"] .step-needs::before { content: "NEEDS"; font-size: 8px; }
 .fl-label { font-size: 10.5px; color: var(--text-3); }
 .fl-progress { margin-left: auto; font: 400 10px/1 var(--mono); color: var(--text-3); }
 .flow-lane.running .fl-label { color: var(--accent-text); }
+/* Said, not tinted. The colour alone was invisible exactly when it mattered:
+   a run returning to a lane the reader had read as finished, because a
+   dependency appended a step to it. */
+.fl-running { font-size: 10px; color: var(--accent-text); }
+.fl-head .thinking-dot { flex: none; align-self: center; }
+/* A step on the board because an earlier finding put it there. The body labels
+   it in words; the rail has room for a mark and the reason in a tooltip. */
+.fl-trigger {
+  position: absolute; left: -7px; top: 1px;
+  font-size: 9px; line-height: 1; color: var(--accent-text);
+}
+.fl-step button { position: relative; }
 .fl-steps { list-style: none; margin: 0; padding: 0; }
 /* The connecting line makes it a flow rather than a list of dots. */
 .fl-step { position: relative; padding-left: 2px; }

@@ -863,7 +863,7 @@ function renderFlowPanel(path, options = {}) {
 // differently. The rail's fold used to be a dead count line while the body's was
 // expandable and named what was inside — a reader who skipped ownership could
 // see it named on the left and had no way to reach it on the right.
-function flowStepRow(item, { asking, options, muted = false } = {}) {
+function flowStepRow(item, { asking, options, triggered, muted = false } = {}) {
   // The declined fields have to reach here too. Without them the fold said "2
   // skipped" and every row inside it drew the "!" of a live question, because the
   // enclosing laneView knew about the declined fields and the row did not.
@@ -881,6 +881,7 @@ function flowStepRow(item, { asking, options, muted = false } = {}) {
     <li class="fl-step ${shape.cls} ${current ? "current" : ""} ${isRunning ? "is-running" : ""}">
       <button type="button" data-flow-step="${esc(item.id)}" title="${esc(title)}">
         <span class="fl-node" aria-hidden="true">${shape.mark}</span>
+        ${triggered?.has(item.id) ? `<span class="fl-trigger" title="${esc(t("stepTriggered"))}">＋</span>` : ""}
         <span class="fl-text">${esc(item.title)}</span>
       </button>
     </li>`;
@@ -917,18 +918,20 @@ function flowMarkup(path, options = {}) {
       // The same view the body draws, from the same rule, so the two panels
       // cannot list different steps for one run.
       const view = laneView(lane, { question: asking, declined: options.declined });
+      const triggered = new Set((path.triggered || []).map((edge) => edge.to?.step));
       const laneFolded = view.folded;
       const running = options.activeLane === lane.lane;
       return `
       <section class="flow-lane ${running ? "running" : ""}">
         <div class="fl-head">
           <span class="fl-label">${esc(lane.label)}</span>
+          ${running ? `<span class="thinking-dot" aria-hidden="true"></span><span class="fl-running">${esc(t("laneRunning"))}</span>` : ""}
           <span class="fl-progress">${view.settled}/${view.total}</span>
         </div>
-        <ol class="fl-steps">${view.shown.map((item) => flowStepRow(item, { asking, options })).join("")}</ol>
+        <ol class="fl-steps">${view.shown.map((item) => flowStepRow(item, { asking, options, triggered })).join("")}</ol>
         ${laneFolded.length ? `<details class="fl-folded">
           <summary>${esc(t("flowFolded").replace("{n}", laneFolded.length))}</summary>
-          <ol class="fl-steps">${laneFolded.map((item) => flowStepRow(item, { asking, options, muted: true })).join("")}</ol>
+          <ol class="fl-steps">${laneFolded.map((item) => flowStepRow(item, { asking, options, triggered, muted: true })).join("")}</ol>
         </details>` : ""}
       </section>`;
     }).join("")}

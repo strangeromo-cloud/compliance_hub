@@ -283,14 +283,19 @@ test("both panels fold the same steps, and both let you see them", async () => {
   const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
 
   assert.match(app, /<details class="fl-folded">/, "the rail's fold has to open");
-  assert.match(app, /laneFolded\.map\(\(item\) => flowStepRow\(item, \{ asking, options, muted: true \}\)\)/,
-    "and hold the same rows the open list holds");
+  const open = app.match(/view\.shown\.map\(\(item\) => flowStepRow\(item, \{([^}]*)\}\)\)/);
+  const folded = app.match(/laneFolded\.map\(\(item\) => flowStepRow\(item, \{([^}]*)\}\)\)/);
+  assert.ok(open && folded, "both lists build their rows through flowStepRow");
+  assert.deepEqual(
+    folded[1].split(",").map((part) => part.trim()).filter((part) => part && part !== "muted: true"),
+    open[1].split(",").map((part) => part.trim()).filter(Boolean),
+    "and hold the same rows the open list holds, muting aside");
 
   // One row template for both, because a fold that describes a step differently
   // from the list is the same fault in a new place.
   assert.equal([...app.matchAll(/<li class="fl-step /g)].length, 1,
     "there must be exactly one step-row template");
-  assert.match(app, /function flowStepRow\(item, \{ asking, options, muted = false \} = \{\}\) \{/);
+  assert.match(app, /function flowStepRow\(item, \{[^}]*muted = false \} = \{\}\) \{/);
 
   // A folded step is not the step the run is waiting on, so it must never be
   // marked current inside the fold.

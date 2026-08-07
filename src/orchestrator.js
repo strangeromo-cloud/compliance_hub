@@ -675,9 +675,12 @@ export async function assessScenario({ question, locale = "zh", config = {}, his
   // the user for input; a form offered mid-run would be answered against a path
   // that is still moving.
   analysisPath = { ...analysisPath, awaitingInput: awaiting ? { step: awaiting.id, title: awaiting.title } : null };
-  onEvent({ type: "path", path: analysisPath, final: true });
-
+  // Localized like the six path events before it. Sent raw, this one frame put
+  // the other language's lane labels on the page — Chinese headings in an
+  // English run — until the done payload arrived and corrected them. Brief, but
+  // the same class of leak as any other: the reader saw the wrong language.
   const localizedPath = localizePath(analysisPath, locale);
+  onEvent({ type: "path", path: localizedPath, final: true });
   return {
     id,
     createdAt: new Date().toISOString(),
