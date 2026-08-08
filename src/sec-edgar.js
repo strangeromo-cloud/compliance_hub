@@ -35,8 +35,8 @@
 
 import { readNormalized } from "./data-layer/storage.js";
 import { fetchPublicFile } from "./data-layer/http.js";
-import { xmlTag, xmlTags } from "./data-layer/parsers.js";
-import { scoreNameMatch } from "./entity-matching.js";
+import { xmlCells, xmlTag, xmlTags } from "./data-layer/parsers.js";
+import { normalizeEntityName, scoreNameMatch } from "./entity-matching.js";
 
 // The registry entry this resolver implements, so the coverage page's claim can
 // be checked against code rather than taken on trust.
@@ -56,6 +56,194 @@ const STRUCTURED_FROM = "2024-12-18";
 // complex that files fifty times a year would otherwise turn one review into a
 // hundred requests against a rate-limited public service.
 const MAX_FILINGS = 20;
+
+// The proxy statement's ownership table, which is the other half of the picture.
+//
+// A Schedule 13D/G is event-driven: it is filed on crossing five per cent and
+// amended on a material change, so a holder whose stake has been steady for years
+// files nothing. Apple's structured schedules yield one holder. Its proxy yields
+// two — Vanguard at 9.63% and BlackRock at 7.10% — because Item 403 of Regulation
+// S-K requires the company to table EVERY holder above five per cent as of a
+// stated record date. Complete as of a date, rather than whatever happened to be
+// filed lately.
+//
+// It is the same measure as the schedules — Rule 13d-3 beneficial ownership — and
+// often literally the same numbers: Apple's footnote says the Vanguard figure
+// comes from a 13G/A filed on 29 July 2025. So the two are merged per holder
+// rather than added, newest wins, and which document each came from travels with
+// it.
+const PROXY_FORM = /^DEF ?14A$/i;
+// A percentage worth aggregating. The table also lists every director and officer,
+// almost all of them shown as "*" for under one per cent; they are not holders in
+// the sense the 50 Percent Rule means, and a name-by-name list of the board is a
+// different lane's question.
+const PROXY_MIN_PERCENT = 5;
+
+// The first number in a cell, and only the first.
+//
+// A share cell reads "1,043,713,019 (3)" — the number followed by its footnote
+// marker. Stripping every non-digit concatenated the two into 10,437,130,193,
+// ten times the real holding. The arithmetic check below caught it, which is what
+// the check is for, but a reading that cannot be checked has to be right the
+// first time.
+const firstNumber = (value) => {
+  const match = String(value).replace(/&#160;|&nbsp;/gi, " ").match(/\d[\d,]*(?:\.\d+)?/);
+  return match ? Number(match[0].replace(/,/g, "")) || null : null;
+};
+
+const plainText = (value) => String(value).replace(/<[^>]+>/g, " ").replace(/&#160;|&nbsp;/gi, " ").replace(/\s+/g, " ");
+
+// Candidate denominators, chosen later by whether they reconcile.
+//
+// The obvious approaches both fail. A document-wide search for "outstanding"
+// returned 4,092,836 for Apple where the answer was 14,697,926,000 — a proxy says
+// "outstanding" about equity compensation plans and buybacks too. Anchoring on
+// the text just above the table fixes Apple and breaks Microsoft, whose count
+// sits in the meeting notice thousands of words earlier and reads "shares of
+// common stock outstanding" rather than "issued and outstanding".
+//
+// So no prose heuristic decides it. Every plausible count is collected, and the
+// one that makes the table's own rows add up is the one used — the rows validate
+// the denominator rather than the other way round. A document where nothing
+// reconciles reports its rows as unchecked instead of guessing.
+function outstandingCandidates(document) {
+  const text = plainText(document);
+  const found = new Set();
+  for (const match of text.matchAll(/([\d][\d,]{6,})[^.]{0,140}?outstanding/gi)) {
+    const value = firstNumber(match[1]);
+    if (value && value >= 1_000_000) found.add(value);
+  }
+  return [...found];
+}
+
+// Within a percentage point, or within a quarter of the stated figure. A cell
+// read from the wrong column is wrong by orders of magnitude; a company computing
+// its percentage on a slightly different base is wrong by a rounding.
+const reconciles = (shares, outstanding, percent) => {
+  const off = Math.abs((shares / outstanding) * 100 - percent);
+  return off <= 1 || off <= percent * 0.25;
+};
+
+// The table is found by what its header says. Its COLUMNS are then read from the
+// data, not from the header, because header wording is not a layout.
+//
+// Microsoft's amount column is headed "Amount and Nature of Beneficial Ownership
+// as of 09/30/2025". Picking the name column by matching /beneficial owner/
+// selected that one, so every holder came out named "664,882,153¹" — a share
+// count in the name field, which is the sort of thing that then gets screened
+// against a sanctions list. Apple's header happens to read "Name of Beneficial
+// Owner" and worked by luck.
+//
+// Within a row the three values identify themselves: the percentage is the cell
+// carrying %, the holding is a large bare number, and the name is the cell with
+// letters in it. That holds across both layouts and does not depend on either
+// company's choice of words.
+const OWNERSHIP_TABLE = /beneficial owner(?:ship)?/i;
+const PERCENT_HEADER = /percent/i;
+
+const rowCells = (row) => {
+  const data = xmlCells(row, "td").filter((cell) => cell !== "");
+  const heads = xmlCells(row, "th").filter((cell) => cell !== "");
+  return data.length >= heads.length ? data : heads;
+};
+
+const PERCENT_CELL = /(\d{1,3}(?:\.\d+)?)\s*%/;
+// A holding: digits and separators, and long enough not to be a footnote marker.
+// A holding: digits and separators, optionally trailed by a footnote marker —
+// "1,415,826,462 (2)" or "664,882,153¹".
+const NUMBER_CELL = /^[\d,]{4,}\s*(?:\(\d+\)|[^\w\s]{1,2})?$/;
+
+// A name has to be a name. A cell that is mostly digits is a share count that
+// landed in the wrong column, and letting it through would put it into screening.
+function holderName(cell) {
+  const raw = String(cell || "").replace(/\s*\(\d+\)\s*$/, "").trim();
+  if (!/\p{L}{3}/u.test(raw)) return null;
+  const letters = (raw.match(/\p{L}/gu) || []).length;
+  if (letters < raw.replace(/\s/g, "").length * 0.4) return null;
+  // Proxies often run the holder's address into the same cell: "The Vanguard
+  // Group, Inc. 100 Vanguard Blvd., Malvern, PA 19355". Cut at the street number.
+  const cut = raw.replace(/\s+\d+\s+\p{L}.*$/u, "").trim();
+  // And they qualify the group: Ford's table reads "BlackRock, Inc. and certain
+  // of its affiliates" for the holding its own 13G/A files as "BlackRock, Inc."
+  // Left in, the same holder counts twice in the aggregate — 8.4% from the
+  // schedule beside 8.36% from the proxy — and neither gets screened under the
+  // name the lists carry.
+  const named = (cut.length >= 4 ? cut : raw)
+    .replace(/,?\s+and\s+(?:certain\s+)?(?:of\s+)?(?:its\s+)?(?:affiliates?|related\s+entities|subsidiaries)\b.*$/iu, "")
+    .replace(/[,;\s]+$/, "")
+    .trim();
+  return named.length >= 4 ? named : cut || raw;
+}
+
+export function parseProxyOwnership(document) {
+  const source = String(document);
+  const candidates = outstandingCandidates(source);
+  for (const table of xmlTags(source, "table")) {
+    // Two columns is a legitimate layout — Ford's table carries names and
+    // percentages and no count — so the floor is two. What keeps this from
+    // matching arbitrary tables is the header test below, not the column count.
+    const rows = xmlTags(table, "tr").map(rowCells).filter((cells) => cells.length >= 2);
+    const header = rows.find((cells) => cells.some((cell) => OWNERSHIP_TABLE.test(cell)) && cells.some((cell) => PERCENT_HEADER.test(cell)));
+    if (!header) continue;
+    const securityClass = header.find((cell) => PERCENT_HEADER.test(cell)) || null;
+
+    // Read the rows first, then settle the denominator on them.
+    const raw = [];
+    for (const cells of rows.slice(rows.indexOf(header) + 1)) {
+      const percentCell = cells.findIndex((cell) => PERCENT_CELL.test(cell));
+      if (percentCell < 0) continue;
+      const percent = Number(cells[percentCell].match(PERCENT_CELL)[1]);
+      if (!Number.isFinite(percent) || percent < PROXY_MIN_PERCENT || percent > 100) continue;
+
+      const name = cells.slice(0, percentCell).map(holderName).find(Boolean);
+      if (!name || name.length > 120) continue;
+      const shares = cells.slice(0, percentCell)
+        .filter((cell) => NUMBER_CELL.test(cell.trim()))
+        .map(firstNumber).filter(Boolean).sort((left, right) => right - left)[0] || null;
+
+      raw.push({ name, shares, percentOfClass: percent, securityClass });
+    }
+    if (!raw.length) continue;
+
+    // The denominator is whichever candidate the rows themselves agree with, and
+    // "most rows" rather than "any row" so a coincidence cannot win against the
+    // real figure.
+    const withShares = raw.filter((row) => row.shares);
+    let outstanding = null;
+    let agreed = 0;
+    for (const candidate of candidates) {
+      const hits = withShares.filter((row) => reconciles(row.shares, candidate, row.percentOfClass)).length;
+      if (hits > agreed) { agreed = hits; outstanding = candidate; }
+    }
+
+    const holders = [];
+    const rejected = [];
+    for (const row of raw) {
+      // Only a row that had a holding AND a settled denominator can be checked.
+      // One that reconciles is used and marked; one that contradicts the figure
+      // the rest of the table agrees on is a misread and is dropped, with what it
+      // read reported. A row with no holding to check is used unchecked — the
+      // percentage came from the cell carrying the % sign, which is not the part
+      // that goes wrong.
+      if (row.shares && outstanding) {
+        if (!reconciles(row.shares, outstanding, row.percentOfClass)) {
+          rejected.push({ ...row, against: outstanding, computed: Math.round((row.shares / outstanding) * 10_000) / 100 });
+          continue;
+        }
+        holders.push({ ...row, arithmeticChecked: true });
+        continue;
+      }
+      holders.push({ ...row, arithmeticChecked: false });
+    }
+    return {
+      holders, rejected, sharesOutstanding: outstanding,
+      // True only when every row was reconciled against the document's own share
+      // count. Anything less says so rather than passing as verified.
+      checked: holders.length > 0 && holders.every((holder) => holder.arithmeticChecked)
+    };
+  }
+  return { holders: [], rejected: [], sharesOutstanding: null, checked: false };
+}
 
 // The class a schedule is filed on, reduced to the letter that identifies it.
 //
@@ -212,8 +400,42 @@ export async function beneficialOwners(name) {
   const held = (map) => [...map.values()]
     .filter((entry) => (entry.percentOfClass || 0) > 0)
     .sort((left, right) => (right.percentOfClass || 0) - (left.percentOfClass || 0));
-  const holders = held(inbound);
   const holdings = held(outbound);
+
+  // The proxy's table, merged in. This is where the holders the schedules cannot
+  // see come from: Apple's structured schedules name one, its proxy names two.
+  const proxyFiling = (recent.form || [])
+    .map((form, index) => ({ form, filedAt: recent.filingDate?.[index] || "", accession: recent.accessionNumber?.[index] || "", document: recent.primaryDocument?.[index] || "" }))
+    .filter((filing) => PROXY_FORM.test(filing.form) && /\.html?$/i.test(filing.document))
+    .sort((left, right) => right.filedAt.localeCompare(left.filedAt))[0] || null;
+
+  let proxy = null;
+  if (proxyFiling) {
+    const folder = `${ARCHIVE}/${cik}/${proxyFiling.accession.replaceAll("-", "")}`;
+    try {
+      const file = await fetchPublicFile(`${folder}/${proxyFiling.document}`, { accept: "text/html", maxBytes: 24 * 1024 * 1024, attempts: 2 });
+      proxy = { ...parseProxyOwnership(file.bytes.toString("utf8")), filedAt: proxyFiling.filedAt, form: proxyFiling.form, sourceUrl: `${folder}/${proxyFiling.document}` };
+    } catch {
+      // One unreadable proxy is not a reason to discard the schedules.
+      proxy = null;
+    }
+  }
+
+  // Merged per holder, never added. The two documents report the same measure and
+  // often the same underlying filing — Apple's proxy footnote cites the very
+  // 13G/A this also reads — so the later statement supersedes the earlier one and
+  // the document it came from travels with it.
+  // A schedule's percentage is a filed named field, not a number parsed out of a
+  // table, so arithmetic checking does not apply to it — null rather than false,
+  // which would read as "checked and failed".
+  const merged = new Map(held(inbound).map((holder) => [normalizeEntityName(holder.name), { ...holder, document: holder.form, arithmeticChecked: null }]));
+  for (const holder of proxy?.holders || []) {
+    const key = normalizeEntityName(holder.name);
+    const existing = merged.get(key);
+    if (existing && existing.filedAt >= proxy.filedAt) continue;
+    merged.set(key, { ...holder, filedAt: proxy.filedAt, document: proxy.form, sourceUrl: proxy.sourceUrl, personType: null, form: proxy.form });
+  }
+  const holders = [...merged.values()].sort((left, right) => (right.percentOfClass || 0) - (left.percentOfClass || 0));
 
   return {
     queried: legalName,
@@ -227,7 +449,13 @@ export async function beneficialOwners(name) {
     // Filers whose latest statement reports a position they no longer hold. Kept
     // as a count rather than dropped: it is the difference between "nobody else
     // filed" and "somebody filed to say they had left".
-    exited: inbound.size - holders.length,
+    exited: Math.max(0, inbound.size - held(inbound).length),
+    // Where the proxy's contribution came from and whether its rows were checked
+    // against the document's own share count. A table that could not be checked
+    // says so rather than passing as verified.
+    proxy: proxy
+      ? { form: proxy.form, filedAt: proxy.filedAt, sharesOutstanding: proxy.sharesOutstanding, arithmeticChecked: proxy.checked, rejectedRows: proxy.rejected.length, sourceUrl: proxy.sourceUrl }
+      : null,
     filingsRead: read,
     filingsAvailable: available,
     // The submissions feed returns roughly the last thousand filings of every
@@ -238,6 +466,6 @@ export async function beneficialOwners(name) {
       || (recent.filingDate || []).reduce((earliest, date) => (date < earliest ? date : earliest), "9999") <= STRUCTURED_FROM,
     asOf: holders[0]?.filedAt || null,
     // Carried with the result so no caller has to remember any of it.
-    meaning: "Schedule 13D/G 报告的是 13d-3 项下的受益所有权（表决权或处分权），并非股权比例，且按证券类别分别计算；关联申报人会就同一批股份各报一次，不能相加。它给出 5% 以上持有人的名称与比例，是 OFAC 50% 合计持股计算的输入，不是计算结果。两类持有人不在其中：5% 以下者依规则不申报；2024 年 12 月前已申报且此后无重大变动者无需修订，因而不在结构化数据内 —— 名单为空或偏短不等于没有 5% 以上股东。"
+    meaning: "两个来源：持有人自己申报的 Schedule 13D/G，以及公司在 DEF 14A 委托说明书里按记录日公布的持股表。两者口径相同，都是 13d-3 项下的受益所有权（表决权或处分权），并非股权比例，且按证券类别分别计算；同一持有人在两处出现时取较新的一次，不相加。关联申报人会就同一批股份各报一次，相加前须确认彼此无关联。这些是 OFAC 50% 合计持股计算的输入，不是计算结果。仍然不在其中的：5% 以下持有人依规则不申报；没有委托说明书或其中无持股表的发行人；以及全部非美国注册发行人与私营公司 —— 名单为空或偏短不等于没有 5% 以上股东。"
   };
 }

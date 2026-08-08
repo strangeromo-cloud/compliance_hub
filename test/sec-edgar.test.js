@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { classKey, parseSchedule13 } from "../src/sec-edgar.js";
+import { classKey, parseProxyOwnership, parseSchedule13 } from "../src/sec-edgar.js";
 import { holderMatches } from "../src/grounding.js";
 
 // A Schedule 13D/G as SEC has published it since 18 December 2024: structured
@@ -122,4 +122,117 @@ test("a shareholder is screened on an agreeing name, not a contained one", () =>
   assert.equal(holderMatches(hit("character_similarity", 0.56)), false, "NOMURA HOLDINGS is not OURA");
   assert.equal(holderMatches(hit("character_similarity", 0.59)), false, "Rostech is not PROTEH");
   assert.equal(holderMatches(hit("character_similarity", 0.61)), false, "Aeroflot is not Aerofalcon");
+});
+
+// The proxy statement's ownership table, in the two layouts these were built
+// against. Every cell below is what the real filings actually contain.
+const proxyTable = ({ header, rows, outstandingSentence }) => `<html><body>
+  <p>${outstandingSentence || ""}</p>
+  <table><tr>${header.map((cell) => `<td>${cell}</td>`).join("")}</tr>
+  ${rows.map((cells) => `<tr>${cells.map((cell) => `<td>${cell}</td>`).join("")}</tr>`).join("")}
+  </table></body></html>`;
+
+// Apple: the name column is headed "Name of Beneficial Owner", the count sits
+// beside its footnote marker, and the denominator is in the sentence above.
+const APPLE = proxyTable({
+  outstandingSentence: "As of the Table Date, 14,697,926,000 shares of Apple&#8217;s common stock were issued and outstanding.",
+  header: ["Name of Beneficial Owner", "Shares of Common Stock Beneficially Owned (1)", "Percent of Common Stock Outstanding"],
+  rows: [
+    ["The Vanguard Group", "1,415,826,462 (2)", "9.63%"],
+    ["BlackRock, Inc.", "1,043,713,019 (3)", "7.10%"],
+    ["Tim Cook", "3,280,295 (6)", "*"]
+  ]
+});
+
+// Microsoft: the AMOUNT column is the one headed "Beneficial Ownership", the
+// holder's address runs into the name cell, and the denominator is thousands of
+// words away in the meeting notice under different wording.
+const MICROSOFT = proxyTable({
+  outstandingSentence: "On September 30, 2025, there were 7,433,087,554 shares of common stock outstanding, held of record by 76,483 shareholders. Total outstanding stock awards and stock options 92,142,642.",
+  header: ["Name", "Amount and Nature of Beneficial Ownership as of 09/30/2025", "Percent of Class to be Voted During the Meeting"],
+  rows: [
+    ["The Vanguard Group, Inc. 100 Vanguard Blvd., Malvern, PA 19355", "664,882,153&#185;", "8.95%"],
+    ["BlackRock, Inc. 50 Hudson Yards, New York, NY 10001", "540,020,228&#178;", "7.30%"]
+  ]
+});
+
+test("the holder is read from the cell with letters in it, not the one the header names", () => {
+  // Microsoft's amount column is headed "Amount and Nature of Beneficial
+  // Ownership". Choosing the name column by matching /beneficial owner/ picked
+  // that one, and every holder came out named "664,882,153" — a share count in
+  // the name field, on its way to being screened against a sanctions list.
+  const parsed = parseProxyOwnership(MICROSOFT);
+  assert.deepEqual(parsed.holders.map((holder) => holder.name), ["The Vanguard Group, Inc.", "BlackRock, Inc."]);
+  assert.deepEqual(parsed.holders.map((holder) => holder.percentOfClass), [8.95, 7.3]);
+  // The address is cut off the name: it is screened against lists that carry
+  // company names, not postal addresses.
+  assert.equal(parsed.holders[0].name.includes("Malvern"), false);
+});
+
+test("the share count stops at the footnote marker", () => {
+  // "1,043,713,019 (3)" — stripping every non-digit concatenated the number with
+  // its footnote and produced 10,437,130,193, ten times the real holding.
+  const parsed = parseProxyOwnership(APPLE);
+  assert.deepEqual(parsed.holders.map((holder) => holder.shares), [1_415_826_462, 1_043_713_019]);
+  // A director shown as "*" is under one per cent and is not a holder in the
+  // sense the 50 Percent Rule means.
+  assert.equal(parsed.holders.some((holder) => holder.name === "Tim Cook"), false);
+});
+
+test("the denominator is whichever candidate the rows themselves agree with", () => {
+  // No prose rule picks it. A document-wide search for "outstanding" found
+  // 4,092,836 in Apple's proxy where the answer was 14,697,926,000; anchoring on
+  // the text above the table fixed Apple and broke Microsoft, whose count sits in
+  // the meeting notice under different wording. Both are settled by arithmetic.
+  assert.equal(parseProxyOwnership(APPLE).sharesOutstanding, 14_697_926_000);
+  assert.equal(parseProxyOwnership(MICROSOFT).sharesOutstanding, 7_433_087_554);
+
+  // Microsoft's document also says "outstanding" about 92,142,642 stock options.
+  // That candidate reconciles with nothing, so it cannot win.
+  assert.notEqual(parseProxyOwnership(MICROSOFT).sharesOutstanding, 92_142_642);
+
+  for (const document of [APPLE, MICROSOFT]) {
+    const parsed = parseProxyOwnership(document);
+    assert.equal(parsed.checked, true, "every row should reconcile against the settled count");
+    for (const holder of parsed.holders) {
+      const computed = (holder.shares / parsed.sharesOutstanding) * 100;
+      assert.ok(Math.abs(computed - holder.percentOfClass) < 1, `${holder.name}: ${computed} vs ${holder.percentOfClass}`);
+    }
+  }
+});
+
+test("a row that contradicts the table's own arithmetic is dropped, not used", () => {
+  // The failure this guards against: a cell read from the wrong column. It is
+  // wrong by orders of magnitude, and the number would go into a 50 Percent Rule
+  // calculation.
+  const broken = proxyTable({
+    outstandingSentence: "There were 1,000,000,000 shares of common stock outstanding.",
+    header: ["Name of Beneficial Owner", "Shares Beneficially Owned", "Percent of Class"],
+    rows: [
+      ["Honest Holdings LLC", "80,000,000", "8.00%"],
+      ["Misread Partners LP", "800,000,000", "7.00%"]
+    ]
+  });
+  const parsed = parseProxyOwnership(broken);
+  assert.deepEqual(parsed.holders.map((holder) => holder.name), ["Honest Holdings LLC"]);
+  assert.equal(parsed.rejected.length, 1);
+  assert.equal(parsed.rejected[0].name, "Misread Partners LP");
+  assert.equal(parsed.checked, true, "what survived was still reconciled");
+});
+
+test("a table with no share column is used, and says it was not reconciled", () => {
+  // Ford's table carries names and percentages and no count, so there is nothing
+  // to check the percentage against. The percentage still came from the cell
+  // carrying the % sign, which is not the part that goes wrong — so it is used,
+  // and marked.
+  const noShares = proxyTable({
+    header: ["Name of Beneficial Owner", "Percent of Class"],
+    rows: [["The Vanguard Group and certain of its affiliates", "11.68%"], ["BlackRock, Inc. and certain of its affiliates", "8.36%"]]
+  });
+  const parsed = parseProxyOwnership(noShares);
+  assert.equal(parsed.checked, false);
+  assert.deepEqual(parsed.holders.map((holder) => holder.arithmeticChecked), [false, false]);
+  // The group qualifier is stripped, or the same holder counts twice in the
+  // aggregate: 8.36% here beside the 8.4% its own 13G/A files as "BlackRock, Inc."
+  assert.deepEqual(parsed.holders.map((holder) => holder.name), ["The Vanguard Group", "BlackRock, Inc."]);
 });

@@ -678,11 +678,15 @@ function tradeSteps(question, grounding, results, declaredFacts = {}) {
   if (owners.length) {
     const top = owners.slice(0, 6);
     chainLines.push(bi(
-      `SEC Schedule 13D/G 申报的 5% 以上受益所有人（${filed.issuer.name}，CIK ${filed.issuer.cik}，读取 ${filed.filingsRead} 份申报）：`
-      + top.map((holder) => `${holder.name} ${holder.percentOfClass}%（${holder.securityClass}，${holder.filedAt}）`).join("；")
+      // Which document each figure came from, on the figure. They arrive from two
+      // — the schedules a holder files and the table the company publishes — and
+      // labelling the whole list as one of them was wrong the moment the second
+      // was added.
+      `SEC 申报的 5% 以上受益所有人（${filed.issuer.name}，CIK ${filed.issuer.cik}）：`
+      + top.map((holder) => `${holder.name} ${holder.percentOfClass}%（${holder.document || "SEC"}，${holder.filedAt}${holder.arithmeticChecked === false ? "，比例未经股数核验" : ""}）`).join("；")
       + (owners.length > top.length ? `；另有 ${owners.length - top.length} 名` : ""),
-      `Beneficial owners above 5% from SEC Schedule 13D/G (${filed.issuer.name}, CIK ${filed.issuer.cik}, ${filed.filingsRead} filings read): `
-      + top.map((holder) => `${holder.name} ${holder.percentOfClass}% (${holder.securityClass}, ${holder.filedAt})`).join("; ")
+      `Beneficial owners above 5% from SEC filings (${filed.issuer.name}, CIK ${filed.issuer.cik}): `
+      + top.map((holder) => `${holder.name} ${holder.percentOfClass}% (${holder.document || "SEC"}, ${holder.filedAt}${holder.arithmeticChecked === false ? ", percentage not cross-checked against a share count" : ""})`).join("; ")
       + (owners.length > top.length ? `; and ${owners.length - top.length} more` : "")));
     chainLines.push(bi(filed.meaning,
       "A Schedule 13D/G reports Rule 13d-3 beneficial ownership — voting or dispositive power — per class of security, not an equity share, and affiliated filers each report the same shares. It is the input to the 50 Percent Rule aggregation, not the result of it. Two kinds of holder are absent: anyone below 5%, who need not file, and anyone who filed before December 2024 and has had no material change since, who need not amend — so a short or empty list is not an absence of large shareholders."));

@@ -281,14 +281,14 @@ export const DATA_SOURCE_REGISTRY = [
     sourceType: "company_filing", officialSource: true, accessMethod: "REST API + bulk ZIP + filing archives", fileFormat: "JSON / HTML / XML / ZIP",
     automationStatus: "api_available", feasibility: "can_build_now", currentCoverage: "verified_lookup", priority: 2, authenticationRequired: false, captchaPresent: false,
     updateFrequency: "Real time; bulk nightly", websiteUrl: "https://www.sec.gov/search-filings/edgar-application-programming-interfaces", apiUrl: "https://data.sec.gov/submissions/",
-    dataCaptured: ["registered-issuer index (CIK, ticker, filing name)", "Schedule 13D/G beneficial owners above 5%, with the filed percentage, per case"],
+    dataCaptured: ["registered-issuer index (CIK, ticker, filing name)", "Schedule 13D/G beneficial owners above 5%, with the filed percentage, per case", "DEF 14A beneficial-ownership table, reconciled against the shares outstanding the document states"],
     targetData: ["CIK", "filing history", "annual reports", "subsidiaries", "ownership filings", "risk disclosures"],
     webSearchUse: "good_for_discovery",
     // The one public source in this registry that states a shareholding as a
     // number. What that number is not — equity, comparable across classes, or
     // addable across affiliated filers — is carried with every answer rather
     // than recorded here, because the caveat has to travel with the figure.
-    notes: "No API key is required; automated access must use an identified user agent and observe SEC access policy. The synced snapshot is the issuer index only; shareholdings are read per case from structured Schedule 13D/G, mandatory in that form since 18 December 2024."
+    notes: "No API key is required; automated access must use an identified user agent and observe SEC access policy. The synced snapshot is the issuer index only; shareholdings are read per case from structured Schedule 13D/G (mandatory in that form since 18 December 2024) and from the DEF 14A ownership table, which is complete as of a record date where the schedules are event-driven."
   },
   {
     sourceId: "companies-house", sourceName: "UK Companies House", module: "tpdd", country: "UK", authority: "Companies House",
