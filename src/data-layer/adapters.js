@@ -8,6 +8,7 @@ import { VENDOR_ADAPTERS } from "./adapters-vendor.js";
 import { FEDREG_ADAPTERS } from "./adapters-fedreg.js";
 import { OWNERSHIP_ADAPTERS } from "./adapters-ownership.js";
 import { beneficialOwners } from "../sec-edgar.js";
+import { topShareholders } from "../cninfo.js";
 
 const CSL_URL = "https://data.trade.gov/downloadable_consolidated_screening_list/v1/consolidated.json";
 const UK_URL = "https://sanctionslist.fcdo.gov.uk/docs/UK-Sanctions-List.csv";
@@ -348,6 +349,39 @@ async function syncSecEdgar() {
   };
 }
 
+// The exchanges' designated disclosure site indexes every A share: code, the
+// internal orgId its announcement search needs, and the exchange short name. It
+// holds no shareholdings — those are inside each company's periodic report, read
+// per case — so this is the same shape as the SEC issuer index: the thing that
+// turns a counterparty name into the key the lookup needs.
+const CNINFO_INDEX = "https://www.cninfo.com.cn/new/data/szse_stock.json";
+
+async function syncCninfoIndex() {
+  const file = await fetchPublicFile(CNINFO_INDEX, { accept: "application/json", maxBytes: 8 * 1024 * 1024, attempts: 2 });
+  const payload = JSON.parse(file.bytes.toString("utf8"));
+  const rows = (payload.stockList || []).filter((item) => item?.code && item?.zwjc);
+  if (!rows.length) throw new Error("cninfo listed-company index returned no rows.");
+  return {
+    extension: "json",
+    file,
+    records: rows.map((item, index) => ({
+      sourceId: "cninfo",
+      recordId: String(item.code),
+      code: String(item.code),
+      orgId: item.orgId || null,
+      shortName: item.zwjc,
+      entityName: item.zwjc,
+      market: item.category || null,
+      recordType: "listed_issuer",
+      sourceUrl: `https://www.cninfo.com.cn/new/disclosure/stock?stockCode=${item.code}&orgId=${item.orgId || ""}`,
+      rawRecord: { snapshotRecordIndex: index }
+    })),
+    // Named for what it is: the issuers, not their shareholders.
+    syncScope: "a_share_issuer_index_use_live_query_for_shareholdings",
+    sourceUpdatedAt: file.lastModified
+  };
+}
+
 async function syncEcfrPart(sourceId, part) {
   let file;
   let versionDate;
@@ -369,6 +403,7 @@ export const ADAPTERS = {
   "uk-sanctions": { sync: syncUk, mode: "full_download", credential: null },
   "gleif-lei": { sync: syncGleifSample, mode: "sample_plus_live_query", credential: null },
   "sec-edgar": { sync: syncSecEdgar, mode: "issuer_index_plus_live_query", credential: null },
+  "cninfo": { sync: syncCninfoIndex, mode: "issuer_index_plus_live_query", credential: null },
   "bis-ear": { sync: () => syncEcfrPart("bis-ear", 736), mode: "versioned_snapshot", credential: null },
   "bis-ear-732": { sync: () => syncEcfrPart("bis-ear-732", 732), mode: "versioned_snapshot", credential: null },
   "bis-ear-734": { sync: () => syncEcfrPart("bis-ear-734", 734), mode: "versioned_snapshot", credential: null },
@@ -415,6 +450,27 @@ export async function queryRemoteSource(sourceId, query) {
       // Travels on every record, because a percentage with no measure attached
       // is the one thing a reader will misuse.
       basisOfMeasure: "rule_13d-3_beneficial_ownership_per_class_not_equity_share"
+    }));
+  }
+  if (sourceId === "cninfo") {
+    const result = await topShareholders(query);
+    if (result?.notSynced) throw Object.assign(new Error("cninfo 的上市公司索引尚未同步。"), { status: 409, code: "sync_required" });
+    if (result?.unavailable) throw Object.assign(new Error(result.unavailable), { status: 502 });
+    return (result?.holders || []).map((holder) => ({
+      sourceId: "cninfo",
+      recordId: `${result.company.code}-${holder.name}`,
+      recordType: "registered_shareholder",
+      entityName: holder.name,
+      issuerName: result.company.shortName,
+      issuerCode: result.company.code,
+      percentOfClass: holder.percentOfClass,
+      shares: holder.shares,
+      shareholderNature: holder.nature,
+      asOf: result.report?.publishedAt || null,
+      sourceUrl: result.report?.sourceUrl || null,
+      // On every record, because a register of holders is not a register of
+      // beneficial owners and the difference decides what it can be used for.
+      basisOfMeasure: "registered_shareholding_from_periodic_report_not_beneficial_ownership"
     }));
   }
   if (sourceId === "sam-exclusions") {

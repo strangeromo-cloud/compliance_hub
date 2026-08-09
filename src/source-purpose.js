@@ -180,10 +180,15 @@ export const SOURCE_PURPOSE = {
     en: "The global LEI register. The ownership step queries it for direct and ultimate parent — GLEIF's parent is the accounting consolidating parent and carries no percentages.",
     usedIn: ["ownership"]
   },
+  cninfo: {
+    zh: "巨潮资讯网，深沪交易所指定的信息披露网站。所有权穿透从年度报告的「前 10 名股东持股情况」表中读取股东与持股比例，并以各行「持股数量 ÷ 持股比例」互相校验。仅覆盖 A 股上市公司。",
+    en: "The disclosure site the Shenzhen and Shanghai exchanges designate. The ownership step reads the top-ten shareholder table out of the annual report and cross-checks every row against the others. A-share listed companies only.",
+    usedIn: ["ownership"]
+  },
   "sec-edgar": {
-    zh: "美国证券交易委员会公开披露库。上市公司的股权与关联方披露来源；目前仅登记，尚未接入所有权步骤。",
-    en: "SEC public filings — ownership and related-party disclosure for listed issuers. Registered; not yet read by the ownership step.",
-    usedIn: []
+    zh: "美国证券交易委员会公开披露库。所有权穿透读取它的两类文件：持有人自己申报的 Schedule 13D/G，以及公司在 DEF 14A 中按记录日公布的 5% 以上持股表。",
+    en: "SEC public filings. The ownership step reads two of them: the Schedule 13D/G a holder files for itself, and the table of holders above 5% the company publishes in its DEF 14A as of a record date.",
+    usedIn: ["ownership"]
   },
   "companies-house": {
     zh: "英国公司注册处，含 25% 以上实益所有人（PSC）登记。需要 API key，未配置时不参与分析。",

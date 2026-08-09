@@ -3,7 +3,8 @@ import { classifyQuestionIntent, isChinaDualUseQuestion } from "./question-inten
 import { findNamesMentioned, fuzzyPartyCandidates, matchParty, normalizeEntityName } from "./entity-matching.js";
 import { findBom, findInternalParties, findProducts, manufacturerFactsFor } from "./internal-data.js";
 import { resolveOwnership, statedOwnership } from "./ownership.js";
-import { beneficialOwners } from "./sec-edgar.js";
+import { beneficialOwners, SOURCE_ID as SEC_SOURCE } from "./sec-edgar.js";
+import { topShareholders, SOURCE_ID as CNINFO_SOURCE } from "./cninfo.js";
 import { aggregateOwnership, buildOwnershipGraph } from "./ownership-graph.js";
 import { bi } from "./path-i18n.js";
 import { isConfigured as cslApiConfigured, searchName } from "./data-layer/csl-search.js";
@@ -327,6 +328,20 @@ export async function collectGrounding(question, agents = [], declaredFacts = {}
     // by hand. A Schedule 13D/G states it in a field — for a US registered
     // issuer, above five per cent, as beneficial ownership rather than equity.
     if (subject) grounding.beneficialOwners = await beneficialOwners(subject).catch(() => null);
+    // And the Chinese half of the same question. "sec-edgar" covers US registered
+    // issuers and nothing else; "cninfo" is the disclosure site the Shenzhen and
+    // Shanghai exchanges designate, and the top-ten table inside a periodic report
+    // is the only route to a Chinese shareholding that needs no key and no
+    // captcha. Asked only when the name is Chinese: a US issuer has no A share and
+    // the lookup would spend a request to learn that.
+    if (subject && CJK_NAME.test(subject)) {
+      grounding.listedShareholders = await topShareholders(subject).catch(() => null);
+      if (grounding.listedShareholders?.rejected?.length) {
+        grounding.limitations.push(bi(
+          `年报股东表中有 ${grounding.listedShareholders.rejected.length} 行与其余各行的隐含总股本不一致，已丢弃未采信；该表由 PDF 文本解析得到。`,
+          `${grounding.listedShareholders.rejected.length} row(s) of the annual report's shareholder table implied a different total share count from the rest and were discarded rather than used; the table is parsed from the PDF's text.`));
+      }
+    }
 
     // The parent, screened in its own right. This is the whole point of
     // resolving the chain: a company owned in aggregate by designated parties is

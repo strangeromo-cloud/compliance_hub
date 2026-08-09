@@ -114,7 +114,7 @@ npm run start:env
 `SYNC_ON_BOOT` 的推荐完整值——覆盖分析路径引用的全部官方流程条文，以及中国侧四个源：
 
 ```
-bis-ear,bis-ear-732,bis-ear-734,bis-ear-740,bis-ear-744,bis-country-chart,bis-ccl,nvidia-export,amd-export,us-federal-register,us-uflpa,us-dod-1260h,sec-edgar,ofac-ownership,jp-meti-eul,tw-shtc,eu-fsf,jp-export-control,china-licence-catalogue,china-unreliable-entity,china-dual-use,china-control-entities,china-export-licence-goods,china-control-list
+bis-ear,bis-ear-732,bis-ear-734,bis-ear-740,bis-ear-744,bis-country-chart,bis-ccl,nvidia-export,amd-export,us-federal-register,us-uflpa,us-dod-1260h,sec-edgar,ofac-ownership,cninfo,jp-meti-eul,tw-shtc,eu-fsf,jp-export-control,china-licence-catalogue,china-unreliable-entity,china-dual-use,china-control-entities,china-export-licence-goods,china-control-list
 ```
 
 `sec-edgar` 同步的**不是持股数据**，是 SEC 的注册发行人索引（约 10,400 家公司的 CIK、代码、EDGAR 备案名，780 KB，秒级）。它的作用是把交易方名称解析成 CIK；真正的持股比例在审查时按案件实时拉取 Schedule 13D/G（每次约 3–20 个请求）。不同步它，所有权穿透就只能回到「请用户自己填股权结构」。

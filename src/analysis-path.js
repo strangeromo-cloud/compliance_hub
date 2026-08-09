@@ -725,6 +725,29 @@ function tradeSteps(question, grounding, results, declaredFacts = {}) {
       "The total covers the ownership relationships this system knows about. A figure below 50% is not an exclusion: the edge set is not known to be complete, and neither GLEIF nor OFAC publishes percentages."));
   }
 
+  // The Chinese half, from the exchanges' disclosure site. Reported separately
+  // from the SEC figures rather than pooled with them: they are different
+  // disclosures under different rules, and a registered shareholder in a PRC
+  // annual report is not the same thing as beneficial ownership under 13d-3.
+  const listed = grounding.listedShareholders;
+  if (listed?.holders?.length) {
+    const top = listed.holders.slice(0, 6);
+    chainLines.push(bi(
+      `${listed.company.shortName}（${listed.company.code}）${listed.report.title} 披露的前 10 名股东：`
+      + top.map((holder) => `${holder.name} ${holder.percentOfClass}%`).join("；")
+      + (listed.holders.length > top.length ? `；另有 ${listed.holders.length - top.length} 名` : "")
+      + `（各行相互校验${listed.tableAgreed ? "全部通过" : "有行未通过并已丢弃"}，隐含总股本 ${listed.impliedShares.toLocaleString("en-US")} 股）`,
+      `Top ten shareholders disclosed by ${listed.company.shortName} (${listed.company.code}) in its ${listed.report.title}: `
+      + top.map((holder) => `${holder.name} ${holder.percentOfClass}%`).join("; ")
+      + (listed.holders.length > top.length ? `; and ${listed.holders.length - top.length} more` : "")
+      + ` (rows cross-checked against one another: ${listed.tableAgreed ? "all agreed" : "one or more disagreed and were discarded"}; implied total ${listed.impliedShares.toLocaleString("en-US")} shares)`));
+    chainLines.push(bi(listed.meaning,
+      "Taken from the top-ten shareholder table of the company's annual report, parsed from the PDF's text and cross-checked row against row — each row's holding divided by its percentage must imply the same total, and rows that disagree are discarded. These are registered shareholders, not beneficial owners; holders below 5% are not tabled; and the disclosure is a quarterly point in time, not a current position."));
+  } else if (listed?.notListed) {
+    chainLines.push(bi("该主体不在 A 股上市公司索引内，因此没有定期报告可读；非上市中国公司的股权只能另行取得（国家企业信用信息公示系统有验证码，保持人工）。",
+      "The party is not in the A-share issuer index, so there is no periodic report to read. An unlisted Chinese company's ownership has to come from elsewhere — the national register is behind a captcha and stays manual."));
+  }
+
   if (filed?.notSynced) {
     chainLines.push(bi("SEC EDGAR 发行人索引尚未同步，本次未检索已申报的 5% 以上持有人。",
       "The SEC EDGAR issuer index is not synced, so filed holders above 5% were not retrieved."));

@@ -291,6 +291,21 @@ export const DATA_SOURCE_REGISTRY = [
     notes: "No API key is required; automated access must use an identified user agent and observe SEC access policy. The synced snapshot is the issuer index only; shareholdings are read per case from structured Schedule 13D/G (mandatory in that form since 18 December 2024) and from the DEF 14A ownership table, which is complete as of a record date where the schedules are event-driven."
   },
   {
+    sourceId: "cninfo", sourceName: "巨潮资讯网 (CNINFO)", module: "tpdd", country: "CN", authority: "Shenzhen and Shanghai Stock Exchanges' designated disclosure site",
+    sourceType: "company_filing", officialSource: true, accessMethod: "Announcement search + report PDF", fileFormat: "JSON index / PDF reports",
+    automationStatus: "api_available", feasibility: "can_build_now", currentCoverage: "verified_lookup", priority: 1, authenticationRequired: false, captchaPresent: false,
+    updateFrequency: "Continuous; shareholding disclosed quarterly", websiteUrl: "https://www.cninfo.com.cn/", apiUrl: "https://www.cninfo.com.cn/new/hisAnnouncement/query",
+    dataCaptured: ["A-share issuer index (code, orgId, exchange short name)", "top ten shareholders with holding and percentage, parsed from the annual report and reconciled across rows"],
+    targetData: ["top ten shareholders", "shareholding percentages", "shareholder nature", "controlling shareholder"],
+    webSearchUse: "supplement_only",
+    // The one route to Chinese shareholding that needs no key and no captcha, and
+    // the only one in this registry whose figures are parsed from a PDF rather
+    // than read from a field. What makes that acceptable is that the table checks
+    // itself: every row carries both a holding and a percentage, so all ten must
+    // imply the same total share count, and a row that does not is dropped.
+    notes: "No key and no captcha. Shareholdings are parsed from the annual report PDF and cross-checked row against row — each row's holding divided by its percentage must imply the same total, and rows that disagree are discarded rather than used. Registered shareholders are not beneficial owners, holders below 5% are not tabled, and unlisted Chinese companies disclose none of this. Unreachable from some overseas nodes, including Zeabur Bangkok."
+  },
+  {
     sourceId: "companies-house", sourceName: "UK Companies House", module: "tpdd", country: "UK", authority: "Companies House",
     sourceType: "company_registry", officialSource: true, accessMethod: "REST API", fileFormat: "JSON",
     automationStatus: "api_available", feasibility: "can_build_with_limitations", currentCoverage: "planned", priority: 2, authenticationRequired: true, captchaPresent: false,
