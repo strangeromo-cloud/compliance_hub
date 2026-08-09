@@ -90,7 +90,7 @@
 <g class="c-purple"><rect x="600" y="246" width="560" height="112" rx="4"/>
 <text class="sub" x="616" y="269">② 取材 retrieval ＋ 取证 grounding —— 两件不同的事，取材在前</text>
 <text class="tn" x="616" y="290"><tspan font-weight="600">取材拿法条原文</tspan>：按条线挑官方文档（三条线全开时 14 份），24 小时缓存 + ETag 条件请求</text>
-<text class="tn" x="616" y="307"><tspan font-weight="600">取证拿这笔交易的事实</tspan>：翻已入库的 89,659 条记录，加上用户当次声明</text>
+<text class="tn" x="616" y="307"><tspan font-weight="600">取证拿这笔交易的事实</tspan>：翻已入库的 106,287 条记录，加上用户当次声明</text>
 <text class="tn" x="616" y="324">　产出：名单命中 · 筛了哪些源 · 哪些没同步 · 名称候选 · 所有权链 · 本次边界</text>
 <text class="tn" x="616" y="346"><tspan font-weight="600">法条原文只发给下面三条线</tspan>；③④ 只看取证结果与用户声明，看不到原文</text></g>
 
@@ -128,7 +128,7 @@
 <text class="tn" x="614" y="634">② 检索受限方名单</text>
 <text class="tn" x="614" y="651">③ 名称匹配 · 用管辖</text>
 <text class="tn" x="614" y="668">④ 身份要素消歧</text>
-<text class="tn" x="614" y="685">⑤ 所有权穿透（50% 聚合）</text>
+<text class="tn" x="614" y="685">⑤ 所有权穿透 · 四源合一张图</text>
 <text class="tn" x="614" y="706">＋ 母公司筛查（依赖触发）</text>
 <text class="tn" x="614" y="723">负责：名单状态</text></g>
 
@@ -187,10 +187,10 @@
 
 <g class="c-teal"><rect x="40" y="880" width="1140" height="112" rx="5"/>
 <text class="layer" x="62" y="912">数据与来源</text>
-<text class="ts" x="210" y="910">36 个官方来源：美国 16 · 中国 10 · 其他 10（欧盟 / 英国 / 联合国 / 日本 / 台湾 / GLEIF / 厂商分类）</text>
-<text class="ts" x="210" y="930">30 个适配器自动同步：手动触发 · 启动时 · 定时；取原文 → 解析归一 → 一次事务写入并记 SHA-256</text>
+<text class="ts" x="210" y="910">37 个官方来源：美国 16 · 中国 11 · 其他 10（欧盟 / 英国 / 联合国 / 日本 / 台湾 / GLEIF / 厂商分类）</text>
+<text class="ts" x="210" y="930">32 个适配器（30 个可快照）：手动触发 · 启动时 · 定时；取原文 → 解析归一 → 一次事务写入并记 SHA-256</text>
 <text class="ts" x="210" y="950">3 个有验证码的源没有适配器，明确只人工 —— 不绕验证码，缺了就说缺了</text>
-<text class="ts" x="210" y="970">落到单个 SQLite 文件 · 9 张表 · 89,659 条记录：名单记录 · 原始快照 · 页面缓存 · 案件历史 · 案件信号</text></g>
+<text class="ts" x="210" y="970">落到单个 SQLite 文件 · 9 张表 · 106,287 条记录：名单记录 · 原始快照 · 页面缓存 · 案件历史 · 案件信号</text></g>
 
 <path class="arr" d="M300 992 V1024" marker-end="url(#a)"/>
 <path class="arr" d="M880 992 V1024" marker-end="url(#a)"/>

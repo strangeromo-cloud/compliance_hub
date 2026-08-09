@@ -36,7 +36,7 @@
 <text class="ts" x="110" y="28">怎么提问</text>
 <g class="c-gray"><rect x="110" y="36" width="336" height="64" rx="4"/><text class="th" x="126" y="58">直接描述交易</text><text class="ts" x="126" y="76">按命中词决定开哪几条线</text><text class="ts" x="126" y="92">词没命中就三条全开</text></g>
 <g class="c-gray"><rect x="467" y="36" width="336" height="64" rx="4"/><text class="th" x="483" y="58">/ 选 Gem · 8 个</text><text class="ts" x="483" y="76">提交前标出还缺哪几项</text><text class="ts" x="483" y="92">限定只用哪些来源作依据</text></g>
-<g class="c-gray"><rect x="824" y="36" width="336" height="64" rx="4"/><text class="th" x="840" y="58">@ 直查数据源</text><text class="ts" x="840" y="76">翻 89,659 条已入库记录</text><text class="ts" x="840" y="92">绕过主 Agent，不作判断</text></g>
+<g class="c-gray"><rect x="824" y="36" width="336" height="64" rx="4"/><text class="th" x="840" y="58">@ 直查数据源</text><text class="ts" x="840" y="76">翻 106,287 条已入库记录</text><text class="ts" x="840" y="92">绕过主 Agent，不作判断</text></g>
 
 <path class="arr" d="M278 100 V120 H532 V140" marker-end="url(#a)"/>
 <path class="arr" d="M635 100 V120 H532 V140" marker-end="url(#a)"/>
@@ -69,13 +69,13 @@
 <text class="ts" x="130" y="524">来源缺失不等于无风险，不会被写成「无命中」</text></g>
 
 <g class="c-teal"><rect x="720" y="395" width="440" height="150" rx="4"/>
-<text class="th" x="738" y="420">数据层 · 36 个官方来源 · 28 个已入库 · 89,659 条</text>
+<text class="th" x="738" y="420">数据层 · 37 个官方来源 · 30 个已入库 · 106,287 条</text>
 <text class="tn" x="738" y="439">单个 SQLite 文件，编排层只读；按条线分：贸易 16 · 产品 13 · 尽调 7</text>
 <text class="tn" x="738" y="461">美国 16：BIS EAR / CCL / 国别矩阵 · OFAC SDN 与所有权图</text>
-<text class="tn" x="738" y="478">　　　　CSL 综合筛查名单 · UFLPA · DoD 1260H · 联邦公报</text>
-<text class="tn" x="738" y="495">中国 10：两用物项清单 · 许可目录 · 管控名单 · 不可靠实体</text>
+<text class="tn" x="738" y="478">　　　　CSL 综合筛查名单 · UFLPA · DoD 1260H · 联邦公报 · SEC 持股申报</text>
+<text class="tn" x="738" y="495">中国 11：两用物项清单 · 许可目录 · 管控名单 · 不可靠实体 · 巨潮</text>
 <text class="tn" x="738" y="512">其他 10：欧盟 · 英国 · 联合国 · 日本 · 台湾 · GLEIF · 厂商分类</text>
-<text class="tn" x="738" y="534">30 个适配器自动同步；3 个有验证码的源没有适配器，明确只人工</text></g>
+<text class="tn" x="738" y="534">32 个适配器（30 个可快照）；3 个有验证码的源没有适配器，明确只人工</text></g>
 
 <path class="arr-data" d="M720 470 H700" marker-end="url(#ad)"/>
 <text class="lbl-data" x="710" y="462" text-anchor="middle">读记录</text>
@@ -111,7 +111,7 @@
 
 <g class="c-purple"><rect x="110" y="745" width="263" height="196" rx="4"/>
 <text class="th" x="126" y="768">④ 贸易合规 Agent</text><text class="tn" x="126" y="787">范围：交易方是谁</text>
-<text class="tn" x="126" y="812">① 确定法律实体　② 检索受限方名单</text><text class="tn" x="126" y="829">③ 名称匹配　④ 身份要素消歧</text><text class="tn" x="126" y="846">⑤ 所有权穿透（50% 聚合）</text><text class="tn" x="126" y="863">＋ 母公司筛查（依赖触发，不是固定步骤）</text>
+<text class="tn" x="126" y="812">① 确定法律实体　② 检索受限方名单</text><text class="tn" x="126" y="829">③ 名称匹配（中英跨语）　④ 身份要素消歧</text><text class="tn" x="126" y="846">⑤ 所有权穿透 · 四源合一张图算 50%</text><text class="tn" x="126" y="863">＋ 母公司筛查（依赖触发，不是固定步骤）</text>
 <text class="tn" x="126" y="886">本线负责：交易方名单状态</text><text class="tn" x="126" y="903">§ 732.3(g) · OFAC 50% Rule</text><text class="tn" x="126" y="925">不读别的 Agent 的输出</text></g>
 
 <g class="c-purple"><rect x="503" y="745" width="263" height="196" rx="4"/>
@@ -169,7 +169,7 @@
 
 <g class="c-teal"><rect x="110" y="1318" width="1050" height="120" rx="4"/>
 <text class="th" x="130" y="1341">⑧ 历史记录与案件信号 · 一次运行结束时，和答案写在同一个事务里</text>
-<text class="ts" x="130" y="1363">threads 97 条 · turns 166 条：完整案件历史，有条数上限，超出后按最近使用裁剪</text>
+<text class="ts" x="130" y="1363">threads 92 条 · turns 161 条：完整案件历史，有条数上限，超出后按最近使用裁剪</text>
 <text class="ts" x="130" y="1381">case_signals 49 条：每次运行一行，写在执行裁剪的同一个事务里，但被<tspan font-weight="600">刻意排除在裁剪之外</tspan></text>
 <text class="ts" x="130" y="1399">信号记的是结构不是原文：意图 · 开了哪几条线 · 路由词有没有命中 · 停在哪一步 · 补了哪些字段 · 还剩几步未闭合</text>
 <text class="ts" x="130" y="1421">历史能否活过重新部署取决于有没有挂 Volume —— 容器文件系统是临时的，页面会如实说明当前是哪种</text></g>

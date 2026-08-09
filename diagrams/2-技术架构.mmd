@@ -12,7 +12,7 @@ B3 --- SH
 
 SH --> SRV["<b>server.js · Node 24 · 依赖 0 个 · node_modules 0 个</b><br/>14 条路由 + 静态文件；/api/assess/stream 是 NDJSON 长连接，其余是普通 JSON<br/>服务端配了模型 key 时完全忽略前端传来的 baseUrl —— 防止把密钥送到任意主机"]
 
-SRV --> DET["<b>确定性部分 · 不调模型</b><br/>intent 路由 · triage 触发门 · clearance 五条件<br/>analysis-path 规划与解析 · lane-dependencies<br/>grounding 名单筛查 · entity-matching 名称比对<br/>ownership 穿透 · lookup · briefing<br/>简报 / 备忘录 / 直查：0 次模型"]
+SRV --> DET["<b>确定性部分 · 不调模型</b><br/>intent 路由 · triage 触发门 · clearance 五条件<br/>analysis-path 规划与解析 · lane-dependencies<br/>grounding 名单筛查 · entity-matching 名称比对<br/>ownership 穿透 · ownership-graph 50% 合计<br/>lookup · briefing<br/>简报 / 备忘录 / 直查：0 次模型"]
 
 SRV --> LLM["<b>调模型的两处，一次审查最多 4 次</b><br/>runAgent —— 每条专业线一次<br/>synthesize —— 主 Agent 综合一次<br/>llm.js：OpenAI 兼容，参数被拒即降级并记住<br/>剥离 think 块，配平花括号取 JSON<br/>没有可用模型时直接拒答，不存在规则模式"]
 
@@ -20,13 +20,18 @@ DET --> CAP["<b>agent-capabilities.js · 4 条具名能力</b><br/>纯函数，�
 
 CAP -.-> MCP["<b>mcp-server.js</b><br/>stdio JSON-RPC · npm run mcp<br/>不暴露任何能跑审查、存案件或碰模型的东西"]
 
-CAP --> DB["<b>数据层 · 单个 SQLite 文件 · node:sqlite · WAL</b><br/>9 张表：snapshots · records · snapshot_log · sync_status<br/>threads · turns · page_cache · case_signals · sqlite_sequence<br/>89,659 条记录 · 28 个源已入库；编排层只读"]
+OWN["<b>ownership-graph.js · 一张边表，四个来源</b><br/>OFAC 声明的关系（无比例）· GLEIF 合并母公司（无比例）<br/>SEC 13D/G 与 DEF 14A（有比例）· 用户填报（有比例）<br/>按 OFAC 50% 规则做闭包：跨主体相加，不沿链相乘<br/>算已知合计与待补边，指名说出「哪一个比例能定案」<br/>低于门槛永不构成排除 —— 边集不保证完整"]
 
-SYNC["<b>同步 · 30 个适配器，28 个可快照</b><br/>手动触发 · 启动时 SYNC_ON_BOOT · 定时 SYNC_INTERVAL_HOURS（串行，默认关闭）<br/>官方来源取原文 → 解析归一 → 一次事务写入并记 SHA-256<br/>验证码源没有适配器，定时任务碰不到；这是数据层唯一的写入方"]
+DET --> OWN
+OWN --> DB
+
+CAP --> DB["<b>数据层 · 单个 SQLite 文件 · node:sqlite · WAL</b><br/>9 张表：snapshots · records · snapshot_log · sync_status<br/>threads · turns · page_cache · case_signals · sqlite_sequence<br/>106,287 条记录 · 30 个源已入库；编排层只读"]
+
+SYNC["<b>同步 · 32 个适配器，30 个可快照</b><br/>手动触发 · 启动时 SYNC_ON_BOOT · 定时 SYNC_INTERVAL_HOURS（串行，默认关闭）<br/>官方来源取原文 → 解析归一 → 一次事务写入并记 SHA-256<br/>验证码源没有适配器，定时任务碰不到；这是数据层唯一的写入方"]
 
 SYNC --> DB
 
-LIVE["<b>运行时实时请求（不入库）</b><br/>引文摘录 · GLEIF 母公司链 · 官方 CSL 匹配器"]
+LIVE["<b>运行时实时请求（不入库）</b><br/>引文摘录 · GLEIF 母公司链与另一语言名 · 官方 CSL 匹配器<br/>SEC 13D/G 与 DEF 14A 持股 · cninfo 年报前十大股东<br/>索引已同步，持股按案件即时取"]
 LIVE -.-> DET
 
 classDef master fill:#FAEEDA,stroke:#854F0B,stroke-width:1px,color:#412402
@@ -39,3 +44,4 @@ class LLM master
 class DET,CAP agent
 class B1,B2,B3,SH,MCP plain
 class DB,SYNC,LIVE data
+class OWN agent
