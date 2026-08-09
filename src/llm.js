@@ -12,7 +12,7 @@ export function classifyModelError(error) {
   if (providerStatus === 400 || providerStatus === 422) return { code: "model_invalid_request", providerStatus };
   if (providerStatus) return { code: "model_provider_error", providerStatus };
   if (/valid json|no message content|unexpected token|json/i.test(String(error?.message || ""))) {
-    return { code: "model_invalid_response", providerStatus: null };
+    return { code: "model_text_not_json", providerStatus: null };
   }
   if (error instanceof TypeError || /fetch failed|network|enotfound|econnrefused|socket/i.test(String(error?.message || ""))) {
     return { code: "model_network_error", providerStatus: null };
@@ -60,7 +60,10 @@ function extractJson(text) {
     if (fenced) return JSON.parse(fenced[1]);
     const object = firstJsonObject(cleaned);
     if (object) return JSON.parse(object);
-    throw new Error("The model did not return valid JSON.");
+    // What it actually wrote, briefly. Without it there is no way to tell prose
+    // from a truncated object, and the two have different remedies.
+    const excerpt = cleaned.slice(0, 120).replace(/\s+/g, " ");
+    throw new Error(`The model did not return valid JSON. It began: ${excerpt}`);
   }
 }
 
@@ -151,13 +154,13 @@ async function requestCompletion(config, messages, dropped = new Set()) {
     payload = await response.json();
   } catch (cause) {
     const error = new Error("Model API returned a non-JSON response.", { cause });
-    error.modelError = { code: "model_invalid_response", providerStatus: response.status };
+    error.modelError = { code: "model_non_json_body", providerStatus: response.status };
     throw error;
   }
   const content = payload.choices?.[0]?.message?.content;
   if (!content) {
     const error = new Error("Model API returned no Chat Completions message content.");
-    error.modelError = { code: "model_invalid_response", providerStatus: response.status };
+    error.modelError = { code: "model_empty_content", providerStatus: response.status };
     throw error;
   }
   return extractJson(content);
@@ -257,7 +260,7 @@ async function streamCompletion(config, messages, dropped, onText, onMeta) {
 
   if (!content) {
     const error = new Error("Model API returned no streamed content.");
-    error.modelError = { code: "model_invalid_response", providerStatus: response.status };
+    error.modelError = { code: "model_empty_content", providerStatus: response.status };
     throw error;
   }
   return extractJson(content);

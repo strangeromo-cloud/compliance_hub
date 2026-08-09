@@ -58,7 +58,7 @@ const i18n = {
     gemDetail: "详情", gemNoSources: "不绑定外部来源，基于当前对话生成", factsLabel: "必填事实",
     factsMet: "已提供", boundLabel: "绑定来源",
     paletteEmpty: "没有匹配的 Gem", paletteNav: "↑↓ 选择", paletteEnter: "Enter 使用", paletteEsc: "Esc 关闭",
-    model_auth_error: "认证失败（401）：API Key 无效或不属于该服务。", model_permission_error: "权限被拒绝（403）。", model_endpoint_or_name_not_found: "接口或模型不存在（404）：检查 Base URL 是否含 /v1。", model_quota_or_rate_limit: "被限流或额度不足（429）。", model_invalid_request: "接口拒绝了请求（400/422）。", model_invalid_response: "响应不是兼容的 Chat Completions JSON。", model_timeout: "连接超时。", model_network_error: "无法连接模型接口。", model_provider_error: "模型服务异常。", model_unknown_error: "连接失败。"
+    model_auth_error: "认证失败（401）：API Key 无效或不属于该服务。", model_permission_error: "权限被拒绝（403）。", model_endpoint_or_name_not_found: "接口或模型不存在（404）：检查 Base URL 是否含 /v1。", model_quota_or_rate_limit: "被限流或额度不足（429）。", model_invalid_request: "接口拒绝了请求（400/422）。", model_non_json_body: "接口没有返回 JSON —— 通常是网关或代理返回了错误页，不是模型本身的问题。", model_empty_content: "模型返回了空内容 —— 常见于触发了内容过滤，或输出被 token 上限截断。", model_text_not_json: "模型返回的不是 JSON —— 它按自然语言作答了。若该供应商不支持 response_format，换一个支持的模型更稳。", model_invalid_response: "响应不是兼容的 Chat Completions JSON。", model_timeout: "连接超时。", model_network_error: "无法连接模型接口。", model_provider_error: "模型服务异常。", model_unknown_error: "连接失败。"
   },
   en: {
     prototype: "Compliance intelligence", skipLink: "Skip to workspace", workbench: "Export control workbench", newChat: "New",
@@ -115,7 +115,7 @@ const i18n = {
     gemDetail: "Details", gemNoSources: "No external sources; works from the current thread", factsLabel: "Required facts",
     factsMet: "provided", boundLabel: "Bound sources",
     paletteEmpty: "No matching gem", paletteNav: "↑↓ navigate", paletteEnter: "Enter to use", paletteEsc: "Esc to close",
-    model_auth_error: "Authentication failed (401): the API key is invalid or belongs to another service.", model_permission_error: "Permission denied (403).", model_endpoint_or_name_not_found: "Endpoint or model not found (404): check that the Base URL includes /v1.", model_quota_or_rate_limit: "Rate limited or out of quota (429).", model_invalid_request: "The endpoint rejected the request (400/422).", model_invalid_response: "The response was not compatible Chat Completions JSON.", model_timeout: "The request timed out.", model_network_error: "The model endpoint could not be reached.", model_provider_error: "The provider returned an error.", model_unknown_error: "Connection failed."
+    model_auth_error: "Authentication failed (401): the API key is invalid or belongs to another service.", model_permission_error: "Permission denied (403).", model_endpoint_or_name_not_found: "Endpoint or model not found (404): check that the Base URL includes /v1.", model_quota_or_rate_limit: "Rate limited or out of quota (429).", model_invalid_request: "The endpoint rejected the request (400/422).", model_non_json_body: "The endpoint did not return JSON — usually a gateway or proxy error page rather than the model itself.", model_empty_content: "The model returned empty content — typically a content filter, or output cut off by the token limit.", model_text_not_json: "The model answered in prose rather than JSON. If this provider does not support response_format, a model that does will be steadier.", model_invalid_response: "The response was not compatible Chat Completions JSON.", model_timeout: "The request timed out.", model_network_error: "The model endpoint could not be reached.", model_provider_error: "The provider returned an error.", model_unknown_error: "Connection failed."
   }
 };
 
@@ -1697,6 +1697,30 @@ function syncSubmitState() {
   button.title = running ? t("stopRun") : "";
 }
 
+// The step an answer is still waiting on, if the last one is.
+//
+// An open review has a form on screen asking for something. Anything the reader
+// types while it is there is far more likely to be that answer than a new
+// transaction to review — "无第三方参与，没有代理经销商以及中间方" is not a
+// scenario, it is the third-party step being answered in the composer instead of
+// in the box. Sent as a new question it started a whole second review of a
+// sentence with no counterparty, no item and no destination in it.
+function pendingStepForm() {
+  const answers = [...document.querySelectorAll(".msg-assistant")];
+  const last = answers.at(-1);
+  return last?.querySelector(".step-inputs:not(.si-collapsed):not(.submitted)") || null;
+}
+
+// Whether a message reads as a new transaction rather than as an answer.
+//
+// Deliberately crude and deliberately biased towards continuing. The step shows
+// what it recorded and against which field, so a wrong guess is visible and the
+// reader can start over; guessing the other way silently abandons a review in
+// progress and re-runs every specialist on a sentence that describes no
+// transaction. An export verb or a long message reads as a new scenario.
+const NEW_SCENARIO = /(出口|进口|销售|采购|转口|再出口|export|import|re-?export|ship|sell|supply)/i;
+const readsAsNewScenario = (text) => text.length > 120 || NEW_SCENARIO.test(text);
+
 // Ends the run the reader is watching. The request is aborted, which drops the
 // connection — the server notices and stops before the next specialist rather
 // than finishing and filing a case nobody asked it to keep.
@@ -2753,6 +2777,22 @@ document.addEventListener("click", (event) => {
 // says.
 $("questionForm").addEventListener("submit", (event) => {
   if (state.busy && state.run) { event.preventDefault(); return stopRun(); }
+  // A message typed while a step is still asking is that step's answer, and the
+  // review carries on with it rather than starting a second one. Routed through
+  // the form the step already owns, so there is one path for a declared fact and
+  // one place where the analysis resumes.
+  const pending = pendingStepForm();
+  const text = $("questionInput").value.trim();
+  if (pending && text.length >= 2 && !readsAsNewScenario(text)) {
+    event.preventDefault();
+    const field = pending.querySelector(".si-text");
+    if (field) {
+      field.value = text;
+      setComposer("");
+      pending.querySelector(".si-submit")?.click();
+      return;
+    }
+  }
   return analyze(event);
 });
 $("newChatBtn").addEventListener("click", newConversation);

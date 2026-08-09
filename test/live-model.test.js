@@ -15,7 +15,12 @@ test("model connection errors are classified without exposing credentials", () =
   assert.deepEqual(classifyModelError(Object.assign(new Error("limited"), { status: 429 })), { code: "model_quota_or_rate_limit", providerStatus: 429 });
   assert.deepEqual(classifyModelError(Object.assign(new Error("aborted"), { name: "AbortError" })), { code: "model_timeout", providerStatus: null });
   assert.deepEqual(classifyModelError(new TypeError("fetch failed")), { code: "model_network_error", providerStatus: null });
-  assert.deepEqual(classifyModelError(new Error("Model API returned no message content.")), { code: "model_invalid_response", providerStatus: null });
+  // The four ways a response can be unusable used to collapse into one opaque
+  // message. They have different remedies — a gateway error page, a content
+  // filter, a token limit, a model that answered in prose — so they are told
+  // apart. This one is the model writing something that is not JSON.
+  assert.deepEqual(classifyModelError(new Error("The model did not return valid JSON. It began: 根据现有信息，")), { code: "model_text_not_json", providerStatus: null });
+  assert.deepEqual(classifyModelError(new Error("Model API returned no message content.")), { code: "model_text_not_json", providerStatus: null });
 });
 
 test("live-model path routes, grounds, and synthesizes different questions", async (t) => {
