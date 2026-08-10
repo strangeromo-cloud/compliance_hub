@@ -70,7 +70,7 @@
 
 <g class="c-teal"><rect x="720" y="395" width="440" height="150" rx="4"/>
 <text class="th" x="738" y="420">数据层 · 37 个官方来源 · 30 个已入库 · 106,287 条</text>
-<text class="tn" x="738" y="439">单个 SQLite 文件，编排层只读；按条线分：贸易 16 · 产品 13 · 尽调 7</text>
+<text class="tn" x="738" y="439">单个 SQLite 文件，编排层只读；按条线分：贸易 16 · 产品 13 · 尽调 8</text>
 <text class="tn" x="738" y="461">美国 16：BIS EAR / CCL / 国别矩阵 · OFAC SDN 与所有权图</text>
 <text class="tn" x="738" y="478">　　　　CSL 综合筛查名单 · UFLPA · DoD 1260H · 联邦公报 · SEC 持股申报</text>
 <text class="tn" x="738" y="495">中国 11：两用物项清单 · 许可目录 · 管控名单 · 不可靠实体 · 巨潮</text>
@@ -111,7 +111,7 @@
 
 <g class="c-purple"><rect x="110" y="745" width="263" height="196" rx="4"/>
 <text class="th" x="126" y="768">④ 贸易合规 Agent</text><text class="tn" x="126" y="787">范围：交易方是谁</text>
-<text class="tn" x="126" y="812">① 确定法律实体　② 检索受限方名单</text><text class="tn" x="126" y="829">③ 名称匹配（中英跨语）　④ 身份要素消歧</text><text class="tn" x="126" y="846">⑤ 所有权穿透 · 四源合一张图算 50%</text><text class="tn" x="126" y="863">＋ 母公司筛查（依赖触发，不是固定步骤）</text>
+<text class="tn" x="126" y="812">① 确定法律实体　② 检索受限方名单</text><text class="tn" x="126" y="829">③ 名称匹配 中英跨语 · 用管辖　④ 身份要素消歧</text><text class="tn" x="126" y="846">⑤ 所有权穿透 · 四源合一张图算 50%</text><text class="tn" x="126" y="863">＋ 母公司筛查（依赖触发，不是固定步骤）</text>
 <text class="tn" x="126" y="886">本线负责：交易方名单状态</text><text class="tn" x="126" y="903">§ 732.3(g) · OFAC 50% Rule</text><text class="tn" x="126" y="925">不读别的 Agent 的输出</text></g>
 
 <g class="c-purple"><rect x="503" y="745" width="263" height="196" rx="4"/>
