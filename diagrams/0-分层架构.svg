@@ -81,8 +81,8 @@
 <text class="tn" x="312" y="429">只开被选中的专业线</text>
 <text class="tn" x="312" y="446">每条线一次模型调用</text>
 <text class="tn" x="312" y="463">一次审查最多 4 次</text>
-<text class="tn" x="312" y="488">按路径顺序一条条跑，每条</text>
-<text class="tn" x="312" y="505">前后各查一次要不要停下问</text></g>
+<text class="tn" x="312" y="488">按路径顺序一条条跑完，</text>
+<text class="tn" x="312" y="505">缺证据不中断，跑完再说</text></g>
 
 <path class="arr-hand" d="M510 424 H556 V286 H600" marker-end="url(#ah)"/>
 <text class="lbl-hand" transform="rotate(-90 536 486)" x="536" y="486" text-anchor="middle">① 判为合规审查，交出去</text>
@@ -152,7 +152,7 @@
 <text class="tn" x="994" y="723">负责：付款风险</text></g>
 
 <text class="tn" x="600" y="748" fill="#534AB7">三条线各拿到：<tspan font-weight="600">法条原文 ＋ 交易事实 ＋ 4 条能力答案</tspan>，各跑一次模型</text>
-<text class="tn" x="600" y="765" fill="#534AB7">步骤与状态由代码算，Agent 不设置任何状态；缺证据就<tspan font-weight="600">停下问人</tspan>，填完从断点续跑</text>
+<text class="tn" x="600" y="765" fill="#534AB7">步骤与状态由代码算，Agent 不设置任何状态；缺证据<tspan font-weight="600">照常跑完</tspan>，结论标为阶段性并点名待补</text>
 <text class="tn" x="600" y="782" fill="#534AB7">路径上还有<tspan font-weight="600">第四条线「结案」</tspan>，一步：Compliance / Legal 人工复核，不跑 Agent</text>
 
 <path class="arr" d="M689 730 V816"/>
@@ -201,7 +201,7 @@
 <text class="tn" x="60" y="1086">跨会话：threads 上限 100 个，每个 thread 的 turns 上限 30 条，超出按最近使用裁剪</text>
 <text class="tn" x="60" y="1108">重开一个案件时，恢复的是 threadId 与已声明的事实，<tspan font-weight="600">对话不恢复</tspan></text>
 <text class="tn" x="60" y="1125">　模型看不到上次的措辞，只看到这次的事实 —— 旧表述带不偏新结论</text>
-<text class="tn" x="60" y="1147">声明的事实一路累积；停下问人、填完从断点续跑走的就是这条</text>
+<text class="tn" x="60" y="1147">声明的事实一路累积；补一项就针对它继续判，走的就是这条</text>
 <text class="tn" x="60" y="1164">历史能否活过重新部署，取决于有没有挂 Volume；页面会如实说明当前是哪种</text></g>
 
 <g class="c-gray"><rect x="620" y="1024" width="560" height="152" rx="5"/>
