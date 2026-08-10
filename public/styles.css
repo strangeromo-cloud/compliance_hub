@@ -1802,3 +1802,8 @@ html[lang="en"] .step-needs::before { content: "NEEDS"; font-size: 8px; }
 /* The closing summary writes here, below the path and above the conclusion it is
    producing — not inside whichever step the reader last answered. */
 [data-live-synthesis] .stream-box { margin-left: 0; }
+/* What the question will run into, said before it is sent. Muted and after the
+   lane tags: it is an aid, not a requirement — the review runs without it. */
+.route-asks { color: var(--text-3); font-size: 11px; }
+/* The outstanding items, on the same line as the count that summarises them. */
+.interim-items { display: block; margin-top: 3px; font-weight: 400; opacity: .85; }

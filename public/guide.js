@@ -17,7 +17,7 @@ const copy = {
     kindsLead: "把每个问题都当成合规审查是错的。「这个料号的 ECCN 是多少」没有交易方、没有目的地、没有交易，跑一遍审查程序只会得到一段与提问无关的通用话。所以问题先分流，四条路各有各的产出和边界。",
     kindsHeads: ["类型", "什么时候走这条", "产出", "不做什么"],
     kinds: [
-      ["合规审查", "描述了一笔交易——有交易方、物项、目的地或最终用户", "按已公布程序逐步执行，每步带条文依据；缺资料就停在那一步问你；结论带风险等级与边界", "不放行交易。最后一步永远是人工复核"],
+      ["合规审查", "描述了一笔交易——有交易方、物项、目的地或最终用户", "按已公布程序逐步执行，每步带条文依据；缺资料不停下，跑完给出阶段性判断并列出还缺什么；结论带风险等级与边界", "不放行交易。最后一步永远是人工复核"],
       ["直接查询", "问一个已登记的值：料号的 ECCN、管制编码的含义、某主体是否在某份清单上", "单步检索，直接给值和来源；查不到时说明查了哪些记录、答案在谁那里", "不推断。未收录不等于不受管制"],
       ["监管简报", "问一段时间内发布了什么变化", "按公告汇总：新增多少家、分别进了哪份清单、来自哪些国家，再逐份列出动作与公告号", "不判断这些变化是否影响某笔交易——那是审查"],
       ["案件备忘录", "把本会话已完成的分析整理成文书", "记录既有结论与证据来源", "不产生新判断。会话为空时直接说没有可整理的内容"]
@@ -91,10 +91,10 @@ const copy = {
     useLead: "上下键选择 Gem，回车确认。每个 Gem 绑定五样东西：产出类型、指令、数据源白名单、必填事实清单、输出模板。产出类型决定它走哪条路——/reg-brief 是简报，不会触发受限方筛查；必填事实清单则让系统在提交前就知道自己缺什么，而不是让模型悄悄猜。",
     gemsLabel: "可用 Gem", gemBound: "个来源", gemRecords: "条记录", gemUnsynced: "个未同步", gemNone: "不绑定外部来源",
     streamTitle: "一步一步，问完再分析",
-    streamBody: "回答按顺序自上而下产生，遇到缺资料就停在那一步问你，不绕过缺口继续。",
+    streamBody: "回答按顺序自上而下产生。缺资料不打断：跑完后在结论旁列出还缺哪几项，补上任意一项就接着往下判。",
     streamPoints: [
       "开场先说明本次落在哪些审查范围、每个范围遵循哪份已公布的程序、步骤有哪些——右侧执行流程就是同一份清单。",
-      "缺资料时分析停在那一步、就地提示、就地填写。有未决问题时不出结论——在刚承认的缺口上写判断，正是本工具要避免的。",
+      "缺资料时分析照常跑完，结论标为「阶段性判断」并列出未闭合的步骤，就地可填。只要还有一步未闭合，就不会出清晰结论——在缺口上写一个看起来已定案的判断，正是本工具要避免的。",
       "补齐后从停下的地方继续，正文只画已执行的步骤，整体计划始终在右侧。",
       "三个专业 Agent 依次执行而非并发。代价是实时模型下总耗时约为三次调用之和，换来的是可跟读的顺序。"
     ],
@@ -150,7 +150,7 @@ const copy = {
       "会话内：最近 6 轮对话连同这次的问题一起发给模型，专业线和综合各一份。",
       "跨会话：案件历史存在 threads 与 turns 两张表里，上限 100 个会话、每个会话 30 轮，超出按最近使用裁剪。",
       "重开一个历史案件时，恢复的是案件编号与已声明的事实，对话本身不恢复——模型看不到上次的措辞，只看到这次的事实，旧表述带不偏新结论。",
-      "声明的事实一路累积。停下问人、填完从断点续跑，走的就是这条路径，不是把整个问题重问一遍。",
+      "声明的事实一路累积。补一项就针对它继续判，走的就是这条路径，不是把整个问题重问一遍。",
       "历史能否活过重新部署取决于有没有挂持久卷。容器文件系统是临时的，数据覆盖页会如实说明当前是哪一种。"
     ],
     evoTitle: "案件信号：每次运行留一行",
@@ -277,7 +277,7 @@ const copy = {
     streamBody: "The answer is produced in one direction, top to bottom, and stops at the step that needs something from you rather than analysing around the gap.",
     streamPoints: [
       "It opens by stating which review scopes the question falls into, which published procedure governs each, and the steps that procedure lays down — the flow rail on the right is the same list.",
-      "Where a fact is missing the analysis stops at that step and asks there. No conclusion is drawn while a question is open: an assessment written over a gap the run has just stopped at is the thing this is trying not to produce.",
+      "Where a fact is missing the run does not stop. It finishes, writes the assessment it can support, and names what is still outstanding beside it — labelled interim, and barred from reading as cleared while any step is open. Supplying one of those facts later in the conversation carries on from there rather than starting the procedure again.",
       "Supplying it continues from where it stopped. The body draws only what has run; the whole plan stays on the right.",
       "The three specialists run consecutively rather than at once. The cost is that a live run takes about as long as its three calls added together; the gain is a sequence a reader can follow."
     ],
@@ -484,7 +484,7 @@ function proceduresSection() {
                 <td class="proc-n">${index + 1}</td>
                 <td>${esc(step.title)}</td>
                 <td><code>${esc(step.cite || "—")}</code>${step.methodology !== lane.methodology ? `<span class="proc-tag">${esc(byId[step.methodology]?.label || step.methodology)}</span>` : ""}${step.note ? `<span class="proc-note">${esc(step.note)}</span>` : ""}</td>
-                <td>${step.asks.length ? step.asks.map((ask) => esc(ask)).join("<br>") : esc(t.procAsksNone)}</td>
+                <td>${step.asks.length ? step.asks.map((ask) => esc(ask.label)).join("<br>") : esc(t.procAsksNone)}</td>
               </tr>`).join("")}</tbody>
             </table></div>
           </details>`).join("")}

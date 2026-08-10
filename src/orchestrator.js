@@ -153,6 +153,26 @@ function localizeClearance(clearance, locale) {
   };
 }
 
+// What could not be closed on the facts given, told to the synthesis rather than
+// used to withhold it.
+//
+// The run used to stop at the first unanswerable step and return no conclusion at
+// all. That protected one thing — a conclusion must not be written over a gap —
+// at the cost of the thing a reader came for. Four runs in five stopped, and each
+// continuation re-ran the lanes that had already reported.
+//
+// The protection is kept and moved: the assessment is written, and it is written
+// knowing exactly what is missing, labelled interim, and barred from reading as
+// low risk. What must never happen is a gap that does not show; withholding the
+// answer was only one way of achieving that, and an expensive one.
+function outstandingBrief(steps) {
+  if (!steps.length) return "";
+  const titles = steps.slice(0, 6).map((step) => localizeLine(step.title, "en")).join("; ");
+  return `INTERIM ASSESSMENT. ${steps.length} step(s) could not be closed on the facts supplied: ${titles}. `
+    + "Write the conclusion as provisional and say plainly which facts are missing and what each would decide. "
+    + 'Never present this as a completed review, and overallRisk must not be "low" while any step is outstanding. ';
+}
+
 function clearanceBrief(clearance) {
   if (!clearance) return "";
   if (clearance.cleared) {
@@ -175,12 +195,12 @@ const SUMMARY_SHAPE = "Write executiveSummary as short markdown sections, not as
   + "Put the provision or source in parentheses at the end of the line it supports. "
   + "Omit a section that has nothing in it rather than writing that it is empty. Keep each line to one point.";
 
-async function synthesize(question, locale, results, config, history, grounding, onDelta) {
+async function synthesize(question, locale, results, config, history, grounding, onDelta, outstanding = []) {
   const language = locale === "en" ? "English" : "Simplified Chinese";
   const result = await callJsonModelStream(config, [
     {
       role: "system",
-      content: `${clearanceBrief(grounding.clearance)}You are the Compliance Hub Master Agent. Synthesize specialist findings without overruling them or inventing facts. Respond in ${language}. The headline and executiveSummary must answer the current question directly and specifically. Never replace a requested policy explanation or factual value with a generic human-review statement. ${intentScope(grounding.intent)} Distinguish controlled status, license requirement and prohibition only when those issues are actually in scope. Return JSON only: {"overallRisk":"low|medium|high|unknown","headline":"...","executiveSummary":"...","nextStep":"..."}. ${SUMMARY_SHAPE} Missing critical information must not become a low-risk result. This is not legal advice.`
+      content: `${outstandingBrief(outstanding)}${clearanceBrief(grounding.clearance)}You are the Compliance Hub Master Agent. Synthesize specialist findings without overruling them or inventing facts. Respond in ${language}. The headline and executiveSummary must answer the current question directly and specifically. Never replace a requested policy explanation or factual value with a generic human-review statement. ${intentScope(grounding.intent)} Distinguish controlled status, license requirement and prohibition only when those issues are actually in scope. Return JSON only: {"overallRisk":"low|medium|high|unknown","headline":"...","executiveSummary":"...","nextStep":"..."}. ${SUMMARY_SHAPE} Missing critical information must not become a low-risk result. This is not legal advice.`
     },
     { role: "user", content: `Recent conversation:\n${conversationContext(history)}\n\nCurrent question:\n${question}\n\nQuestion intent: ${grounding.intent}\n\nSpecialist outputs:\n${JSON.stringify(results)}` }
   ], (text) => onDelta?.(text));
@@ -212,19 +232,25 @@ const INFORMATIONAL = new Set(["policy_lookup", "product_metric"]);
 // A step the user can actually answer. A step that is merely blocked by an
 // earlier one is not a question — nobody can do anything about it yet, and one
 // the user has already said they cannot supply is not a question either.
-function openQuestion(path, { intent, unavailable = [] } = {}) {
-  if (INFORMATIONAL.has(intent)) return null;
+// Every step that still needs something a person could supply.
+//
+// This used to return the first one and the run stopped there. It returns all of
+// them now because the run no longer stops: the answer is written over what is
+// known, and what is not known is named beside it. The reader decides whether to
+// supply it, and supplying it later continues from there.
+function openQuestions(path, { intent, unavailable = [] } = {}) {
+  if (INFORMATIONAL.has(intent)) return [];
   const skipped = new Set(unavailable);
+  const open = [];
   for (const lane of path?.lanes || []) {
     for (const step of lane.steps) {
       if (step.status !== "evidence_needed" || !step.inputs?.length) continue;
-      // Asking again for something already declined would stop the run at the
-      // same step for ever.
+      // Something already declined is not asked for again.
       if (step.inputs.every((input) => skipped.has(input.field))) continue;
-      return step;
+      open.push(step);
     }
   }
-  return null;
+  return open;
 }
 
 const disclaimerFor = (locale) => (locale === "en"
@@ -631,16 +657,6 @@ export async function assessScenario({ question, locale = "zh", config = {}, his
     // Checked before the specialist runs rather than after, so stopping saves
     // the call rather than discarding its result.
     if (shouldStop()) { stopped = true; break; }
-    // Asked before the lane runs, not only after. Most questions come from the
-    // path itself once retrieval has landed — they are not findings a specialist
-    // produced — so running one to arrive at a question that was already known
-    // spends a minute of model time to learn nothing.
-    const asked = openQuestion(askablePath(), { intent: grounding.intent, unavailable: unavailableFacts });
-    if (asked) {
-      awaiting = asked;
-      onEvent({ type: "awaiting_input", step: asked.id, title: asked.title });
-      break;
-    }
     onEvent({ type: "agent_start", agent });
     const result = await runAgent(agent, question, locale, sources, config, history, grounding,
       (text) => onEvent({ type: "agent_delta", agent, text }),
@@ -652,17 +668,15 @@ export async function assessScenario({ question, locale = "zh", config = {}, his
     analysisPath = resolveAnalysisPath(analysisPath, { question: contextualQuestion, grounding: groundingSummary, results, declaredFacts });
     onEvent({ type: "path", path: localizePath(analysisPath, locale) });
 
-    // A lane that ends with a question the user can answer stops the run there.
-    // Carrying on to the next specialist would be analysing around a gap that has
-    // just been identified, and it would present the whole structure at once when
-    // what was asked for is one thing at a time: analyse, ask, wait, continue.
-    const pending = openQuestion(askablePath(), { intent: grounding.intent, unavailable: unavailableFacts });
-    if (pending) {
-      awaiting = pending;
-      onEvent({ type: "awaiting_input", step: pending.id, title: pending.title });
-      break;
-    }
   }
+
+  // Every lane has reported. What is still open is now reported alongside the
+  // answer instead of in place of it: the reader gets the assessment, labelled
+  // interim, with the outstanding items named — and supplying one of them later
+  // in the conversation carries on from there rather than starting over.
+  const outstanding = openQuestions(askablePath(), { intent: grounding.intent, unavailable: unavailableFacts });
+  awaiting = outstanding[0] || null;
+  if (awaiting) onEvent({ type: "awaiting_input", step: awaiting.id, title: awaiting.title });
 
   if (stopped || shouldStop()) {
     // The caller discards this. It is returned rather than thrown so a stop is
@@ -675,16 +689,9 @@ export async function assessScenario({ question, locale = "zh", config = {}, his
     // was reached, and this is how far it got.
     return { stopped: true, synthesis: null, awaitingInput: null, results, analysisPath, grounding: groundingSummary };
   }
-  if (!awaiting) onEvent({ type: "synthesizing" });
-  if (awaiting) {
-    // No conclusion is drawn while a question is open. An assessment written over
-    // a gap the analysis has just stopped at would be the thing it is trying not
-    // to produce.
-    synthesis = null;
-  } else {
-    synthesis = await synthesize(question, locale, results, config, history, grounding,
-      (text) => onEvent({ type: "synthesis_delta", text }));
-  }
+  onEvent({ type: "synthesizing" });
+  synthesis = await synthesize(question, locale, results, config, history, grounding,
+    (text) => onEvent({ type: "synthesis_delta", text }), outstanding);
 
   // Resolved the same way the question was chosen, always. Returning a less
   // resolved path than the one the ask came from meant the step being asked about

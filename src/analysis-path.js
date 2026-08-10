@@ -198,7 +198,9 @@ export function describeProcedures() {
       cite: source?.cite || null,
       note: source?.note || null,
       methodology: source?.methodology || plan.methodology,
-      asks: (inputs ? [].concat(inputs) : []).map((input) => input.label)
+      // Field and label together: the guide prints the label, and the composer
+      // needs the key to tell what the reader has already supplied.
+      asks: (inputs ? [].concat(inputs) : []).map((input) => ({ field: input.field, label: input.label }))
     }))
   }));
   const steps = lanes.flatMap((item) => item.steps);

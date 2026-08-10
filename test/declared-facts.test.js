@@ -56,20 +56,27 @@ test("a declared value moves its step off evidence_needed", () => {
   }
 });
 
-test("the run stops at the first question a user can answer", async () => {
+test("a question it cannot answer is reported beside the conclusion, not instead of it", async () => {
   const { assessScenario } = await import("../src/orchestrator.js");
   const question = "我们计划向一家新加坡代理商出口高性能计算服务器，最终用户在中国，由一家咨询公司代为付款";
 
-  const stopped = await assessScenario({ question, locale: "zh", config: stub.config });
-  assert.ok(stopped.awaitingInput, "a run with an unanswered question should be waiting");
-  assert.equal(stopped.synthesis, null, "no conclusion is drawn over a gap the run stopped at");
-  // The question was already knowable from retrieval, so no specialist was spent
-  // on arriving at it.
-  assert.equal(stopped.results.length, 0, "no specialist runs to reach a question already on the path");
+  // The run used to stop at the first unanswerable step and return nothing.
+  // Four runs in five stopped, and every continuation re-ran the lanes that had
+  // already reported — so the reader waited through the whole procedure again to
+  // learn one more fact. The protection it bought is kept and moved: the answer
+  // is written, labelled interim, with what is missing named beside it.
+  const result = await assessScenario({ question, locale: "zh", config: stub.config });
 
-  const asked = stopped.analysisPath.lanes.flatMap((lane) => lane.steps).find((step) => step.id === stopped.awaitingInput.step);
-  assert.equal(asked.status, "evidence_needed");
-  assert.ok(asked.inputs.length, "the step it stopped at is one the user can actually answer");
+  assert.ok(result.synthesis, "the reader gets the assessment that could be made");
+  assert.equal(result.results.length, 3, "every lane reports before the answer is written");
+  assert.ok(result.awaitingInput, "and what could not be closed is still named");
+
+  const named = result.analysisPath.lanes.flatMap((lane) => lane.steps).find((step) => step.id === result.awaitingInput.step);
+  assert.equal(named.status, "evidence_needed");
+  assert.ok(named.inputs.length, "what is reported outstanding is something a person can actually supply");
+
+  // The sixth gate holds regardless: an unclosed step must never read as cleared.
+  assert.notEqual(result.grounding?.clearance?.cleared, true, "an outstanding step cannot clear");
 });
 
 test("answering every question lets the run reach a conclusion", async () => {
