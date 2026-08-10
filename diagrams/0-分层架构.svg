@@ -113,7 +113,7 @@
 <text class="tn" x="899" y="462">item_jurisdiction　管辖　产品线负责</text>
 <text class="tn" x="899" y="479">classification_status　分类　产品线负责</text>
 <text class="tn" x="899" y="496">payment_risk　付款风险　尽调线负责</text>
-<text class="tn" x="899" y="519">每条带条文出处；三条线彼此不通信，</text>
+<text class="tn" x="899" y="519">每条带条文出处；三条线同时跑、不通信，</text>
 <text class="tn" x="899" y="536">标「用 X」的步骤就是消费这里的答案</text></g>
 
 <path class="arr" d="M1022 550 V562"/>

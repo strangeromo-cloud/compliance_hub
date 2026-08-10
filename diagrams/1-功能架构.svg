@@ -53,7 +53,7 @@
 <path class="arr" d="M651 235 V275" marker-end="url(#a)"/>
 <path class="arr" d="M955 200 H970 V315 H985" marker-end="url(#a)"/>
 
-<g class="c-purple"><rect x="110" y="275" width="202" height="80" rx="4"/><text class="th" x="124" y="297">合规审查</text><text class="tn" x="124" y="315">只开被选中的专业线</text><text class="tn" x="124" y="331">每条线一次模型调用</text><text class="tn" x="124" y="347">最多 4 次</text></g>
+<g class="c-purple"><rect x="110" y="275" width="202" height="80" rx="4"/><text class="th" x="124" y="297">合规审查</text><text class="tn" x="124" y="315">只开被选中的专业线</text><text class="tn" x="124" y="331">三条线同时发出，各一次</text><text class="tn" x="124" y="347">最多 4 次，两轮等待</text></g>
 <g class="c-gray"><rect x="330" y="275" width="202" height="80" rx="4"/><text class="th" x="344" y="297">监管简报</text><text class="tn" x="344" y="315">读已同步公告排期</text><text class="tn" x="344" y="331">按生效日排序</text><text class="tn" x="344" y="347">0 次模型调用</text></g>
 <g class="c-gray"><rect x="550" y="275" width="202" height="80" rx="4"/><text class="th" x="564" y="297">案件备忘录</text><text class="tn" x="564" y="315">整理本会话结论</text><text class="tn" x="564" y="331">不产生新判断</text><text class="tn" x="564" y="347">0 次模型调用</text></g>
 <g class="c-gray"><rect x="985" y="275" width="175" height="80" rx="4"/><text class="th" x="999" y="297">直接查询</text><text class="tn" x="999" y="315">按料号或编码翻库</text><text class="tn" x="999" y="331">出记录，不出结论</text><text class="tn" x="999" y="347">0 次模型调用</text></g>

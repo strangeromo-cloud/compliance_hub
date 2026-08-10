@@ -1267,7 +1267,7 @@ function pathMarkup(path, grounding, options = {}) {
       const notApplicable = view.folded;
       const steps = view.shown;
       const result = results.find((item) => item.agent === lane.lane);
-      const running = lane.lane === activeLane;
+      const running = options.runningLanes ? options.runningLanes.has(lane.lane) : lane.lane === activeLane;
       if (!steps.length && !result && !running) return "";
       const laneState = running ? "running" : doneLanes.has(lane.lane) ? "done" : "";
       return `
@@ -1915,7 +1915,11 @@ async function analyze(event, options = {}) {
   const collected = { agents: [], sources: [] };
   // Lane progress is kept outside the DOM so a redraw can restore the streamed
   // text: the path is re-rendered whenever a lane starts or finishes.
-  const progress = { activeLane: null, doneLanes: new Set(), text: {}, summary: {}, index: 0, total: 0, clock: null, stage: null };
+  // runningLanes, not one activeLane: the three specialists start together, so
+  // "the lane that started last" stopped meaning "the lane that is running".
+  // activeLane survives alongside it because the stage banner and the scroll
+  // still need one lane to point at.
+  const progress = { activeLane: null, runningLanes: new Set(), doneLanes: new Set(), text: {}, summary: {}, index: 0, total: 0, clock: null, stage: null };
 
   // Each delta carries the whole readable text of the call that produced it, not
   // an increment — the projection re-normalizes whitespace, so diffing against the
@@ -1973,13 +1977,15 @@ async function analyze(event, options = {}) {
     if (!path) return;
     for (const laneNode of path.querySelectorAll(".path-lane")) {
       const lane = laneNode.dataset.lane;
-      laneNode.classList.toggle("running", lane === progress.activeLane);
+      laneNode.classList.toggle("running", progress.runningLanes.has(lane));
       laneNode.classList.toggle("done", progress.doneLanes.has(lane));
       // While a continuation is running the resume box is the live surface, so
       // lane boxes are left alone rather than repopulated with finished text that
       // would read as a second stream still going.
       if (live.querySelector("[data-resume-stream]")) continue;
-      if (lane !== "review" && lane === progress.activeLane && progress.text[lane] !== undefined) {
+      // Every lane that has produced text shows it. This was gated on the one
+      // active lane because only one ever ran at a time; three now do.
+      if (lane !== "review" && progress.text[lane] !== undefined) {
         setStream(laneNode.querySelector("[data-lane-stream]"), null, progress.text[lane]);
       }
     }
@@ -2041,13 +2047,16 @@ async function analyze(event, options = {}) {
     if (!host) return markLanes();
     const openLanes = [...host.querySelectorAll(".path-lane")].filter((lane) => lane.dataset.open === "1").map((lane) => lane.dataset.lane);
     host.innerHTML = pathMarkup(collected.path, collected.grounding, {
-      allowInput: false, activeLane: progress.activeLane, doneLanes: progress.doneLanes,
+      allowInput: false, activeLane: progress.activeLane, runningLanes: progress.runningLanes, doneLanes: progress.doneLanes,
       results: collected.agents, stage: progress.stage, currentStep: state.resumingStep
     });
-    // Only the lane being analysed shows a stream; a finished lane's text stays
-    // out of the way so there is never more than one box writing.
-    if (progress.activeLane && progress.activeLane !== "review" && progress.text[progress.activeLane] !== undefined) {
-      setStream(host.querySelector(`[data-lane-stream="${CSS.escape(progress.activeLane)}"]`), null, progress.text[progress.activeLane]);
+    // drawPath rebuilt the markup, so every lane that has written text gets it
+    // back. This restored only the active lane, from when only one lane could be
+    // writing; three write at once now and the other two would go blank on every
+    // path event.
+    for (const [lane, text] of Object.entries(progress.text)) {
+      if (lane === "review" || text === undefined) continue;
+      setStream(host.querySelector(`[data-lane-stream="${CSS.escape(lane)}"]`), null, text);
     }
     for (const lane of openLanes) host.querySelector(`[data-lane="${CSS.escape(lane)}"]`)?.setAttribute("data-open", "1");
   }
@@ -2131,6 +2140,7 @@ async function analyze(event, options = {}) {
       // The lane becomes the active one, so the reasoning about to stream lands
       // inside the steps it is reasoning about.
       progress.activeLane = event.agent;
+      progress.runningLanes.add(event.agent);
       // Retrieval and screening are over once a specialist speaks. Leaving the
       // stage set would put the waiting animation back on the first lane every
       // time a lane finished and the next had not yet started — and again on the
@@ -2161,6 +2171,7 @@ async function analyze(event, options = {}) {
       collected.agents.push(event.result);
       progress.doneLanes.add(event.result.agent);
       progress.summary[event.result.agent] = event.result;
+      progress.runningLanes.delete(event.result.agent);
       if (progress.activeLane === event.result.agent) progress.activeLane = null;
       drawPath();
       renderFlowPanel(collected.path, { activeLane: progress.activeLane, stage: progress.stage });
@@ -2172,6 +2183,7 @@ async function analyze(event, options = {}) {
     if (event.type === "synthesizing") {
       done.add("agents");
       progress.activeLane = "review";
+      progress.runningLanes.clear();
       clearInterval(progress.clock);
       renderSteps(live, done, "synthesizing");
       progress.clock = startElapsed(live);

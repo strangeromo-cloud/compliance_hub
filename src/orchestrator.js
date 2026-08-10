@@ -652,22 +652,31 @@ export async function assessScenario({ question, locale = "zh", config = {}, his
   let synthesis = null;
   let awaiting = null;
 
+  // The lanes run at the same time, because nothing about them is sequential.
+  //
+  // They were run one after another so a lane could stop the whole thing before
+  // the next one spent a call. Nothing stops any more — the run finishes and
+  // reports what it could not close — so the only thing the ordering still bought
+  // was latency: three round trips where one would do. A review that took four
+  // waits now takes two.
+  //
+  // They cannot interfere. Each reads the same frozen grounding and its own
+  // filtered sources, none reads another's output, and the path is resolved once
+  // after all of them rather than between each.
   let stopped = false;
-  for (const agent of laneOrder) {
-    // Checked before the specialist runs rather than after, so stopping saves
-    // the call rather than discarding its result.
-    if (shouldStop()) { stopped = true; break; }
-    onEvent({ type: "agent_start", agent });
-    const result = await runAgent(agent, question, locale, sources, config, history, grounding,
+  if (shouldStop()) {
+    stopped = true;
+  } else {
+    laneOrder.forEach((agent) => onEvent({ type: "agent_start", agent }));
+    const reported = await Promise.all(laneOrder.map((agent) => runAgent(
+      agent, question, locale, sources, config, history, grounding,
       (text) => onEvent({ type: "agent_delta", agent, text }),
-      (meta) => onEvent({ type: "stream_mode", agent, ...meta }));
-    results.push(result);
-    onEvent({ type: "agent", result });
-    // This lane's steps close before the next lane starts, so the path fills in
-    // the order it is read rather than all at once at the end.
+      (meta) => onEvent({ type: "stream_mode", agent, ...meta })
+    )));
+    results.push(...reported);
+    reported.forEach((result) => onEvent({ type: "agent", result }));
     analysisPath = resolveAnalysisPath(analysisPath, { question: contextualQuestion, grounding: groundingSummary, results, declaredFacts });
     onEvent({ type: "path", path: localizePath(analysisPath, locale) });
-
   }
 
   // Every lane has reported. What is still open is now reported alongside the

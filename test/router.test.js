@@ -396,10 +396,16 @@ test("the closing summary is not written inside a step it is not about", async (
   // Created next to the conclusion it is producing, which is outside every step.
   assert.match(app, /live\.querySelector\("\.conclusion"\) \|\| live\.querySelector\("\.analysis-path"\)/);
 
-  // And the closing lane must not receive the same text a second time: two boxes
-  // writing at once is indistinguishable from two things running at once.
-  assert.match(app, /lane !== "review" && lane === progress\.activeLane/);
-  assert.match(app, /progress\.activeLane !== "review" && progress\.text\[progress\.activeLane\]/);
+  // And the closing lane must not receive the same text a second time — the
+  // conclusion has its own box.
+  //
+  // This used to also require the one active lane, on the reasoning that two
+  // boxes writing at once could not be told apart from two things running at
+  // once. Three things now do run at once, so three boxes writing at once is
+  // what is happening, and showing one would be the lie.
+  assert.match(app, /if \(lane !== "review" && progress\.text\[lane\] !== undefined\)/);
+  assert.match(app, /if \(lane === "review" \|\| text === undefined\) continue;/,
+    "and the rebuild that restores lane streams skips it too");
 
   // The scaffold goes when the finished answer replaces it.
   assert.match(app, /live\.querySelector\("\[data-live-synthesis\]"\)\?\.remove\(\);/);
