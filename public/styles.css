@@ -1609,6 +1609,22 @@ html[lang="en"] .step-needs::before { content: "NEEDS"; font-size: 8px; }
   50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 0%, transparent); }
 }
 @media (prefers-reduced-motion: reduce) { .path-step.asking .step-mark { animation: none; } }
+
+/* Only the newest answer marks a step.
+   The rail describes the newest run and nothing else, but every answer in a
+   thread kept its own highlight — so a thread with two turns put two marked
+   steps on screen and only the lower one matched the rail. Scrolled up to the
+   earlier answer, the two panels named different steps as the one in hand,
+   which is exactly what "对应不上" is. The earlier turn's status label stays:
+   what that step needed then is still true of that turn. */
+.msg-assistant:not(:last-of-type) .path-step.asking > .step-body {
+  background: none; border-color: var(--border); box-shadow: none;
+}
+.msg-assistant:not(:last-of-type) .path-step.asking .step-mark {
+  border-color: var(--risk-medium); background: none; color: var(--risk-medium); animation: none;
+}
+.msg-assistant:not(:last-of-type) .path-step.asking .step-head strong { font-size: 12.5px; }
+
 /* The step being worked on, which is not the same as the step asking for
    something. The page now scrolls to follow it, so it has to be visible on
    arrival — landing on an unmarked step reads as the page having jumped for no
@@ -1661,6 +1677,21 @@ html[lang="en"] .step-needs::before { content: "NEEDS"; font-size: 8px; }
      is the one that looks misaligned. */
   padding: 3px 6px 3px 8px; }
 .fl-step.current::after { left: -6px; top: 3px; bottom: 3px; width: 3px; }
+/* A finished run has no current step, only an outstanding one.
+   .current marks the step the reader is at, which during a run is the step being
+   worked on and afterwards is the step that stopped it going further. Both wore
+   the accent — the fill, the bar, the band — and after the run that is a badge
+   reading "in progress" on a review that finished several seconds ago, beside a
+   conclusion already written. Answering it is what the body says about the same
+   step, so the rail says it in the same colour. is-running is already false once
+   nothing is in flight, so the split needs no new state. */
+.fl-step.current:not(.is-running) .fl-node {
+  background: var(--risk-medium); border-color: var(--risk-medium); color: #fff;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--risk-medium) 26%, transparent);
+}
+.fl-step.current:not(.is-running)::after { background: var(--risk-medium); }
+.fl-step.current:not(.is-running) { background: color-mix(in srgb, var(--risk-medium) 11%, transparent); }
+
 /* Same size as every other dot. It is already the only one filled with the
    accent, on the only banded row, next to the only accent bar and the only bold
    line of text — enlarging it on top of that made it bulge out of a column whose

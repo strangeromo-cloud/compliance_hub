@@ -25,7 +25,7 @@ const i18n = {
     teachSlashTitle: "在输入框键入 /", teachSlashBody: "呼出 {n} 个 Gem 的完整目录，上下键选择，回车使用。",
     teachPinTitle: "把常用 Gem 加入工作区", teachPinBody: "在目录里点 ★，或在 Gem 详情里点「添加到工作区」，它会常驻左侧栏。",
     historyLabel: "历史记录", historyEmpty: "暂无记录", historyVolatile: "记录存在容器本地磁盘，重新部署会清空。挂载 Volume 到 data/runtime 可长期保留。", turnUnit: "轮", historyOpenFailed: "无法打开该记录", flowTitle: "执行流程", runPanel: "本次运行", flowRest: "顶部计的是整轮。另有 {n} 步在 {lanes} 本次没有走到 —— 上面这条线还缺证据，所以给出的是阶段性判断而不是结案",
-    flowRestDone: "顶部计的是整轮。另有 {n} 步在 {lanes} 本次没有走完（其中 {done} 步已完成）—— 上面这条线还缺证据，所以给出的是阶段性判断而不是结案", briefLead: "本次问题落在以下 {n} 个审查范围，按顺序逐步执行：", briefBecause: "命中 ", briefStandard: "标准程序", briefNoStandard: "无对应标准程序", briefDesigned: "系统设计", briefSteps: "{n} 个步骤", briefDesignedN: "其中 {n} 步由系统补充", flowEmpty: "提交一个问题后，这里显示分析路径的执行进度", flowNotRun: "该步骤尚未执行",
+    flowRestDone: "顶部计的是整轮。另有 {n} 步在 {lanes} 本次没有走完（其中 {done} 步已完成）—— 上面这条线还缺证据，所以给出的是阶段性判断而不是结案", briefLead: "本次问题落在以下 {n} 个审查范围：", briefBecause: "命中 ", briefStandard: "标准程序", briefNoStandard: "无对应标准程序", briefDesigned: "系统设计", briefSteps: "{n} 个步骤", briefDesignedN: "其中 {n} 步由系统补充", flowEmpty: "提交一个问题后，这里显示分析路径的执行进度", flowNotRun: "该步骤尚未执行",
     derivMatch_gem: "由所选 Gem 指定为主检查", derivMatch_always: "每次分析都执行", derivMatch_direct_lookup: "直接查询，不进入审查程序", derivMatch_gem_kind: "该 Gem 的产出类型，不进入审查程序", derivMatch_question_terms: "问题中的关键词",
     derivMatch_no_term_matched_all_lanes_run: "问题未命中任何关键词，三条检查全部执行",
     derivKind_official: "官方程序", derivKind_derived: "系统规划",
@@ -86,7 +86,7 @@ const i18n = {
     teachSlashTitle: "Press / in the composer", teachSlashBody: "Opens the full catalogue of {n} gems. Arrow keys select, Enter uses.",
     teachPinTitle: "Pin the ones you use", teachPinBody: "Add to workspace from a gem's details and it stays in the sidebar.",
     historyLabel: "History", historyEmpty: "No cases yet", historyVolatile: "Cases sit on the container\u2019s own disk and are cleared by a redeploy. Mount a volume at data/runtime to keep them.", turnUnit: "turns", historyOpenFailed: "That case could not be opened", flowTitle: "Execution flow", runPanel: "This run", flowRest: "The count above is the whole run. {n} further steps in {lanes} were not reached — the lane above is still short of evidence, so what you have is an interim assessment rather than a closed case",
-    flowRestDone: "The count above is the whole run. {n} further steps in {lanes} were not finished ({done} of them are settled) — the lane above is still short of evidence, so what you have is an interim assessment rather than a closed case", briefLead: "This question falls into {n} review scopes, worked through in order:", briefBecause: "matched ", briefStandard: "Standard procedure", briefNoStandard: "No standard procedure", briefDesigned: "designed here", briefSteps: "{n} steps", briefDesignedN: "{n} added by this system", flowEmpty: "Ask a question and the analysis path\u2019s progress appears here", flowNotRun: "That step has not run yet",
+    flowRestDone: "The count above is the whole run. {n} further steps in {lanes} were not finished ({done} of them are settled) — the lane above is still short of evidence, so what you have is an interim assessment rather than a closed case", briefLead: "This question falls into {n} review scopes:", briefBecause: "matched ", briefStandard: "Standard procedure", briefNoStandard: "No standard procedure", briefDesigned: "designed here", briefSteps: "{n} steps", briefDesignedN: "{n} added by this system", flowEmpty: "Ask a question and the analysis path\u2019s progress appears here", flowNotRun: "That step has not run yet",
     derivMatch_gem: "set as the lead check by the selected gem", derivMatch_always: "runs on every analysis", derivMatch_direct_lookup: "a direct lookup; no review procedure applies", derivMatch_gem_kind: "what this gem produces; no review procedure applies", derivMatch_question_terms: "terms in the question",
     derivMatch_no_term_matched_all_lanes_run: "no term matched, so all three checks run",
     derivKind_official: "official", derivKind_derived: "system-planned",
@@ -1183,12 +1183,16 @@ function derivationMarkup(path) {
                 ? `${esc(t("briefBecause"))}${row.matchedTerms.map((term) => `<code>${esc(term)}</code>`).join("")}`
                 : esc(t(`derivMatch_${row.matchedBy}`))}</span>
             </div>
+            ${/* The procedure, and nothing that repeats it. The authority was
+                  printed after every title — "EAR Part 732 … U.S. Bureau of
+                  Industry and Security" — and the title already names the
+                  regulation. A scope with no published procedure said so twice,
+                  once as 无对应标准程序 and once as the same sentence in English. */ ""}
             <div class="bf-std">
               <span class="bf-std-label">${esc(t(kind === "official" ? "briefStandard" : "briefNoStandard"))}</span>
-              ${row.methodology ? (row.methodology.url
+              ${kind === "official" && row.methodology ? (row.methodology.url
                 ? `<a href="${esc(row.methodology.url)}" target="_blank" rel="noopener noreferrer">${esc(row.methodology.label)}</a>`
                 : esc(row.methodology.label)) : ""}
-              ${row.methodology?.authority ? `<i>${esc(row.methodology.authority)}</i>` : ""}
             </div>
             ${/* A count, not the titles again.
                   This listed every step of every scope, and then the body listed
@@ -1200,11 +1204,18 @@ function derivationMarkup(path) {
                   What stays is what only this block knows: which scopes opened,
                   on what terms, under which published procedure, and how many of
                   the steps this system added rather than took from it. */ ""}
-            <div class="bf-count">
-              ${esc(t("briefSteps").replace("{n}", (lane?.steps || []).length))}
-              ${(lane?.steps || []).some((step) => step.methodology === "derived")
-                ? `<span class="bf-tag">${esc(t("briefDesignedN").replace("{n}", (lane?.steps || []).filter((step) => step.methodology === "derived").length))}</span>` : ""}
-            </div>
+            ${(() => {
+              const steps = lane?.steps || [];
+              const designed = steps.filter((step) => step.methodology === "derived").length;
+              // All of them designed here is not "N steps, N of which are
+              // designed" — it is one fact, and the scope already said it has no
+              // published procedure to take them from.
+              const tag = !designed ? ""
+                : designed === steps.length ? t("briefDesigned")
+                : t("briefDesignedN").replace("{n}", designed);
+              return `<div class="bf-count">${esc(t("briefSteps").replace("{n}", steps.length))}${
+                tag ? `<span class="bf-tag">${esc(tag)}</span>` : ""}</div>`;
+            })()}
           </li>`;
         }).join("")}
       </ol>
