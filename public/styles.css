@@ -1399,7 +1399,9 @@ html[lang="en"] .step-needs::before { content: "NEEDS"; font-size: 8px; }
 .live-detail::before { content: "· "; }
 .live-elapsed { margin-left: auto; font: 400 10.5px/1 var(--mono); color: var(--text-3); }
 /* The waiting step is the focal point of an open analysis. */
-.step-ask { margin: 8px 0 6px; font-size: 12px; font-weight: 500; color: var(--accent-text); }
+.step-ask { margin: 8px 0 6px; font-size: 12px; font-weight: 400; line-height: 1.7; color: var(--text-2); }
+/* Reads as a note about the answer, not as a field waiting to be filled. */
+.step-ask .si-redo { margin-left: 4px; }
 
 /* ---- streamed reasoning: one component, wherever it appears ----
    Sits clear of the content above it, never grows past a readable height, and

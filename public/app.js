@@ -48,7 +48,7 @@ const i18n = {
     filterAll: "全部", filterTrade: "Trade", filterProduct: "Product", filterTpdd: "TPDD", filterCross: "跨域",
     runtimeReady: "实时模型", runtimeMissing: "未配置模型",
     routeLabel: "路由", intentReview: "合规审查", intentLookup: "直接查询", intentBriefing: "监管变化简报", intentMemo: "案件备忘录", intentNoReview: "不进入合规审查流程", intentAllLanes: "未匹配到关键词，三条线全跑", routedTo: "已路由至",
-    willAsk: "这次会用到：", willAskMore: " 等 {n} 项", send: "发送", stopRun: "停止本次分析", runStopped: "已停止。本次分析未完成，也未存入案件历史。", overallAssessment: "总体判断", nextStep: "下一步", missingInfo: "仍需信息", actions: "建议行动", planSuggested: "专业 Agent 的其他建议", planSuggestedNote: "这些建议未对应分析路径上的某一步，供人工复核时参考", notClosed: "尚有 {n} 项未补齐", stepAsk: "请补充以下信息，分析将从这里继续", naCount: "{n} 项本次不适用", stepTriggered: "由前一步的发现触发", flowFolded: "另有 {n} 项不适用", laneFindings: "本条线的分析发现（专业 Agent 输出，非全案结论）", interimVerdict: "阶段性判断（基于现有信息，未结案）", noItems: "暂无", limitations: "结论边界与限制", clearanceTitle: "结案条件 · 五条", clearanceNote: "五个条件分属三条专业线，任何一条线都无法独自定案。沉默不算通过：未说明即为未满足。", clearanceCleared: "五条全部满足 —— 在所述事实下不产生许可要求，这不是批准，也不是放行。", clearanceBlocked: "尚有 {n} 条未满足，因此不出清晰结论。", clearanceOpen: "另有 {n} 个步骤仍在等证据；即使五条全过，未闭合的步骤同样阻断清晰结论。", clearanceMet: "已满足", clearanceUnmet: "未满足",
+    willAsk: "这次会用到：", willAskMore: " 等 {n} 项", send: "发送", stopRun: "停止本次分析", runStopped: "已停止。本次分析未完成，也未存入案件历史。", overallAssessment: "总体判断", nextStep: "下一步", missingInfo: "仍需信息", actions: "建议行动", planSuggested: "专业 Agent 的其他建议", planSuggestedNote: "这些建议未对应分析路径上的某一步，供人工复核时参考", notClosed: "尚有 {n} 项未补齐", stepAsk: "结论已按现有信息给出。这一项仍缺，补上可继续核验：", stepFill: "填写", naCount: "{n} 项本次不适用", stepTriggered: "由前一步的发现触发", flowFolded: "另有 {n} 项不适用", laneFindings: "本条线的分析发现（专业 Agent 输出，非全案结论）", interimVerdict: "阶段性判断（基于现有信息，未结案）", noItems: "暂无", limitations: "结论边界与限制", clearanceTitle: "结案条件 · 五条", clearanceNote: "五个条件分属三条专业线，任何一条线都无法独自定案。沉默不算通过：未说明即为未满足。", clearanceCleared: "五条全部满足 —— 在所述事实下不产生许可要求，这不是批准，也不是放行。", clearanceBlocked: "尚有 {n} 条未满足，因此不出清晰结论。", clearanceOpen: "另有 {n} 个步骤仍在等证据；即使五条全过，未闭合的步骤同样阻断清晰结论。", clearanceMet: "已满足", clearanceUnmet: "未满足",
     sourceLive: "实时获取", sourceMetadata: "元数据", sourceUnavailable: "获取失败", sourceNotFetched: "未获取", sourceArchived: "已采集副本", sourceCitationOnly: "仅引用", sourceCached: "缓存", noQueryableSource: "暂无可直查的来源（需先同步）", sourceQueryHint: "@ 直查数据源", srcAuthority: "发布机构", srcCountry: "法域", srcUpdates: "更新频率", srcCaptured: "本地采集于", srcBoundary: "这里返回来源自己的记录，不是判定结论。", sourceQueryPlaceholder: "输入实体名、公告号或条文关键词（按相关性排序；留空则浏览全部）…",
     queryEmpty: "请输入查询内容", queryHits: "{total} 条命中", browseCount: "共 {total} 条", browseAll: "浏览全部", pagePrev: "上一页", pageNext: "下一页", relMatched: "命中", relMissed: "未命中", relPartial: "另有 {n} 条仅命中部分检索词，未列出", queryNoHit: "该来源中未找到匹配记录", queryTruncated: "显示前 {shown} 条，共 {total} 条",
     queryEscalate: "以此发起完整筛查 →", escalatePrefix: "请对 {q} 做完整合规筛查",
@@ -109,7 +109,7 @@ const i18n = {
     filterAll: "All", filterTrade: "Trade", filterProduct: "Product", filterTpdd: "TPDD", filterCross: "Cross-domain",
     runtimeReady: "Live model", runtimeMissing: "No model configured",
     routeLabel: "Route", intentReview: "Compliance review", intentLookup: "Direct lookup", intentBriefing: "Regulatory briefing", intentMemo: "Case memo", intentNoReview: "no review procedure runs", intentAllLanes: "no term matched, so all three run", routedTo: "Routed to",
-    willAsk: "This will use: ", willAskMore: " and {n} more", send: "Send", stopRun: "Stop this analysis", runStopped: "Stopped. This analysis did not finish, and was not saved to the case history.", overallAssessment: "Overall assessment", nextStep: "Next step", missingInfo: "Missing information", actions: "Recommended actions", planSuggested: "Other suggestions from the specialists", planSuggestedNote: "These do not map onto a step in the analysis path; they are for the reviewer to weigh", notClosed: "{n} items still open", stepAsk: "Add these and the analysis continues from here", naCount: "{n} not applicable here", stepTriggered: "triggered by an earlier finding", flowFolded: "{n} more not applicable", laneFindings: "What this lane found (specialist output, not the case conclusion)", interimVerdict: "Interim assessment (on incomplete facts, not a conclusion)", noItems: "None", limitations: "Limits on this conclusion", clearanceTitle: "Clearance conditions · five", clearanceNote: "The five conditions belong to three different lanes, so no lane can close a case on its own. Silence is not a pass: unstated is unmet.", clearanceCleared: "All five are met — no licence requirement arises on the stated facts. This is not an approval and not a release.", clearanceBlocked: "{n} not met, so no clear conclusion is drawn.", clearanceOpen: "{n} step(s) are still waiting on evidence. An open step blocks a clear conclusion even when all five conditions hold.", clearanceMet: "Met", clearanceUnmet: "Not met",
+    willAsk: "This will use: ", willAskMore: " and {n} more", send: "Send", stopRun: "Stop this analysis", runStopped: "Stopped. This analysis did not finish, and was not saved to the case history.", overallAssessment: "Overall assessment", nextStep: "Next step", missingInfo: "Missing information", actions: "Recommended actions", planSuggested: "Other suggestions from the specialists", planSuggestedNote: "These do not map onto a step in the analysis path; they are for the reviewer to weigh", notClosed: "{n} items still open", stepAsk: "The conclusion above stands on what was given. This is still missing; supplying it carries the check further: ", stepFill: "fill in", naCount: "{n} not applicable here", stepTriggered: "triggered by an earlier finding", flowFolded: "{n} more not applicable", laneFindings: "What this lane found (specialist output, not the case conclusion)", interimVerdict: "Interim assessment (on incomplete facts, not a conclusion)", noItems: "None", limitations: "Limits on this conclusion", clearanceTitle: "Clearance conditions · five", clearanceNote: "The five conditions belong to three different lanes, so no lane can close a case on its own. Silence is not a pass: unstated is unmet.", clearanceCleared: "All five are met — no licence requirement arises on the stated facts. This is not an approval and not a release.", clearanceBlocked: "{n} not met, so no clear conclusion is drawn.", clearanceOpen: "{n} step(s) are still waiting on evidence. An open step blocks a clear conclusion even when all five conditions hold.", clearanceMet: "Met", clearanceUnmet: "Not met",
     sourceLive: "Live", sourceMetadata: "Metadata", sourceUnavailable: "Unavailable", sourceNotFetched: "Not fetched", sourceArchived: "Archived copy", sourceCitationOnly: "Cited only", sourceCached: "Cached", noQueryableSource: "No queryable source yet (sync one first)", sourceQueryHint: "@ query a source", srcAuthority: "Published by", srcCountry: "Jurisdiction", srcUpdates: "Updated", srcCaptured: "Captured locally", srcBoundary: "This returns the source's own records, not a determination.", sourceQueryPlaceholder: "Entity name, notice number or keyword — ranked by relevance; leave empty to browse all…",
     queryEmpty: "Enter something to look up", queryHits: "{total} matches", browseCount: "{total} records", browseAll: "Browse all", pagePrev: "Previous", pageNext: "Next", relMatched: "matched", relMissed: "not matched", relPartial: "{n} more records matched only part of the query and are not listed", queryNoHit: "No matching record in this source", queryTruncated: "Showing {shown} of {total}",
     queryEscalate: "Run a full screening on this →", escalatePrefix: "Run a full compliance screening on {q}",
@@ -1070,10 +1070,10 @@ function choiceMarkup(option, field, selected, asRecord) {
           </button>`;
 }
 
-function stepInputsMarkup(item, { values = null, collapsed = false } = {}) {
+function stepInputsMarkup(item, { values = null, collapsed = false, outstanding = false } = {}) {
   const filled = (field) => (values ? String(values[field] ?? "") : "");
   return `
-    <div class="step-inputs${collapsed ? " si-collapsed" : ""}" data-step="${esc(item.id)}">
+    <div class="step-inputs${collapsed ? " si-collapsed" : ""}"${outstanding ? " data-outstanding" : ""} data-step="${esc(item.id)}">
       ${item.inputs.filter((input) => input.kind !== "choice" || input.options?.length).map((input) => input.kind === "choice"
         ? (() => {
           // One option carrying a separator makes the whole group a record
@@ -1323,7 +1323,14 @@ function pathMarkup(path, grounding, options = {}) {
                   }).join("")}</ul>` : ""}
                   ${item.needs.length ? `<ul class="step-needs">${item.needs.map((line) => `<li>${formatInline(line)}</li>`).join("")}</ul>` : ""}
                   ${stepDetailMarkup(item, grounding)}
-                  ${asking ? `<p class="step-ask"><span class="step-arrow" aria-hidden="true">➜</span>${esc(t("stepAsk"))}</p>${stepInputsMarkup(item)}` : ""}
+                  ${/* Stated, not asked. The run does not wait for this and the
+                        conclusion above was already written without it; an open
+                        input box under a finished answer says otherwise, and read
+                        as the analysis having stopped for the reader. The fields
+                        are still here, one click away, because supplying the fact
+                        does still carry the review further. */ ""}
+                  ${asking ? `<p class="step-ask">${esc(t("stepAsk"))}<button type="button" class="si-redo">${esc(t("stepFill"))}</button></p>`
+                    + stepInputsMarkup(item, { collapsed: true, outstanding: true }) : ""}
                   ${!asking && item.status === "declared" && item.inputs?.length ? `
                     <p class="step-redo"><button type="button" class="si-redo">${esc(t("declareRedo"))}</button></p>
                     ${stepInputsMarkup(item, { values: state.declaredFacts, collapsed: true })}` : ""}
@@ -1776,7 +1783,12 @@ function syncSubmitState() {
 function pendingStepForm() {
   const answers = [...document.querySelectorAll(".msg-assistant")];
   const last = answers.at(-1);
-  return last?.querySelector(".step-inputs:not(.si-collapsed):not(.submitted)") || null;
+  // Collapsed still counts. Hiding the form was a decision about what a finished
+  // answer should look like, not about whether a fact typed afterwards still
+  // belongs to the step that wanted it. Named by data-outstanding rather than by
+  // document order: a step already declared carries a collapsed form of its own,
+  // and that one sits earlier in the answer.
+  return last?.querySelector(".step-inputs[data-outstanding]:not(.submitted)") || null;
 }
 
 // Whether a message reads as a new transaction rather than as an answer.
@@ -2719,7 +2731,10 @@ const onWorkspaceClick = (event) => {
     const host = redo.closest(".step-detail-wrap")?.querySelector(".step-inputs.si-collapsed");
     if (!host) return;
     host.classList.remove("si-collapsed");
-    redo.closest(".step-redo").remove();
+    // The link lives in .step-redo on a step already declared and in .step-ask on
+    // one still outstanding; only the link goes, and the sentence around it stays
+    // because it is what the step is still saying.
+    (redo.closest(".step-redo") || redo).remove();
     host.querySelector(".si-text")?.focus();
     return;
   }
