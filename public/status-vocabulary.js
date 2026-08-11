@@ -58,6 +58,17 @@ export function tone(vocabulary, key) {
 
 export const SETTLED_STATUS = new Set(["confirmed", "declared", "review_required", "not_applicable"]);
 
+// Settled is not the same as done, and progress counts the second one.
+//
+// review_required is settled — its outcome is decided and nothing further
+// will happen to it automatically — but what it says is that a person has to
+// look at this, which is the one thing in the path that definitely has not
+// been done. Counted as progress it put a step in the numerator that the
+// panel also never draws while anything is open, so the rail could not reach
+// its own total and read as a run that never finished. Across 47 stored
+// paths it was the only step that was ever counted and not shown.
+export const isDone = (step) => SETTLED_STATUS.has(step?.status) && step.status !== "review_required";
+
 // What a step is, right now, in one place.
 //
 // The rail and the body each worked this out for themselves, and each got it
@@ -168,7 +179,7 @@ export function laneView(lane, { question = null, declined = [] } = {}) {
   return {
     shown: reached.filter((item) => !FOLDED.has(stepState(item, declined))),
     folded: reached.filter((item) => FOLDED.has(stepState(item, declined))),
-    settled: steps.filter((item) => SETTLED_STATUS.has(item.status)).length,
+    settled: steps.filter(isDone).length,
     total: steps.length
   };
 }
@@ -195,6 +206,16 @@ export function firstBlockedStep(path, declined = []) {
 // reader sees when they say the panels do not match.
 //
 // One rule, the body's. What is still ahead is carried by the counts.
+// A lane is drawn once it has been reached, and reaching it no longer stops at
+// the first question.
+//
+// This used to break out of the loop at the lane holding an open question: one
+// question at a time, and nothing past it had run, so drawing it would have
+// promised work that had not happened. The run does not stop at a question any
+// more — every lane runs and reports — so the break was hiding lanes that had
+// finished. A rail reading "6/17, Trade 3/5" over a note saying twelve steps
+// elsewhere were not shown, three of them already settled, is the same panel
+// contradicting itself: the work was done and the panel would not draw it.
 export function visibleLanes(path, { activeLane = null, declined = [], allowInput = true, analysed = [] } = {}) {
   const blocked = firstBlockedStep(path, declined);
   const seen = new Set(analysed);
@@ -203,7 +224,10 @@ export function visibleLanes(path, { activeLane = null, declined = [], allowInpu
     if (lane.lane === "review") {
       // The closing step is only drawn once there is something to close, and
       // never on its own — a rail holding nothing but "human review" describes a
-      // run that has not started as though it were nearly over.
+      // run that has not started as though it were nearly over. Still withheld
+      // while a question is open: human_review carries review_required from the
+      // moment the path is planned, so it is not evidence the run got there, and
+      // a case with something unresolved is a case that cannot be closed.
       if (!blocked && allowInput && out.length) out.push(lane);
       continue;
     }
@@ -212,7 +236,6 @@ export function visibleLanes(path, { activeLane = null, declined = [], allowInpu
     if (seen.has(lane.lane) || lane.lane === activeLane
       || lane.steps.some((item) => SETTLED_STATUS.has(item.status))
       || lane.steps.some((item) => item.id === blocked)) out.push(lane);
-    if (lane.steps.some((item) => isAskable(item, declined))) break;
   }
   // A plan that has not been resolved yet has no settled step anywhere and no
   // question — nothing qualifies, and both panels would draw an empty frame. The

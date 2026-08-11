@@ -1,5 +1,5 @@
 import { GEMS, GEM_BY_ID, GEM_GROUPS, factCoverage, matchGems, toggleWorkspaceGem, workspaceGemIds } from "/gems.js";
-import { EVIDENCE_STATUS, FOLDED, SETTLED_STATUS, STEP_STATUS_VOCAB, currentStepId, firstBlockedStep as blockedStep, isAskable as askable, label, laneView, stepState as state_, tone, visibleLanes } from "/status-vocabulary.js";
+import { EVIDENCE_STATUS, FOLDED, SETTLED_STATUS, STEP_STATUS_VOCAB, currentStepId, firstBlockedStep as blockedStep, isAskable as askable, isDone, label, laneView, stepState as state_, tone, visibleLanes } from "/status-vocabulary.js";
 import { AGENT_META, judgeIntent } from "/intent.js";
 
 const i18n = {
@@ -960,13 +960,12 @@ function flowMarkup(path, options = {}) {
   // header reading 5 settled above a lane reading 4 — the fifth is settled in a
   // lane that is not on screen, and unsaid that is just a second unexplained
   // number under the first.
-  const withheldDone = withheld.reduce((sum, lane) =>
-    sum + lane.steps.filter((item) => SETTLED_STATUS.has(item.status)).length, 0);
+  const withheldDone = withheld.reduce((sum, lane) => sum + lane.steps.filter(isDone).length, 0);
   // Progress counts what is settled, not what has merely been reached. A step
   // waiting on evidence had been counted as done, so answering six questions in a
   // row moved the number not at all — the one place a reader looks to see that
   // their answers are getting somewhere.
-  const executed = steps.filter((item) => SETTLED_STATUS.has(item.status)).length;
+  const executed = steps.filter(isDone).length;
   // Three meanings of "current" and the rail kept picking the wrong one. While a
   // continuation is in flight it is the step the reader just submitted — the one
   // showing "continuing the analysis" — and computing a fresh guess put the rail
