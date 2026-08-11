@@ -562,7 +562,11 @@ export async function assessScenario({ question, locale = "zh", config = {}, his
   onEvent({ type: "sources", sources: publicSources });
 
   onEvent({ type: "stage", key: "grounding" });
-  const grounding = await collectGrounding(contextualQuestion, agents, declaredFacts);
+  // Each register says its own name as it is read. The stage is the same stage
+  // throughout — only the detail changes — so the elapsed clock on it keeps
+  // running rather than restarting at every lookup.
+  const grounding = await collectGrounding(contextualQuestion, agents, declaredFacts,
+    (lookup) => onEvent({ type: "stage", key: "grounding", detail: lookup }));
   // The comparison detail is the argument behind the conclusion. Returning only
   // counts left the reader with a verdict and no way to see how it was reached.
   // designatedRecord is dropped because it is the bulky raw list entry, and

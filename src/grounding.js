@@ -261,14 +261,30 @@ async function productFacts(question) {
   return facts;
 }
 
-export async function collectGrounding(question, agents = [], declaredFacts = {}) {
+// onProgress names the lookup about to be made, before it is made.
+//
+// Grounding is the longest stretch of a review in which nothing appears on
+// screen — every specialist waits on it, and on a cold cache it is several
+// seconds of registers and list snapshots being read over the network. It
+// announced itself once, as one opaque block, so a slow register and a hung
+// process looked the same from the outside.
+//
+// The keys name real calls rather than a fabricated sequence: if a lookup is
+// skipped — no Chinese name, so no annual report — its key is never sent, and
+// the reader is not shown a step that did not happen.
+export async function collectGrounding(question, agents = [], declaredFacts = {}, onProgress = () => {}) {
   const intent = classifyQuestionIntent(question);
   const grounding = { intent, facts: [], listMatches: [], internalParties: [], screening: null, limitations: [] };
 
-  if (isChinaDualUseQuestion(question)) grounding.facts.push(...await chinaNoticeFacts(question));
+  if (isChinaDualUseQuestion(question)) {
+    onProgress("notices");
+    grounding.facts.push(...await chinaNoticeFacts(question));
+  }
+  onProgress("product");
   grounding.facts.push(...await productFacts(question));
 
   if (agents.includes("trade") || agents.includes("tpdd")) {
+    onProgress("screening");
     const screening = await screenQuestionParties(question);
     grounding.listMatches = screening.matches;
     grounding.screening = { screenedSources: screening.screenedSources, fallbackSources: screening.fallbackSources, unsyncedSources: screening.unsyncedSources, official: screening.official || null };
@@ -281,6 +297,7 @@ export async function collectGrounding(question, agents = [], declaredFacts = {}
     if (screening.official?.unavailable?.length) {
       grounding.limitations.push(`ITA 官方检索接口本次不可用（${screening.official.unavailable[0]}），已回落到本机快照比对。`);
     }
+    onProgress("counterparties");
     grounding.partyCandidates = await resolveCounterparties(question, screening.sources || []);
     // Screened again under the name the register holds in the other language.
     //
@@ -313,6 +330,7 @@ export async function collectGrounding(question, agents = [], declaredFacts = {}
     // and picking "none of these" leaves none to find, which is also an answer.
     const declaredSubject = String(declaredFacts.ownershipSubject || "").trim();
     if (subject) {
+      onProgress("ownership");
       grounding.ownership = await resolveOwnership(subject, {
         chosenLei: declaredSubject.match(/\b[A-Z0-9]{20}\b/)?.[0] || null,
         answered: Boolean(declaredSubject)
@@ -321,13 +339,19 @@ export async function collectGrounding(question, agents = [], declaredFacts = {}
     // What the Treasury has said about this name, alongside what GLEIF says about
     // its accounts. They answer different questions and neither answers the 50
     // Percent Rule, so both are carried and both say what they are.
-    if (subject) grounding.statedOwnership = await statedOwnership(subject).catch(() => null);
+    if (subject) {
+      onProgress("stated");
+      grounding.statedOwnership = await statedOwnership(subject).catch(() => null);
+    }
     // The only public source that attaches a number to a holding. GLEIF says who
     // sits above the company and OFAC says a relationship exists; neither states
     // a share, so the aggregate the 50 Percent Rule turns on had to be typed in
     // by hand. A Schedule 13D/G states it in a field — for a US registered
     // issuer, above five per cent, as beneficial ownership rather than equity.
-    if (subject) grounding.beneficialOwners = await beneficialOwners(subject).catch(() => null);
+    if (subject) {
+      onProgress("beneficial");
+      grounding.beneficialOwners = await beneficialOwners(subject).catch(() => null);
+    }
     // And the Chinese half of the same question. "sec-edgar" covers US registered
     // issuers and nothing else; "cninfo" is the disclosure site the Shenzhen and
     // Shanghai exchanges designate, and the top-ten table inside a periodic report
@@ -335,6 +359,7 @@ export async function collectGrounding(question, agents = [], declaredFacts = {}
     // captcha. Asked only when the name is Chinese: a US issuer has no A share and
     // the lookup would spend a request to learn that.
     if (subject && CJK_NAME.test(subject)) {
+      onProgress("shareholders");
       grounding.listedShareholders = await topShareholders(subject).catch(() => null);
       if (grounding.listedShareholders?.rejected?.length) {
         grounding.limitations.push(bi(

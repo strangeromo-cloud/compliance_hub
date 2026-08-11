@@ -24,7 +24,8 @@ const i18n = {
     hfQuestion: "一个问题", hfAnswer: "统一答案", startersLabel: "快速开始", workspaceEmpty: "工作区还没有 Gem", gemBacking: "数据支撑",
     teachSlashTitle: "在输入框键入 /", teachSlashBody: "呼出 {n} 个 Gem 的完整目录，上下键选择，回车使用。",
     teachPinTitle: "把常用 Gem 加入工作区", teachPinBody: "在目录里点 ★，或在 Gem 详情里点「添加到工作区」，它会常驻左侧栏。",
-    historyLabel: "历史记录", historyEmpty: "暂无记录", historyVolatile: "记录存在容器本地磁盘，重新部署会清空。挂载 Volume 到 data/runtime 可长期保留。", turnUnit: "轮", historyOpenFailed: "无法打开该记录", flowTitle: "执行流程", briefLead: "本次问题落在以下 {n} 个审查范围，按顺序逐步执行：", briefBecause: "命中 ", briefStandard: "标准程序", briefNoStandard: "无对应标准程序", briefDesigned: "系统设计", flowEmpty: "提交一个问题后，这里显示分析路径的执行进度", flowNotRun: "该步骤尚未执行",
+    historyLabel: "历史记录", historyEmpty: "暂无记录", historyVolatile: "记录存在容器本地磁盘，重新部署会清空。挂载 Volume 到 data/runtime 可长期保留。", turnUnit: "轮", historyOpenFailed: "无法打开该记录", flowTitle: "执行流程", runPanel: "本次运行", flowRest: "顶部计的是整轮 —— 另有 {n} 步在 {lanes}，等当前这条线问完再展开",
+    flowRestDone: "顶部计的是整轮 —— 另有 {n} 步在 {lanes}（其中 {done} 步已完成），等当前这条线问完再展开", briefLead: "本次问题落在以下 {n} 个审查范围，按顺序逐步执行：", briefBecause: "命中 ", briefStandard: "标准程序", briefNoStandard: "无对应标准程序", briefDesigned: "系统设计", flowEmpty: "提交一个问题后，这里显示分析路径的执行进度", flowNotRun: "该步骤尚未执行",
     derivMatch_gem: "由所选 Gem 指定为主检查", derivMatch_always: "每次分析都执行", derivMatch_direct_lookup: "直接查询，不进入审查程序", derivMatch_gem_kind: "该 Gem 的产出类型，不进入审查程序", derivMatch_question_terms: "问题中的关键词",
     derivMatch_no_term_matched_all_lanes_run: "问题未命中任何关键词，三条检查全部执行",
     derivKind_official: "官方程序", derivKind_derived: "系统规划",
@@ -40,6 +41,9 @@ const i18n = {
     disp_likely_false_positive_identity_elements_conflict: "身份要素冲突 —— 判定为疑似误报（仍需人工用注册证据确认）",
     disp_below_review_threshold: "低于复核阈值",
     noStreamNotice: "当前模型未返回流式响应，分析文本会在每个 Agent 完成后一次性显示。", step_routed: "选择 Agent", step_sources: "检索官方来源", step_grounding: "名单筛查与结构化事实", step_agents: "专业 Agent 分析", step_synthesizing: "综合结论", step_briefing: "汇总已发布公告", step_memo: "整理本会话的分析", step_lookup: "在已接入数据中检索",
+    ground_notices: "两用物项公告", ground_product: "物项与管制编码", ground_screening: "管制名单比对",
+    ground_counterparties: "交易对手候选", ground_ownership: "GLEIF 公司链", ground_stated: "OFAC 声明的关系",
+    ground_beneficial: "SEC 13D/G 与 DEF 14A 持股", ground_shareholders: "年报前十大股东",
     groundingNote: "已筛查 {screened} 个名单来源 · {matches} 条潜在命中 · {internal} 条内部主数据关联",
     filterAll: "全部", filterTrade: "Trade", filterProduct: "Product", filterTpdd: "TPDD", filterCross: "跨域",
     runtimeReady: "实时模型", runtimeMissing: "未配置模型",
@@ -81,7 +85,8 @@ const i18n = {
     hfQuestion: "One question", hfAnswer: "One answer", startersLabel: "Start here", workspaceEmpty: "No gems in your workspace yet", gemBacking: "Data behind it",
     teachSlashTitle: "Press / in the composer", teachSlashBody: "Opens the full catalogue of {n} gems. Arrow keys select, Enter uses.",
     teachPinTitle: "Pin the ones you use", teachPinBody: "Add to workspace from a gem's details and it stays in the sidebar.",
-    historyLabel: "History", historyEmpty: "No cases yet", historyVolatile: "Cases sit on the container\u2019s own disk and are cleared by a redeploy. Mount a volume at data/runtime to keep them.", turnUnit: "turns", historyOpenFailed: "That case could not be opened", flowTitle: "Execution flow", briefLead: "This question falls into {n} review scopes, worked through in order:", briefBecause: "matched ", briefStandard: "Standard procedure", briefNoStandard: "No standard procedure", briefDesigned: "designed here", flowEmpty: "Ask a question and the analysis path\u2019s progress appears here", flowNotRun: "That step has not run yet",
+    historyLabel: "History", historyEmpty: "No cases yet", historyVolatile: "Cases sit on the container\u2019s own disk and are cleared by a redeploy. Mount a volume at data/runtime to keep them.", turnUnit: "turns", historyOpenFailed: "That case could not be opened", flowTitle: "Execution flow", runPanel: "This run", flowRest: "The count above is the whole run — {n} further steps sit in {lanes}, drawn once this lane\u2019s question is answered",
+    flowRestDone: "The count above is the whole run — {n} further steps sit in {lanes} ({done} of them already settled), drawn once this lane\u2019s question is answered", briefLead: "This question falls into {n} review scopes, worked through in order:", briefBecause: "matched ", briefStandard: "Standard procedure", briefNoStandard: "No standard procedure", briefDesigned: "designed here", flowEmpty: "Ask a question and the analysis path\u2019s progress appears here", flowNotRun: "That step has not run yet",
     derivMatch_gem: "set as the lead check by the selected gem", derivMatch_always: "runs on every analysis", derivMatch_direct_lookup: "a direct lookup; no review procedure applies", derivMatch_gem_kind: "what this gem produces; no review procedure applies", derivMatch_question_terms: "terms in the question",
     derivMatch_no_term_matched_all_lanes_run: "no term matched, so all three checks run",
     derivKind_official: "official", derivKind_derived: "system-planned",
@@ -97,6 +102,9 @@ const i18n = {
     disp_likely_false_positive_identity_elements_conflict: "Identity elements conflict — likely false positive (still requires confirmation against registration evidence)",
     disp_below_review_threshold: "Below review threshold",
     noStreamNotice: "This model does not return a streamed response; each specialist\u2019s text appears once it finishes.", step_routed: "Select agents", step_sources: "Retrieve official sources", step_grounding: "Screening and structured facts", step_agents: "Specialist analysis", step_synthesizing: "Synthesis", step_briefing: "Summarising published notices", step_memo: "Assembling this session\u2019s analysis", step_lookup: "Searching the ingested data",
+    ground_notices: "Dual-use notices", ground_product: "Item and control codes", ground_screening: "Restricted-list comparison",
+    ground_counterparties: "Counterparty candidates", ground_ownership: "GLEIF corporate chain", ground_stated: "OFAC stated relationships",
+    ground_beneficial: "SEC 13D/G and DEF 14A holdings", ground_shareholders: "Annual-report top ten",
     groundingNote: "{screened} list sources screened · {matches} potential matches · {internal} internal records touched",
     filterAll: "All", filterTrade: "Trade", filterProduct: "Product", filterTpdd: "TPDD", filterCross: "Cross-domain",
     runtimeReady: "Live model", runtimeMissing: "No model configured",
@@ -188,7 +196,6 @@ const state = {
   rail: localStorage.getItem("compliance-rail") === "1",
   historyPersistent: true,
   evidenceCollapsed: false,
-  panelTab: "flow",
   activeGem: null,
   palette: { open: false, items: [], index: 0 }
 };
@@ -800,20 +807,6 @@ function hydrateBars(root = document) {
   });
 }
 
-// The right column holds two views of the same run — where the analysis is, and
-// what it stands on — so they are tabs rather than a stack. The flow is the
-// default because "which step are we on" is the question asked most often, and
-// the panel starts open: a panel that has to be found first is not a panel.
-function setPanelTab(tab) {
-  // Not persisted: every load opens on the flow. Which tab someone last looked
-  // at is a weaker signal than "where is this analysis now", which is the
-  // question the panel exists to answer.
-  state.panelTab = tab === "evidence" ? "evidence" : "flow";
-  $("evidencePanel").classList.toggle("show-evidence", state.panelTab === "evidence");
-  $("tabFlow").setAttribute("aria-selected", String(state.panelTab === "flow"));
-  $("tabEvidence").setAttribute("aria-selected", String(state.panelTab === "evidence"));
-}
-
 // The flow rail: every step of the path as a node, so what has run, what is
 // running and what has not been reached is answerable at a glance. The body of
 // the answer only carries steps that have executed, and this is where the rest
@@ -882,9 +875,6 @@ function renderFlowPanel(path, options = {}) {
   // declined as the one blocking the run.
   const declined = state.unavailableFacts;
   const markup = flowMarkup(path, { ...options, declined, firstBlocked: path ? firstBlockedStep(path, declined) : null });
-  const steps = (path?.lanes || []).flatMap((lane) => lane.steps);
-  const executed = steps.filter((item) => SETTLED_STATUS.has(item.status)).length;
-  $("flowCount").textContent = steps.length ? `${executed}/${steps.length}` : "";
   // While a source is open the panel belongs to that source, not to an analysis
   // path that this kind of question never produces.
   const sourceView = !markup && state.sourceQuery ? sourcePanelMarkup(state.sourceQuery) : "";
@@ -925,7 +915,32 @@ function flowStepRow(item, { asking, options, triggered, muted = false } = {}) {
 
 function flowMarkup(path, options = {}) {
   if (!path?.lanes?.length) return "";
+  // Two counts that could not be reconciled, and the reader was right to ask.
+  //
+  // The header counts the whole run, which is the true size of it. The list
+  // below draws what visibleLanes returns, and that deliberately stops at the
+  // lane holding the open question — one question at a time — so later lanes are
+  // withheld along with their steps. Neither number was wrong; what was missing
+  // was any sign that the difference existed, so "4/12" sat above a single lane
+  // reading "4/5" with nothing to explain the other seven.
+  //
+  // The header stays the whole run. What is withheld is now said out loud at the
+  // foot of the rail, which is the only thing that makes the two add up.
+  const drawn = visibleLanes(path, {
+    activeLane: options.activeLane, declined: options.declined,
+    allowInput: true, analysed: options.analysed || []
+  });
   const steps = path.lanes.flatMap((lane) => lane.steps);
+  const shownIds = new Set(drawn.map((lane) => lane.lane));
+  const withheld = path.lanes.filter((lane) => !shownIds.has(lane.lane) && lane.steps.length);
+  const withheldSteps = withheld.reduce((sum, lane) => sum + lane.steps.length, 0);
+  // Both halves of the difference, or the sentence only explains one of them.
+  // Saying "seven more steps" accounts for 12 against the 5 shown, but leaves a
+  // header reading 5 settled above a lane reading 4 — the fifth is settled in a
+  // lane that is not on screen, and unsaid that is just a second unexplained
+  // number under the first.
+  const withheldDone = withheld.reduce((sum, lane) =>
+    sum + lane.steps.filter((item) => SETTLED_STATUS.has(item.status)).length, 0);
   // Progress counts what is settled, not what has merely been reached. A step
   // waiting on evidence had been counted as done, so answering six questions in a
   // row moved the number not at all — the one place a reader looks to see that
@@ -947,10 +962,7 @@ function flowMarkup(path, options = {}) {
     <div class="flow-bar" role="img" aria-label="${executed}/${steps.length}">
       <span class="fb-fill" data-bar="${percent}"></span>
     </div>
-    ${visibleLanes(path, {
-      activeLane: options.activeLane, declined: options.declined,
-      allowInput: true, analysed: options.analysed || []
-    }).map((lane) => {
+    ${drawn.map((lane) => {
       // The same view the body draws, from the same rule, so the two panels
       // cannot list different steps for one run.
       const view = laneView(lane, { question: asking, declined: options.declined });
@@ -971,6 +983,9 @@ function flowMarkup(path, options = {}) {
         </details>` : ""}
       </section>`;
     }).join("")}
+    ${withheldSteps ? `<p class="flow-rest">${esc(t(withheldDone ? "flowRestDone" : "flowRest")
+        .replace("{n}", withheldSteps).replace("{done}", withheldDone)
+        .replace("{lanes}", withheld.map((lane) => lane.label).join("、")))}</p>` : ""}
     <div class="flow-legend">
       <span class="fl-key done">✓ ${esc(t("stConfirmed"))}</span>
       <span class="fl-key blocked">! ${esc(t("stEvidence"))}</span>
@@ -1566,8 +1581,13 @@ function renderSteps(node, done, current, detail = "") {
   // live scaffold is gone. Progress then shows on the path itself.
   const host = node.querySelector("[data-live-steps]");
   if (!host) return;
+  // Carried across the rebuild. The clock re-finds its node every tick, so it
+  // survives on its own, but the fresh node is empty until the next second — and
+  // a counter that blinks out whenever the line beneath it changes is worse than
+  // no counter on the one screen whose job is to show that time is passing.
+  const elapsed = host.querySelector("[data-elapsed]")?.textContent || "";
   host.innerHTML = current
-    ? `<span class="tick" aria-hidden="true"></span>${esc(t(`step_${current}`))}${detail ? `<span class="live-detail">${esc(detail)}</span>` : ""}<span class="live-elapsed" data-elapsed></span>`
+    ? `<span class="tick" aria-hidden="true"></span>${esc(t(`step_${current}`))}${detail ? `<span class="live-detail">${esc(detail)}</span>` : ""}<span class="live-elapsed" data-elapsed>${esc(elapsed)}</span>`
     : "";
 }
 
@@ -1835,7 +1855,6 @@ async function runSourceQuery(event, options = {}) {
     // record of clicks.
     const panel = $("flowPanel");
     panel.innerHTML = sourcePanelMarkup(source) + markup;
-    setPanelTab("flow");
     hydrateBars(panel);
     panel.scrollTop = 0;
   } catch (error) {
@@ -2123,17 +2142,24 @@ async function analyze(event, options = {}) {
     // page to look like nothing is happening.
     if (event.type === "stage") {
       done.add("routed");
-      clearInterval(progress.clock);
-      renderSteps(live, done, event.key);
-      progress.clock = startElapsed(live);
+      // A detail arriving under the stage already showing is the same stage
+      // naming what it is doing — grounding says which register it is reading.
+      // Restarting the clock there would reset the elapsed time several times
+      // inside one wait, which is the opposite of what the clock is for.
+      const sameStage = progress.stage === event.key;
+      if (!sameStage) clearInterval(progress.clock);
+      renderSteps(live, done, event.key, event.detail ? t(`ground_${event.detail}`) : "");
+      if (!sameStage) progress.clock = startElapsed(live);
       // And inside the path, where the analysis will appear. A line at the top of
       // the answer saying "screening and structured facts" is easy to miss above a
       // framework that is not moving; the reader is looking at the lanes, so the
       // lane about to run is where it has to be said.
       progress.stage = event.key;
-      showStageWaiting();
-      renderFlowPanel(collected.path, { activeLane: progress.activeLane, stage: progress.stage });
-      followRunning();
+      if (!sameStage) {
+        showStageWaiting();
+        renderFlowPanel(collected.path, { activeLane: progress.activeLane, stage: progress.stage });
+        followRunning();
+      }
       return;
     }
     if (event.type === "agent_start") {
@@ -2796,13 +2822,6 @@ document.addEventListener("click", (event) => {
 });
 
 $("evidenceToggle").addEventListener("click", () => setEvidenceCollapsed(!state.evidenceCollapsed));
-document.querySelector(".panel-tabs").addEventListener("click", (event) => {
-  const tab = event.target.closest("[data-panel-tab]");
-  // Choosing a tab on a collapsed panel means "show me this", so it opens too.
-  if (!tab) return;
-  if (state.evidenceCollapsed) setEvidenceCollapsed(false);
-  setPanelTab(tab.dataset.panelTab);
-});
 $("railToggle").addEventListener("click", () => setRail(true));
 // The toggle is hidden once collapsed, so the brand mark restores the sidebar.
 document.querySelector(".sidebar-brand").addEventListener("click", (event) => {
@@ -2894,7 +2913,6 @@ $("scenarioDialog").addEventListener("click", (event) => {
 setTheme(localStorage.getItem("compliance-theme") || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark"));
 setRail(state.rail);
 setEvidenceCollapsed(state.evidenceCollapsed);
-setPanelTab(state.panelTab);
 applyLocale(state.locale);
 renderEvidence([]);
 renderFlowPanel(null);
