@@ -1455,6 +1455,10 @@ html[lang="en"] .step-needs::before { content: "NEEDS"; font-size: 8px; }
 .ae-label { font-size: 11px; font-weight: 600; letter-spacing: .07em; margin-bottom: 5px; }
 .answer-extra.is-limits .ae-label { color: var(--risk-medium); }
 .answer-extra.is-suggested .ae-label { color: var(--text-2); }
+/* What to supply is the one block here the reader can act on directly, so it
+   carries the accent the other two do not. */
+.answer-extra.is-askfor .ae-label { color: var(--accent-text); }
+.answer-extra.is-askfor li::before { background: var(--accent); }
 .ae-note { margin: 0 0 7px; font-size: 10.5px; color: var(--text-3); line-height: 1.6; }
 .answer-extra ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; font-size: 11.5px; color: var(--text-2); }
 .answer-extra li { padding-left: 13px; position: relative; line-height: 1.7; }
@@ -1802,4 +1806,3 @@ html[lang="en"] .step-needs::before { content: "NEEDS"; font-size: 8px; }
    lane tags: it is an aid, not a requirement — the review runs without it. */
 .route-asks { color: var(--text-3); font-size: 11px; }
 /* The outstanding items, on the same line as the count that summarises them. */
-.interim-items { display: block; margin-top: 3px; font-weight: 400; opacity: .85; }
