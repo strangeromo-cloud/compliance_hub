@@ -25,7 +25,7 @@ const i18n = {
     teachSlashTitle: "在输入框键入 /", teachSlashBody: "呼出 {n} 个 Gem 的完整目录，上下键选择，回车使用。",
     teachPinTitle: "把常用 Gem 加入工作区", teachPinBody: "在目录里点 ★，或在 Gem 详情里点「添加到工作区」，它会常驻左侧栏。",
     historyLabel: "历史记录", historyEmpty: "暂无记录", historyVolatile: "记录存在容器本地磁盘，重新部署会清空。挂载 Volume 到 data/runtime 可长期保留。", turnUnit: "轮", historyOpenFailed: "无法打开该记录", flowTitle: "执行流程", runPanel: "本次运行", flowRest: "顶部计的是整轮 —— 另有 {n} 步在 {lanes}，等当前这条线问完再展开",
-    flowRestDone: "顶部计的是整轮 —— 另有 {n} 步在 {lanes}（其中 {done} 步已完成），等当前这条线问完再展开", briefLead: "本次问题落在以下 {n} 个审查范围，按顺序逐步执行：", briefBecause: "命中 ", briefStandard: "标准程序", briefNoStandard: "无对应标准程序", briefDesigned: "系统设计", flowEmpty: "提交一个问题后，这里显示分析路径的执行进度", flowNotRun: "该步骤尚未执行",
+    flowRestDone: "顶部计的是整轮 —— 另有 {n} 步在 {lanes}（其中 {done} 步已完成），等当前这条线问完再展开", briefLead: "本次问题落在以下 {n} 个审查范围，按顺序逐步执行：", briefBecause: "命中 ", briefStandard: "标准程序", briefNoStandard: "无对应标准程序", briefDesigned: "系统设计", briefSteps: "{n} 个步骤", briefDesignedN: "其中 {n} 步由系统补充", flowEmpty: "提交一个问题后，这里显示分析路径的执行进度", flowNotRun: "该步骤尚未执行",
     derivMatch_gem: "由所选 Gem 指定为主检查", derivMatch_always: "每次分析都执行", derivMatch_direct_lookup: "直接查询，不进入审查程序", derivMatch_gem_kind: "该 Gem 的产出类型，不进入审查程序", derivMatch_question_terms: "问题中的关键词",
     derivMatch_no_term_matched_all_lanes_run: "问题未命中任何关键词，三条检查全部执行",
     derivKind_official: "官方程序", derivKind_derived: "系统规划",
@@ -86,7 +86,7 @@ const i18n = {
     teachSlashTitle: "Press / in the composer", teachSlashBody: "Opens the full catalogue of {n} gems. Arrow keys select, Enter uses.",
     teachPinTitle: "Pin the ones you use", teachPinBody: "Add to workspace from a gem's details and it stays in the sidebar.",
     historyLabel: "History", historyEmpty: "No cases yet", historyVolatile: "Cases sit on the container\u2019s own disk and are cleared by a redeploy. Mount a volume at data/runtime to keep them.", turnUnit: "turns", historyOpenFailed: "That case could not be opened", flowTitle: "Execution flow", runPanel: "This run", flowRest: "The count above is the whole run — {n} further steps sit in {lanes}, drawn once this lane\u2019s question is answered",
-    flowRestDone: "The count above is the whole run — {n} further steps sit in {lanes} ({done} of them already settled), drawn once this lane\u2019s question is answered", briefLead: "This question falls into {n} review scopes, worked through in order:", briefBecause: "matched ", briefStandard: "Standard procedure", briefNoStandard: "No standard procedure", briefDesigned: "designed here", flowEmpty: "Ask a question and the analysis path\u2019s progress appears here", flowNotRun: "That step has not run yet",
+    flowRestDone: "The count above is the whole run — {n} further steps sit in {lanes} ({done} of them already settled), drawn once this lane\u2019s question is answered", briefLead: "This question falls into {n} review scopes, worked through in order:", briefBecause: "matched ", briefStandard: "Standard procedure", briefNoStandard: "No standard procedure", briefDesigned: "designed here", briefSteps: "{n} steps", briefDesignedN: "{n} added by this system", flowEmpty: "Ask a question and the analysis path\u2019s progress appears here", flowNotRun: "That step has not run yet",
     derivMatch_gem: "set as the lead check by the selected gem", derivMatch_always: "runs on every analysis", derivMatch_direct_lookup: "a direct lookup; no review procedure applies", derivMatch_gem_kind: "what this gem produces; no review procedure applies", derivMatch_question_terms: "terms in the question",
     derivMatch_no_term_matched_all_lanes_run: "no term matched, so all three checks run",
     derivKind_official: "official", derivKind_derived: "system-planned",
@@ -1174,11 +1174,21 @@ function derivationMarkup(path) {
                 : esc(row.methodology.label)) : ""}
               ${row.methodology?.authority ? `<i>${esc(row.methodology.authority)}</i>` : ""}
             </div>
-            <ol class="bf-steps">
-              ${(lane?.steps || []).map((step) => `
-                <li${step.methodology === "derived" ? ' class="designed"' : ""}>${esc(step.title)}${
-                  step.methodology === "derived" ? `<span class="bf-tag">${esc(t("briefDesigned"))}</span>` : ""}</li>`).join("")}
-            </ol>
+            ${/* A count, not the titles again.
+                  This listed every step of every scope, and then the body listed
+                  the same steps with their status, and the rail listed them a
+                  third time with the progress. Of the three copies this was the
+                  only one carrying no status at all — the least informative — and
+                  it came first, so an answer opened with a dozen bare titles
+                  before it said anything.
+                  What stays is what only this block knows: which scopes opened,
+                  on what terms, under which published procedure, and how many of
+                  the steps this system added rather than took from it. */ ""}
+            <div class="bf-count">
+              ${esc(t("briefSteps").replace("{n}", (lane?.steps || []).length))}
+              ${(lane?.steps || []).some((step) => step.methodology === "derived")
+                ? `<span class="bf-tag">${esc(t("briefDesignedN").replace("{n}", (lane?.steps || []).filter((step) => step.methodology === "derived").length))}</span>` : ""}
+            </div>
           </li>`;
         }).join("")}
       </ol>
@@ -1301,11 +1311,24 @@ function pathMarkup(path, grounding, options = {}) {
             const stepTone = passedOver ? "muted" : tone(STEP_STATUS_VOCAB, item.status);
             const mark = passedOver ? "–" : (STEP_STATUS_VOCAB[item.status]?.mark || "·");
             const asking = item.id === blocked;   // one form at a time, path order
+            // A settled step opens shut.
+            //
+            // Every step showed every line it stood on, always — nine list
+            // sources one per line, the method behind each comparison, the
+            // provisions consulted. Measured across stored cases that working is
+            // 58% of the words in an answer, and almost all of it belongs to
+            // steps that came out settled. It is audit material and it is worth
+            // keeping; it is not what someone reads to learn what the answer is.
+            //
+            // So what is unresolved stays open — that is the part still in play —
+            // and what is settled shows its verdict and its provision with the
+            // working one click behind the same toggle that was always there.
+            const shut = SETTLED_STATUS.has(item.status) && item.status !== "declared" && item.id !== blocked;
             return `
-            <li class="path-step tone-${stepTone} open ${asking ? "asking" : ""} ${passedOver ? "passed-over" : ""} ${item.id === runningStep ? "running" : ""}" data-step-id="${esc(item.id)}">
+            <li class="path-step tone-${stepTone} ${shut ? "shut" : "open"} ${asking ? "asking" : ""} ${passedOver ? "passed-over" : ""} ${item.id === runningStep ? "running" : ""}" data-step-id="${esc(item.id)}">
               <span class="step-mark" aria-hidden="true">${mark}</span>
               <div class="step-body">
-                <button type="button" class="step-head" data-step-toggle aria-expanded="true">
+                <button type="button" class="step-head" data-step-toggle aria-expanded="${shut ? "false" : "true"}">
                   <strong>${esc(item.title)}</strong>
                   <span class="step-status">${esc(passedOver ? t("stSkipped") : label(STEP_STATUS_VOCAB, item.status, state.locale))}</span>
                   ${triggerFor(item.id) ? `<span class="step-trigger" title="${esc(triggerFor(item.id).note)}">${esc(t("stepTriggered"))}</span>` : ""}

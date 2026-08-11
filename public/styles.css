@@ -1440,9 +1440,7 @@ html[lang="en"] .step-needs::before { content: "NEEDS"; font-size: 8px; }
 .bf-std a { color: var(--accent-text); }
 .bf-std i { margin-left: 6px; font-style: normal; font-size: 10.5px; color: var(--text-3); }
 /* The steps as they will be worked through — the same list the flow rail shows. */
-.bf-steps { margin: 5px 0 0; padding-left: 18px; display: grid; gap: 1px; font-size: 11.5px; color: var(--text-2); }
-.bf-steps li { line-height: 1.65; }
-.bf-steps li::marker { color: var(--text-3); font-family: var(--mono); font-size: 10px; }
+.bf-count { margin-top: 5px; font-size: 11.5px; color: var(--text-3); }
 .bf-tag { margin-left: 6px; font: 400 9.5px/1.6 var(--mono); padding: 0 5px; border-radius: 3px; background: color-mix(in srgb, var(--risk-medium) 15%, transparent); color: var(--risk-medium); }
 
 /* ---- what hangs off a conclusion ----

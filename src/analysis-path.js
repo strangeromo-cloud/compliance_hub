@@ -510,10 +510,16 @@ function tradeSteps(question, grounding, results, declaredFacts = {}) {
           ...candidates.map((candidate) => bi(
             `候选主体：${candidate.entityName}（${candidate.sourceId}，匹配于「${candidate.matchedName}」，相似度 ${candidate.matchScore}）`,
             `Candidate: ${candidate.entityName} (${candidate.sourceId}, matched on "${candidate.matchedName}", score ${candidate.matchScore})`)),
-          candidates.length > 1
-            ? bi(`问题中的名称对应多个候选，取最相近的 ${candidates.length} 个继续后续步骤`,
-              `The name matches more than one entity; the ${candidates.length} closest go forward`)
-            : bi("问题中的名称在已同步来源中检索到一个候选", "One candidate was found in the synced sources"),
+          // The single-candidate line restated the line above it and is gone.
+          //
+          // The one below it stays. It looks like method prose and it is the
+          // reason the number beside the candidate cannot be misread: a score of
+          // 0.8 is a resemblance, and without this sentence a resemblance sitting
+          // in a settled step reads as an identification. A test pins it, and the
+          // test is right.
+          ...(candidates.length > 1
+            ? [bi(`取最相近的 ${candidates.length} 个继续`, `The ${candidates.length} closest go forward`)]
+            : []),
           "名称相似不等于同一主体：下一步按注册号、国别和地址逐项比对"
         ]
       }
@@ -525,13 +531,25 @@ function tradeSteps(question, grounding, results, declaredFacts = {}) {
     screened.length ? "confirmed" : "evidence_needed",
     screened.length
       ? {
-        basis: screened.map((source) => {
-          const count = Number(source.recordCount).toLocaleString();
-          const at = String(source.capturedAt).slice(0, 10);
-          const copy = source.provenance === "bundled_fallback_snapshot";
-          return bi(`${source.sourceId}：${count} 条，采集于 ${at}${copy ? "（时点副本）" : ""}`,
-            `${source.sourceId}: ${count} records, captured ${at}${copy ? " (committed copy)" : ""}`);
-        }),
+        // One line, not one per source. Nine sources each restating "N records,
+        // captured DATE" was the single longest block in an answer and said one
+        // thing: these lists were searched, this recently. The ids are still all
+        // named, and the per-source counts and capture times are in the evidence
+        // panel, which is where a reader checking one source is already looking.
+        basis: (() => {
+          const total = screened.reduce((sum, source) => sum + Number(source.recordCount || 0), 0);
+          const dates = screened.map((source) => String(source.capturedAt).slice(0, 10)).sort();
+          const span = dates[0] === dates[dates.length - 1] ? dates[0] : `${dates[0]}–${dates[dates.length - 1]}`;
+          const copies = screened.filter((source) => source.provenance === "bundled_fallback_snapshot");
+          const ids = screened.map((source) => source.sourceId).join("、");
+          const idsEn = screened.map((source) => source.sourceId).join(", ");
+          return [
+            bi(`已检索 ${screened.length} 个名单来源，共 ${total.toLocaleString()} 条，采集于 ${span}：${ids}`,
+              `Searched ${screened.length} list sources, ${total.toLocaleString()} records, captured ${span}: ${idsEn}`),
+            ...(copies.length ? [bi(`其中 ${copies.length} 个为时点副本，非本次抓取`,
+              `${copies.length} of them are committed copies rather than a fresh capture`)] : [])
+          ];
+        })(),
         needs: unsynced.length
           ? [bi(`以下来源未同步，本次未检索：${unsynced.join("、")}`,
             `Not searched because they are not synced: ${unsynced.join(", ")}`)]
