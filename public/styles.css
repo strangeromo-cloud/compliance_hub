@@ -301,12 +301,13 @@ html[data-theme="light"] .moon-icon { display: block; }
 .gem-meta .warn { color: var(--risk-medium); }
 .gem-meta .none { color: var(--text-3); font-style: italic; }
 
-.coverage-card { border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); overflow: hidden; }
-.coverage-card > .section-label { margin: 0; padding: 13px 16px 11px; border-bottom: 1px solid var(--border); }
-.coverage-card > .section-label b { font: inherit; }
-.cc-more { margin-left: auto; font-size: 10.5px; font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--text-2); text-decoration: none; }
-.cc-more::after { content: " \2192"; }
-.cc-more:hover { color: var(--text); }
+.hero-card { border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); overflow: hidden; }
+.hero-card > .coverage-strip { border-top: 1px solid var(--border); }
+/* The way into the full register, as the last cell of the numbers row rather
+   than as a heading the module no longer needs — the numbers name themselves. */
+a.cc-more { display: flex; align-items: center; justify-content: flex-end; font-size: 11px; color: var(--text-2); text-decoration: none; }
+a.cc-more::after { content: " \2192"; margin-left: 4px; }
+a.cc-more:hover { color: var(--text); background: var(--surface-2); }
 .coverage-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); gap: 1px; background: var(--border); }
 .coverage-cell { background: var(--surface); padding: 14px 16px; }
 .coverage-cell b { display: block; font-size: 19px; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
@@ -954,12 +955,8 @@ details.trace.reasoning > summary { color: var(--text); font-weight: 600; }
      flat bars and the diagram stopped reading as three parallel things. */
   display: grid; grid-template-columns: auto 30px auto 30px auto;
   justify-content: center; align-items: center; gap: 0 4px;
-  border: 1px solid var(--border); border-radius: var(--radius-lg);
-  background:
-    radial-gradient(120% 140% at 8% 50%, var(--accent-soft), transparent 46%),
-    var(--surface);
-  padding: 16px 18px 26px;
-  margin-bottom: 22px;
+  background: radial-gradient(120% 140% at 8% 50%, var(--accent-soft), transparent 46%);
+  padding: 30px 18px 32px;
 }
 .hf-col { display: grid; gap: 6px; }
 .hf-node {
@@ -990,12 +987,6 @@ details.trace.reasoning > summary { color: var(--text); font-weight: 600; }
 .hf-fan-in::before { left: auto; right: 0; }
 
 /* Real control codes, not lorem — the vernacular of the subject, set faint. */
-.hf-codes {
-  position: absolute; left: 18px; right: 18px; bottom: 7px;
-  font: 400 9.5px/1 var(--mono); letter-spacing: .04em;
-  color: var(--text-3); opacity: .5;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
 
 .source-mosaic { display: grid; border-top: 1px solid var(--border); }
 .mosaic-row { display: flex; align-items: center; gap: 10px; padding: 9px 16px; }

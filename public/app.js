@@ -446,8 +446,7 @@ function renderHeroFigure() {
     <div class="hf-col hf-agents">${lanes.map((lane) => `
       <span class="hf-node hf-agent lane-${lane.key}"><em></em>${esc(lane.label)}</span>`).join("")}</div>
     <div class="hf-fan hf-fan-in" aria-hidden="true"><i></i><i></i><i></i></div>
-    <div class="hf-col hf-out"><span class="hf-node hf-answer">${esc(t("hfAnswer"))}</span></div>
-    <div class="hf-codes" aria-hidden="true">4A090.a · 1C117.d · 5A002.a.1 · 3A090.b · 3C004.a · EAR 734 · EAR 744</div>`;
+    <div class="hf-col hf-out"><span class="hf-node hf-answer">${esc(t("hfAnswer"))}</span></div>`;
 }
 
 // One tile per registered source, tinted by what it is actually doing. The data
@@ -1717,7 +1716,8 @@ async function loadCoverage() {
       { value: records.toLocaleString(), label: t("listRecords") },
       ...(fallback.length ? [{ value: String(fallback.length), label: t("fallbackSources"), warn: true }] : []),
       ...(failed.length ? [{ value: String(failed.length), label: t("failedSources"), bad: true }] : [])
-    ].map((cell) => `<div class="coverage-cell ${cell.bad ? "is-bad" : ""} ${cell.warn ? "is-warn" : ""}"><b>${esc(cell.value)}</b><span>${esc(cell.label)}</span></div>`).join("");
+    ].map((cell) => `<div class="coverage-cell ${cell.bad ? "is-bad" : ""} ${cell.warn ? "is-warn" : ""}"><b>${esc(cell.value)}</b><span>${esc(cell.label)}</span></div>`).join("")
+      + `<a class="coverage-cell cc-more" href="/data-sources.html">${esc(t("coverageMore"))}</a>`;
 
     renderGemNav();
     renderSourceMosaic();
