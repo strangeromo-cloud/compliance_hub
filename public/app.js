@@ -440,13 +440,23 @@ function renderHeroFigure() {
     { key: "product", label: "Product" },
     { key: "tpdd", label: "Ethics & TPDD" }
   ];
+  // The three lanes and the six connector lines share one set of grid rows.
+  //
+  // They used to be separate columns — a fan that stretched to the figure's full
+  // height beside a lane column that sized to its own content — so the moment
+  // anything made the figure taller than the lanes, the fan's thirds spread
+  // wider than the boxes and the outer two lines missed by 26px. In the same
+  // rows they cannot miss: each line is centred in the row its box is in.
   $("heroFigure").innerHTML = `
-    <div class="hf-col hf-in"><span class="hf-node">${esc(t("hfQuestion"))}</span></div>
+    <span class="hf-node hf-q">${esc(t("hfQuestion"))}</span>
     <div class="hf-fan" aria-hidden="true"><i></i><i></i><i></i></div>
-    <div class="hf-col hf-agents">${lanes.map((lane) => `
-      <span class="hf-node hf-agent lane-${lane.key}"><em></em>${esc(lane.label)}</span>`).join("")}</div>
+    ${/* No row written into the markup: the CSP is style-src 'self', so a style
+          attribute is dropped without a word. Column 3 is empty otherwise, so
+          auto-placement puts the three in rows 1, 2 and 3 in document order. */ ""}
+    ${lanes.map((lane) => `
+      <span class="hf-node hf-agent lane-${lane.key}"><em></em>${esc(lane.label)}</span>`).join("")}
     <div class="hf-fan hf-fan-in" aria-hidden="true"><i></i><i></i><i></i></div>
-    <div class="hf-col hf-out"><span class="hf-node hf-answer">${esc(t("hfAnswer"))}</span></div>`;
+    <span class="hf-node hf-answer">${esc(t("hfAnswer"))}</span>`;
 }
 
 // One tile per registered source, tinted by what it is actually doing. The data
@@ -1716,7 +1726,13 @@ async function loadCoverage() {
       { value: records.toLocaleString(), label: t("listRecords") },
       ...(fallback.length ? [{ value: String(fallback.length), label: t("fallbackSources"), warn: true }] : []),
       ...(failed.length ? [{ value: String(failed.length), label: t("failedSources"), bad: true }] : [])
-    ].map((cell) => `<div class="coverage-cell ${cell.bad ? "is-bad" : ""} ${cell.warn ? "is-warn" : ""}"><b>${esc(cell.value)}</b><span>${esc(cell.label)}</span></div>`).join("");
+    ].map((cell, index) => `<div class="coverage-cell ${cell.bad ? "is-bad" : ""} ${cell.warn ? "is-warn" : ""}">
+      <b>${esc(cell.value)}</b><span>${esc(cell.label)}</span>
+      ${/* The way into the register rides under the last number rather than
+            taking a band of its own, which leaves the column exactly four:
+            the numbers and the three regions. */ ""}
+      ${index === 1 ? `<a class="cc-more" href="/data-sources.html">${esc(t("coverageMore"))}</a>` : ""}
+    </div>`).join("");
 
     renderGemNav();
     renderSourceMosaic();
