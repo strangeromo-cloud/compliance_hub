@@ -979,7 +979,15 @@ details.trace.reasoning > summary { color: var(--text); font-weight: 600; }
      — which is what pulled the connectors away from the boxes. */
   justify-content: center; align-content: center;
   column-gap: 4px; row-gap: 6px;
-  background: radial-gradient(120% 140% at 8% 50%, var(--accent-soft), transparent 46%);
+  /* Diagonal, and its own mix rather than --accent-soft — the gem rail and the
+     answer node also read that variable and did not want more presence. The
+     radial version faded out by 46% from one edge, which read as a flat panel
+     with a smudge in the corner; on the diagonal the wash crosses the whole
+     figure and the falloff is long enough to be seen as a falloff. */
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--accent) 18%, transparent),
+    color-mix(in srgb, var(--accent) 7%, transparent) 42%,
+    transparent 82%);
   padding: 18px;
 }
 .hf-q { grid-area: 1 / 1 / 4 / 2; align-self: center; }
