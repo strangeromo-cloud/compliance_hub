@@ -195,12 +195,12 @@ function clearanceBrief(clearance) {
 // Markdown, not HTML: everything is escaped before any tag is applied, so no
 // model output can inject markup.
 const SUMMARY_SHAPE = "Write executiveSummary as short markdown sections, not as one paragraph. "
-  + "Use a bold line as a section heading (for example **结论** / **依据** / **仍需确认**, or **Conclusion** / **Basis** / **Still open**), "
+  + "Use a bold line as a section heading (for example **结论** / **依据**, or **Conclusion** / **Basis**), "
   + "and a hyphen list under a heading where there is more than one item. "
   + "Put the provision or source in parentheses at the end of the line it supports. "
   + "Omit a section that has nothing in it rather than writing that it is empty. Keep each line to one point. "
   + "Be brief: at most three sections, at most three lines under any heading, one sentence per line. "
-  + "The specialists' findings and the step list are shown to the reader in full elsewhere in the same answer, so do not restate them — say what they add up to.";
+  + "The specialists' findings, the step list and the exact facts still missing are all shown to the reader elsewhere in the same answer. Do not restate them and do not write a section listing what is outstanding — say what the findings add up to.";
 
 async function synthesize(question, locale, results, config, history, grounding, onDelta, outstanding = []) {
   const language = locale === "en" ? "English" : "Simplified Chinese";

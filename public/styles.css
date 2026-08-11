@@ -1490,7 +1490,18 @@ html[lang="en"] .step-needs::before { content: "NEEDS"; font-size: 8px; }
 /* The provision is what makes the condition checkable, so it is present and
    quiet rather than absent. */
 .cl-cite { margin: 2px 0 0; font-size: 10.5px; color: var(--text-3); font-variant-numeric: tabular-nums; }
-.cl-verdict, .cl-open { margin: 10px 0 0; font-size: 11.5px; line-height: 1.7; }
+/* The three folded blocks share one summary style: it has to read as
+   something to open, not as something that went missing. */
+.answer-extra > details > summary, .cl-detail > summary {
+  font-size: 11.5px; font-weight: 500; color: var(--text-2); cursor: pointer;
+  list-style: none; padding: 1px 0;
+}
+.answer-extra > details > summary::-webkit-details-marker, .cl-detail > summary::-webkit-details-marker { display: none; }
+.answer-extra > details > summary::before, .cl-detail > summary::before { content: "▸ "; font-size: 9px; color: var(--text-3); }
+.answer-extra > details[open] > summary::before, .cl-detail[open] > summary::before { content: "▾ "; }
+.answer-extra > details > summary:hover, .cl-detail > summary:hover { color: var(--text); }
+.cl-detail { margin-top: 9px; }
+.cl-verdict, .cl-open { margin: 0 0 3px; font-size: 11.5px; line-height: 1.7; }
 .cl-verdict.ok { color: var(--risk-low); }
 .cl-verdict.blocked { color: var(--risk-medium); }
 .cl-open { color: var(--text-3); }

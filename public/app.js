@@ -48,7 +48,7 @@ const i18n = {
     filterAll: "全部", filterTrade: "Trade", filterProduct: "Product", filterTpdd: "TPDD", filterCross: "跨域",
     runtimeReady: "实时模型", runtimeMissing: "未配置模型",
     routeLabel: "路由", intentReview: "合规审查", intentLookup: "直接查询", intentBriefing: "监管变化简报", intentMemo: "案件备忘录", intentNoReview: "不进入合规审查流程", intentAllLanes: "未匹配到关键词，三条线全跑", routedTo: "已路由至",
-    willAsk: "这次会用到：", willAskMore: " 等 {n} 项", send: "发送", stopRun: "停止本次分析", runStopped: "已停止。本次分析未完成，也未存入案件历史。", overallAssessment: "总体判断", nextStep: "下一步", missingInfo: "仍需信息", actions: "建议行动", askFor: "建议补充", planSuggested: "专业 Agent 的其他建议", planSuggestedNote: "这些建议未对应分析路径上的某一步，供人工复核时参考", notClosed: "尚有 {n} 项未补齐", stepAsk: "结论已按现有信息给出。这一项仍缺，补上可继续核验：", stepFill: "填写", naCount: "{n} 项本次不适用", stepTriggered: "由前一步的发现触发", flowFolded: "另有 {n} 项不适用", laneFindings: "本条线的分析发现（专业 Agent 输出，非全案结论）", interimVerdict: "阶段性判断（基于现有信息，未结案）", noItems: "暂无", limitations: "结论边界与限制", clearanceTitle: "结案条件 · 五条", clearanceNote: "五个条件分属三条专业线，任何一条线都无法独自定案。沉默不算通过：未说明即为未满足。", clearanceCleared: "五条全部满足 —— 在所述事实下不产生许可要求，这不是批准，也不是放行。", clearanceBlocked: "尚有 {n} 条未满足，因此不出清晰结论。", clearanceOpen: "另有 {n} 个步骤仍在等证据；即使五条全过，未闭合的步骤同样阻断清晰结论。", clearanceMet: "已满足", clearanceUnmet: "未满足",
+    willAsk: "这次会用到：", willAskMore: " 等 {n} 项", send: "发送", stopRun: "停止本次分析", runStopped: "已停止。本次分析未完成，也未存入案件历史。", overallAssessment: "总体判断", nextStep: "下一步", missingInfo: "仍需信息", actions: "建议行动", askFor: "建议补充", planSuggested: "专业 Agent 的其他建议", planSuggestedNote: "这些建议未对应分析路径上的某一步，供人工复核时参考", notClosed: "尚有 {n} 项未补齐", stepAsk: "结论已按现有信息给出。这一项仍缺，补上可继续核验：", stepFill: "填写", naCount: "{n} 项本次不适用", stepTriggered: "由前一步的发现触发", flowFolded: "另有 {n} 项不适用", laneFindings: "本条线的分析发现（专业 Agent 输出，非全案结论）", interimVerdict: "阶段性判断（基于现有信息，未结案）", noItems: "暂无", limitations: "结论边界与限制", clearanceTitle: "结案条件 · 五条", clearanceNote: "五个条件分属三条专业线，任何一条线都无法独自定案。沉默不算通过：未说明即为未满足。", clearanceCleared: "五条全部满足 —— 在所述事实下不产生许可要求，这不是批准，也不是放行。", clearanceBlocked: "尚有 {n} 条未满足，因此不出清晰结论。", clearanceOpen: "另有 {n} 个步骤仍在等证据；即使五条全过，未闭合的步骤同样阻断清晰结论。", clearanceMet: "已满足", clearanceUnmet: "未满足", countSuffix: " · {n} 条",
     sourceLive: "实时获取", sourceMetadata: "元数据", sourceUnavailable: "获取失败", sourceNotFetched: "未获取", sourceArchived: "已采集副本", sourceCitationOnly: "仅引用", sourceCached: "缓存", noQueryableSource: "暂无可直查的来源（需先同步）", sourceQueryHint: "@ 直查数据源", srcAuthority: "发布机构", srcCountry: "法域", srcUpdates: "更新频率", srcCaptured: "本地采集于", srcBoundary: "这里返回来源自己的记录，不是判定结论。", sourceQueryPlaceholder: "输入实体名、公告号或条文关键词（按相关性排序；留空则浏览全部）…",
     queryEmpty: "请输入查询内容", queryHits: "{total} 条命中", browseCount: "共 {total} 条", browseAll: "浏览全部", pagePrev: "上一页", pageNext: "下一页", relMatched: "命中", relMissed: "未命中", relPartial: "另有 {n} 条仅命中部分检索词，未列出", queryNoHit: "该来源中未找到匹配记录", queryTruncated: "显示前 {shown} 条，共 {total} 条",
     queryEscalate: "以此发起完整筛查 →", escalatePrefix: "请对 {q} 做完整合规筛查",
@@ -109,7 +109,7 @@ const i18n = {
     filterAll: "All", filterTrade: "Trade", filterProduct: "Product", filterTpdd: "TPDD", filterCross: "Cross-domain",
     runtimeReady: "Live model", runtimeMissing: "No model configured",
     routeLabel: "Route", intentReview: "Compliance review", intentLookup: "Direct lookup", intentBriefing: "Regulatory briefing", intentMemo: "Case memo", intentNoReview: "no review procedure runs", intentAllLanes: "no term matched, so all three run", routedTo: "Routed to",
-    willAsk: "This will use: ", willAskMore: " and {n} more", send: "Send", stopRun: "Stop this analysis", runStopped: "Stopped. This analysis did not finish, and was not saved to the case history.", overallAssessment: "Overall assessment", nextStep: "Next step", missingInfo: "Missing information", actions: "Recommended actions", askFor: "Suggested to supply", planSuggested: "Other suggestions from the specialists", planSuggestedNote: "These do not map onto a step in the analysis path; they are for the reviewer to weigh", notClosed: "{n} items still open", stepAsk: "The conclusion above stands on what was given. This is still missing; supplying it carries the check further: ", stepFill: "fill in", naCount: "{n} not applicable here", stepTriggered: "triggered by an earlier finding", flowFolded: "{n} more not applicable", laneFindings: "What this lane found (specialist output, not the case conclusion)", interimVerdict: "Interim assessment (on incomplete facts, not a conclusion)", noItems: "None", limitations: "Limits on this conclusion", clearanceTitle: "Clearance conditions · five", clearanceNote: "The five conditions belong to three different lanes, so no lane can close a case on its own. Silence is not a pass: unstated is unmet.", clearanceCleared: "All five are met — no licence requirement arises on the stated facts. This is not an approval and not a release.", clearanceBlocked: "{n} not met, so no clear conclusion is drawn.", clearanceOpen: "{n} step(s) are still waiting on evidence. An open step blocks a clear conclusion even when all five conditions hold.", clearanceMet: "Met", clearanceUnmet: "Not met",
+    willAsk: "This will use: ", willAskMore: " and {n} more", send: "Send", stopRun: "Stop this analysis", runStopped: "Stopped. This analysis did not finish, and was not saved to the case history.", overallAssessment: "Overall assessment", nextStep: "Next step", missingInfo: "Missing information", actions: "Recommended actions", askFor: "Suggested to supply", planSuggested: "Other suggestions from the specialists", planSuggestedNote: "These do not map onto a step in the analysis path; they are for the reviewer to weigh", notClosed: "{n} items still open", stepAsk: "The conclusion above stands on what was given. This is still missing; supplying it carries the check further: ", stepFill: "fill in", naCount: "{n} not applicable here", stepTriggered: "triggered by an earlier finding", flowFolded: "{n} more not applicable", laneFindings: "What this lane found (specialist output, not the case conclusion)", interimVerdict: "Interim assessment (on incomplete facts, not a conclusion)", noItems: "None", limitations: "Limits on this conclusion", clearanceTitle: "Clearance conditions · five", clearanceNote: "The five conditions belong to three different lanes, so no lane can close a case on its own. Silence is not a pass: unstated is unmet.", clearanceCleared: "All five are met — no licence requirement arises on the stated facts. This is not an approval and not a release.", clearanceBlocked: "{n} not met, so no clear conclusion is drawn.", clearanceOpen: "{n} step(s) are still waiting on evidence. An open step blocks a clear conclusion even when all five conditions hold.", clearanceMet: "Met", clearanceUnmet: "Not met", countSuffix: " · {n}",
     sourceLive: "Live", sourceMetadata: "Metadata", sourceUnavailable: "Unavailable", sourceNotFetched: "Not fetched", sourceArchived: "Archived copy", sourceCitationOnly: "Cited only", sourceCached: "Cached", noQueryableSource: "No queryable source yet (sync one first)", sourceQueryHint: "@ query a source", srcAuthority: "Published by", srcCountry: "Jurisdiction", srcUpdates: "Updated", srcCaptured: "Captured locally", srcBoundary: "This returns the source's own records, not a determination.", sourceQueryPlaceholder: "Entity name, notice number or keyword — ranked by relevance; leave empty to browse all…",
     queryEmpty: "Enter something to look up", queryHits: "{total} matches", browseCount: "{total} records", browseAll: "Browse all", pagePrev: "Previous", pageNext: "Next", relMatched: "matched", relMissed: "not matched", relPartial: "{n} more records matched only part of the query and are not listed", queryNoHit: "No matching record in this source", queryTruncated: "Showing {shown} of {total}",
     queryEscalate: "Run a full screening on this →", escalatePrefix: "Run a full compliance screening on {q}",
@@ -1446,9 +1446,20 @@ function clearanceMarkup(clearance) {
   const verdict = clearance.cleared
     ? t("clearanceCleared")
     : unmet.length ? t("clearanceBlocked").replace("{n}", unmet.length) : "";
+  // The verdict sentence, and the five conditions behind it.
+  //
+  // The sentence already says the thing a reader needs — all five met, or how
+  // many are not, or that an open step blocks a clear conclusion anyway. Under
+  // it sat the five conditions restated in full, each with its state, its lanes,
+  // its reason and its provision, saying the same thing at five times the
+  // length. It is what the verdict stands on, so it stays; it is not what the
+  // verdict is, so it is not the default view.
   return `
     <div class="answer-extra is-clearance">
-      <div class="ae-label">${esc(t("clearanceTitle"))}</div>
+      ${verdict ? `<p class="cl-verdict ${clearance.cleared ? "ok" : "blocked"}">${esc(verdict)}</p>` : ""}
+      ${open ? `<p class="cl-open">${esc(t("clearanceOpen").replace("{n}", open))}</p>` : ""}
+      <details class="cl-detail">
+      <summary>${esc(t("clearanceTitle"))}</summary>
       <p class="ae-note">${esc(t("clearanceNote"))}</p>
       <ol class="cl-list">
         ${ordered.map((check) => `
@@ -1463,8 +1474,7 @@ function clearanceMarkup(clearance) {
             </div>
           </li>`).join("")}
       </ol>
-      ${verdict ? `<p class="cl-verdict ${clearance.cleared ? "ok" : "blocked"}">${esc(verdict)}</p>` : ""}
-      ${open ? `<p class="cl-open">${esc(t("clearanceOpen").replace("{n}", open))}</p>` : ""}
+      </details>
     </div>`;
 }
 
@@ -1495,7 +1505,16 @@ function conclusionMarkup(data) {
       ${note ? `<p class="ae-note">${esc(note)}</p>` : ""}
       <ul>${items.map((line) => `<li>${formatInline(line)}</li>`).join("")}</ul>
     </div>` : "");
-  const limitsBlock = block(t("limitations"), "", limits, "is-limits");
+  // Folded for the same reason. What bounds a conclusion has to be reachable
+  // from it and does not have to be read before it.
+  const foldedBlock = (label, note, items, cls) => (items.length ? `
+    <div class="answer-extra ${cls}">
+      <details><summary>${esc(label)}${esc(t("countSuffix").replace("{n}", items.length))}</summary>
+        ${note ? `<p class="ae-note">${esc(note)}</p>` : ""}
+        <ul>${items.map((line) => `<li>${formatInline(line)}</li>`).join("")}</ul>
+      </details>
+    </div>` : "");
+  const limitsBlock = foldedBlock(t("limitations"), "", limits, "is-limits");
   // What is missing, as things to supply rather than as a count.
   //
   // The conclusion said "尚有 N 项未补齐" and named the first three steps, which
@@ -1508,7 +1527,7 @@ function conclusionMarkup(data) {
     return fields.length ? `**${localized(step.title)}** — ${fields.join("、")}` : `**${localized(step.title)}**`;
   });
   const askBlock = () => block(t("askFor"), t("declareNote"), askFor, "is-askfor");
-  const suggestedBlock = () => block(t("planSuggested"), t("planSuggestedNote"), suggested, "is-suggested");
+  const suggestedBlock = () => foldedBlock(t("planSuggested"), t("planSuggestedNote"), suggested, "is-suggested");
   // Above the limits and below the verdict: it is the working behind the verdict,
   // not a caveat on it. Absent for a briefing, a lookup or a memo, which have no
   // clearance to assess and never carry the field.
