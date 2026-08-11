@@ -1476,9 +1476,6 @@ html[lang="en"] .step-needs::before { content: "NEEDS"; font-size: 8px; }
 .live-detail::before { content: "· "; }
 .live-elapsed { margin-left: auto; font: 400 10.5px/1 var(--mono); color: var(--text-3); }
 /* The waiting step is the focal point of an open analysis. */
-.step-ask { margin: 8px 0 6px; font-size: 12px; font-weight: 400; line-height: 1.7; color: var(--text-2); }
-/* Reads as a note about the answer, not as a field waiting to be filled. */
-.step-ask .si-redo { margin-left: 4px; }
 
 /* ---- streamed reasoning: one component, wherever it appears ----
    Sits clear of the content above it, never grows past a readable height, and
@@ -1736,7 +1733,6 @@ html[lang="en"] .step-needs::before { content: "NEEDS"; font-size: 8px; }
 /* Once the prompt has been acted on it stops prompting: no arrow, no animation,
    and the line recedes to a caption over the values that were supplied. */
 .path-step.answered .step-arrow { display: none; }
-.path-step.answered .step-ask { color: var(--text-3); font-weight: 400; font-size: 11px; }
 .path-step.answered .step-mark { animation: none; }
 /* A standing property of the deployment, stated beside the list it qualifies. */
 .case-volatile { margin: 8px 4px 0; font-size: 11px; line-height: 1.5; color: var(--text-3); }

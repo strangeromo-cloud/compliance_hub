@@ -214,7 +214,17 @@ export function laneView(lane, { question = null, declined = [] } = {}) {
 // independently and drifted the moment a reader declined a question — the run
 // moved on and the page recomputed the same step and asked again.
 export function firstBlockedStep(path, declined = []) {
-  if (path?.awaitingInput?.step) return path.awaitingInput.step;
+  // The run's own answer wins, but not over a field that is not coming. It used
+  // to win outright, so a step the reader had declined — or that the run retired
+  // because the question never carried the fact — stayed nominated as the one
+  // blocking everything, and no amount of skipping could clear it. Checked
+  // against the same rule as every other step, so the short circuit cannot
+  // disagree with the walk below it.
+  const named = path?.awaitingInput?.step
+    ? (path.lanes || []).flatMap((lane) => lane.steps).find((item) => item.id === path.awaitingInput.step)
+    : null;
+  if (named && isAskable(named, declined)) return named.id;
+  if (path?.awaitingInput?.step && !named) return path.awaitingInput.step;
   if (path?.awaitingInput === null && path?.final) return null;
   for (const lane of path?.lanes || []) {
     for (const item of lane.steps) if (isAskable(item, declined)) return item.id;
