@@ -431,7 +431,12 @@ async function openCase(id) {
     renderCaseNav();
     closeDrawer();
     $("threadInner").lastElementChild?.scrollIntoView({ behavior: "smooth", block: "start" });
-  } catch { toast(t("historyOpenFailed")); }
+  } catch (error) {
+    // The reason, not just the toast. A swallowed exception here is a case that
+    // will not open with nothing anywhere saying why.
+    console.error("Opening a case failed:", error);
+    toast(t("historyOpenFailed"));
+  }
 }
 
 function renderHeroFigure() {
@@ -1159,66 +1164,26 @@ const firstBlockedStep = (path) => blockedStep(path, state.unavailableFacts);
 // what makes progress legible: the plan is stated once, the work arrives against
 // it, and the flow rail is the same list again.
 function derivationMarkup(path) {
-  const rows = path?.derivation || [];
-  if (!rows.length) return "";
-  const byLane = new Map((path.lanes || []).map((lane) => [lane.lane, lane]));
+  // Only the gates. What the scope list carried is now on the lanes themselves.
+  //
+  // It named every scope, why it was selected and which procedure governs it —
+  // and then the body named the same scopes again with their steps and status.
+  // Two lists of the same four things, the first one arriving before any
+  // analysis. What was not duplicated was the matched terms and the procedure
+  // link, so those moved down to the lane they describe rather than being lost
+  // with the block that held them.
+  //
+  // The gates stay here and stay first. They are the record of a review that was
+  // shortened — which steps were not run, and under which rule — and nothing
+  // else on the page says it. Silent shortening is the one thing a compliance
+  // tool must not do.
+  const gates = path?.triage || [];
+  if (!gates.length) return "";
   return `
     <section class="briefing">
-      <p class="bf-lead">${esc(t("briefLead").replace("{n}", rows.length))}</p>
-      ${/* A review shorter than the published procedure has to say so, and say
-            which rule allowed each omission. Silent shortening is the one thing a
-            compliance tool must not do. */ ""}
-      ${(path.triage || []).length ? `<ul class="bf-triage">
-        ${path.triage.map((gate) => `<li><span class="bt-mark">−</span>${esc(gate.because)}<span class="bt-cite">${esc(gate.cite)}</span></li>`).join("")}
-      </ul>` : ""}
-      <ol class="bf-scopes">
-        ${rows.map((row) => {
-          const lane = byLane.get(row.lane);
-          const kind = row.methodology?.kind || "derived";
-          return `
-          <li class="bf-scope">
-            <div class="bf-head">
-              <b>${esc(row.label)}</b>
-              <span class="bf-why">${row.matchedTerms.length
-                ? `${esc(t("briefBecause"))}${row.matchedTerms.map((term) => `<code>${esc(term)}</code>`).join("")}`
-                : esc(t(`derivMatch_${row.matchedBy}`))}</span>
-            </div>
-            ${/* The procedure, and nothing that repeats it. The authority was
-                  printed after every title — "EAR Part 732 … U.S. Bureau of
-                  Industry and Security" — and the title already names the
-                  regulation. A scope with no published procedure said so twice,
-                  once as 无对应标准程序 and once as the same sentence in English. */ ""}
-            <div class="bf-std">
-              <span class="bf-std-label">${esc(t(kind === "official" ? "briefStandard" : "briefNoStandard"))}</span>
-              ${kind === "official" && row.methodology ? (row.methodology.url
-                ? `<a href="${esc(row.methodology.url)}" target="_blank" rel="noopener noreferrer">${esc(row.methodology.label)}</a>`
-                : esc(row.methodology.label)) : ""}
-            </div>
-            ${/* A count, not the titles again.
-                  This listed every step of every scope, and then the body listed
-                  the same steps with their status, and the rail listed them a
-                  third time with the progress. Of the three copies this was the
-                  only one carrying no status at all — the least informative — and
-                  it came first, so an answer opened with a dozen bare titles
-                  before it said anything.
-                  What stays is what only this block knows: which scopes opened,
-                  on what terms, under which published procedure, and how many of
-                  the steps this system added rather than took from it. */ ""}
-            ${(() => {
-              const steps = lane?.steps || [];
-              const designed = steps.filter((step) => step.methodology === "derived").length;
-              // All of them designed here is not "N steps, N of which are
-              // designed" — it is one fact, and the scope already said it has no
-              // published procedure to take them from.
-              const tag = !designed ? ""
-                : designed === steps.length ? t("briefDesigned")
-                : t("briefDesignedN").replace("{n}", designed);
-              return `<div class="bf-count">${esc(t("briefSteps").replace("{n}", steps.length))}${
-                tag ? `<span class="bf-tag">${esc(tag)}</span>` : ""}</div>`;
-            })()}
-          </li>`;
-        }).join("")}
-      </ol>
+      <ul class="bf-triage">
+        ${gates.map((gate) => `<li><span class="bt-mark">−</span>${esc(gate.because)}<span class="bt-cite">${esc(gate.cite)}</span></li>`).join("")}
+      </ul>
     </section>`;
 }
 
@@ -1251,6 +1216,10 @@ function pathMarkup(path, grounding, options = {}) {
   // The declined fields belong in here as much as in laneView below. Left out,
   // the final render re-offered the very step the reader had said they had
   // nothing for, as the one thing blocking the run.
+  // Why this lane opened and which procedure supplies its steps, keyed by lane.
+  // It used to be a list of its own above the answer, alongside a second list of
+  // the same lanes; here it is attached to the lane it is about.
+  const derivedBy = new Map((path.derivation || []).map((row) => [row.lane, row]));
   const blocked = options.allowInput === false ? null : firstBlockedStep(path, state.unavailableFacts);
   // The same step the rail marks, from the same rule. Two panels naming
   // different steps as current is the fault this pair has had in a dozen forms,
@@ -1331,6 +1300,19 @@ function pathMarkup(path, grounding, options = {}) {
                   of the answer, detached from the steps they explain. */ ""}
             ${result ? `<span class="risk-chip risk-${esc(result.riskLevel)}">${esc(riskLabel(result.riskLevel))}</span>` : ""}
             ${running ? `<span class="thinking-dot" aria-hidden="true"></span><span class="lane-state">${esc(t("laneRunning"))}</span>` : ""}
+            ${(() => {
+              const row = derivedBy.get(lane.lane);
+              if (!row) return "";
+              const why = row.matchedTerms?.length
+                ? row.matchedTerms.map((term) => `<code>${esc(term)}</code>`).join("")
+                : `<span class="ll-why">${esc(t(`derivMatch_${row.matchedBy}`))}</span>`;
+              const std = row.methodology?.kind === "official" && row.methodology.label
+                ? (row.methodology.url
+                  ? `<a class="ll-std" href="${esc(row.methodology.url)}" target="_blank" rel="noopener noreferrer">${esc(row.methodology.label)}</a>`
+                  : `<span class="ll-std">${esc(row.methodology.label)}</span>`)
+                : `<span class="ll-std ll-none">${esc(t("briefNoStandard"))}</span>`;
+              return `<span class="lane-meta">${why}${std}</span>`;
+            })()}
           </div>
           ${result?.summary ? `<p class="lane-verdict">${esc(result.summary)}</p>` : ""}
           <ol class="path-steps">${steps.map((item) => {
@@ -2128,6 +2110,19 @@ async function analyze(event, options = {}) {
   // a lane that scrolled out of view while the previous one finished is brought
   // back, and a lane already visible is left exactly where it is. Scrolling on
   // every event would take the page away from a reader who is reading.
+  // The part of the thread a reader can actually see.
+  //
+  // The top bars float over their scrollers, so the thread's own rectangle
+  // starts 48px above the first pixel of it that is not behind the workspace
+  // header. Measured against the raw rectangle, a step sitting in that strip
+  // counts as visible and nothing scrolls to it — which is what "it stopped
+  // following the running step" was.
+  function visibleThread() {
+    const box = $("thread").getBoundingClientRect();
+    const bar = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--bar-h")) || 0;
+    return { top: box.top + bar, bottom: box.bottom };
+  }
+
   function followRunning() {
     // The step, not the lane. Following the lane worked while a lane was shorter
     // than the viewport; at six steps the header scrolls into view once, the
@@ -2139,7 +2134,7 @@ async function analyze(event, options = {}) {
       || (lane ? live.querySelector(`.path-lane[data-lane="${CSS.escape(lane)}"]`) : null);
     if (!node) return;
     const box = node.getBoundingClientRect();
-    const view = $("thread").getBoundingClientRect();
+    const view = visibleThread();
     if (box.top >= view.top + 20 && box.top <= view.bottom - 80) return;
     // Not smooth. A smooth scroll is animated and therefore asynchronous, and the
     // next path event replaces the very node being scrolled to — which cancels
@@ -2384,24 +2379,27 @@ async function analyze(event, options = {}) {
     live.classList.remove("resuming");
     state.resumingStep = null;
     renderEvidence(finished.sources || []);
-    // One deliberate scroll, and only one: to the step that is waiting for the
-    // reader. Everything else stays where it was — jumping to the top of a
-    // finished answer is what made the sequence impossible to follow — but a
-    // question nobody can see is a question nobody answers, so if it is off
-    // screen the page goes to it.
+    // One deliberate scroll, and only one: to the conclusion.
+    //
+    // It used to go to the step still waiting on the reader, from when the run
+    // stopped at that step and there was no conclusion to go to. There is one
+    // now, it is what the reader has been waiting through the run for, and it is
+    // at the very bottom of a long answer — so leaving the page wherever the
+    // last streamed lane left it is leaving the reader above the only part that
+    // answers their question. What is outstanding is named inside it.
+    //
     // setTimeout rather than requestAnimationFrame: rAF does not fire while the
-    // tab is hidden, so a run finished in a background tab would never move to
-    // its question and never focus it — the reader returns to a page that is
-    // waiting for them somewhere below the fold with no sign of it.
+    // tab is hidden, so a run finished in a background tab would never move at
+    // all — the reader returns to a page stopped mid-analysis with the answer
+    // somewhere below the fold and no sign of it.
     setTimeout(() => {
-      const waiting = live.querySelector(".path-step.asking");
-      if (!waiting) return;
-      const box = waiting.getBoundingClientRect();
-      const view = $("thread").getBoundingClientRect();
-      if (box.top < view.top + 40 || box.bottom > view.bottom - 40) {
-        waiting.scrollIntoView({ behavior: "smooth", block: "center" });
+      const answer = live.querySelector(".conclusion .answer") || live.querySelector(".conclusion");
+      if (!answer) return;
+      const box = answer.getBoundingClientRect();
+      const view = visibleThread();
+      if (box.top < view.top + 20 || box.top > view.bottom - 80) {
+        answer.scrollIntoView({ behavior: "smooth", block: "start" });
       }
-      waiting.querySelector(".si-text")?.focus({ preventScroll: true });
     });
     loadCases();
   } catch (error) {

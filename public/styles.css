@@ -1060,6 +1060,16 @@ details.analysis-path > summary { color: var(--text); font-weight: 600; flex-wra
 .path-lane { padding: 10px 0; border-bottom: 1px solid var(--border); }
 .path-lane:last-child { border-bottom: 0; padding-bottom: 2px; }
 .path-lane-label { font: 600 10px/1.6 var(--mono); letter-spacing: .08em; color: var(--text-3); margin-bottom: 8px; }
+
+/* Why the lane opened and which procedure it follows, on the lane itself. It was
+   a separate block above the answer that also re-listed every lane; only these
+   two facts were not already below, so only these two came down. */
+.lane-meta { margin-left: auto; display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+.lane-meta code { font: 400 10px/1.6 var(--mono); padding: 0 5px; border-radius: 3px; background: var(--surface-3); color: var(--text-2); }
+.lane-meta .ll-why { font-size: 10.5px; color: var(--text-3); }
+.lane-meta .ll-std { font-size: 10.5px; color: var(--text-3); text-decoration: none; border-bottom: 1px solid var(--border-strong); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 46ch; }
+a.ll-std:hover { color: var(--text-2); }
+.lane-meta .ll-none { border-bottom: 0; font-style: italic; }
 .path-steps { list-style: none; padding: 0; margin: 0; display: grid; gap: 9px; }
 
 .path-step { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 10px; align-items: start; position: relative; }
