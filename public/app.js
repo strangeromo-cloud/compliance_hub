@@ -24,8 +24,8 @@ const i18n = {
     hfQuestion: "一个问题", hfAnswer: "统一答案", startersLabel: "快速开始", workspaceEmpty: "工作区还没有 Gem", gemBacking: "数据支撑",
     teachSlashTitle: "在输入框键入 /", teachSlashBody: "呼出 {n} 个 Gem 的完整目录，上下键选择，回车使用。",
     teachPinTitle: "把常用 Gem 加入工作区", teachPinBody: "在目录里点 ★，或在 Gem 详情里点「添加到工作区」，它会常驻左侧栏。",
-    historyLabel: "历史记录", historyEmpty: "暂无记录", historyVolatile: "记录存在容器本地磁盘，重新部署会清空。挂载 Volume 到 data/runtime 可长期保留。", turnUnit: "轮", historyOpenFailed: "无法打开该记录", flowTitle: "执行流程", runPanel: "本次运行", flowRest: "顶部计的是整轮 —— 另有 {n} 步在 {lanes}，等当前这条线问完再展开",
-    flowRestDone: "顶部计的是整轮 —— 另有 {n} 步在 {lanes}（其中 {done} 步已完成），等当前这条线问完再展开", briefLead: "本次问题落在以下 {n} 个审查范围，按顺序逐步执行：", briefBecause: "命中 ", briefStandard: "标准程序", briefNoStandard: "无对应标准程序", briefDesigned: "系统设计", briefSteps: "{n} 个步骤", briefDesignedN: "其中 {n} 步由系统补充", flowEmpty: "提交一个问题后，这里显示分析路径的执行进度", flowNotRun: "该步骤尚未执行",
+    historyLabel: "历史记录", historyEmpty: "暂无记录", historyVolatile: "记录存在容器本地磁盘，重新部署会清空。挂载 Volume 到 data/runtime 可长期保留。", turnUnit: "轮", historyOpenFailed: "无法打开该记录", flowTitle: "执行流程", runPanel: "本次运行", flowRest: "顶部计的是整轮。另有 {n} 步在 {lanes} 本次没有走到 —— 上面这条线还缺证据，所以给出的是阶段性判断而不是结案",
+    flowRestDone: "顶部计的是整轮。另有 {n} 步在 {lanes} 本次没有走完（其中 {done} 步已完成）—— 上面这条线还缺证据，所以给出的是阶段性判断而不是结案", briefLead: "本次问题落在以下 {n} 个审查范围，按顺序逐步执行：", briefBecause: "命中 ", briefStandard: "标准程序", briefNoStandard: "无对应标准程序", briefDesigned: "系统设计", briefSteps: "{n} 个步骤", briefDesignedN: "其中 {n} 步由系统补充", flowEmpty: "提交一个问题后，这里显示分析路径的执行进度", flowNotRun: "该步骤尚未执行",
     derivMatch_gem: "由所选 Gem 指定为主检查", derivMatch_always: "每次分析都执行", derivMatch_direct_lookup: "直接查询，不进入审查程序", derivMatch_gem_kind: "该 Gem 的产出类型，不进入审查程序", derivMatch_question_terms: "问题中的关键词",
     derivMatch_no_term_matched_all_lanes_run: "问题未命中任何关键词，三条检查全部执行",
     derivKind_official: "官方程序", derivKind_derived: "系统规划",
@@ -85,8 +85,8 @@ const i18n = {
     hfQuestion: "One question", hfAnswer: "One answer", startersLabel: "Start here", workspaceEmpty: "No gems in your workspace yet", gemBacking: "Data behind it",
     teachSlashTitle: "Press / in the composer", teachSlashBody: "Opens the full catalogue of {n} gems. Arrow keys select, Enter uses.",
     teachPinTitle: "Pin the ones you use", teachPinBody: "Add to workspace from a gem's details and it stays in the sidebar.",
-    historyLabel: "History", historyEmpty: "No cases yet", historyVolatile: "Cases sit on the container\u2019s own disk and are cleared by a redeploy. Mount a volume at data/runtime to keep them.", turnUnit: "turns", historyOpenFailed: "That case could not be opened", flowTitle: "Execution flow", runPanel: "This run", flowRest: "The count above is the whole run — {n} further steps sit in {lanes}, drawn once this lane\u2019s question is answered",
-    flowRestDone: "The count above is the whole run — {n} further steps sit in {lanes} ({done} of them already settled), drawn once this lane\u2019s question is answered", briefLead: "This question falls into {n} review scopes, worked through in order:", briefBecause: "matched ", briefStandard: "Standard procedure", briefNoStandard: "No standard procedure", briefDesigned: "designed here", briefSteps: "{n} steps", briefDesignedN: "{n} added by this system", flowEmpty: "Ask a question and the analysis path\u2019s progress appears here", flowNotRun: "That step has not run yet",
+    historyLabel: "History", historyEmpty: "No cases yet", historyVolatile: "Cases sit on the container\u2019s own disk and are cleared by a redeploy. Mount a volume at data/runtime to keep them.", turnUnit: "turns", historyOpenFailed: "That case could not be opened", flowTitle: "Execution flow", runPanel: "This run", flowRest: "The count above is the whole run. {n} further steps in {lanes} were not reached — the lane above is still short of evidence, so what you have is an interim assessment rather than a closed case",
+    flowRestDone: "The count above is the whole run. {n} further steps in {lanes} were not finished ({done} of them are settled) — the lane above is still short of evidence, so what you have is an interim assessment rather than a closed case", briefLead: "This question falls into {n} review scopes, worked through in order:", briefBecause: "matched ", briefStandard: "Standard procedure", briefNoStandard: "No standard procedure", briefDesigned: "designed here", briefSteps: "{n} steps", briefDesignedN: "{n} added by this system", flowEmpty: "Ask a question and the analysis path\u2019s progress appears here", flowNotRun: "That step has not run yet",
     derivMatch_gem: "set as the lead check by the selected gem", derivMatch_always: "runs on every analysis", derivMatch_direct_lookup: "a direct lookup; no review procedure applies", derivMatch_gem_kind: "what this gem produces; no review procedure applies", derivMatch_question_terms: "terms in the question",
     derivMatch_no_term_matched_all_lanes_run: "no term matched, so all three checks run",
     derivKind_official: "official", derivKind_derived: "system-planned",
@@ -937,8 +937,11 @@ function flowMarkup(path, options = {}) {
   // was any sign that the difference existed, so "4/12" sat above a single lane
   // reading "4/5" with nothing to explain the other seven.
   //
-  // The header stays the whole run. What is withheld is now said out loud at the
-  // foot of the rail, which is the only thing that makes the two add up.
+  // The header stays the whole run. What is withheld is said out loud at the foot
+  // of the rail, which is the only thing that makes the two add up — and it says
+  // why, because "5/12" beside a finished answer otherwise reads as a run that
+  // stopped early. Nothing stopped: the later lanes were never reached, and that
+  // is exactly what makes the conclusion interim rather than closed.
   const drawn = visibleLanes(path, {
     activeLane: options.activeLane, declined: options.declined,
     allowInput: true, analysed: options.analysed || []
