@@ -312,13 +312,18 @@ html[data-theme="light"] .moon-icon { display: block; }
 .hero-data { border-left: 1px solid var(--border); display: flex; flex-direction: column; }
 .hero-data .coverage-strip { grid-template-columns: 1fr 1fr; }
 .hero-data .source-mosaic { flex: 1 1 auto; }
-a.cc-more { display: inline-block; margin-top: 3px; font-size: 10.5px; color: var(--text-2); text-decoration: none; }
+/* The left column is a flex column: the figure takes the slack and centres
+   itself in it, and the link sits at the foot of the space that was left over. */
+.hero-left { display: flex; flex-direction: column; min-width: 0; }
+.hero-left > .hero-figure { flex: 1 1 auto; }
+a.cc-more { padding: 0 18px 14px; font-size: 11px; color: var(--text-2); text-decoration: none; }
 a.cc-more::after { content: " \2192"; margin-left: 4px; }
 a.cc-more:hover { color: var(--text); background: var(--surface-2); }
 
 /* Narrow enough that 268px of data column starves the figure — stack again. */
 @media (max-width: 760px) {
   .hero-card { grid-template-columns: minmax(0, 1fr); }
+  a.cc-more { padding-top: 4px; }
   .hero-data { border-left: 0; border-top: 1px solid var(--border); }
 }
 .coverage-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); gap: 1px; background: var(--border); }

@@ -20,7 +20,7 @@ const i18n = {
     fallbackTitle: "本机未同步，使用随仓库提交的时点快照，采集于",
     gemSourcesUnit: "个来源", gemRecordsUnit: "条记录", gemUnsynced: "个未同步", gemNoData: "无绑定来源", gemNoCoverage: "数据状态未知",
     factsShort: "必填", railCollapse: "收起侧边栏", railExpand: "展开侧边栏",
-    coverageMore: "查看全部", mosaicUs: "美国", mosaicCn: "中国", mosaicOther: "全球 / 其他",
+    coverageMore: "查看全部数据源", mosaicUs: "美国", mosaicCn: "中国", mosaicOther: "全球 / 其他",
     hfQuestion: "一个问题", hfAnswer: "统一答案", startersLabel: "快速开始", workspaceEmpty: "工作区还没有 Gem", gemBacking: "数据支撑",
     teachSlashTitle: "在输入框键入 /", teachSlashBody: "呼出 {n} 个 Gem 的完整目录，上下键选择，回车使用。",
     teachPinTitle: "把常用 Gem 加入工作区", teachPinBody: "在目录里点 ★，或在 Gem 详情里点「添加到工作区」，它会常驻左侧栏。",
@@ -81,7 +81,7 @@ const i18n = {
     fallbackTitle: "Not synced on this host; using the bundled point-in-time copy captured",
     gemSourcesUnit: "sources", gemRecordsUnit: "records", gemUnsynced: "not synced", gemNoData: "no bound sources", gemNoCoverage: "coverage unknown",
     factsShort: "Facts", railCollapse: "Collapse sidebar", railExpand: "Expand sidebar",
-    coverageMore: "See all", mosaicUs: "United States", mosaicCn: "China", mosaicOther: "Global / other",
+    coverageMore: "See all sources", mosaicUs: "United States", mosaicCn: "China", mosaicOther: "Global / other",
     hfQuestion: "One question", hfAnswer: "One answer", startersLabel: "Start here", workspaceEmpty: "No gems in your workspace yet", gemBacking: "Data behind it",
     teachSlashTitle: "Press / in the composer", teachSlashBody: "Opens the full catalogue of {n} gems. Arrow keys select, Enter uses.",
     teachPinTitle: "Pin the ones you use", teachPinBody: "Add to workspace from a gem's details and it stays in the sidebar.",
@@ -1729,13 +1729,7 @@ async function loadCoverage() {
       { value: records.toLocaleString(), label: t("listRecords") },
       ...(fallback.length ? [{ value: String(fallback.length), label: t("fallbackSources"), warn: true }] : []),
       ...(failed.length ? [{ value: String(failed.length), label: t("failedSources"), bad: true }] : [])
-    ].map((cell, index) => `<div class="coverage-cell ${cell.bad ? "is-bad" : ""} ${cell.warn ? "is-warn" : ""}">
-      <b>${esc(cell.value)}</b><span>${esc(cell.label)}</span>
-      ${/* The way into the register rides under the last number rather than
-            taking a band of its own, which leaves the column exactly four:
-            the numbers and the three regions. */ ""}
-      ${index === 1 ? `<a class="cc-more" href="/data-sources.html">${esc(t("coverageMore"))}</a>` : ""}
-    </div>`).join("");
+    ].map((cell) => `<div class="coverage-cell ${cell.bad ? "is-bad" : ""} ${cell.warn ? "is-warn" : ""}"><b>${esc(cell.value)}</b><span>${esc(cell.label)}</span></div>`).join("");
 
     renderGemNav();
     renderSourceMosaic();
