@@ -1716,20 +1716,25 @@ async function loadCoverage() {
       ...failed.map((source) => `${source.sourceId}: ${source.sync.error || ""}`)
     ].join("\n");
 
-    // A zero is worth a cell only when zero is the interesting answer. "0 时点副本"
-    // and "0 失败" held two of five slots on every healthy install, which is where
-    // half the clutter in this strip came from; both appear the moment they are
-    // not zero, which is the only time they say anything.
+    // Four cells, two by two, with the way into the register as the fourth.
     //
-    // 中国来源 went with them, for a different reason: the region rows directly
-    // below print the same 7/11, and a number stated twice inside one module is
-    // the thing this module was merged to stop.
+    // 中国来源 is not among them: the region rows directly below print the same
+    // 7/11, and a number stated twice inside one module is the thing this module
+    // was merged to stop.
+    //
+    // The third cell is fallbacks, or failures when there are any — a failed sync
+    // is the one of the two that needs attention, and both are always spelled out
+    // in full on the sidebar's data-status line, so nothing is lost by the cell
+    // showing one at a time.
+    const third = failed.length
+      ? { value: String(failed.length), label: t("failedSources"), bad: true }
+      : { value: String(fallback.length), label: t("fallbackSources"), warn: fallback.length > 0 };
     $("coverageStrip").innerHTML = [
       { value: `${synced.length}/${data.sources.length}`, label: t("sourcesSynced") },
       { value: records.toLocaleString(), label: t("listRecords") },
-      ...(fallback.length ? [{ value: String(fallback.length), label: t("fallbackSources"), warn: true }] : []),
-      ...(failed.length ? [{ value: String(failed.length), label: t("failedSources"), bad: true }] : [])
-    ].map((cell) => `<div class="coverage-cell ${cell.bad ? "is-bad" : ""} ${cell.warn ? "is-warn" : ""}"><b>${esc(cell.value)}</b><span>${esc(cell.label)}</span></div>`).join("");
+      third
+    ].map((cell) => `<div class="coverage-cell ${cell.bad ? "is-bad" : ""} ${cell.warn ? "is-warn" : ""}"><b>${esc(cell.value)}</b><span>${esc(cell.label)}</span></div>`).join("")
+      + `<a class="coverage-cell cc-more" href="/data-sources.html">${esc(t("coverageMore"))}</a>`;
 
     renderGemNav();
     renderSourceMosaic();
