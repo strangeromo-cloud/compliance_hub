@@ -166,6 +166,23 @@ export function currentStepId(path, options = {}) {
 // One rule now, and it is the body's: a panel shows what has happened, because
 // a step nobody has reached yet has nothing to say about this question. What is
 // still ahead is carried by the counts, which is where a number belongs.
+// Which step a given lane is at, which is not the same as which step the run is
+// at. The lane holding the open question is at that question; the lane being
+// analysed is at its frontier; every other lane is at its own first unanswered
+// step, or nowhere.
+//
+// This lived in the body only, while the rail passed the run's single current
+// step to every lane. So the two panels computed different "touched" sets from
+// the same laneView and drew different rows and different lanes for one run —
+// the body showing Product with a row, the rail not showing Product at all.
+// One definition, read by both.
+export function laneQuestion(lane, { blocked = null, runningStep = null, declined = [] } = {}) {
+  const steps = lane?.steps || [];
+  if (blocked && steps.some((item) => item.id === blocked)) return blocked;
+  if (runningStep && steps.some((item) => item.id === runningStep)) return runningStep;
+  return steps.find((item) => isAskable(item, declined))?.id || null;
+}
+
 export function laneView(lane, { question = null, declined = [] } = {}) {
   const steps = lane?.steps || [];
   const touched = steps.filter((item) =>
@@ -179,6 +196,14 @@ export function laneView(lane, { question = null, declined = [] } = {}) {
   return {
     shown: reached.filter((item) => !FOLDED.has(stepState(item, declined))),
     folded: reached.filter((item) => FOLDED.has(stepState(item, declined))),
+    // How many the lane has that this view does not list.
+    //
+    // A lane reading "3/6" over a list of four is a count nobody can reconcile,
+    // and the two missing rows are the answer to "why is it not six". Reported
+    // rather than drawn: an unreached step carries no basis and no question, so
+    // as a row it is an empty box, and the panels are already long. Both panels
+    // read it from here, so neither can state a different number.
+    unreached: steps.length - reached.length,
     settled: steps.filter(isDone).length,
     total: steps.length
   };

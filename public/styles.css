@@ -1840,6 +1840,10 @@ html[lang="en"] .step-needs::before { content: "NEEDS"; font-size: 8px; }
 /* The fold names what is inside it, like the body's does. A count with no way to
    see what it counts is the reader being told a number and refused the list. */
 .flow-rest { margin: 8px 2px 0; font-size: 10.5px; line-height: 1.6; color: var(--text-3); }
+/* The steps the lane has that the list does not show, so the lane's own count
+   can be reconciled with the rows under it. Same sentence in both panels. */
+.fl-rest { margin: 3px 0 0 2px; font-size: 10.5px; color: var(--text-3); }
+.lane-rest { margin: 5px 0 0 26px; font-size: 11px; color: var(--text-3); }
 .fl-folded { margin: 4px 0 0 2px; font-size: 10.5px; color: var(--text-3); }
 .fl-folded > summary { cursor: pointer; list-style: none; padding: 2px 0; }
 .fl-folded > summary::-webkit-details-marker { display: none; }
