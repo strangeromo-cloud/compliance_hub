@@ -301,16 +301,32 @@ html[data-theme="light"] .moon-icon { display: block; }
 .gem-meta .warn { color: var(--risk-medium); }
 .gem-meta .none { color: var(--text-3); font-style: italic; }
 
-.hero-card { border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); overflow: hidden; }
-.hero-card > .coverage-strip { border-top: 1px solid var(--border); }
-/* The way into the full register, as the last cell of the numbers row rather
-   than as a heading the module no longer needs — the numbers name themselves. */
-a.cc-more { display: flex; align-items: center; justify-content: flex-end; font-size: 11px; color: var(--text-2); text-decoration: none; }
+/* Side by side, because stacked it was a tall block of mostly air: the figure
+   is wide and short, the coverage is narrow and short, and one above the other
+   they made a column twice the height either of them needed. */
+.hero-card {
+  display: grid; grid-template-columns: minmax(0, 1fr) 316px;
+  border: 1px solid var(--border); border-radius: var(--radius-lg);
+  background: var(--surface); overflow: hidden;
+}
+.hero-data { border-left: 1px solid var(--border); display: flex; flex-direction: column; }
+.hero-data .coverage-strip { grid-template-columns: 1fr 1fr; }
+.hero-data .source-mosaic { flex: 1 1 auto; }
+a.cc-more {
+  display: block; padding: 9px 14px; border-top: 1px solid var(--border);
+  font-size: 11px; color: var(--text-2); text-decoration: none;
+}
 a.cc-more::after { content: " \2192"; margin-left: 4px; }
 a.cc-more:hover { color: var(--text); background: var(--surface-2); }
+
+/* Narrow enough that 268px of data column starves the figure — stack again. */
+@media (max-width: 760px) {
+  .hero-card { grid-template-columns: minmax(0, 1fr); }
+  .hero-data { border-left: 0; border-top: 1px solid var(--border); }
+}
 .coverage-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); gap: 1px; background: var(--border); }
-.coverage-cell { background: var(--surface); padding: 14px 16px; }
-.coverage-cell b { display: block; font-size: 19px; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.coverage-cell { background: var(--surface); padding: 12px 14px; }
+.coverage-cell b { display: block; font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
 .coverage-cell span { display: block; font-size: 10.5px; color: var(--text-3); margin-top: 4px; }
 .coverage-cell.is-bad b { color: var(--risk-high); }
 .coverage-cell.is-warn b { color: var(--risk-medium); }
@@ -956,7 +972,7 @@ details.trace.reasoning > summary { color: var(--text); font-weight: 600; }
   display: grid; grid-template-columns: auto 30px auto 30px auto;
   justify-content: center; align-items: center; gap: 0 4px;
   background: radial-gradient(120% 140% at 8% 50%, var(--accent-soft), transparent 46%);
-  padding: 30px 18px 32px;
+  padding: 24px 18px;
 }
 .hf-col { display: grid; gap: 6px; }
 .hf-node {
@@ -989,13 +1005,15 @@ details.trace.reasoning > summary { color: var(--text); font-weight: 600; }
 /* Real control codes, not lorem — the vernacular of the subject, set faint. */
 
 .source-mosaic { display: grid; border-top: 1px solid var(--border); }
-.mosaic-row { display: flex; align-items: center; gap: 10px; padding: 9px 16px; }
+.mosaic-row { display: flex; align-items: center; gap: 8px; padding: 8px 14px; }
 .mosaic-row + .mosaic-row { border-top: 1px solid var(--border); }
-.mosaic-name { flex: 0 0 auto; min-width: 68px; font-size: 11.5px; color: var(--text-2); }
-.mosaic-count { flex: 0 0 auto; min-width: 40px; font: 600 11px/1 var(--mono); color: var(--text-3); font-variant-numeric: tabular-nums; }
+.mosaic-name { flex: 0 0 auto; min-width: 52px; font-size: 11px; color: var(--text-2); }
+.mosaic-count { flex: 0 0 auto; font: 600 10.5px/1 var(--mono); color: var(--text-3); font-variant-numeric: tabular-nums; }
 
-.mosaic-tiles { display: flex; flex-wrap: wrap; gap: 3px; margin-left: auto; justify-content: flex-end; }
-.tile { width: 13px; height: 13px; border-radius: 2px; border: 1px solid var(--border); background: var(--surface-2); display: block; }
+/* No wrap. Sixteen tiles falling onto a second line made the three rows
+   different heights and the block read as ragged rather than as a scale. */
+.mosaic-tiles { display: flex; gap: 2px; margin-left: auto; justify-content: flex-end; }
+.tile { width: 9px; height: 9px; border-radius: 2px; border: 1px solid var(--border); background: var(--surface-2); display: block; }
 .tile.tone-live { background: var(--accent); border-color: var(--accent); }
 .tile.tone-fallback { background: var(--risk-medium); border-color: var(--risk-medium); }
 .tile.tone-failed { background: var(--risk-high); border-color: var(--risk-high); }

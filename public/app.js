@@ -1716,8 +1716,7 @@ async function loadCoverage() {
       { value: records.toLocaleString(), label: t("listRecords") },
       ...(fallback.length ? [{ value: String(fallback.length), label: t("fallbackSources"), warn: true }] : []),
       ...(failed.length ? [{ value: String(failed.length), label: t("failedSources"), bad: true }] : [])
-    ].map((cell) => `<div class="coverage-cell ${cell.bad ? "is-bad" : ""} ${cell.warn ? "is-warn" : ""}"><b>${esc(cell.value)}</b><span>${esc(cell.label)}</span></div>`).join("")
-      + `<a class="coverage-cell cc-more" href="/data-sources.html">${esc(t("coverageMore"))}</a>`;
+    ].map((cell) => `<div class="coverage-cell ${cell.bad ? "is-bad" : ""} ${cell.warn ? "is-warn" : ""}"><b>${esc(cell.value)}</b><span>${esc(cell.label)}</span></div>`).join("");
 
     renderGemNav();
     renderSourceMosaic();
