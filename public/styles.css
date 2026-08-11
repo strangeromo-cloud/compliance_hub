@@ -985,9 +985,9 @@ details.trace.reasoning > summary { color: var(--text); font-weight: 600; }
      with a smudge in the corner; on the diagonal the wash crosses the whole
      figure and the falloff is long enough to be seen as a falloff. */
   background: linear-gradient(135deg,
-    color-mix(in srgb, var(--accent) 18%, transparent),
-    color-mix(in srgb, var(--accent) 7%, transparent) 42%,
-    transparent 82%);
+    color-mix(in srgb, var(--accent) 38%, transparent),
+    color-mix(in srgb, var(--accent) 15%, transparent) 45%,
+    transparent 88%);
   padding: 18px;
 }
 .hf-q { grid-area: 1 / 1 / 4 / 2; align-self: center; }
