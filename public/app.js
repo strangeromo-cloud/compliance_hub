@@ -16,11 +16,11 @@ const i18n = {
     keyNote: "API Key 仅保存在当前浏览器会话中，用于转发本次调用；不会写入服务器文件或日志。",
     testConnection: "测试连接", saveSession: "保存", analyzing: "正在检索官方来源并组织答案……",
     dataLoading: "数据状态载入中", dataSynced: "个来源已同步", dataFallback: "个用兜底快照", dataFailed: "个失败", dataNone: "暂无可用来源",
-    sourcesSynced: "已同步来源", listRecords: "名单记录", cnSources: "中国来源", fallbackSources: "兜底快照", failedSources: "同步失败",
+    sourcesSynced: "已同步来源", listRecords: "名单记录", fallbackSources: "兜底快照", failedSources: "同步失败",
     fallbackTitle: "本机未同步，使用随仓库提交的时点快照，采集于",
     gemSourcesUnit: "个来源", gemRecordsUnit: "条记录", gemUnsynced: "个未同步", gemNoData: "无绑定来源", gemNoCoverage: "数据状态未知",
     factsShort: "必填", railCollapse: "收起侧边栏", railExpand: "展开侧边栏",
-    mosaicLabel: "来源版图", mosaicUs: "美国", mosaicCn: "中国", mosaicOther: "全球 / 其他",
+    coverageMore: "查看全部", mosaicUs: "美国", mosaicCn: "中国", mosaicOther: "全球 / 其他",
     hfQuestion: "一个问题", hfAnswer: "统一答案", startersLabel: "快速开始", workspaceEmpty: "工作区还没有 Gem", gemBacking: "数据支撑",
     teachSlashTitle: "在输入框键入 /", teachSlashBody: "呼出 {n} 个 Gem 的完整目录，上下键选择，回车使用。",
     teachPinTitle: "把常用 Gem 加入工作区", teachPinBody: "在目录里点 ★，或在 Gem 详情里点「添加到工作区」，它会常驻左侧栏。",
@@ -77,11 +77,11 @@ const i18n = {
     keyNote: "The API key stays in this browser session and is used only to forward this call. It is never written to server files or logs.",
     testConnection: "Test connection", saveSession: "Save", analyzing: "Retrieving official sources and composing the answer…",
     dataLoading: "Loading data status", dataSynced: "synced", dataFallback: "on bundled copy", dataFailed: "failed", dataNone: "No sources available",
-    sourcesSynced: "Sources synced", listRecords: "List records", cnSources: "PRC sources", fallbackSources: "Bundled copies", failedSources: "Sync failures",
+    sourcesSynced: "Sources synced", listRecords: "List records", fallbackSources: "Bundled copies", failedSources: "Sync failures",
     fallbackTitle: "Not synced on this host; using the bundled point-in-time copy captured",
     gemSourcesUnit: "sources", gemRecordsUnit: "records", gemUnsynced: "not synced", gemNoData: "no bound sources", gemNoCoverage: "coverage unknown",
     factsShort: "Facts", railCollapse: "Collapse sidebar", railExpand: "Expand sidebar",
-    mosaicLabel: "Source map", mosaicUs: "United States", mosaicCn: "China", mosaicOther: "Global / other",
+    coverageMore: "See all", mosaicUs: "United States", mosaicCn: "China", mosaicOther: "Global / other",
     hfQuestion: "One question", hfAnswer: "One answer", startersLabel: "Start here", workspaceEmpty: "No gems in your workspace yet", gemBacking: "Data behind it",
     teachSlashTitle: "Press / in the composer", teachSlashBody: "Opens the full catalogue of {n} gems. Arrow keys select, Enter uses.",
     teachPinTitle: "Pin the ones you use", teachPinBody: "Add to workspace from a gem's details and it stays in the sidebar.",
@@ -463,13 +463,17 @@ function renderSourceMosaic() {
   const bucket = (source) => (source.country === "US" || source.country === "CN" ? source.country : "other");
   const tone = (status) => ({ success: "live", fallback_snapshot: "fallback", failed: "failed", syncing: "syncing" }[status] || "idle");
 
+  // A row per region rather than a card per region. Three bordered cards inside
+  // a bordered module is three frames around one subject; on one line each, the
+  // name, the count and the tiles read left to right as one sentence.
   $("sourceMosaic").innerHTML = groups.map((group) => {
     const sources = data.sources.filter((source) => bucket(source) === group.key);
     if (!sources.length) return "";
     const live = sources.filter((source) => ["success", "fallback_snapshot"].includes(source.sync?.status)).length;
     return `
-      <div class="mosaic-group">
-        <div class="mosaic-head"><span>${esc(group.label)}</span><b>${live}/${sources.length}</b></div>
+      <div class="mosaic-row">
+        <span class="mosaic-name">${esc(group.label)}</span>
+        <b class="mosaic-count">${live}/${sources.length}</b>
         <div class="mosaic-tiles">${sources.map((source) => `
           <a class="tile tone-${tone(source.sync?.status)}" href="/data-sources.html"
              title="${esc(source.sourceId)} · ${esc(source.sync?.status || "not_synced")}${source.sync?.recordCount ? ` · ${source.sync.recordCount}` : ""}"></a>`).join("")}</div>
@@ -1687,8 +1691,6 @@ async function loadCoverage() {
     const failed = data.sources.filter((source) => ["failed", "refresh_failed"].includes(source.sync?.status));
     const usable = [...synced, ...fallback];
     const records = usable.reduce((sum, source) => sum + (source.sync.recordCount || 0), 0);
-    const cnUsable = usable.filter((source) => source.country === "CN").length;
-    const cnTotal = data.sources.filter((source) => source.country === "CN").length;
 
     // A bundled copy never reads as green. It is a warning state, because the
     // list it holds may already have been superseded.
@@ -1702,12 +1704,19 @@ async function loadCoverage() {
       ...failed.map((source) => `${source.sourceId}: ${source.sync.error || ""}`)
     ].join("\n");
 
+    // A zero is worth a cell only when zero is the interesting answer. "0 时点副本"
+    // and "0 失败" held two of five slots on every healthy install, which is where
+    // half the clutter in this strip came from; both appear the moment they are
+    // not zero, which is the only time they say anything.
+    //
+    // 中国来源 went with them, for a different reason: the region rows directly
+    // below print the same 7/11, and a number stated twice inside one module is
+    // the thing this module was merged to stop.
     $("coverageStrip").innerHTML = [
       { value: `${synced.length}/${data.sources.length}`, label: t("sourcesSynced") },
       { value: records.toLocaleString(), label: t("listRecords") },
-      { value: `${cnUsable}/${cnTotal}`, label: t("cnSources") },
-      { value: String(fallback.length), label: t("fallbackSources"), warn: fallback.length > 0 },
-      { value: String(failed.length), label: t("failedSources"), bad: failed.length > 0 }
+      ...(fallback.length ? [{ value: String(fallback.length), label: t("fallbackSources"), warn: true }] : []),
+      ...(failed.length ? [{ value: String(failed.length), label: t("failedSources"), bad: true }] : [])
     ].map((cell) => `<div class="coverage-cell ${cell.bad ? "is-bad" : ""} ${cell.warn ? "is-warn" : ""}"><b>${esc(cell.value)}</b><span>${esc(cell.label)}</span></div>`).join("");
 
     renderGemNav();

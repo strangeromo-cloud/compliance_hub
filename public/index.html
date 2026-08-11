@@ -85,13 +85,23 @@
             <p data-i18n="startLead">范围为美国与中国的出口管制。Master Agent 自动路由到贸易、产品和第三方尽调 Agent，返回一份带证据链的统一答案。</p>
           </div>
           <div class="hero-figure" id="heroFigure" aria-hidden="true"></div>
-          <p class="section-label" data-i18n="mosaicLabel">来源版图</p>
-          <div class="source-mosaic" id="sourceMosaic"></div>
-          <div class="start-teach" id="startTeach"></div>
+
           <p class="section-label" data-i18n="startersLabel">快速开始</p>
           <div class="starter-grid" id="starterGrid"></div>
-          <p class="section-label" data-i18n="coverageLabel">数据覆盖</p>
-          <div class="coverage-strip" id="coverageStrip"></div>
+
+          <!-- One module, not two. The strip counted the sources and the mosaic
+               drew the same sources as tiles, under two headings, at opposite
+               ends of the page — the same subject answered twice. -->
+          <section class="coverage-card">
+            <div class="section-label">
+              <b data-i18n="coverageLabel">数据覆盖</b>
+              <a class="cc-more" href="/data-sources.html" data-i18n="coverageMore">查看全部</a>
+            </div>
+            <div class="coverage-strip" id="coverageStrip"></div>
+            <div class="source-mosaic" id="sourceMosaic"></div>
+          </section>
+
+          <div class="start-teach" id="startTeach"></div>
         </div>
 
         <div class="thread-inner" id="threadInner"></div>

@@ -260,24 +260,33 @@ html[data-theme="light"] .moon-icon { display: block; }
 
 /* ------------------------------------------------------------ empty state */
 
-.start { max-width: 800px; margin: 0 auto; padding: 30px 22px 8px; }
-.start-head { margin-bottom: 22px; }
-.start-head h2 { font-size: 18px; font-weight: 600; letter-spacing: -.01em; margin-bottom: 5px; }
-.start-head p { font-size: 12.5px; color: var(--text-2); max-width: 62ch; }
-.section-label { display: flex; align-items: baseline; gap: 8px; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--text-3); margin: 0 0 9px; }
+/* Four sections, not six, and the space between them larger than the space
+   inside any of them — which is the whole of what makes a stack read as
+   sections rather than as one long column. */
+.start { max-width: 800px; margin: 0 auto; padding: 44px 22px 8px; display: grid; gap: 34px; }
+.start-head { margin-bottom: 0; }
+.start-head h2 { font-size: 21px; font-weight: 600; letter-spacing: -.015em; margin-bottom: 8px; }
+.start-head p { font-size: 12.5px; line-height: 1.75; color: var(--text-2); max-width: 62ch; }
+.section-label { display: flex; align-items: baseline; gap: 8px; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--text-3); margin: 0 0 11px; }
+/* The label carries the section name; a heading followed by its own section
+   needs no gap of its own, so the grid gap must not apply between them. */
+.start > .section-label { margin-bottom: -24px; }
 .section-label span { letter-spacing: 0; text-transform: none; font-weight: 400; font-size: 11px; }
 
 /* The empty state teaches what the sidebar and palette cannot: how to reach
    the catalogue, and something concrete to click first. */
-.start-teach { display: grid; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 24px; }
+.start-teach { display: grid; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
 .teach-row { background: var(--surface); padding: 12px 14px; display: grid; grid-template-columns: 26px 1fr; gap: 12px; align-items: start; }
 .teach-row kbd { justify-self: center; margin-top: 1px; font-size: 12px; padding: 2px 7px; }
 .teach-pin { justify-self: center; margin-top: 1px; color: var(--accent-text); font-size: 13px; }
 .teach-row strong { display: block; font-size: 12.5px; font-weight: 600; margin-bottom: 2px; }
 .teach-row span { font-size: 11.5px; color: var(--text-2); line-height: 1.55; }
 
-.starter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 7px; margin-bottom: 24px; }
-.starter { text-align: left; cursor: pointer; padding: 11px 12px; color: inherit; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); transition: border-color .15s, background .15s; }
+/* Two columns, because there are four starters: at three per row the fourth
+   sat alone against two empty cells. */
+.starter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap: 8px; }
+.starter { padding: 13px 14px; }
+.starter { text-align: left; cursor: pointer; color: inherit; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); transition: border-color .15s, background .15s; }
 .starter:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--border-strong)); background: var(--surface-2); }
 .starter strong { display: block; font-size: 12.5px; font-weight: 600; margin-bottom: 3px; line-height: 1.45; }
 .starter small { display: block; font-size: 11px; color: var(--text-3); }
@@ -292,10 +301,16 @@ html[data-theme="light"] .moon-icon { display: block; }
 .gem-meta .warn { color: var(--risk-medium); }
 .gem-meta .none { color: var(--text-3); font-style: italic; }
 
-.coverage-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); gap: 1px; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--border); }
-.coverage-cell { background: var(--surface); padding: 10px 12px; }
-.coverage-cell b { display: block; font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
-.coverage-cell span { display: block; font-size: 10.5px; color: var(--text-3); margin-top: 2px; }
+.coverage-card { border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); overflow: hidden; }
+.coverage-card > .section-label { margin: 0; padding: 13px 16px 11px; border-bottom: 1px solid var(--border); }
+.coverage-card > .section-label b { font: inherit; }
+.cc-more { margin-left: auto; font-size: 10.5px; font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--text-2); text-decoration: none; }
+.cc-more::after { content: " \2192"; }
+.cc-more:hover { color: var(--text); }
+.coverage-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); gap: 1px; background: var(--border); }
+.coverage-cell { background: var(--surface); padding: 14px 16px; }
+.coverage-cell b { display: block; font-size: 19px; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.coverage-cell span { display: block; font-size: 10.5px; color: var(--text-3); margin-top: 4px; }
 .coverage-cell.is-bad b { color: var(--risk-high); }
 .coverage-cell.is-warn b { color: var(--risk-medium); }
 
@@ -982,11 +997,13 @@ details.trace.reasoning > summary { color: var(--text); font-weight: 600; }
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
-.source-mosaic { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin-bottom: 24px; }
-.mosaic-group { border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); padding: 11px 12px; }
-.mosaic-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 8px; font-size: 11px; color: var(--text-3); }
-.mosaic-head b { font: 600 11px/1 var(--mono); color: var(--text-2); font-variant-numeric: tabular-nums; }
-.mosaic-tiles { display: flex; flex-wrap: wrap; gap: 3px; }
+.source-mosaic { display: grid; border-top: 1px solid var(--border); }
+.mosaic-row { display: flex; align-items: center; gap: 10px; padding: 9px 16px; }
+.mosaic-row + .mosaic-row { border-top: 1px solid var(--border); }
+.mosaic-name { flex: 0 0 auto; min-width: 68px; font-size: 11.5px; color: var(--text-2); }
+.mosaic-count { flex: 0 0 auto; min-width: 40px; font: 600 11px/1 var(--mono); color: var(--text-3); font-variant-numeric: tabular-nums; }
+
+.mosaic-tiles { display: flex; flex-wrap: wrap; gap: 3px; margin-left: auto; justify-content: flex-end; }
 .tile { width: 13px; height: 13px; border-radius: 2px; border: 1px solid var(--border); background: var(--surface-2); display: block; }
 .tile.tone-live { background: var(--accent); border-color: var(--accent); }
 .tile.tone-fallback { background: var(--risk-medium); border-color: var(--risk-medium); }
