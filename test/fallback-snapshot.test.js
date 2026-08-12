@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readdir, readFile } from "node:fs/promises";
+import { gunzipSync } from "node:zlib";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { readNormalized } from "../src/data-layer/storage.js";
@@ -15,9 +16,19 @@ test("the bundled fallback covers the PRC sources that a host may not reach", as
   }
 });
 
+// Gzipped or plain — a sanctions list is tens of thousands of records and goes
+// to a tenth compressed, which is what let three of them be committed at all.
+// The claims a fallback has to make are the same either way, so the test reads
+// both forms rather than the compressed ones getting a pass by being unreadable.
+const readSnapshot = async (file) => JSON.parse(file.endsWith(".gz")
+  ? gunzipSync(await readFile(join(FALLBACK_DIR, file))).toString("utf8")
+  : await readFile(join(FALLBACK_DIR, file), "utf8"));
+
 test("every bundled snapshot declares itself as a point-in-time copy", async () => {
-  for (const file of await readdir(FALLBACK_DIR)) {
-    const snapshot = JSON.parse(await readFile(join(FALLBACK_DIR, file), "utf8"));
+  const files = await readdir(FALLBACK_DIR);
+  assert.ok(files.length, "there is at least one bundled snapshot to check");
+  for (const file of files) {
+    const snapshot = await readSnapshot(file);
     assert.equal(snapshot.provenance, "bundled_fallback_snapshot", file);
     assert.ok(snapshot.bundledAt, `${file} must record when it was captured`);
     assert.match(snapshot.note, /point-in-time|superseded/i, file);

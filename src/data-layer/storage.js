@@ -8,6 +8,7 @@
 // rewriting a file that another read might be halfway through.
 
 import { createHash } from "node:crypto";
+import { gunzipSync } from "node:zlib";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -86,9 +87,25 @@ export async function readNormalized(sourceId) {
     };
   }
 
+  const bundled = await readBundled(sourceId);
+  return bundled ? { ...bundled, provenance: "bundled_fallback_snapshot", isFallback: true } : null;
+}
+
+// Plain or gzipped, whichever is on disk.
+//
+// A sanctions list is tens of thousands of records and compresses to about a
+// tenth: OFAC's SLS is 14.4 MB of JSON and 1.5 MB gzipped. Committing the plain
+// form would have put 20 MB into a repository whose whole history is 32, and
+// again on every refresh. Compressing loses nothing — the alternative on the
+// table was dropping fields to make it fit, which would have made the copy a
+// different thing from the sync it stands in for, and that is the one property
+// a fallback has to keep.
+async function readBundled(sourceId) {
   try {
-    const bundled = JSON.parse(await readFile(join(FALLBACK_DIR, `${sourceId}.json`), "utf8"));
-    return { ...bundled, provenance: "bundled_fallback_snapshot", isFallback: true };
+    return JSON.parse(gunzipSync(await readFile(join(FALLBACK_DIR, `${sourceId}.json.gz`))).toString("utf8"));
+  } catch { /* fall through to the plain form */ }
+  try {
+    return JSON.parse(await readFile(join(FALLBACK_DIR, `${sourceId}.json`), "utf8"));
   } catch { return null; }
 }
 
@@ -135,8 +152,7 @@ export async function readRawSnapshot(sourceId) {
 }
 
 export async function readFallbackMeta(sourceId) {
-  try {
-    const snapshot = JSON.parse(await readFile(join(FALLBACK_DIR, `${sourceId}.json`), "utf8"));
-    return { available: true, bundledAt: snapshot.bundledAt || snapshot.capturedAt || null, recordCount: snapshot.records?.length || 0 };
-  } catch { return { available: false }; }
+  const snapshot = await readBundled(sourceId);
+  if (!snapshot) return { available: false };
+  return { available: true, bundledAt: snapshot.bundledAt || snapshot.capturedAt || null, recordCount: snapshot.records?.length || 0 };
 }

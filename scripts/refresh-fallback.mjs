@@ -18,7 +18,8 @@
 //   2. A source that fails to sync keeps the copy it already has. A failed
 //      refresh must not leave a source with less than it started with.
 
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile, rm, writeFile } from "node:fs/promises";
+import { gunzipSync, gzipSync } from "node:zlib";
 import { createHash } from "node:crypto";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -37,6 +38,8 @@ const NOTE = "Committed fallback used only when the official source cannot be re
 const digest = (records) => createHash("sha256").update(JSON.stringify(records)).digest("hex").slice(0, 12);
 
 async function existing(sourceId) {
+  try { return JSON.parse(gunzipSync(await readFile(join(FALLBACK_DIR, `${sourceId}.json.gz`))).toString("utf8")); }
+  catch { /* not the compressed form */ }
   try { return JSON.parse(await readFile(join(FALLBACK_DIR, `${sourceId}.json`), "utf8")); }
   catch { return null; }
 }
@@ -46,11 +49,18 @@ async function existing(sourceId) {
 // nothing at all, and for a part number the vendor's table is the only source
 // that can answer. They are small enough to commit — half a megabyte and two
 // and a half — and they carry their own capture date like every other fallback.
-const VENDOR_FALLBACKS = ["nvidia-export", "amd-export"];
+//
+// The three sanctions lists were added for the same reason and a sharper one.
+// Measured from the Hong Kong deployment: ofac-sls times out to 164.95.9.80 and
+// uk-sanctions cannot resolve sanctionslist.fcdo.gov.uk, so that host screened
+// against 44,933 records and none of them were OFAC's or the UK's. A screening
+// tool missing the SDN list is worse than one that says it is using a copy from
+// a known date.
+const EXTRA_FALLBACKS = ["nvidia-export", "amd-export", "ofac-sls", "ofac-ownership", "uk-sanctions"];
 
 const requested = process.argv.slice(2).filter((argument) => !argument.startsWith("-"));
 const targets = DATA_SOURCE_REGISTRY
-  .filter((source) => (source.country === "CN" || VENDOR_FALLBACKS.includes(source.sourceId)) && ADAPTERS[source.sourceId]?.sync)
+  .filter((source) => (source.country === "CN" || EXTRA_FALLBACKS.includes(source.sourceId)) && ADAPTERS[source.sourceId]?.sync)
   .map((source) => source.sourceId)
   .filter((sourceId) => !requested.length || requested.includes(sourceId));
 
@@ -74,7 +84,13 @@ for (const sourceId of targets) {
     if (snapshot?.provenance !== "live_sync") throw new Error("sync reported success but no live snapshot is stored");
     if (!snapshot.records?.length) throw new Error("live snapshot contains no records");
 
-    await writeFile(join(FALLBACK_DIR, `${sourceId}.json`), `${JSON.stringify({
+    // Gzipped past a megabyte, plain below it. A sanctions list is tens of
+    // thousands of records and compresses to about a tenth — OFAC's SLS is
+    // 14.4 MB and 1.5 gzipped — and the plain form would have put 20 MB into a
+    // repository whose entire history is 32, again on every refresh. The small
+    // PRC copies stay readable in a diff, which is worth more there than the
+    // few hundred kilobytes compressing them would save.
+    const body = JSON.stringify({
       sourceId,
       capturedAt: snapshot.capturedAt,
       metadata: snapshot.metadata,
@@ -82,7 +98,11 @@ for (const sourceId of targets) {
       provenance: "bundled_fallback_snapshot",
       bundledAt: snapshot.capturedAt,
       note: NOTE
-    }, null, 2)}\n`);
+    }, null, 2);
+    const big = Buffer.byteLength(body) > 1024 * 1024;
+    await rm(join(FALLBACK_DIR, `${sourceId}.json${big ? "" : ".gz"}`), { force: true });
+    await writeFile(join(FALLBACK_DIR, `${sourceId}.json${big ? ".gz" : ""}`),
+      big ? gzipSync(Buffer.from(`${body}\n`), { level: 9 }) : `${body}\n`);
 
     const changed = !before || digest(before.records) !== digest(snapshot.records);
     const delta = before ? snapshot.records.length - before.records.length : null;

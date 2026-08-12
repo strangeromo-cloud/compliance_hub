@@ -11,6 +11,7 @@
     "seed": "node scripts/generate-seed.mjs",
     "test": "node --test",
     "refresh-fallback": "node scripts/refresh-fallback.mjs",
+    "reachability": "node scripts/reachability.mjs",
     "check-model": "node scripts/check-model.mjs",
     "mcp": "node mcp-server.js"
   },
