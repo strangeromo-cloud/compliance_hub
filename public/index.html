@@ -12,7 +12,10 @@
 <body>
   <a class="skip-link" href="#thread" data-i18n="skipLink">跳到工作区</a>
 
-  <div class="app" id="app">
+  <!-- no-evidence from the markup, not from the first render: the panel is in
+       this file, so a class applied by app.js arrives after one paint and the
+       home page opens with a column that immediately disappears. -->
+  <div class="app no-evidence" id="app">
     <!-- Sidebar: gems live here permanently instead of only on the empty state. -->
     <nav class="sidebar" id="sidebar" aria-label="Workspace">
       <div class="sidebar-brand">

@@ -979,6 +979,24 @@ function clearFlowPanel() {
   renderFlowPanel(null);
 }
 
+// The right column exists only when it has something in it.
+//
+// On the home page and on a new conversation it was two headings, an empty-state
+// sentence and a zero — a fifth of the width spent saying nothing yet. Worse, it
+// said it beside the one screen that is meant to teach what to type, so the eye
+// went to the emptiest thing on the page.
+//
+// Derived rather than toggled at each call site: the panel's content comes from
+// three unrelated places — a run's path, a source lookup, the evidence list —
+// and a flag set by each of them is a flag one of them will forget to clear.
+// state.busy is in the list so the column is already there when the first step
+// arrives, instead of appearing under the reader a second into the run.
+function syncEvidenceVisibility() {
+  const has = Boolean(state.busy || lastFlowPath || state.sourceQuery
+    || $("evidenceList").querySelector(".source-card"));
+  $("app").classList.toggle("no-evidence", !has);
+}
+
 function renderFlowPanel(path, options = {}) {
   if (path) lastFlowPath = path;
   else path = lastFlowPath;
@@ -1006,6 +1024,7 @@ function renderFlowPanel(path, options = {}) {
   // Below the breakpoint that hides the right column the rail has to live
   // somewhere, so the same markup is mirrored into the answer and CSS picks one.
   document.querySelectorAll(".flow-inline").forEach((host) => { host.innerHTML = markup; hydrateBars(host); });
+  syncEvidenceVisibility();
 }
 
 // One row, so the folded list and the open one cannot describe the same step
@@ -1171,7 +1190,11 @@ function flowMarkup(path, options = {}) {
 
 function renderEvidence(sources) {
   $("sourceCount").textContent = sources.length;
-  if (!sources.length) { $("evidenceList").innerHTML = `<p class="evidence-empty">${t("evidenceEmpty")}</p>`; return; }
+  if (!sources.length) {
+    $("evidenceList").innerHTML = `<p class="evidence-empty">${t("evidenceEmpty")}</p>`;
+    syncEvidenceVisibility();
+    return;
+  }
   const statusKey = (source) => (source.liveStatus === "cached" && source.stale ? "cached_stale" : source.liveStatus);
   const statusLabel = (source) => label(EVIDENCE_STATUS, statusKey(source), state.locale);
   $("evidenceList").innerHTML = sources.map((source) => `
@@ -1194,6 +1217,7 @@ function renderEvidence(sources) {
       ${["unavailable", "metadata_only"].includes(source.liveStatus)
         ? `<p class="source-note">${esc(t("sourceFellBack"))}</p>` : ""}
     </article>`).join("");
+  syncEvidenceVisibility();
 }
 
 // What a reviewer needs, in the order they need it: the call, then the gaps
@@ -2089,7 +2113,7 @@ async function runSourceQuery(event, options = {}) {
   const offset = Number(options.offset) || 0;
 
   if (!options.replace) setComposer("");
-  state.busy = true; syncSubmitState();
+  state.busy = true; syncSubmitState(); syncEvidenceVisibility();
 
   try {
     const response = await fetch("/api/data-sources/query", {
@@ -2207,6 +2231,7 @@ async function analyze(event, options = {}) {
   state.busy = true;
   state.run = new AbortController();
   syncSubmitState();
+  syncEvidenceVisibility();
 
   const live = resuming || createLiveMessage();
   if (!resuming) { live.dataset.question = question; live.dataset.gem = gem?.id || ""; }
@@ -2666,6 +2691,9 @@ async function analyze(event, options = {}) {
     state.run = null;
     state.busy = false;
     syncSubmitState();
+    // A run that failed before it produced a path leaves the column holding
+    // nothing, and busy is no longer keeping it open on its own.
+    syncEvidenceVisibility();
   }
 }
 
