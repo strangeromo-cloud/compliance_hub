@@ -430,7 +430,8 @@ test("a skill is text a reader wrote, and reaches the model as that", async () =
   // The namespace is shared with the gems, so a skill must not be able to take a
   // gem's command: /screen-party has to keep meaning the procedure that screens
   // against bound sources.
-  assert.match(source, /GEM_COMMANDS\.has\(command\)/);
+  assert.match(source, /commandOwner\(skill\.command\)/,
+    "and against the whole namespace — the custom gems share it");
 });
 
 test("a custom gem carries the four fields a gem's code consumes", async () => {
@@ -447,8 +448,8 @@ test("a custom gem carries the four fields a gem's code consumes", async () => {
   // line in the prompt telling the model to rely on something it cannot see.
   assert.match(source, /const unknown = boundSources\.filter/);
   assert.match(source, /KNOWN_SOURCES\.has/);
-  assert.match(source, /BUILTIN_COMMANDS\.has\(command\)/,
-    "and it cannot take a built-in gem's command");
+  assert.match(source, /commandOwner\(gem\.command\)/,
+    "and it cannot take any command already spoken for — built-in, custom gem or skill");
 
   // Keywords rather than regular expressions, escaped because they are words
   // somebody typed.
@@ -481,4 +482,27 @@ test("one fact rule serves both kinds of gem", async () => {
 
   assert.equal(factLabel(builtin.requiredFacts[0], "zh"), "注册号");
   assert.equal(factLabel(custom.requiredFacts[0], "zh"), "最终用户");
+});
+
+test("gems and skills share one slash namespace and one check on it", async () => {
+  // They are different things — a gem becomes the mode the composer is in, a
+  // skill stays in the text and is parsed off the question — but both are found
+  // by typing / and both answer to one token, so they share a namespace whether
+  // or not they share a mechanism.
+  //
+  // They did not share a check. Each refused the built-in commands and its own
+  // and never asked the other, so a skill and a custom gem could both claim
+  // /tpdd-quick: the palette would list both and the parser would reach whichever
+  // it looked for first.
+  const { readFile } = await import("node:fs/promises");
+  const registry = await readFile(new URL("../src/command-registry.js", import.meta.url), "utf8");
+
+  assert.match(registry, /custom_gems/);
+  assert.match(registry, /skills/);
+  assert.match(registry, /GEMS\.map/, "and the built-in eight");
+
+  // Read from the tables rather than through the two modules: having each import
+  // the other's list is a cycle held together by nothing but where the calls sit.
+  assert.doesNotMatch(registry, /from "\.\/skills\.js"/);
+  assert.doesNotMatch(registry, /from "\.\/gems-custom\.js"/);
 });

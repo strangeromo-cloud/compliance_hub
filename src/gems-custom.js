@@ -16,12 +16,11 @@
 // answer.
 
 import { db } from "./data-layer/db.js";
-import { GEMS } from "../public/gems.js";
 import { DATA_SOURCE_REGISTRY } from "./data-source-registry.js";
+import { commandOwner } from "./command-registry.js";
 
 const KINDS = new Set(["review", "lookup", "briefing", "memo"]);
 const COMMAND = /^[a-z0-9][a-z0-9-]{1,39}$/;
-const BUILTIN_COMMANDS = new Set(GEMS.map((gem) => String(gem.command).replace(/^\//, "")));
 const KNOWN_SOURCES = new Set(DATA_SOURCE_REGISTRY.map((source) => source.sourceId));
 
 const fail = (message, status = 400) => { throw Object.assign(new Error(message), { status }); };
@@ -54,7 +53,6 @@ function normalizeFact(input, index) {
 export function normalizeCustomGem(input = {}) {
   const command = String(input.command ?? "").trim().replace(/^\/+/, "").toLowerCase();
   if (!COMMAND.test(command)) fail("斜杠命令需为 2–40 个小写字母、数字或连字符，且以字母或数字开头");
-  if (BUILTIN_COMMANDS.has(command)) fail(`/${command} 是内置 Gem 的命令，换一个`, 409);
 
   const kind = KINDS.has(input.kind) ? input.kind : "review";
 
@@ -94,8 +92,12 @@ export function listCustomGems() {
 
 export function createCustomGem(input) {
   const gem = normalizeCustomGem(input);
-  const taken = listCustomGems().some((item) => item.command === gem.command);
-  if (taken) fail(`${gem.command} 已存在`, 409);
+  // The whole namespace, skills included: the palette lists both under / and the
+  // composer parses one token without knowing which kind it belongs to.
+  const owner = commandOwner(gem.command);
+  if (owner) fail(owner.kind === "builtin-gem"
+    ? `${gem.command} 是内置 Gem 的命令，换一个`
+    : `${gem.command} 已被一个自建 ${owner.kind === "gem" ? "Gem" : "Skill"} 占用`, 409);
   db().prepare("INSERT INTO custom_gems (gem_id, command, created_at, payload) VALUES (?, ?, ?, ?)")
     .run(gem.id, gem.command, gem.createdAt, JSON.stringify(gem));
   return gem;

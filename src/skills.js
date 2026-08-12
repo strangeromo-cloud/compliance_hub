@@ -13,14 +13,12 @@
 // neither committed nor official.
 
 import { db } from "./data-layer/db.js";
-import { GEMS } from "../public/gems.js";
+import { commandOwner } from "./command-registry.js";
 
 // Two to forty characters, lowercase, starting on a letter or digit. The same
 // shape a gem command has, because they share one namespace: the palette offers
 // both and the composer parses one leading /token without knowing which it is.
 const COMMAND = /^[a-z0-9][a-z0-9-]{1,39}$/;
-
-const GEM_COMMANDS = new Set(GEMS.map((gem) => String(gem.command).replace(/^\//, "")));
 
 const fail = (message, status = 400) => { throw Object.assign(new Error(message), { status }); };
 
@@ -33,10 +31,6 @@ function text(value, field, { min, max }) {
 export function normalizeSkill(input = {}) {
   const command = String(input.command ?? "").trim().replace(/^\/+/, "").toLowerCase();
   if (!COMMAND.test(command)) fail("斜杠命令需为 2–40 个小写字母、数字或连字符，且以字母或数字开头");
-  // Checked here rather than at the call site: a skill that shadows /screen-party
-  // would be invoked instead of the gem, and the reader would get a prompt where
-  // they asked for a procedure that screens against bound sources.
-  if (GEM_COMMANDS.has(command)) fail(`/${command} 是内置 Gem 的命令，换一个`, 409);
 
   return {
     id: String(input.id || `skill-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`),
@@ -70,7 +64,13 @@ export function findSkillByCommand(command) {
 
 export function createSkill(input) {
   const skill = normalizeSkill(input);
-  if (findSkillByCommand(skill.command)) fail(`/${skill.command} 已存在`, 409);
+  // Against the whole namespace, not just the other skills. A skill shadowing
+  // /screen-party would be invoked instead of the gem, and the reader would get
+  // a prompt where they asked for a procedure that screens against bound sources.
+  const owner = commandOwner(skill.command);
+  if (owner) fail(owner.kind === "builtin-gem"
+    ? `/${skill.command} 是内置 Gem 的命令，换一个`
+    : `/${skill.command} 已被一个自建 ${owner.kind === "gem" ? "Gem" : "Skill"} 占用`, 409);
   db().prepare("INSERT INTO skills (skill_id, command, created_at, payload) VALUES (?, ?, ?, ?)")
     .run(skill.id, skill.command, skill.createdAt, JSON.stringify(skill));
   return skill;
