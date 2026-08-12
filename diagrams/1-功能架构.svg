@@ -35,7 +35,7 @@
 
 <text class="ts" x="110" y="28">怎么提问</text>
 <g class="c-gray"><rect x="110" y="36" width="336" height="64" rx="4"/><text class="th" x="126" y="58">直接描述交易</text><text class="ts" x="126" y="76">按命中词决定开哪几条线</text><text class="ts" x="126" y="92">词没命中就三条全开</text></g>
-<g class="c-gray"><rect x="467" y="36" width="336" height="64" rx="4"/><text class="th" x="483" y="58">/ 选 Gem · 8 个</text><text class="ts" x="483" y="76">提交前标出还缺哪几项</text><text class="ts" x="483" y="92">限定只用哪些来源作依据</text></g>
+<g class="c-gray"><rect x="467" y="36" width="336" height="64" rx="4"/><text class="th" x="483" y="58">/ 选 Gem 或 Skill</text><text class="ts" x="483" y="76">Gem：提交前标出还缺哪几项，限定依据来源</text><text class="ts" x="483" y="92">Skill：一段流程追加给模型，不绑来源</text></g>
 <g class="c-gray"><rect x="824" y="36" width="336" height="64" rx="4"/><text class="th" x="840" y="58">@ 直查数据源</text><text class="ts" x="840" y="76">翻 106,287 条已入库记录</text><text class="ts" x="840" y="92">绕过主 Agent，不作判断</text></g>
 
 <path class="arr" d="M278 100 V120 H532 V140" marker-end="url(#a)"/>

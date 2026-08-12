@@ -22,8 +22,12 @@ const i18n = {
     factsShort: "必填", railCollapse: "收起侧边栏", railExpand: "展开侧边栏",
     coverageMore: "查看全部数据源", mosaicUs: "美国", mosaicCn: "中国", mosaicOther: "全球 / 其他",
     hfQuestion: "一个问题", hfAnswer: "统一答案", startersLabel: "快速开始", workspaceEmpty: "工作区还没有 Gem", gemBacking: "数据支撑",
-    teachSlashTitle: "在输入框键入 /", teachSlashBody: "呼出 {n} 个 Gem 的完整目录，上下键选择，回车使用。",
-    teachPinTitle: "把常用 Gem 加入工作区", teachPinBody: "在目录里点 ★，或在 Gem 详情里点「添加到工作区」，它会常驻左侧栏。",
+    teachSlashTitle: "键入 / — 选一个 Gem 或 Skill",
+    teachSlashBody: "{n} 个 Gem 和 {s} 个自建 Skill。Gem 把审查切换成一种模式，并检查问题里还缺什么；Skill 把一段流程追加给模型，命令留在文本里。点 ★ 把常用的 Gem 留在左侧栏。",
+    teachAtTitle: "键入 @ — 直查数据源",
+    teachAtBody: "在 {n} 个已入库的来源里按实体名、公告号或关键词翻记录。返回的是来源自己的条目，不是判定结论。",
+    teachMakeTitle: "＋ 建自己的 Gem 和 Skill",
+    teachMakeBody: "在左侧栏两个标题旁边。Skill 是一段 SOP 加一个斜杠命令；Gem 还能绑定可用的数据源，并规定问题里需要包含哪些事实。",
     historyLabel: "历史记录", historyEmpty: "暂无记录", historyVolatile: "记录存在容器本地磁盘，重新部署会清空。挂载 Volume 到 data/runtime 可长期保留。", turnUnit: "轮", historyOpenFailed: "无法打开该记录", flowTitle: "执行流程", flowDone: "已跑完", flowOf: "共 {n} 步", runPanel: "本次运行", flowRest: "顶部计的是整轮。另有 {n} 步在 {lanes} 本次没有走到 —— 上面这条线还缺证据，所以给出的是阶段性判断而不是结案",
     flowRestDone: "顶部计的是整轮。另有 {n} 步在 {lanes} 本次没有走完（其中 {done} 步已完成）—— 上面这条线还缺证据，所以给出的是阶段性判断而不是结案", briefLead: "本次问题落在以下 {n} 个审查范围：", briefBecause: "命中 ", briefStandard: "标准程序", briefNoStandard: "无对应标准程序", briefDesigned: "系统设计", briefSteps: "{n} 个步骤", briefDesignedN: "其中 {n} 步由系统补充", flowEmpty: "提交一个问题后，这里显示分析路径的执行进度", flowNotRun: "该步骤尚未执行",
     derivMatch_gem: "由所选 Gem 指定为主检查", derivMatch_always: "每次分析都执行", derivMatch_direct_lookup: "直接查询，不进入审查程序", derivMatch_gem_kind: "该 Gem 的产出类型，不进入审查程序", derivMatch_question_terms: "问题中的关键词",
@@ -83,8 +87,12 @@ const i18n = {
     factsShort: "Facts", railCollapse: "Collapse sidebar", railExpand: "Expand sidebar",
     coverageMore: "See all sources", mosaicUs: "United States", mosaicCn: "China", mosaicOther: "Global / other",
     hfQuestion: "One question", hfAnswer: "One answer", startersLabel: "Start here", workspaceEmpty: "No gems in your workspace yet", gemBacking: "Data behind it",
-    teachSlashTitle: "Press / in the composer", teachSlashBody: "Opens the full catalogue of {n} gems. Arrow keys select, Enter uses.",
-    teachPinTitle: "Pin the ones you use", teachPinBody: "Add to workspace from a gem's details and it stays in the sidebar.",
+    teachSlashTitle: "Type / \u2014 a gem or a skill",
+    teachSlashBody: "{n} gems and {s} skills of your own. A gem switches the review into a mode and checks what the question is missing; a skill appends a procedure and its command stays in the text. Click \u2605 to keep a gem in the sidebar.",
+    teachAtTitle: "Type @ \u2014 query a source",
+    teachAtBody: "Search {n} ingested sources by entity name, notice number or keyword. It returns the source\u2019s own records, not a determination.",
+    teachMakeTitle: "\uFF0B Build your own",
+    teachMakeBody: "Beside either sidebar heading. A skill is an SOP and a slash command; a gem also binds the sources it may use and the facts a question has to carry.",
     historyLabel: "History", historyEmpty: "No cases yet", historyVolatile: "Cases sit on the container\u2019s own disk and are cleared by a redeploy. Mount a volume at data/runtime to keep them.", turnUnit: "turns", historyOpenFailed: "That case could not be opened", flowTitle: "Execution flow", flowDone: "finished", flowOf: "of {n}", runPanel: "This run", flowRest: "The count above is the whole run. {n} further steps in {lanes} were not reached — the lane above is still short of evidence, so what you have is an interim assessment rather than a closed case",
     flowRestDone: "The count above is the whole run. {n} further steps in {lanes} were not finished ({done} of them are settled) — the lane above is still short of evidence, so what you have is an interim assessment rather than a closed case", briefLead: "This question falls into {n} review scopes:", briefBecause: "matched ", briefStandard: "Standard procedure", briefNoStandard: "No standard procedure", briefDesigned: "designed here", briefSteps: "{n} steps", briefDesignedN: "{n} added by this system", flowEmpty: "Ask a question and the analysis path\u2019s progress appears here", flowNotRun: "That step has not run yet",
     derivMatch_gem: "set as the lead check by the selected gem", derivMatch_always: "runs on every analysis", derivMatch_direct_lookup: "a direct lookup; no review procedure applies", derivMatch_gem_kind: "what this gem produces; no review procedure applies", derivMatch_question_terms: "terms in the question",
@@ -345,6 +353,14 @@ function gemBackingMarkup(gem) {
 }
 
 
+// The start panel states three counts — how many gems, how many skills, how many
+// sources hold records — and all three arrive after it first paints. Without
+// this it renders 8 gems, 0 skills and 0 sources and never corrects itself,
+// which is a claim about the system rather than a stale label.
+function refreshStartCounts() {
+  if (!$("startPanel").classList.contains("hidden")) renderStartPanel();
+}
+
 function renderGemNav() {
   const pinned = workspaceGemIds();
   // The sidebar is the workspace, not the catalogue — the palette is the
@@ -374,6 +390,7 @@ async function loadGems() {
     state.sourceOptions = data.sources || [];
   } catch { /* the built-in eight are enough to work with */ }
   renderGemNav();
+  refreshStartCounts();
 }
 
 async function loadSkills() {
@@ -383,6 +400,7 @@ async function loadSkills() {
     state.skills = (await response.json()).skills || [];
   } catch { /* the workbench works without them */ }
   renderSkillNav();
+  refreshStartCounts();
 }
 
 function renderSkillNav() {
@@ -540,15 +558,20 @@ function renderSourceMosaic() {
 function renderStartPanel() {
   renderHeroFigure();
   renderSourceMosaic();
-  $("startTeach").innerHTML = `
+  // The three things the composer does, by what you type into it. Pinning had one
+  // of the two rows; it is a convenience, and what a reader needs first is that
+  // the same box runs a review, a saved procedure or a raw lookup depending on
+  // the first character.
+  const rows = [
+    ["/", t("teachSlashTitle"), t("teachSlashBody").replace("{n}", allGems().length).replace("{s}", state.skills.length)],
+    ["@", t("teachAtTitle"), t("teachAtBody").replace("{n}", (state.coverage?.sources || []).filter((source) => source.sync?.recordCount > 0).length)],
+    ["＋", t("teachMakeTitle"), t("teachMakeBody")]
+  ];
+  $("startTeach").innerHTML = rows.map(([key, title, body]) => `
     <div class="teach-row">
-      <kbd>/</kbd>
-      <div><strong>${esc(t("teachSlashTitle"))}</strong><span>${esc(t("teachSlashBody").replace("{n}", GEMS.length))}</span></div>
-    </div>
-    <div class="teach-row">
-      <span class="teach-pin" aria-hidden="true">★</span>
-      <div><strong>${esc(t("teachPinTitle"))}</strong><span>${esc(t("teachPinBody"))}</span></div>
-    </div>`;
+      <kbd>${esc(key)}</kbd>
+      <div><strong>${esc(title)}</strong><span>${esc(body)}</span></div>
+    </div>`).join("");
 
   // Example questions rather than gem names: something to click that the
   // sidebar and the palette do not already offer.
@@ -1914,6 +1937,7 @@ async function loadCoverage() {
 
     renderGemNav();
     renderSourceMosaic();
+    refreshStartCounts();
   } catch (error) {
     // Coverage is informational and the workbench stays usable without it, but
     // swallowing the reason entirely makes a failure here impossible to find.

@@ -1,6 +1,7 @@
 const copy = {
   zh: {
     brandSub: "合规情报原型", back: "返回对话", title: "公开数据覆盖与接入状态", lead: "每个来源当前读到了什么、授权允许怎么用、以及哪些来源因为验证码或反爬必须保留人工查询。",
+    howto: "这里的 sourceId（如 trade-csl）在工作台有两个用处：在输入框开头打 @ 可以直查它的原始记录；建自建 Gem 时可以把它勾成绑定来源，那个 Gem 的问题就会写明只依据勾选的来源。答案里每条依据旁的 ⛁ 也跳到直查视图。",
     checked: "调研核验日期", connected: "真实同步成功", ready: "现在可以开发", limited: "有限制可开发", manual: "仅人工查询", boundary: "数据边界",
     disclosure: "「已同步」指真实保存了官方原始快照与标准化记录，不等于完成法律判断或交易放行。「刷新失败」指快照仍可用、只是最近一次刷新没成功，与从未采集到的「同步失败」是两回事。标注了授权限制的来源（如 CC-BY-NC 仅限非商用）必须按其条款使用；所有同步数据与历史记录存在单个 SQLite 文件（data/runtime/hub.db）中；容器文件系统是临时的，未挂载 Volume 时重新部署会清空它。厂商分类表（NVIDIA、AMD）是厂商对自家产品的声明，不是分类决定，出口商仍需自行分类。",
     evoTitle: "提问覆盖", evoHelp: "这套部署把用户的问题读得有多准。四项都可以在不动任何条文的前提下改进。",
@@ -17,6 +18,7 @@ const copy = {
   },
   en: {
     brandSub: "Compliance intelligence", back: "Back to chat", title: "Public data coverage & integration status", lead: "What each source currently reads, what its licence permits, and which sources stay manual because of a CAPTCHA or an anti-bot wall.",
+    howto: "A sourceId here (trade-csl, say) is used in two places in the workbench: type @ at the start of the composer to query its own records, and tick it when building a gem so that gem's questions say to rely on the ticked sources only. The \u26C1 beside a step's basis in an answer opens the same query view.",
     checked: "Research checked", connected: "Successful syncs", ready: "Build now", limited: "Build with limits", manual: "Manual only", boundary: "Data boundary",
     disclosure: "Synced means an official raw snapshot and normalized records were saved; it is not a legal determination or transaction clearance. Refresh failed means the snapshot is still usable and only the latest refresh did not land — different from Sync failed, which means the source was never captured. Sources marked with a licence limit (CC-BY-NC is non-commercial only) must be used on those terms. Synced data and case history live in one SQLite file (data/runtime/hub.db); the container filesystem is ephemeral, so without a mounted volume a redeploy clears it. A vendor classification table is the manufacturer\u2019s statement about its own product, not a classification decision \u2014 the exporter remains responsible for its own.",
     evoTitle: "Question coverage", evoHelp: "How well this deployment reads the questions it is given. Every figure here can be improved without touching a provision.",
@@ -60,7 +62,7 @@ function setTheme(theme) { document.documentElement.dataset.theme = theme; local
 function applyLocale(locale) {
   state.locale = locale; localStorage.setItem("compliance-locale", locale); document.documentElement.lang = locale === "zh" ? "zh-CN" : "en";
   const c = t();
-  $("brandSub").textContent = c.brandSub; $("backLabel").textContent = c.back; $("coverageTitle").textContent = c.title; $("coverageLead").textContent = c.lead;
+  $("brandSub").textContent = c.brandSub; $("backLabel").textContent = c.back; $("coverageTitle").textContent = c.title; $("coverageLead").textContent = c.lead; $("coverageHowto").textContent = c.howto;
   $("checkedLabel").textContent = c.checked; $("connectedLabel").textContent = c.connected; $("readyLabel").textContent = c.ready; $("limitedLabel").textContent = c.limited; $("manualLabel").textContent = c.manual;
   $("disclosureTitle").textContent = c.boundary; $("disclosureText").textContent = c.disclosure; $("sourceSearch").placeholder = c.search; $("feasibilityLabel").textContent = c.feasibility;
   $("registryTitle").textContent = c.registry; $("registryHelp").textContent = c.help; $("registryEmpty").textContent = c.noResults;

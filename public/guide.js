@@ -90,6 +90,36 @@ const copy = {
     useLabel: "使用方法", useTitle: "在输入框键入 /",
     useLead: "上下键选择 Gem，回车确认。每个 Gem 绑定五样东西：产出类型、指令、数据源白名单、必填事实清单、输出模板。产出类型决定它走哪条路——/reg-brief 是简报，不会触发受限方筛查；必填事实清单则让系统在提交前就知道自己缺什么，而不是让模型悄悄猜。",
     gemsLabel: "可用 Gem", gemBound: "个来源", gemRecords: "条记录", gemUnsynced: "个未同步", gemNone: "不绑定外部来源",
+    buildTitle: "自己建 Gem 和 Skill",
+    buildLead: "左侧栏 GEMS 和「自建 SKILL」两个标题旁边各有一个 ＋。两者都用斜杠命令调起，但它们不是一类东西——差别在于代码会不会读它们的字段。",
+    cmpGem: {
+      title: "Gem — 四样字段，每样都被消费",
+      lead: "选中后命令从输入框消失，整次审查进入这个模式。",
+      points: [
+        "类型决定跑不跑完整审查流程（审查 / 直查 / 简报 / 备忘录）",
+        "指令发给三条专业线",
+        "绑定的数据源会写进问题：只依据这些来源",
+        "「问题需包含的事实」在你按发送之前就提示还缺什么",
+        "自建的填关键词，内置八个用正则——关键词更松，但这个提示从不拦提交，漏判的代价是少一句提醒"
+      ]
+    },
+    cmpSkill: {
+      title: "Skill — 一段流程说明",
+      lead: "命令留在文本里，服务端解析掉之后把这段话追加到模型的系统提示末尾。",
+      points: [
+        "不绑定数据源，也不要求问题里必须包含什么",
+        "它标明是你自己的流程，并附一句：不是证据，不放宽任何规则",
+        "声明过的值仍然是声明，没有证据的步骤不因它而闭合"
+      ]
+    },
+    buildNamespace: "两者共用一个斜杠命名空间。新建时会同时对照内置 Gem、已有的自建 Gem 和 Skill，撞名直接拒绝并说明被谁占了——否则面板里会出现两个同名条目。",
+    atTitle: "键入 @ — 直查数据源，不做判定",
+    atBody: "在输入框开头打 @ 会列出已入库的来源，选一个之后按实体名、公告号或条文关键词翻它的原始记录。",
+    atPoints: [
+      "返回的是来源自己的条目，带采集时间和出处，不是判定结论",
+      "答案里每条依据旁边的 ⛁ 也跳到这里，用来核对那一句站在什么上面",
+      "时点副本会标明它是副本以及采集日期，不会冒充当前数据"
+    ],
     streamTitle: "一步一步，问完再分析",
     streamBody: "回答按顺序自上而下产生。缺资料不打断：跑完后在结论旁列出还缺哪几项，补上任意一项就接着往下判。",
     streamPoints: [
@@ -273,6 +303,36 @@ const copy = {
     useLabel: "How to use", useTitle: "Press / in the composer",
     useLead: "Arrow keys select a gem, Enter confirms. A gem binds five things: what it produces, the instruction, the bound-source whitelist, the facts it requires, and the output template. The first decides which path it takes \u2014 /reg-brief is a briefing and never opens a party screening \u2014 and the fourth is what makes a gem more than a saved prompt: the interface knows what is missing before anything is submitted.",
     gemsLabel: "Available gems", gemBound: "sources", gemRecords: "records", gemUnsynced: "not synced", gemNone: "no bound sources",
+    buildTitle: "Build your own gems and skills",
+    buildLead: "A ＋ sits beside each of the two sidebar headings. Both are invoked by a slash command, and they are not the same kind of thing \u2014 the difference is whether any code reads their fields.",
+    cmpGem: {
+      title: "Gem \u2014 four fields, all of them consumed",
+      lead: "Choosing one clears the command from the composer; the whole review runs in that mode.",
+      points: [
+        "Its kind decides whether a review procedure runs at all (review / lookup / briefing / memo)",
+        "Its instruction goes to the three specialist lanes",
+        "Its bound sources are written into the question: rely on these only",
+        "Its required facts tell you what the question is missing before you press send",
+        "A custom one uses keywords where the built-in eight use regular expressions \u2014 looser, but this hint never blocks a submission, so a miss costs a prompt rather than an answer"
+      ]
+    },
+    cmpSkill: {
+      title: "Skill \u2014 one procedure",
+      lead: "The command stays in the text; the server parses it off and appends the procedure to the model's system prompt.",
+      points: [
+        "It binds no sources and requires nothing of the question",
+        "It arrives labelled as your own procedure, with a line saying it is not evidence and relaxes nothing",
+        "A declared value is still declared, and no step without evidence is settled by it"
+      ]
+    },
+    buildNamespace: "They share one slash namespace. Creating either checks the built-in gems, the custom gems and the skills at once, and a collision is refused with the holder named \u2014 otherwise the palette would list two entries answering to one command.",
+    atTitle: "Type @ \u2014 query a source, no determination",
+    atBody: "Typing @ at the start of the composer lists the ingested sources; pick one and search its own records by entity name, notice number or keyword.",
+    atPoints: [
+      "It returns the source's own entries with their capture time and provenance, not a determination",
+      "The \u26C1 beside a step's basis in an answer opens the same view, to check what that line stands on",
+      "A point-in-time copy says it is one and gives its capture date; it never presents as current data"
+    ],
     streamTitle: "One step at a time",
     streamBody: "The answer is produced in one direction, top to bottom, and stops at the step that needs something from you rather than analysing around the gap.",
     streamPoints: [
@@ -598,6 +658,25 @@ function render() {
             <div class="guide-gem-meta">${meta}</div>
           </article>`;
         }).join("")}</div>
+
+        ${/* Three entry points, one composer. What the eight gems are is above;
+              what a reader can add and how a raw lookup differs from a review is
+              the part the page did not have at all. */ ""}
+        <h3>${esc(t.buildTitle)}</h3>
+        <p>${esc(t.buildLead)}</p>
+        <div class="guide-compare">
+          ${[["gem", t.cmpGem], ["skill", t.cmpSkill]].map(([kind, col]) => `
+            <article class="cmp-${esc(kind)}">
+              <h4>${esc(col.title)}</h4>
+              <p>${esc(col.lead)}</p>
+              <ul class="guide-list">${col.points.map((point) => `<li>${esc(point)}</li>`).join("")}</ul>
+            </article>`).join("")}
+        </div>
+        <p class="guide-note">${esc(t.buildNamespace)}</p>
+
+        <h3>${esc(t.atTitle)}</h3>
+        <p>${esc(t.atBody)}</p>
+        <ul class="guide-list">${t.atPoints.map((point) => `<li>${esc(point)}</li>`).join("")}</ul>
 
         <h3>${esc(t.streamTitle)}</h3>
         <p>${esc(t.streamBody)}</p>

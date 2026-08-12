@@ -752,6 +752,9 @@ dialog::backdrop { background: rgba(0,0,0,.55); }
 .coverage-hero h1 { font-size: 21px; font-weight: 600; letter-spacing: -.015em; margin-bottom: 6px; }
 .coverage-hero p { font-size: 12.5px; color: var(--text-2); max-width: 62ch; }
 .coverage-date { text-align: right; font-size: 11px; color: var(--text-3); }
+
+/* How the ids on this page are used, for a reader who arrived from one. */
+.coverage-howto { margin-top: 8px; max-width: 76ch; font-size: 11.5px; line-height: 1.8; color: var(--text-3); }
 .coverage-date strong { display: block; font-family: var(--mono); font-size: 13px; color: var(--text); margin-top: 3px; }
 
 .coverage-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 16px; }
@@ -905,6 +908,17 @@ dialog::backdrop { background: rgba(0,0,0,.55); }
 .status-pill.muted { color: var(--text-3); }
 
 .guide-gems { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 8px; margin-bottom: 6px; }
+
+/* Two columns for two things a reader is choosing between. Side by side is the
+   point: the difference between a gem and a skill is what each column contains,
+   and stacked they read as one list of features. */
+.guide-compare { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin: 10px 0 12px; }
+.guide-compare article { border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 13px 15px; background: var(--surface); }
+.guide-compare article.cmp-gem { border-color: color-mix(in srgb, var(--accent) 35%, var(--border)); }
+.guide-compare h4 { font-size: 12.5px; font-weight: 600; margin: 0 0 5px; }
+.guide-compare p { font-size: 11.5px; color: var(--text-2); margin: 0 0 7px; }
+.guide-compare .guide-list { margin: 0; }
+.guide-note { font-size: 11.5px; line-height: 1.75; color: var(--text-3); margin: 0 0 4px; }
 .guide-gems article { border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); padding: 11px 12px; }
 .guide-gem-head { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; flex-wrap: wrap; }
 .guide-gem-head strong { font-size: 12.5px; font-weight: 600; }
