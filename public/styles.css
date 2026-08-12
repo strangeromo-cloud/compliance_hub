@@ -176,7 +176,10 @@ kbd { font-family: var(--mono); border: 1px solid var(--border-strong); border-r
 .rail-toggle svg { width: 15px; height: 15px; }
 
 .sidebar-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: thin; padding: calc(var(--bar-h) + 12px) 8px 8px; scroll-padding-top: var(--bar-h); }
-.rail-label { font-size: 9.5px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--text-3); padding: 0 6px 7px; }
+/* Legible as a heading, not just as a hint. At 9.5px in --text-3 these read as
+   captions on whatever was above them; the sidebar has three sections and the
+   reader has to see where one ends. */
+.rail-label { font-size: 10.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--text-2); padding: 0 6px 7px; }
 
 .gem-nav { list-style: none; padding: 0; margin: 0; display: grid; gap: 1px; }
 .gem-nav button {
@@ -625,8 +628,10 @@ dialog::backdrop { background: rgba(0,0,0,.55); }
 
 .field { display: block; margin-bottom: 11px; }
 .field > span { display: block; font-size: 11px; color: var(--text-2); margin-bottom: 4px; }
-.field input { width: 100%; height: 32px; padding: 0 10px; border: 1px solid var(--border-strong); border-radius: var(--radius); background: var(--surface-2); outline: none; }
-.field input:focus { border-color: var(--accent); }
+/* Text inputs. Written before this form had a checkbox in it, and a full-width
+   32px-tall checkbox is what a source picker looked like until the exclusion. */
+.field input:not([type="checkbox"]) { width: 100%; height: 32px; padding: 0 10px; border: 1px solid var(--border-strong); border-radius: var(--radius); background: var(--surface-2); outline: none; }
+.field input:not([type="checkbox"]):focus { border-color: var(--accent); }
 .pw { position: relative; display: block; }
 .pw input { padding-right: 54px; }
 .pw button { position: absolute; right: 5px; top: 4px; height: 24px; border: 0; background: transparent; color: var(--text-3); font-size: 11px; cursor: pointer; }
@@ -1002,7 +1007,9 @@ details.trace.reasoning > summary { color: var(--text); font-weight: 600; }
 
 /* ------------------------------------------------------------- case list */
 
-.rail-label-spaced { margin-top: 16px; }
+/* The gap does the separating, with a hairline where the gap alone was not
+   enough to say a new section starts here rather than a new item. */
+.rail-label-spaced { margin-top: 18px; padding-top: 13px; border-top: 1px solid var(--border); }
 .case-nav { list-style: none; padding: 0; margin: 0; display: grid; gap: 1px; }
 .case-nav button {
   width: 100%; display: grid; grid-template-columns: 6px 1fr; gap: 9px; align-items: start;
