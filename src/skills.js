@@ -13,7 +13,7 @@
 // neither committed nor official.
 
 import { db } from "./data-layer/db.js";
-import { commandOwner } from "./command-registry.js";
+import { commandOwner, gemSkillIds } from "./command-registry.js";
 
 // Two to forty characters, lowercase, starting on a letter or digit. The same
 // shape a gem command has, because they share one namespace: the palette offers
@@ -81,11 +81,25 @@ export function deleteSkill(id) {
 }
 
 // What the composer typed. One leading /token, the rest is the question.
-export function parseInvocation(question) {
+//
+// gemId scopes it. A gem carries the skills it offers, and the palette and the
+// sidebar both hide the ones it does not — but hiding a command in the interface
+// while the server still runs it is not a rule, it is a suggestion. The check
+// belongs here, where the command is turned into a procedure, so a request that
+// arrives by any other route gets the same answer.
+//
+// A skill the gem does not carry is left in the text rather than stripped: the
+// reader wrote it, it is part of what they asked, and silently deleting a line
+// of somebody's question is worse than answering a question that has a stray
+// slash in it.
+export function parseInvocation(question, gemId = null) {
   const match = String(question || "").match(/^\s*\/([a-z0-9][a-z0-9-]{1,39})\s*([\s\S]*)$/i);
   if (!match) return { skill: null, question: String(question || "") };
   const skill = findSkillByCommand(match[1]);
-  return skill ? { skill, question: match[2].trim() } : { skill: null, question: String(question || "") };
+  if (!skill) return { skill: null, question: String(question || "") };
+  const allowed = gemSkillIds(gemId);
+  if (allowed && !allowed.includes(skill.id)) return { skill: null, question: String(question || "") };
+  return { skill, question: match[2].trim() };
 }
 
 // The skill, as the model sees it.

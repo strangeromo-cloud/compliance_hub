@@ -266,6 +266,25 @@ export function factLabel(fact, locale = "zh") {
   return fact.label || fact[locale] || fact.zh || fact.key || "";
 }
 
+// The skills a gem offers, on Google's arrangement: a gem is who is answering
+// and stays selected, and skills hang under it rather than beside it.
+//
+// A gem that names none offers all of them, and that is the rule for every
+// built-in — they were written before skills existed and cannot name ids for
+// procedures a reader has not written yet. Only a custom gem whose author
+// ticked a set narrows anything, which keeps the default from ever hiding a
+// reader's own work from them.
+//
+// One function, because the sidebar list and the / palette have to answer this
+// identically: a skill listed in one and missing from the other is a command
+// that appears usable and is not.
+export function skillsForGem(gem, skills) {
+  const list = Array.isArray(skills) ? skills : [];
+  const allowed = gem?.skillIds;
+  if (!Array.isArray(allowed) || !allowed.length) return list;
+  return list.filter((skill) => allowed.includes(skill.id));
+}
+
 export function matchGems(query) {
   const needle = String(query || "").replace(/^\//, "").toLowerCase().trim();
   if (!needle) return allGems();

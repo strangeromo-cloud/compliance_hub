@@ -331,7 +331,7 @@ const server = createServer(async (request, response) => {
       // Parsed here rather than trusted from the client: the command is what
       // decides which saved text is appended to a system prompt, so which skill
       // ran has to be a fact about the question, not a field a caller can set.
-      const invoked = parseInvocation(question);
+      const invoked = parseInvocation(question, body.gemId);
       const result = await assessScenario({ question: invoked.question || question, locale, config, gemId: body.gemId, skill: invoked.skill, declaredFacts: declared.facts, unavailableFacts: cleanUnavailable(body.unavailableFacts), history: cleanHistory(body.history) });
       await saveCase(result, question, locale, body.threadId).catch(noteSaveFailure);
       return sendJson(response, 200, { ...result, ignoredDeclaredFacts: declared.ignored });
@@ -367,7 +367,7 @@ const server = createServer(async (request, response) => {
       try {
         const locale = body.locale === "en" ? "en" : "zh";
         const declared = cleanDeclaredFacts(body.declaredFacts);
-        const invoked = parseInvocation(question);
+        const invoked = parseInvocation(question, body.gemId);
         if (invoked.skill) send({ type: "skill", skill: { id: invoked.skill.id, command: invoked.skill.command, name: invoked.skill.name } });
         const result = await assessScenario({ question: invoked.question || question, locale, config, gemId: body.gemId, skill: invoked.skill, declaredFacts: declared.facts, unavailableFacts: cleanUnavailable(body.unavailableFacts), history: cleanHistory(body.history), onEvent: send, shouldStop: () => clientGone });
         if (result.stopped || clientGone) {

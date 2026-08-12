@@ -1,4 +1,4 @@
-import { GEMS, GEM_BY_ID, GEM_GROUPS, allGems, factCoverage, factLabel, matchGems, setCustomGems, toggleWorkspaceGem, workspaceGemIds } from "/gems.js";
+import { GEMS, GEM_BY_ID, GEM_GROUPS, allGems, factCoverage, factLabel, matchGems, setCustomGems, skillsForGem, toggleWorkspaceGem, workspaceGemIds } from "/gems.js";
 import { EVIDENCE_STATUS, FOLDED, SETTLED_STATUS, STEP_STATUS_VOCAB, currentStepId, firstBlockedStep as blockedStep, isAskable as askable, isDone, label, laneQuestion, laneView, stepState as state_, tone, visibleLanes } from "/status-vocabulary.js";
 import { AGENT_META, judgeIntent } from "/intent.js";
 
@@ -8,7 +8,7 @@ const i18n = {
     scenarioLibrary: "测试场景", guideLink: "使用说明", scenarioHelp: "场景只填入输入框，不会新建对话。",
     startTitle: "描述交易，或用 / 选择一个 Gem",
     startLead: "范围为美国与中国的出口管制。Master Agent 自动路由到贸易、产品和第三方尽调 Agent，返回一份带证据链的统一答案。",
-    gemsLabel: "GEMS", skillsLabel: "自建 Skill", skillNew: "新建 Skill", skillName: "名称", skillCommand: "斜杠命令", skillSummary: "一句话说明", skillProcedure: "标准提示词 / SOP", skillSave: "保存", skillDelete: "删除", cancel: "取消", optional: "选填", skillSaved: "已保存", skillNote: "Skill 只是追加给模型的一段流程说明。它不绑定数据源，也不要求问题里必须包含什么——那是 Gem 才做的事。", skillEmpty: "还没有自建 Skill", gemNew: "新建 Gem", gemSaved: "Gem 已保存", gemNote: "Gem 比 Skill 多三样：可用的数据源、提交前就会检查的必填事实、以及给三条专业线的指令。", gemInstruction: "给专业线的指令", gemSources: "可用数据源", gemSourcesHint: "勾选后，问题里会写明只依据这些来源", gemFactsLabel: "问题需包含的事实", gemFactsHint: "填名称和会出现在描述里的词；提交前据此提示还缺什么", gemFactAdd: "＋ 加一项", gemFactName: "名称，如：最终用户", gemFactWords: "关键词，用、分隔", gemsHint: "在输入框键入 / 可随时调用", coverageLabel: "数据覆盖",
+    gemsLabel: "GEMS", skillsLabel: "自建 Skill", skillNew: "新建 Skill", skillName: "名称", skillCommand: "斜杠命令", skillSummary: "一句话说明", skillProcedure: "标准提示词 / SOP", skillSave: "保存", skillDelete: "删除", cancel: "取消", optional: "选填", skillSaved: "已保存", skillNote: "Skill 只是追加给模型的一段流程说明。它不绑定数据源，也不要求问题里必须包含什么——那是 Gem 才做的事。它挂在 Gem 下面：当前 Gem 指定了名单，就只有名单里的能调用。", skillEmpty: "还没有自建 Skill", skillNoneHere: "当前 Gem 没有挂 Skill", skillScoped: "「{gem}」下的 Skill，另有 {n} 个不在这个 Gem 里", gemSkills: "挂在下面的 Skill", gemSkillsAllNote: "这个 Gem 没有指定，所以自建 Skill 全部可用", gemSkillsLabel: "这个 Gem 下的 Skill", gemSkillsHint: "不勾就是全都能用；勾了就只有勾中的能在这个 Gem 下调用", gemSkillsAll: "自建 Skill", gemNew: "新建 Gem", gemSaved: "Gem 已保存", gemNote: "Gem 是常驻的——选中后一直挂着，直到你换一个。它比 Skill 多四样：可用的数据源、提交前就会检查的必填事实、给三条专业线的指令，以及挂在它下面的 Skill。", gemInstruction: "给专业线的指令", gemSources: "可用数据源", gemSourcesHint: "勾选后，问题里会写明只依据这些来源", gemFactsLabel: "问题需包含的事实", gemFactsHint: "填名称和会出现在描述里的词；提交前据此提示还缺什么", gemFactAdd: "＋ 加一项", gemFactName: "名称，如：最终用户", gemFactWords: "关键词，用、分隔", gemsHint: "在输入框键入 / 可随时调用", coverageLabel: "数据覆盖",
     questionLabel: "输入合规情景", placeholder: "描述交易方、产品、路线、最终用户或付款安排……",
     slashHint: "Gem", composerNote: "原型输出仅用于研究与风险分流，不构成法律意见。请勿输入商业秘密或未公开交易数据。", itaAttribution: "This product uses the International Trade Administration\u2019s Data API but is not endorsed or certified by the International Trade Administration.",
     evidence: "证据与来源", evidenceEmpty: "完成一次分析后，这里显示引用来源、获取状态与访问时间。", sourceFellBack: "未取到页面正文，本次只用了该来源的摘要。名单筛查不读这些条文页，用的是已同步的名单记录。",
@@ -73,7 +73,7 @@ const i18n = {
     scenarioLibrary: "Test scenarios", guideLink: "Guide", scenarioHelp: "Scenarios only fill the composer; they do not start a new thread.",
     startTitle: "Describe the transaction, or press / for a gem",
     startLead: "Scope is US and PRC export control. The Master Agent routes to the trade, product and third-party diligence agents and returns one answer with its evidence chain.",
-    gemsLabel: "GEMS", skillsLabel: "Your skills", skillNew: "New skill", skillName: "Name", skillCommand: "Slash command", skillSummary: "One-line description", skillProcedure: "Standard prompt / SOP", skillSave: "Save", skillDelete: "Delete", cancel: "Cancel", optional: "optional", skillSaved: "Saved", skillNote: "A skill is a procedure appended to what the model is already told. It binds no sources and requires no facts \u2014 that is what a built-in gem does.", skillEmpty: "No skills of your own yet", gemNew: "New gem", gemSaved: "Gem saved", gemNote: "A gem carries three things a skill does not: the sources it may use, the facts checked before you submit, and the instruction the specialists get.", gemInstruction: "Instruction for the specialists", gemSources: "Sources it may use", gemSourcesHint: "The question will say to rely on these only", gemFactsLabel: "Facts the question must carry", gemFactsHint: "A name and the words a draft carrying it would use; the composer flags what is missing", gemFactAdd: "+ Add one", gemFactName: "Name, e.g. end user", gemFactWords: "Keywords, comma separated", gemsHint: "type / in the composer at any time", coverageLabel: "Data coverage",
+    gemsLabel: "GEMS", skillsLabel: "Your skills", skillNew: "New skill", skillName: "Name", skillCommand: "Slash command", skillSummary: "One-line description", skillProcedure: "Standard prompt / SOP", skillSave: "Save", skillDelete: "Delete", cancel: "Cancel", optional: "optional", skillSaved: "Saved", skillNote: "A skill is a procedure appended to what the model is already told. It binds no sources and requires no facts \u2014 that is what a gem does. It hangs under a gem: where the selected gem names a set, only that set can be called.", skillEmpty: "No skills of your own yet", skillNoneHere: "This gem carries no skills", skillScoped: "Under {gem} — {n} more sit outside this gem", gemSkills: "Skills under it", gemSkillsAllNote: "This gem names none, so every skill you wrote is available", gemSkillsLabel: "Skills under this gem", gemSkillsHint: "Tick none and all of them work; tick some and only those can be called under this gem", gemSkillsAll: "Your skills", gemNew: "New gem", gemSaved: "Gem saved", gemNote: "A gem stays selected until you pick another. It carries four things a skill does not: the sources it may use, the facts checked before you submit, the instruction the specialists get, and the skills that hang under it.", gemInstruction: "Instruction for the specialists", gemSources: "Sources it may use", gemSourcesHint: "The question will say to rely on these only", gemFactsLabel: "Facts the question must carry", gemFactsHint: "A name and the words a draft carrying it would use; the composer flags what is missing", gemFactAdd: "+ Add one", gemFactName: "Name, e.g. end user", gemFactWords: "Keywords, comma separated", gemsHint: "type / in the composer at any time", coverageLabel: "Data coverage",
     questionLabel: "Enter a compliance scenario", placeholder: "Describe the party, product, route, end user or payment arrangement…",
     slashHint: "Gem", composerNote: "Prototype output is for research and triage only and is not legal advice. Do not enter trade secrets or confidential transaction data.", itaAttribution: "This product uses the International Trade Administration\u2019s Data API but is not endorsed or certified by the International Trade Administration.",
     evidence: "Evidence & sources", evidenceEmpty: "After an analysis, cited sources, retrieval status and access time appear here.", sourceFellBack: "The page text was not retrieved, so only this source\u2019s own summary was used. List screening does not read these provision pages; it runs on the ingested records.",
@@ -389,6 +389,7 @@ async function loadGems() {
     setCustomGems(data.gems || []);
     state.sourceOptions = data.sources || [];
   } catch { /* the built-in eight are enough to work with */ }
+  restoreActiveGem();
   renderGemNav();
   refreshStartCounts();
 }
@@ -403,9 +404,23 @@ async function loadSkills() {
   refreshStartCounts();
 }
 
+// The skills the current gem offers. Same call the palette makes, so a command
+// listed here is a command / will accept, and one that is not is not.
+function visibleSkills() {
+  return skillsForGem(state.activeGem, state.skills);
+}
+
 function renderSkillNav() {
-  $("skillNav").innerHTML = state.skills.length
-    ? state.skills.map((skill) => `
+  const shown = visibleSkills();
+  // Said out loud when a gem is narrowing the list, because a skill that is
+  // simply absent looks the same as one that was never written.
+  const scoped = shown.length !== state.skills.length;
+  $("skillScope").textContent = scoped
+    ? t("skillScoped").replace("{gem}", localized(state.activeGem.name)).replace("{n}", state.skills.length - shown.length)
+    : "";
+  $("skillScope").classList.toggle("hidden", !scoped);
+  $("skillNav").innerHTML = shown.length
+    ? shown.map((skill) => `
       <li>
         <button type="button" data-skill="${esc(skill.command)}" title="${esc(skill.summary)}">
           <span class="gem-icon is-skill" aria-hidden="true">/</span>
@@ -415,7 +430,7 @@ function renderSkillNav() {
           <svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg>
         </button>
       </li>`).join("")
-    : `<li class="gem-nav-empty">${esc(t("skillEmpty"))}</li>`;
+    : `<li class="gem-nav-empty">${esc(t(state.skills.length ? "skillNoneHere" : "skillEmpty"))}</li>`;
 }
 
 // The pipeline the question actually travels, drawn from the same tokens as
@@ -628,15 +643,27 @@ function renderActiveGem() {
   renderGemNav();
 }
 
+// A gem is who is answering, and it stays until the reader changes it.
+//
+// It used to be the mode of one composer: chosen, used, and dropped by the next
+// new conversation, which made picking a specialist a thing you did per question
+// rather than a place you were working. On Google's arrangement you are in a gem
+// — a new conversation is a new conversation with the same assistant — so the
+// selection outlives the thread and the page, and the only ways out are the ×,
+// Escape, and picking a different one.
+const ACTIVE_GEM_KEY = "compliance-active-gem";
+
 function activateGem(gemId, { focus = true } = {}) {
   const gem = GEM_BY_ID.get(gemId);
   if (!gem) return;
   state.activeGem = gem;
   state.factsOpen = false;
+  localStorage.setItem(ACTIVE_GEM_KEY, gem.id);
   closePalette();
   const input = $("questionInput");
   input.placeholder = localized(gem.placeholder) || t("placeholder");
   renderActiveGem();
+  renderSkillNav();
   updateRouteHint();
   if (focus) input.focus();
 }
@@ -644,8 +671,19 @@ function activateGem(gemId, { focus = true } = {}) {
 function clearGem() {
   state.activeGem = null;
   state.factsOpen = false;
+  localStorage.removeItem(ACTIVE_GEM_KEY);
   $("questionInput").placeholder = t("placeholder");
   renderActiveGem();
+  renderSkillNav();
+}
+
+// Restored after the catalogues load, not at boot: a custom gem is not in
+// GEM_BY_ID until loadGems has answered, so restoring earlier would silently
+// drop exactly the gems a reader built for themselves.
+function restoreActiveGem() {
+  const id = localStorage.getItem(ACTIVE_GEM_KEY);
+  if (!id || state.activeGem || !GEM_BY_ID.has(id)) return;
+  activateGem(id, { focus: false });
 }
 
 /* ------------------------------------------------------- slash palette */
@@ -734,7 +772,7 @@ function openPalette(query) {
   // still visible — a gem checks its inputs against bound sources, a skill is a
   // procedure somebody wrote.
   const needle = String(query || "").toLowerCase();
-  const skills = state.skills.filter((skill) => !needle
+  const skills = visibleSkills().filter((skill) => !needle
     || skill.command.includes(needle) || skill.name.toLowerCase().includes(needle));
   state.palette = { open: true, items: [...matchGems(query), ...skills], index: 0 };
   renderPalette();
@@ -820,6 +858,13 @@ function openGemDetail(gemId) {
         ? `<div class="chip-row">${gem.boundSources.map((id) => `<span class="chip mono">${esc(id)}</span>`).join("")}</div>`
         : esc(t("gemNoSources"))}</dd></div>
       <div class="gem-spec-row"><dt>${t("gemFacts")}</dt><dd><div class="chip-row">${gem.requiredFacts.map((fact) => `<span class="chip">${esc(factLabel(fact, state.locale))}</span>`).join("")}</div></dd></div>
+      ${/* Named on the card because it is the one property that changes what the
+            reader can reach next, and it is invisible until they select the gem
+            and notice the list got shorter. */ ""}
+      <div class="gem-spec-row"><dt>${t("gemSkills")}</dt><dd>${skillsForGem(gem, state.skills).length
+        ? `<div class="chip-row">${skillsForGem(gem, state.skills).map((skill) => `<span class="chip mono">/${esc(skill.command)}</span>`).join("")}</div>`
+          + (gem.skillIds?.length ? "" : `<p class="sp-note">${esc(t("gemSkillsAllNote"))}</p>`)
+        : esc(t(state.skills.length ? "skillNoneHere" : "skillEmpty"))}</dd></div>
       <div class="gem-spec-row"><dt>${t("gemOutput")}</dt><dd>${esc(localized(gem.outputTemplate))}</dd></div>
       <div class="gem-spec-row"><dt>${t("gemBacking")}</dt><dd>${gemBackingMarkup(gem)}</dd></div>
     </dl>
@@ -2697,6 +2742,9 @@ async function analyze(event, options = {}) {
   }
 }
 
+// A new conversation, not a new assistant. The gem survives it — that is the
+// whole of "常驻": you are in a gem, and starting over inside it is still inside
+// it. Leaving is the × on the composer row, or Escape.
 function newConversation() {
   clearFlowPanel();
   state.conversation = [];
@@ -2706,7 +2754,7 @@ function newConversation() {
   $("threadInner").innerHTML = "";
   $("startPanel").classList.remove("hidden");
   setComposer("");
-  clearGem();
+  renderActiveGem();
   renderEvidence([]);
   updateRouteHint();
   $("questionInput").focus();
@@ -3265,6 +3313,20 @@ function renderGemSourcePicker() {
       </div>`).join("");
 }
 
+// Ticking none is a real answer, and it means all of them — so the picker says
+// so rather than leaving an empty box to be read as "none".
+function renderGemSkillPicker() {
+  $("gemSkillPicker").innerHTML = state.skills.length
+    ? `<div class="sp-group"><span class="sp-country">${esc(t("gemSkillsAll"))}</span>
+        ${state.skills.map((skill) => `
+          <label class="sp-item" title="${esc(skill.summary)}">
+            <input type="checkbox" value="${esc(skill.id)}">
+            <code>/${esc(skill.command)}</code>
+          </label>`).join("")}
+      </div>`
+    : `<p class="field-hint">${esc(t("skillEmpty"))}</p>`;
+}
+
 function addGemFactRow(fact = {}) {
   $("gemFactRows").insertAdjacentHTML("beforeend", `
     <div class="fact-row">
@@ -3281,6 +3343,7 @@ $("gemAddBtn").addEventListener("click", () => {
   $("gemError").classList.add("hidden");
   $("gemFactRows").innerHTML = "";
   renderGemSourcePicker();
+  renderGemSkillPicker();
   addGemFactRow();
   $("gemDialog").showModal();
 });
@@ -3297,6 +3360,7 @@ $("gemForm").addEventListener("submit", async (event) => {
     summary: $("gemSummaryInput").value,
     instruction: $("gemInstructionInput").value,
     boundSources: [...$("gemSourcePicker").querySelectorAll("input:checked")].map((box) => box.value),
+    skillIds: [...$("gemSkillPicker").querySelectorAll("input:checked")].map((box) => box.value),
     requiredFacts: [...$("gemFactRows").querySelectorAll(".fact-row")].map((row) => ({
       label: row.querySelector(".fact-label").value,
       keywords: row.querySelector(".fact-keywords").value.split(/[、,，\s]+/).filter(Boolean)

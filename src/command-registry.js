@@ -20,6 +20,28 @@ import { GEMS } from "../public/gems.js";
 const bare = (command) => String(command || "").replace(/^\/+/, "").toLowerCase();
 
 const BUILTIN = new Set(GEMS.map((gem) => bare(gem.command)));
+const BUILTIN_IDS = new Set(GEMS.map((gem) => gem.id));
+
+// The skills a gem admits, or null for "all of them".
+//
+// Here for the same reason commandOwner is: skills.js has to ask this to refuse
+// a skill the selected gem does not carry, and gems-custom.js already imports
+// skills.js — asking it back would be a cycle. The row is read directly, as
+// everything in this file is.
+//
+// null, not []: a built-in gem has no skillIds at all and a custom gem can have
+// an empty one, and both mean every skill. An empty array returned for "no
+// restriction" would be indistinguishable from a restriction to nothing.
+export function gemSkillIds(gemId) {
+  const id = String(gemId || "");
+  if (!id || BUILTIN_IDS.has(id)) return null;
+  const row = db().prepare("SELECT payload FROM custom_gems WHERE gem_id = ?").get(id);
+  if (!row) return null;
+  try {
+    const ids = JSON.parse(row.payload)?.skillIds;
+    return Array.isArray(ids) && ids.length ? ids : null;
+  } catch { return null; }
+}
 
 // What holds this command, or null. The caller decides what to say about it: a
 // built-in gem is a different message from something the reader made, and the

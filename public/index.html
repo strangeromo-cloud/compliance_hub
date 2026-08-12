@@ -35,13 +35,15 @@
         </p>
         <ul class="gem-nav" id="gemNav"></ul>
 
-        <!-- Skills the reader wrote. Below the gems because that is what they
-             extend, and with their own heading because they are not the same
-             thing: a gem checks its inputs, a skill is a procedure. -->
+        <!-- Skills the reader wrote, under the gems rather than beside them: a
+             gem is who is answering and stays selected, and the list here is
+             what that gem offers. A gem that names no skills offers all of
+             them, which is every built-in one. -->
         <p class="rail-label rail-label-spaced">
           <span data-i18n="skillsLabel">自建 Skill</span>
           <button type="button" class="rail-add" id="skillAddBtn" title="新建 Skill">＋</button>
         </p>
+        <p class="rail-sub hidden" id="skillScope"></p>
         <ul class="gem-nav" id="skillNav"></ul>
 
         <p class="rail-label rail-label-spaced" data-i18n="historyLabel">历史记录</p>
@@ -189,6 +191,10 @@
       <label class="field opt"><span data-i18n="gemSources">可用数据源</span>
         <span class="field-hint" data-i18n="gemSourcesHint"></span>
         <div class="source-picker" id="gemSourcePicker"></div></label>
+
+      <label class="field opt"><span data-i18n="gemSkillsLabel">这个 Gem 下的 Skill</span>
+        <span class="field-hint" data-i18n="gemSkillsHint"></span>
+        <div class="source-picker" id="gemSkillPicker"></div></label>
 
       <label class="field opt"><span data-i18n="gemFactsLabel">问题需包含的事实</span>
         <span class="field-hint" data-i18n="gemFactsHint"></span>

@@ -91,22 +91,24 @@ const copy = {
     useLead: "上下键选择 Gem，回车确认。每个 Gem 绑定五样东西：产出类型、指令、数据源白名单、必填事实清单、输出模板。产出类型决定它走哪条路——/reg-brief 是简报，不会触发受限方筛查；必填事实清单则让系统在提交前就知道自己缺什么，而不是让模型悄悄猜。",
     gemsLabel: "可用 Gem", gemBound: "个来源", gemRecords: "条记录", gemUnsynced: "个未同步", gemNone: "不绑定外部来源",
     buildTitle: "自己建 Gem 和 Skill",
-    buildLead: "左侧栏 GEMS 和「自建 SKILL」两个标题旁边各有一个 ＋。两者都用斜杠命令调起，但它们不是一类东西——差别在于代码会不会读它们的字段。",
+    buildLead: "左侧栏 GEMS 和「自建 SKILL」两个标题旁边各有一个 ＋。两者不是并列关系：Gem 是「谁在回答」，选中后一直挂着；Skill 挂在 Gem 下面，是这一问怎么做。",
     cmpGem: {
-      title: "Gem — 四样字段，每样都被消费",
-      lead: "选中后命令从输入框消失，整次审查进入这个模式。",
+      title: "Gem — 常驻，四样字段每样都被消费",
+      lead: "选中后命令从输入框消失，一直保持到你换一个或按 ×——开新对话、刷新页面都还在它里面。",
       points: [
         "类型决定跑不跑完整审查流程（审查 / 直查 / 简报 / 备忘录）",
         "指令发给三条专业线",
         "绑定的数据源会写进问题：只依据这些来源",
         "「问题需包含的事实」在你按发送之前就提示还缺什么",
-        "自建的填关键词，内置八个用正则——关键词更松，但这个提示从不拦提交，漏判的代价是少一句提醒"
+        "自建的填关键词，内置八个用正则——关键词更松，但这个提示从不拦提交，漏判的代价是少一句提醒",
+        "自建 Gem 还能指定挂哪几个 Skill；不指定就是自建 Skill 全都能用，内置八个都是这样"
       ]
     },
     cmpSkill: {
-      title: "Skill — 一段流程说明",
+      title: "Skill — 一段流程说明，挂在当前 Gem 下",
       lead: "命令留在文本里，服务端解析掉之后把这段话追加到模型的系统提示末尾。",
       points: [
+        "左侧列表和 / 面板只列当前 Gem 挂着的那几个；不在名单里的，服务端也不会执行",
         "不绑定数据源，也不要求问题里必须包含什么",
         "它标明是你自己的流程，并附一句：不是证据，不放宽任何规则",
         "声明过的值仍然是声明，没有证据的步骤不因它而闭合"
@@ -304,22 +306,24 @@ const copy = {
     useLead: "Arrow keys select a gem, Enter confirms. A gem binds five things: what it produces, the instruction, the bound-source whitelist, the facts it requires, and the output template. The first decides which path it takes \u2014 /reg-brief is a briefing and never opens a party screening \u2014 and the fourth is what makes a gem more than a saved prompt: the interface knows what is missing before anything is submitted.",
     gemsLabel: "Available gems", gemBound: "sources", gemRecords: "records", gemUnsynced: "not synced", gemNone: "no bound sources",
     buildTitle: "Build your own gems and skills",
-    buildLead: "A ＋ sits beside each of the two sidebar headings. Both are invoked by a slash command, and they are not the same kind of thing \u2014 the difference is whether any code reads their fields.",
+    buildLead: "A ＋ sits beside each of the two sidebar headings. They are not siblings: a gem is who is answering and stays selected, and skills hang under it as how this one question should be done.",
     cmpGem: {
-      title: "Gem \u2014 four fields, all of them consumed",
-      lead: "Choosing one clears the command from the composer; the whole review runs in that mode.",
+      title: "Gem \u2014 it stays, and all four fields are consumed",
+      lead: "Choosing one clears the command from the composer and keeps it until you pick another or press \u00d7 \u2014 a new conversation and a page reload are both still inside it.",
       points: [
         "Its kind decides whether a review procedure runs at all (review / lookup / briefing / memo)",
         "Its instruction goes to the three specialist lanes",
         "Its bound sources are written into the question: rely on these only",
         "Its required facts tell you what the question is missing before you press send",
-        "A custom one uses keywords where the built-in eight use regular expressions \u2014 looser, but this hint never blocks a submission, so a miss costs a prompt rather than an answer"
+        "A custom one uses keywords where the built-in eight use regular expressions \u2014 looser, but this hint never blocks a submission, so a miss costs a prompt rather than an answer",
+        "A custom gem can also name the skills that hang under it; naming none means every skill you wrote is available, which is what all eight built-ins do"
       ]
     },
     cmpSkill: {
-      title: "Skill \u2014 one procedure",
+      title: "Skill \u2014 one procedure, under the gem you are in",
       lead: "The command stays in the text; the server parses it off and appends the procedure to the model's system prompt.",
       points: [
+        "The sidebar and the / palette list only what the current gem carries, and the server will not run one it does not",
         "It binds no sources and requires nothing of the question",
         "It arrives labelled as your own procedure, with a line saying it is not evidence and relaxes nothing",
         "A declared value is still declared, and no step without evidence is settled by it"

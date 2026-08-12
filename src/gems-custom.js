@@ -18,6 +18,7 @@
 import { db } from "./data-layer/db.js";
 import { DATA_SOURCE_REGISTRY } from "./data-source-registry.js";
 import { commandOwner } from "./command-registry.js";
+import { listSkills } from "./skills.js";
 
 const KINDS = new Set(["review", "lookup", "briefing", "memo"]);
 const COMMAND = /^[a-z0-9][a-z0-9-]{1,39}$/;
@@ -66,6 +67,19 @@ export function normalizeCustomGem(input = {}) {
   const facts = Array.isArray(input.requiredFacts) ? input.requiredFacts : [];
   if (facts.length > 8) fail("必填事实最多 8 项");
 
+  // Which skills this gem offers. Empty means all of them, and that is the
+  // honest default rather than a shortcut: every skill here was written by the
+  // reader, so a gem that named none and was read as naming none would hide the
+  // reader's own procedures from them.
+  //
+  // Unknown ids are dropped rather than refused. A skill can be deleted after a
+  // gem bound it, so a stale id is an ordinary state of the world, not bad input
+  // — and a gem that refused to save because of one would be unfixable from the
+  // form that saves it.
+  const known = new Set(listSkills().map((skill) => skill.id));
+  const skillIds = [...new Set((Array.isArray(input.skillIds) ? input.skillIds : []).map(String))]
+    .filter((id) => known.has(id));
+
   return {
     id: String(input.id || `gem-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`),
     custom: true,
@@ -77,6 +91,7 @@ export function normalizeCustomGem(input = {}) {
     summary: text(input.summary, "说明", { min: 2, max: 240 }),
     instruction: text(input.instruction, "指令", { min: 10, max: 6000 }),
     boundSources,
+    skillIds,
     requiredFacts: facts.map(normalizeFact),
     outputTemplate: String(input.outputTemplate || "").trim().slice(0, 240),
     placeholder: String(input.placeholder || "").trim().slice(0, 240),
