@@ -736,8 +736,12 @@ function renderPalette() {
         <button type="button" class="palette-item ${items.indexOf(gem) === index ? "active" : ""}" data-gem="${gem.id}" role="option">
           ${gemIconMarkup(gem)}
           <span><strong>${esc(localized(gem.name))}</strong><small>${esc(localized(gem.summary))}</small></span>
+          ${/* Hollow or filled, not two shades of the same star. Pinned and not
+                pinned differed only by colour, and a colour difference on a 12px
+                glyph at the end of a busy row is a difference nobody has to
+                notice. The shape is the state; the colour just agrees with it. */ ""}
           <span class="palette-pin ${workspaceGemIds().includes(gem.id) ? "on" : ""}" data-pin="${gem.id}" role="button" tabindex="-1"
-                title="${esc(t(workspaceGemIds().includes(gem.id) ? "gemRemove" : "gemAdd"))}">★</span>
+                title="${esc(t(workspaceGemIds().includes(gem.id) ? "gemRemove" : "gemAdd"))}">${workspaceGemIds().includes(gem.id) ? "★" : "☆"}</span>
         </button>`).join("")}
     </div>`).join("")
     + (skills.length ? `<div class="palette-group">

@@ -1024,9 +1024,12 @@ details.trace.reasoning > summary { color: var(--text); font-weight: 600; }
 .case-empty { font-size: 11px; color: var(--text-3); padding: 4px 7px; }
 .app.rail .case-nav .case-text, .app.rail .rail-label-spaced { display: none; }
 .app.rail .case-nav button { grid-template-columns: 1fr; justify-items: center; }
-.palette-pin { font-size: 12px; color: var(--text-3); padding: 2px 4px; border-radius: 4px; cursor: pointer; line-height: 1; }
-.palette-pin:hover { color: var(--accent-text); background: var(--surface-3); }
-.palette-pin.on { color: var(--accent-text); }
+.palette-pin { font-size: 13px; color: var(--text-3); opacity: .5; padding: 2px 4px; border-radius: 4px; cursor: pointer; line-height: 1; transition: opacity .12s, color .12s; }
+.palette-item:hover .palette-pin { opacity: 1; }
+.palette-pin:hover { color: var(--accent-text); background: var(--surface-3); opacity: 1; }
+/* Pinned reads at full strength whether or not the row is under the cursor: it
+   is a state of the gem, not an action offered on hover. */
+.palette-pin.on { color: var(--accent); opacity: 1; font-size: 14px; }
 
 /* ==========================================================================
    Home figure and source map.
