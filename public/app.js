@@ -2798,6 +2798,12 @@ function applyLocale(locale) {
   document.querySelector('#settingsBtn .side-label').textContent = t(state.serverModelConfigured ? "accessSettings" : "modelSettings");
   loadCoverage();
   if (!$("evidenceList").children.length || $("evidenceList").querySelector(".evidence-empty")) renderEvidence([]);
+  // The rail too. Its contents are built in JavaScript rather than carried on
+  // data-i18n attributes, so switching to English left "提交一个问题后…" sitting
+  // under an English heading — and, once a run had happened, every lane label
+  // and status in the panel beside an answer that had switched.
+  renderSkillNav();
+  renderFlowPanel(null);
 }
 
 /* --------------------------------------------------------------- events */

@@ -1035,7 +1035,12 @@ details.trace.reasoning > summary { color: var(--text); font-weight: 600; }
      1fr made it absorb the panel: on a wide screen the boxes stretched into
      flat bars and the diagram stopped reading as three parallel things. */
   display: grid;
-  grid-template-columns: auto 26px auto 26px auto;
+  /* 16px, not 26. The connector is the shortest thing that can still read as a
+     line, and every pixel it takes is a pixel the two end labels do not have —
+     which only shows in English, where "One question" and "One answer" are half
+     again as wide as 一个问题 and 统一答案 and the whole diagram grows by 57px
+     with nothing giving way. */
+  grid-template-columns: auto 16px auto 16px auto;
   grid-template-rows: repeat(3, auto);
   /* align-content, not align-items: the rows are centred as a block inside a
      figure that the data column may make taller, instead of each row stretching
