@@ -131,6 +131,20 @@ CREATE TABLE IF NOT EXISTS page_cache (
   captured_at  TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS page_cache_by_age ON page_cache (captured_at);
+
+-- A saved procedure and the slash command that runs it. Written by the reader,
+-- so it lives here with threads and turns rather than in data/fallback, which
+-- holds committed mirrors of official sources and nothing else.
+--
+-- command is UNIQUE because it is how one is invoked: two skills answering to
+-- /tpdd is a composer that cannot say which the reader meant.
+CREATE TABLE IF NOT EXISTS skills (
+  skill_id    TEXT PRIMARY KEY,
+  command     TEXT NOT NULL UNIQUE,
+  created_at  TEXT NOT NULL,
+  payload     TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS skills_by_age ON skills (created_at);
 `;
 
 export const REQUIRED_NODE_MAJOR = 24;

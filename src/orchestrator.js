@@ -3,6 +3,7 @@ import { sourcesForAgents } from "./sources.js";
 import { retrievePublicSources } from "./retrieval.js";
 import { callJsonModel, callJsonModelStream, readableProjection } from "./llm.js";
 import { assessClearance } from "./clearance.js";
+import { skillBrief } from "./skills.js";
 import { resolveLookup } from "./lookup.js";
 import { localizePath, localizeLines, localizeLine } from "./path-i18n.js";
 import { buildBriefing } from "./briefing.js";
@@ -39,7 +40,7 @@ function intentScope(intent) {
   return "Analyze only facts and compliance dimensions raised by the current question. Do not import routes, parties, products, payment facts, or scenarios from templates when the user did not mention them.";
 }
 
-function agentInstructions(agent, locale, intent) {
+function agentInstructions(agent, locale, intent, skill = null) {
   const language = locale === "en" ? "English" : "Simplified Chinese";
   const special = {
     trade: "Analyze exact party identity, aliases, addresses, ownership, transaction role, EAR jurisdiction, end-user and end-use restrictions. Do not claim that all services are permitted or prohibited.",
@@ -71,7 +72,7 @@ Answer what the question asks of your lane before anything else. If it asks how 
 
 Be brief. summary is one sentence. Give at most three findings, each a title plus one or two sentences — the reason and what it rests on, nothing restated from another finding and no repetition of the caveats above. Say a thing once.
 
-Use unknown when facts are insufficient. A source being unavailable is not evidence of no risk. This prototype supports human review and must not provide final legal advice.`;
+Use unknown when facts are insufficient. A source being unavailable is not evidence of no risk. This prototype supports human review and must not provide final legal advice.${skillBrief(skill)}`;
 }
 
 function normalizeAgentResult(result, agent) {
@@ -120,12 +121,12 @@ function applyIntentScope(result, intent, question, locale) {
   };
 }
 
-async function runAgent(agent, question, locale, sources, config, history, grounding, onDelta, onMeta) {
+async function runAgent(agent, question, locale, sources, config, history, grounding, onDelta, onMeta, skill = null) {
   const relevantSources = sources.filter((source) => source.agents.includes(agent));
   // Manufacturer classification values and internal master data now arrive
   // through the structured grounding block instead of a literal prompt string.
   const result = await callJsonModelStream(config, [
-    { role: "system", content: agentInstructions(agent, locale, grounding.intent) },
+    { role: "system", content: agentInstructions(agent, locale, grounding.intent, skill) },
     { role: "user", content: `Recent conversation (context only):\n${conversationContext(history)}\n\nCurrent user question:\n${question}\n\nStructured grounding:\n${groundingContext(grounding)}\n\nPublic sources:\n${sourceContext(relevantSources)}` }
   ], (text) => onDelta?.(text), (meta) => onMeta?.(meta));
   return applyIntentScope(normalizeAgentResult(result, agent), grounding.intent, question, locale);
@@ -217,12 +218,12 @@ const SUMMARY_SHAPE = "Read the question for every distinct thing it asks — th
   + "Keep each line to one point and at most three lines under any heading; omit a section that has nothing in it rather than writing that it is empty. "
   + "The specialists' findings, the step list and the exact facts still missing are all shown to the reader elsewhere in the same answer. Do not restate them and do not write a section listing what is outstanding.";
 
-async function synthesize(question, locale, results, config, history, grounding, onDelta, outstanding = []) {
+async function synthesize(question, locale, results, config, history, grounding, onDelta, outstanding = [], skill = null) {
   const language = locale === "en" ? "English" : "Simplified Chinese";
   const result = await callJsonModelStream(config, [
     {
       role: "system",
-      content: `${outstandingBrief(outstanding)}${clearanceBrief(grounding.clearance)}You are the Compliance Hub Master Agent. Synthesize specialist findings without overruling them or inventing facts. Respond in ${language}. The headline and executiveSummary must answer the current question directly and specifically. Never replace a requested policy explanation or factual value with a generic human-review statement. ${intentScope(grounding.intent)} Distinguish controlled status, license requirement and prohibition only when those issues are actually in scope. Return JSON only: {"overallRisk":"low|medium|high|unknown","headline":"...","executiveSummary":"...","nextStep":"..."}. ${SUMMARY_SHAPE} Missing critical information must not become a low-risk result. This is not legal advice.`
+      content: `${outstandingBrief(outstanding)}${clearanceBrief(grounding.clearance)}You are the Compliance Hub Master Agent. Synthesize specialist findings without overruling them or inventing facts. Respond in ${language}. The headline and executiveSummary must answer the current question directly and specifically. Never replace a requested policy explanation or factual value with a generic human-review statement. ${intentScope(grounding.intent)} Distinguish controlled status, license requirement and prohibition only when those issues are actually in scope. Return JSON only: {"overallRisk":"low|medium|high|unknown","headline":"...","executiveSummary":"...","nextStep":"..."}. ${SUMMARY_SHAPE} Missing critical information must not become a low-risk result. This is not legal advice.${skillBrief(skill)}`
     },
     { role: "user", content: `Recent conversation:\n${conversationContext(history)}\n\nCurrent question:\n${question}\n\nQuestion intent: ${grounding.intent}\n\nSpecialist outputs:\n${JSON.stringify(results)}` }
   ], (text) => onDelta?.(text));
@@ -533,7 +534,7 @@ function crossLaneAnswers(context) {
 // Whatever call is already in flight finishes, because cancelling it would mean
 // threading a signal through the timeout controllers in llm.js, and those decide
 // how a failure is classified.
-export async function assessScenario({ question, locale = "zh", config = {}, history = [], gemId = null, declaredFacts = {}, unavailableFacts = [], onEvent = () => {}, shouldStop = () => false }) {
+export async function assessScenario({ question, locale = "zh", config = {}, history = [], gemId = null, skill = null, declaredFacts = {}, unavailableFacts = [], onEvent = () => {}, shouldStop = () => false }) {
   // A question that asks for a stored value is answered, not reviewed. There is
   // no counterparty, no destination and no transaction in "what is this part's
   // ECCN", so there is nothing for a compliance procedure to work on — and
@@ -697,7 +698,8 @@ export async function assessScenario({ question, locale = "zh", config = {}, his
     const reported = await Promise.all(laneOrder.map((agent) => runAgent(
       agent, question, locale, sources, config, history, grounding,
       (text) => onEvent({ type: "agent_delta", agent, text }),
-      (meta) => onEvent({ type: "stream_mode", agent, ...meta })
+      (meta) => onEvent({ type: "stream_mode", agent, ...meta }),
+      skill
     )));
     results.push(...reported);
     reported.forEach((result) => onEvent({ type: "agent", result }));
@@ -726,7 +728,7 @@ export async function assessScenario({ question, locale = "zh", config = {}, his
   }
   onEvent({ type: "synthesizing" });
   synthesis = await synthesize(question, locale, results, config, history, grounding,
-    (text) => onEvent({ type: "synthesis_delta", text }), outstanding);
+    (text) => onEvent({ type: "synthesis_delta", text }), outstanding, skill);
 
   // Resolved the same way the question was chosen, always. Returning a less
   // resolved path than the one the ask came from meant the step being asked about

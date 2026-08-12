@@ -4,6 +4,7 @@ import { readFile, stat } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 import { assessScenario } from "./src/orchestrator.js";
+import { createSkill, deleteSkill, listSkills, parseInvocation } from "./src/skills.js";
 import { classifyModelError, testModelConnection } from "./src/llm.js";
 import { getDataSourceCoverage, queryDataSource, syncSource } from "./src/data-layer/service.js";
 import { deleteThread, evolutionSignals, listThreads, readThread, saveCase, storageDurability } from "./src/case-store.js";
@@ -316,7 +317,11 @@ const server = createServer(async (request, response) => {
       if (!config.apiKey) throw Object.assign(new Error("A model must be configured: this system does not answer from templates when it cannot reach one."), { status: 400 });
       const locale = body.locale === "en" ? "en" : "zh";
       const declared = cleanDeclaredFacts(body.declaredFacts);
-      const result = await assessScenario({ question, locale, config, gemId: body.gemId, declaredFacts: declared.facts, unavailableFacts: cleanUnavailable(body.unavailableFacts), history: cleanHistory(body.history) });
+      // Parsed here rather than trusted from the client: the command is what
+      // decides which saved text is appended to a system prompt, so which skill
+      // ran has to be a fact about the question, not a field a caller can set.
+      const invoked = parseInvocation(question);
+      const result = await assessScenario({ question: invoked.question || question, locale, config, gemId: body.gemId, skill: invoked.skill, declaredFacts: declared.facts, unavailableFacts: cleanUnavailable(body.unavailableFacts), history: cleanHistory(body.history) });
       await saveCase(result, question, locale, body.threadId).catch(noteSaveFailure);
       return sendJson(response, 200, { ...result, ignoredDeclaredFacts: declared.ignored });
     }
@@ -351,7 +356,9 @@ const server = createServer(async (request, response) => {
       try {
         const locale = body.locale === "en" ? "en" : "zh";
         const declared = cleanDeclaredFacts(body.declaredFacts);
-        const result = await assessScenario({ question, locale, config, gemId: body.gemId, declaredFacts: declared.facts, unavailableFacts: cleanUnavailable(body.unavailableFacts), history: cleanHistory(body.history), onEvent: send, shouldStop: () => clientGone });
+        const invoked = parseInvocation(question);
+        if (invoked.skill) send({ type: "skill", skill: { id: invoked.skill.id, command: invoked.skill.command, name: invoked.skill.name } });
+        const result = await assessScenario({ question: invoked.question || question, locale, config, gemId: body.gemId, skill: invoked.skill, declaredFacts: declared.facts, unavailableFacts: cleanUnavailable(body.unavailableFacts), history: cleanHistory(body.history), onEvent: send, shouldStop: () => clientGone });
         if (result.stopped || clientGone) {
           console.log(`Assessment stopped by the client after ${result.agents?.length ?? 0} of the specialists ran; nothing was saved.`);
           return response.end();
@@ -367,6 +374,24 @@ const server = createServer(async (request, response) => {
         send({ type: "error", error: String(error.message || "Analysis failed.").slice(0, 300), code: error.modelError?.code || null });
       }
       return response.end();
+    }
+
+    if (request.method === "GET" && url.pathname === "/api/skills") {
+      return sendJson(response, 200, { skills: listSkills() });
+    }
+
+    if (request.method === "POST" && url.pathname === "/api/skills") {
+      // Behind the same gate as a model call. A skill is text that reaches a
+      // system prompt on this host; writing one is not a public capability.
+      requireModelAccess(request);
+      return sendJson(response, 201, { skill: createSkill(await readJson(request)) });
+    }
+
+    if (request.method === "DELETE" && url.pathname.startsWith("/api/skills/")) {
+      requireModelAccess(request);
+      const removed = deleteSkill(decodeURIComponent(url.pathname.slice("/api/skills/".length)));
+      if (!removed) throw Object.assign(new Error("No such skill."), { status: 404 });
+      return sendJson(response, 200, { deleted: true });
     }
 
     if (request.method === "GET" && url.pathname === "/api/threads") {

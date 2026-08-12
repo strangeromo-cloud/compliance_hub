@@ -28,6 +28,16 @@
       <div class="sidebar-scroll">
         <p class="rail-label" data-i18n="gemsLabel">GEMS</p>
         <ul class="gem-nav" id="gemNav"></ul>
+
+        <!-- Skills the reader wrote. Below the gems because that is what they
+             extend, and with their own heading because they are not the same
+             thing: a gem checks its inputs, a skill is a procedure. -->
+        <p class="rail-label rail-label-spaced">
+          <span data-i18n="skillsLabel">自建 Skill</span>
+          <button type="button" class="rail-add" id="skillAddBtn" title="新建 Skill">＋</button>
+        </p>
+        <ul class="gem-nav" id="skillNav"></ul>
+
         <p class="rail-label rail-label-spaced" data-i18n="historyLabel">历史记录</p>
         <ul class="case-nav" id="caseNav"></ul>
         <p class="case-volatile hidden" id="historyVolatile"></p>
@@ -156,6 +166,26 @@
       </div>
     </aside>
   </div>
+
+  <dialog class="card-dialog" id="skillDialog">
+    <form class="card" method="dialog" id="skillForm">
+      <h3 data-i18n="skillNew">新建 Skill</h3>
+      <p class="card-note" data-i18n="skillNote"></p>
+      <label><span data-i18n="skillName">名称</span>
+        <input id="skillNameInput" maxlength="80" required></label>
+      <label><span data-i18n="skillCommand">斜杠命令</span>
+        <input id="skillCommandInput" maxlength="40" required placeholder="tpdd-quick" pattern="[a-zA-Z0-9][a-zA-Z0-9-]{1,39}"></label>
+      <label><span data-i18n="skillSummary">一句话说明</span>
+        <input id="skillSummaryInput" maxlength="240" required></label>
+      <label><span data-i18n="skillProcedure">标准提示词 / SOP</span>
+        <textarea id="skillProcedureInput" rows="7" maxlength="6000" required></textarea></label>
+      <p class="card-error hidden" id="skillError"></p>
+      <div class="card-actions">
+        <button type="button" class="btn" id="skillCancel" data-i18n="cancel">取消</button>
+        <button type="submit" class="btn btn-primary" data-i18n="skillSave">保存</button>
+      </div>
+    </form>
+  </dialog>
 
   <div class="scrim" id="scrim" hidden></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>

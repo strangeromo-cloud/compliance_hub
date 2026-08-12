@@ -8,7 +8,7 @@ const i18n = {
     scenarioLibrary: "测试场景", guideLink: "使用说明", scenarioHelp: "场景只填入输入框，不会新建对话。",
     startTitle: "描述交易，或用 / 选择一个 Gem",
     startLead: "范围为美国与中国的出口管制。Master Agent 自动路由到贸易、产品和第三方尽调 Agent，返回一份带证据链的统一答案。",
-    gemsLabel: "GEMS", gemsHint: "在输入框键入 / 可随时调用", coverageLabel: "数据覆盖",
+    gemsLabel: "GEMS", skillsLabel: "自建 Skill", skillNew: "新建 Skill", skillName: "名称", skillCommand: "斜杠命令", skillSummary: "一句话说明", skillProcedure: "标准提示词 / SOP", skillSave: "保存", skillDelete: "删除", skillSaved: "已保存", skillNote: "Skill 只是追加给模型的一段流程说明。它不绑定数据源、也不设必填事实——那是内置 Gem 才做的事。", skillEmpty: "还没有自建 Skill", gemsHint: "在输入框键入 / 可随时调用", coverageLabel: "数据覆盖",
     questionLabel: "输入合规情景", placeholder: "描述交易方、产品、路线、最终用户或付款安排……",
     slashHint: "Gem", composerNote: "原型输出仅用于研究与风险分流，不构成法律意见。请勿输入商业秘密或未公开交易数据。", itaAttribution: "This product uses the International Trade Administration\u2019s Data API but is not endorsed or certified by the International Trade Administration.",
     evidence: "证据与来源", evidenceEmpty: "完成一次分析后，这里显示引用来源、获取状态与访问时间。", sourceFellBack: "未取到页面正文，本次只用了该来源的摘要。名单筛查不读这些条文页，用的是已同步的名单记录。",
@@ -69,7 +69,7 @@ const i18n = {
     scenarioLibrary: "Test scenarios", guideLink: "Guide", scenarioHelp: "Scenarios only fill the composer; they do not start a new thread.",
     startTitle: "Describe the transaction, or press / for a gem",
     startLead: "Scope is US and PRC export control. The Master Agent routes to the trade, product and third-party diligence agents and returns one answer with its evidence chain.",
-    gemsLabel: "GEMS", gemsHint: "type / in the composer at any time", coverageLabel: "Data coverage",
+    gemsLabel: "GEMS", skillsLabel: "Your skills", skillNew: "New skill", skillName: "Name", skillCommand: "Slash command", skillSummary: "One-line description", skillProcedure: "Standard prompt / SOP", skillSave: "Save", skillDelete: "Delete", skillSaved: "Saved", skillNote: "A skill is a procedure appended to what the model is already told. It binds no sources and requires no facts \u2014 that is what a built-in gem does.", skillEmpty: "No skills of your own yet", gemsHint: "type / in the composer at any time", coverageLabel: "Data coverage",
     questionLabel: "Enter a compliance scenario", placeholder: "Describe the party, product, route, end user or payment arrangement…",
     slashHint: "Gem", composerNote: "Prototype output is for research and triage only and is not legal advice. Do not enter trade secrets or confidential transaction data.", itaAttribution: "This product uses the International Trade Administration\u2019s Data API but is not endorsed or certified by the International Trade Administration.",
     evidence: "Evidence & sources", evidenceEmpty: "After an analysis, cited sources, retrieval status and access time appear here.", sourceFellBack: "The page text was not retrieved, so only this source\u2019s own summary was used. List screening does not read these provision pages; it runs on the ingested records.",
@@ -197,6 +197,7 @@ const state = {
   historyPersistent: true,
   evidenceCollapsed: false,
   activeGem: null,
+  skills: [],
   palette: { open: false, items: [], index: 0 }
 };
 
@@ -357,6 +358,30 @@ function renderGemNav() {
         </button>
       </li>`).join("")
     : `<li class="gem-nav-empty">${esc(t("workspaceEmpty"))}</li>`;
+}
+
+async function loadSkills() {
+  try {
+    const response = await fetch("/api/skills");
+    if (!response.ok) return;
+    state.skills = (await response.json()).skills || [];
+  } catch { /* the workbench works without them */ }
+  renderSkillNav();
+}
+
+function renderSkillNav() {
+  $("skillNav").innerHTML = state.skills.length
+    ? state.skills.map((skill) => `
+      <li>
+        <button type="button" data-skill="${esc(skill.command)}" title="${esc(skill.summary)}">
+          <span class="gem-icon is-skill" aria-hidden="true">/</span>
+          <span class="gem-name">${esc(skill.name)}</span>
+        </button>
+        <button type="button" class="gem-drop" data-skill-delete="${esc(skill.id)}" title="${esc(t("skillDelete"))}" aria-label="${esc(t("skillDelete"))}">
+          <svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg>
+        </button>
+      </li>`).join("")
+    : `<li class="gem-nav-empty">${esc(t("skillEmpty"))}</li>`;
 }
 
 // The pipeline the question actually travels, drawn from the same tokens as
@@ -664,8 +689,15 @@ function paletteQuery() {
 }
 
 function openPalette(query) {
-  const items = matchGems(query);
-  state.palette = { open: true, items, index: 0 };
+  // Skills sit in the same list as gems because they share the one namespace the
+  // composer parses: a leading /token, and the reader is choosing what to run,
+  // not what kind of thing it is. They are grouped apart so the difference is
+  // still visible — a gem checks its inputs against bound sources, a skill is a
+  // procedure somebody wrote.
+  const needle = String(query || "").toLowerCase();
+  const skills = state.skills.filter((skill) => !needle
+    || skill.command.includes(needle) || skill.name.toLowerCase().includes(needle));
+  state.palette = { open: true, items: [...matchGems(query), ...skills], index: 0 };
   renderPalette();
 }
 
@@ -681,6 +713,7 @@ function renderPalette() {
   host.classList.remove("hidden");
   if (!items.length) { host.innerHTML = `<div class="palette-empty">${t("paletteEmpty")}</div>`; return; }
   const groups = Object.keys(GEM_GROUPS).filter((group) => items.some((gem) => gem.group === group));
+  const skills = items.filter((item) => item.procedure);
   host.innerHTML = groups.map((group) => `
     <div class="palette-group">
       <div class="palette-group-label">${esc(localized(GEM_GROUPS[group]))}</div>
@@ -692,6 +725,15 @@ function renderPalette() {
                 title="${esc(t(workspaceGemIds().includes(gem.id) ? "gemRemove" : "gemAdd"))}">★</span>
         </button>`).join("")}
     </div>`).join("")
+    + (skills.length ? `<div class="palette-group">
+      <div class="palette-group-label">${esc(t("skillsLabel"))}</div>
+      ${skills.map((skill) => `
+        <button type="button" class="palette-item ${items.indexOf(skill) === index ? "active" : ""}" data-skill="${esc(skill.command)}" role="option">
+          <span class="gem-icon is-skill" aria-hidden="true">/</span>
+          <span><strong>${esc(skill.name)}</strong><small>${esc(skill.summary)}</small></span>
+          <code class="palette-cmd">/${esc(skill.command)}</code>
+        </button>`).join("")}
+    </div>` : "")
     + `<div class="palette-foot"><span>${t("paletteNav")}</span><span>${t("paletteEnter")}</span><span>${t("paletteEsc")}</span></div>`;
   host.querySelector(".palette-item.active")?.scrollIntoView({ block: "nearest" });
 }
@@ -2793,6 +2835,16 @@ $("palette").addEventListener("click", (event) => {
     renderPalette();
     return toast(added ? t("gemAdded") : t("gemRemoved"));
   }
+  // The command, not the procedure. A skill runs by being typed, so choosing one
+  // does what typing it would have done and leaves the reader to write the
+  // question after it.
+  const skillPick = event.target.closest("[data-skill]");
+  if (skillPick) {
+    setComposer(`/${skillPick.dataset.skill} `);
+    closePalette();
+    $("questionInput").focus();
+    return;
+  }
   const button = event.target.closest("[data-gem]");
   if (!button) return;
   setComposer("");
@@ -3091,6 +3143,52 @@ $("questionForm").addEventListener("submit", (event) => {
   return analyze(event);
 });
 $("newChatBtn").addEventListener("click", newConversation);
+
+$("skillNav").addEventListener("click", (event) => {
+  const kill = event.target.closest("[data-skill-delete]");
+  if (kill) {
+    fetch(`/api/skills/${encodeURIComponent(kill.dataset.skillDelete)}`, { method: "DELETE" })
+      .then(() => loadSkills()).catch(() => toast(t("error")));
+    return;
+  }
+  const pick = event.target.closest("[data-skill]");
+  if (pick) {
+    setComposer(`/${pick.dataset.skill} `);
+    $("questionInput").focus();
+  }
+});
+
+$("skillAddBtn").addEventListener("click", () => {
+  $("skillForm").reset();
+  $("skillError").classList.add("hidden");
+  $("skillDialog").showModal();
+});
+$("skillCancel").addEventListener("click", () => $("skillDialog").close());
+$("skillForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const body = {
+    name: $("skillNameInput").value,
+    command: $("skillCommandInput").value,
+    summary: $("skillSummaryInput").value,
+    procedure: $("skillProcedureInput").value
+  };
+  try {
+    const response = await fetch("/api/skills", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body)
+    });
+    const data = await response.json().catch(() => ({}));
+    // The server's own message, not a generic one: it is the only thing that
+    // knows the command collided with a built-in gem rather than being malformed.
+    if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+    $("skillDialog").close();
+    toast(t("skillSaved"));
+    await loadSkills();
+  } catch (error) {
+    const box = $("skillError");
+    box.textContent = error.message;
+    box.classList.remove("hidden");
+  }
+});
 $("zhBtn").addEventListener("click", () => applyLocale("zh"));
 $("enBtn").addEventListener("click", () => applyLocale("en"));
 $("themeBtn").addEventListener("click", () => setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark"));
@@ -3131,6 +3229,7 @@ setRail(state.rail);
 setEvidenceCollapsed(state.evidenceCollapsed);
 applyLocale(state.locale);
 renderEvidence([]);
+loadSkills();
 renderFlowPanel(null);
 syncSubmitState();
 loadRuntimeCapabilities();
