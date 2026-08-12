@@ -1,4 +1,4 @@
-import { GEMS, GEM_BY_ID, GEM_GROUPS, factCoverage, matchGems, toggleWorkspaceGem, workspaceGemIds } from "/gems.js";
+import { GEMS, GEM_BY_ID, GEM_GROUPS, allGems, factCoverage, factLabel, matchGems, setCustomGems, toggleWorkspaceGem, workspaceGemIds } from "/gems.js";
 import { EVIDENCE_STATUS, FOLDED, SETTLED_STATUS, STEP_STATUS_VOCAB, currentStepId, firstBlockedStep as blockedStep, isAskable as askable, isDone, label, laneQuestion, laneView, stepState as state_, tone, visibleLanes } from "/status-vocabulary.js";
 import { AGENT_META, judgeIntent } from "/intent.js";
 
@@ -8,7 +8,7 @@ const i18n = {
     scenarioLibrary: "测试场景", guideLink: "使用说明", scenarioHelp: "场景只填入输入框，不会新建对话。",
     startTitle: "描述交易，或用 / 选择一个 Gem",
     startLead: "范围为美国与中国的出口管制。Master Agent 自动路由到贸易、产品和第三方尽调 Agent，返回一份带证据链的统一答案。",
-    gemsLabel: "GEMS", skillsLabel: "自建 Skill", skillNew: "新建 Skill", skillName: "名称", skillCommand: "斜杠命令", skillSummary: "一句话说明", skillProcedure: "标准提示词 / SOP", skillSave: "保存", skillDelete: "删除", skillSaved: "已保存", skillNote: "Skill 只是追加给模型的一段流程说明。它不绑定数据源、也不设必填事实——那是内置 Gem 才做的事。", skillEmpty: "还没有自建 Skill", gemsHint: "在输入框键入 / 可随时调用", coverageLabel: "数据覆盖",
+    gemsLabel: "GEMS", skillsLabel: "自建 Skill", skillNew: "新建 Skill", skillName: "名称", skillCommand: "斜杠命令", skillSummary: "一句话说明", skillProcedure: "标准提示词 / SOP", skillSave: "保存", skillDelete: "删除", cancel: "取消", skillSaved: "已保存", skillNote: "Skill 只是追加给模型的一段流程说明。它不绑定数据源、也不设必填事实——那是内置 Gem 才做的事。", skillEmpty: "还没有自建 Skill", gemNew: "新建 Gem", gemSaved: "Gem 已保存", gemNote: "Gem 比 Skill 多三样：可用的数据源、提交前就会检查的必填事实、以及给三条专业线的指令。", gemInstruction: "给专业线的指令", gemSources: "可用数据源", gemSourcesHint: "勾选后，问题里会写明只依据这些来源", gemFactsLabel: "必填事实", gemFactsHint: "填名称和会出现在描述里的词；提交前据此提示还缺什么", gemFactAdd: "＋ 加一项", gemFactName: "名称，如：最终用户", gemFactWords: "关键词，用、分隔", gemsHint: "在输入框键入 / 可随时调用", coverageLabel: "数据覆盖",
     questionLabel: "输入合规情景", placeholder: "描述交易方、产品、路线、最终用户或付款安排……",
     slashHint: "Gem", composerNote: "原型输出仅用于研究与风险分流，不构成法律意见。请勿输入商业秘密或未公开交易数据。", itaAttribution: "This product uses the International Trade Administration\u2019s Data API but is not endorsed or certified by the International Trade Administration.",
     evidence: "证据与来源", evidenceEmpty: "完成一次分析后，这里显示引用来源、获取状态与访问时间。", sourceFellBack: "未取到页面正文，本次只用了该来源的摘要。名单筛查不读这些条文页，用的是已同步的名单记录。",
@@ -69,7 +69,7 @@ const i18n = {
     scenarioLibrary: "Test scenarios", guideLink: "Guide", scenarioHelp: "Scenarios only fill the composer; they do not start a new thread.",
     startTitle: "Describe the transaction, or press / for a gem",
     startLead: "Scope is US and PRC export control. The Master Agent routes to the trade, product and third-party diligence agents and returns one answer with its evidence chain.",
-    gemsLabel: "GEMS", skillsLabel: "Your skills", skillNew: "New skill", skillName: "Name", skillCommand: "Slash command", skillSummary: "One-line description", skillProcedure: "Standard prompt / SOP", skillSave: "Save", skillDelete: "Delete", skillSaved: "Saved", skillNote: "A skill is a procedure appended to what the model is already told. It binds no sources and requires no facts \u2014 that is what a built-in gem does.", skillEmpty: "No skills of your own yet", gemsHint: "type / in the composer at any time", coverageLabel: "Data coverage",
+    gemsLabel: "GEMS", skillsLabel: "Your skills", skillNew: "New skill", skillName: "Name", skillCommand: "Slash command", skillSummary: "One-line description", skillProcedure: "Standard prompt / SOP", skillSave: "Save", skillDelete: "Delete", cancel: "Cancel", skillSaved: "Saved", skillNote: "A skill is a procedure appended to what the model is already told. It binds no sources and requires no facts \u2014 that is what a built-in gem does.", skillEmpty: "No skills of your own yet", gemNew: "New gem", gemSaved: "Gem saved", gemNote: "A gem carries three things a skill does not: the sources it may use, the facts checked before you submit, and the instruction the specialists get.", gemInstruction: "Instruction for the specialists", gemSources: "Sources it may use", gemSourcesHint: "The question will say to rely on these only", gemFactsLabel: "Required facts", gemFactsHint: "A name and the words a draft carrying it would use; the composer flags what is missing", gemFactAdd: "+ Add one", gemFactName: "Name, e.g. end user", gemFactWords: "Keywords, comma separated", gemsHint: "type / in the composer at any time", coverageLabel: "Data coverage",
     questionLabel: "Enter a compliance scenario", placeholder: "Describe the party, product, route, end user or payment arrangement…",
     slashHint: "Gem", composerNote: "Prototype output is for research and triage only and is not legal advice. Do not enter trade secrets or confidential transaction data.", itaAttribution: "This product uses the International Trade Administration\u2019s Data API but is not endorsed or certified by the International Trade Administration.",
     evidence: "Evidence & sources", evidenceEmpty: "After an analysis, cited sources, retrieval status and access time appear here.", sourceFellBack: "The page text was not retrieved, so only this source\u2019s own summary was used. List screening does not read these provision pages; it runs on the ingested records.",
@@ -198,6 +198,7 @@ const state = {
   evidenceCollapsed: false,
   activeGem: null,
   skills: [],
+  sourceOptions: [],
   palette: { open: false, items: [], index: 0 }
 };
 
@@ -348,7 +349,7 @@ function renderGemNav() {
   // The sidebar is the workspace, not the catalogue — the palette is the
   // catalogue. Showing all eight here made pinning meaningless, because it only
   // reordered a list that already held everything.
-  const shown = GEMS.filter((gem) => pinned.includes(gem.id) || state.activeGem?.id === gem.id);
+  const shown = allGems().filter((gem) => pinned.includes(gem.id) || state.activeGem?.id === gem.id);
   $("gemNav").innerHTML = shown.length
     ? shown.map((gem) => `
       <li>
@@ -358,6 +359,20 @@ function renderGemNav() {
         </button>
       </li>`).join("")
     : `<li class="gem-nav-empty">${esc(t("workspaceEmpty"))}</li>`;
+}
+
+async function loadGems() {
+  try {
+    const response = await fetch("/api/gems");
+    if (!response.ok) return;
+    const data = await response.json();
+    // Handed to the shared module rather than kept here: the composer, the
+    // palette, the sidebar and the guide all read the catalogue from there, and
+    // a second list on this side is how they would come to disagree.
+    setCustomGems(data.gems || []);
+    state.sourceOptions = data.sources || [];
+  } catch { /* the built-in eight are enough to work with */ }
+  renderGemNav();
 }
 
 async function loadSkills() {
@@ -583,7 +598,7 @@ function renderActiveGem() {
     </button>
     ${state.factsOpen ? `
       <div class="facts-panel">
-        <ul>${facts.map((fact) => `<li class="${fact.met ? "met" : ""}">${esc(localized({ zh: fact.zh, en: fact.en }))}</li>`).join("")}</ul>
+        <ul>${facts.map((fact) => `<li class="${fact.met ? "met" : ""}">${esc(factLabel(fact, state.locale))}</li>`).join("")}</ul>
         <div class="facts-sources">${gem.boundSources.length ? `${t("boundLabel")}: ${gem.boundSources.map(esc).join(" · ")}` : t("gemNoSources")}</div>
       </div>` : ""}`;
   renderGemNav();
@@ -776,7 +791,7 @@ function openGemDetail(gemId) {
       <div class="gem-spec-row"><dt>${t("gemSources")}</dt><dd>${gem.boundSources.length
         ? `<div class="chip-row">${gem.boundSources.map((id) => `<span class="chip mono">${esc(id)}</span>`).join("")}</div>`
         : esc(t("gemNoSources"))}</dd></div>
-      <div class="gem-spec-row"><dt>${t("gemFacts")}</dt><dd><div class="chip-row">${gem.requiredFacts.map((fact) => `<span class="chip">${esc(localized({ zh: fact.zh, en: fact.en }))}</span>`).join("")}</div></dd></div>
+      <div class="gem-spec-row"><dt>${t("gemFacts")}</dt><dd><div class="chip-row">${gem.requiredFacts.map((fact) => `<span class="chip">${esc(factLabel(fact, state.locale))}</span>`).join("")}</div></dd></div>
       <div class="gem-spec-row"><dt>${t("gemOutput")}</dt><dd>${esc(localized(gem.outputTemplate))}</dd></div>
       <div class="gem-spec-row"><dt>${t("gemBacking")}</dt><dd>${gemBackingMarkup(gem)}</dd></div>
     </dl>
@@ -3158,6 +3173,79 @@ $("skillNav").addEventListener("click", (event) => {
   }
 });
 
+// A gem is four fields, so the dialog is four sections rather than one form of
+// eight inputs. The sources are checkboxes over the real registry — an id typed
+// by hand is a line in the prompt naming a source that does not exist — and a
+// required fact is a label and the words that would appear in a draft carrying
+// it, which is the part a regular expression was doing and nobody can be asked
+// to write.
+function renderGemSourcePicker() {
+  const groups = {};
+  for (const source of state.sourceOptions) (groups[source.country || "—"] ||= []).push(source);
+  $("gemSourcePicker").innerHTML = Object.entries(groups).sort((a, b) => b[1].length - a[1].length)
+    .map(([country, list]) => `
+      <div class="sp-group"><span class="sp-country">${esc(country)}</span>
+        ${list.map((source) => `
+          <label class="sp-item" title="${esc(source.sourceName || source.sourceId)}">
+            <input type="checkbox" value="${esc(source.sourceId)}">
+            <code>${esc(source.sourceId)}</code>
+          </label>`).join("")}
+      </div>`).join("");
+}
+
+function addGemFactRow(fact = {}) {
+  $("gemFactRows").insertAdjacentHTML("beforeend", `
+    <div class="fact-row">
+      <input class="fact-label" maxlength="40" placeholder="${esc(t("gemFactName"))}" value="${esc(fact.label || "")}">
+      <input class="fact-keywords" maxlength="240" placeholder="${esc(t("gemFactWords"))}" value="${esc((fact.keywords || []).join("、"))}">
+      <button type="button" class="gem-drop" data-fact-drop aria-label="${esc(t("skillDelete"))}">
+        <svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg>
+      </button>
+    </div>`);
+}
+
+$("gemAddBtn").addEventListener("click", () => {
+  $("gemForm").reset();
+  $("gemError").classList.add("hidden");
+  $("gemFactRows").innerHTML = "";
+  renderGemSourcePicker();
+  addGemFactRow();
+  $("gemDialog").showModal();
+});
+$("gemCancel").addEventListener("click", () => $("gemDialog").close());
+$("gemFactAdd").addEventListener("click", () => addGemFactRow());
+$("gemFactRows").addEventListener("click", (event) => {
+  event.target.closest("[data-fact-drop]")?.closest(".fact-row")?.remove();
+});
+$("gemForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const body = {
+    name: $("gemNameInput").value,
+    command: $("gemCommandInput").value,
+    summary: $("gemSummaryInput").value,
+    instruction: $("gemInstructionInput").value,
+    boundSources: [...$("gemSourcePicker").querySelectorAll("input:checked")].map((box) => box.value),
+    requiredFacts: [...$("gemFactRows").querySelectorAll(".fact-row")].map((row) => ({
+      label: row.querySelector(".fact-label").value,
+      keywords: row.querySelector(".fact-keywords").value.split(/[、,，\s]+/).filter(Boolean)
+    })).filter((fact) => fact.label.trim())
+  };
+  try {
+    const response = await fetch("/api/gems", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body)
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+    $("gemDialog").close();
+    toast(t("gemSaved"));
+    await loadGems();
+  } catch (error) {
+    const box = $("gemError");
+    box.textContent = error.message;
+    box.classList.remove("hidden");
+  }
+});
+
 $("skillAddBtn").addEventListener("click", () => {
   $("skillForm").reset();
   $("skillError").classList.add("hidden");
@@ -3229,6 +3317,7 @@ setRail(state.rail);
 setEvidenceCollapsed(state.evidenceCollapsed);
 applyLocale(state.locale);
 renderEvidence([]);
+loadGems();
 loadSkills();
 renderFlowPanel(null);
 syncSubmitState();

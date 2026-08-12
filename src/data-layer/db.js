@@ -145,6 +145,16 @@ CREATE TABLE IF NOT EXISTS skills (
   payload     TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS skills_by_age ON skills (created_at);
+
+-- A gem the reader built: the same four fields the built-in eight carry, with
+-- requiredFacts written as keywords rather than regular expressions.
+CREATE TABLE IF NOT EXISTS custom_gems (
+  gem_id      TEXT PRIMARY KEY,
+  command     TEXT NOT NULL UNIQUE,
+  created_at  TEXT NOT NULL,
+  payload     TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS custom_gems_by_age ON custom_gems (created_at);
 `;
 
 export const REQUIRED_NODE_MAJOR = 24;

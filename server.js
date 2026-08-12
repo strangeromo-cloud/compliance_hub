@@ -5,6 +5,8 @@ import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 import { assessScenario } from "./src/orchestrator.js";
 import { createSkill, deleteSkill, listSkills, parseInvocation } from "./src/skills.js";
+import { createCustomGem, deleteCustomGem, listCustomGems } from "./src/gems-custom.js";
+import { DATA_SOURCE_REGISTRY } from "./src/data-source-registry.js";
 import { classifyModelError, testModelConnection } from "./src/llm.js";
 import { getDataSourceCoverage, queryDataSource, syncSource } from "./src/data-layer/service.js";
 import { deleteThread, evolutionSignals, listThreads, readThread, saveCase, storageDurability } from "./src/case-store.js";
@@ -374,6 +376,22 @@ const server = createServer(async (request, response) => {
         send({ type: "error", error: String(error.message || "Analysis failed.").slice(0, 300), code: error.modelError?.code || null });
       }
       return response.end();
+    }
+
+    if (request.method === "GET" && url.pathname === "/api/gems") {
+      return sendJson(response, 200, { gems: listCustomGems(), sources: DATA_SOURCE_REGISTRY.map(({ sourceId, sourceName, country }) => ({ sourceId, sourceName, country })) });
+    }
+
+    if (request.method === "POST" && url.pathname === "/api/gems") {
+      requireModelAccess(request);
+      return sendJson(response, 201, { gem: createCustomGem(await readJson(request)) });
+    }
+
+    if (request.method === "DELETE" && url.pathname.startsWith("/api/gems/")) {
+      requireModelAccess(request);
+      const removed = deleteCustomGem(decodeURIComponent(url.pathname.slice("/api/gems/".length)));
+      if (!removed) throw Object.assign(new Error("No such gem."), { status: 404 });
+      return sendJson(response, 200, { deleted: true });
     }
 
     if (request.method === "GET" && url.pathname === "/api/skills") {

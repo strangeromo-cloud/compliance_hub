@@ -217,6 +217,24 @@ kbd { font-family: var(--mono); border: 1px solid var(--border-strong); border-r
 .card-note { font-size: 11.5px; line-height: 1.7; color: var(--text-3); margin: -2px 0 4px; }
 .card-error { font-size: 11.5px; color: var(--risk-high); margin: 2px 0 0; }
 .card-error.hidden { display: none; }
+/* A gem is four sections, not eight inputs in a column. */
+.card-wide { width: min(620px, calc(100vw - 32px)); }
+.field-row { display: grid; grid-template-columns: 1fr 200px; gap: 10px; }
+.field-hint { display: block; font-size: 10.5px; font-weight: 400; color: var(--text-3); margin: -2px 0 4px; }
+.source-picker { max-height: 150px; overflow-y: auto; scrollbar-width: thin; border: 1px solid var(--border); border-radius: var(--radius); padding: 7px 8px; display: grid; gap: 7px; }
+.sp-group { display: flex; flex-wrap: wrap; gap: 4px; align-items: baseline; }
+.sp-country { font: 600 9.5px/1.6 var(--mono); color: var(--text-3); min-width: 44px; }
+.sp-item { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; font-size: 10.5px; padding: 2px 7px 2px 5px; border: 1px solid var(--border); border-radius: 999px; cursor: pointer; }
+.sp-item:hover { border-color: var(--border-strong); }
+.sp-item input { margin: 0; width: 11px; height: 11px; flex: 0 0 auto; }
+.sp-item code { font-size: 10px; color: var(--text-2); }
+.sp-item:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.fact-row { display: grid; grid-template-columns: 150px 1fr auto; gap: 6px; align-items: center; margin-bottom: 5px; }
+.fact-row input { height: 30px; padding: 0 9px; border: 1px solid var(--border-strong); border-radius: var(--radius); background: var(--surface-2); outline: none; font-size: 12px; }
+.fact-row input:focus { border-color: var(--accent); }
+.card textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--border-strong); border-radius: var(--radius); background: var(--surface-2); outline: none; font: inherit; resize: vertical; }
+.card textarea:focus { border-color: var(--accent); }
+.btn-small { height: 24px; padding: 0 9px; font-size: 11px; }
 
 .sidebar-foot { flex: 0 0 auto; border-top: 1px solid var(--border); padding: 6px 8px 8px; display: grid; gap: 1px; }
 .side-item {

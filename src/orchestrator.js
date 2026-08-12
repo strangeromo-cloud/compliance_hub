@@ -4,6 +4,7 @@ import { retrievePublicSources } from "./retrieval.js";
 import { callJsonModel, callJsonModelStream, readableProjection } from "./llm.js";
 import { assessClearance } from "./clearance.js";
 import { skillBrief } from "./skills.js";
+import { customGemKind } from "./gems-custom.js";
 import { resolveLookup } from "./lookup.js";
 import { localizePath, localizeLines, localizeLine } from "./path-i18n.js";
 import { buildBriefing } from "./briefing.js";
@@ -545,7 +546,10 @@ export async function assessScenario({ question, locale = "zh", config = {}, his
   // through one produced a party-screening step for a question with no party in
   // it — the gem said which lane to open with and nothing said whether to open
   // any.
-  const kind = GEM_KINDS[gemId] || null;
+  // A custom gem's kind lives in the database, not in the frozen table built
+  // from the eight. Without this a gem created as a lookup would run the whole
+  // review procedure — the one decision this value makes.
+  const kind = GEM_KINDS[gemId] || customGemKind(gemId) || null;
   if (kind === "briefing") return await answerBriefing({ question, locale, onEvent, gemId });
   if (kind === "memo") return await answerMemo({ question, locale, history, onEvent, gemId });
 

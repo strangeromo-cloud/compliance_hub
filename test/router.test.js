@@ -432,3 +432,53 @@ test("a skill is text a reader wrote, and reaches the model as that", async () =
   // against bound sources.
   assert.match(source, /GEM_COMMANDS\.has\(command\)/);
 });
+
+test("a custom gem carries the four fields a gem's code consumes", async () => {
+  // The difference from a skill is not the form it is created through, it is
+  // that all four of these are read: kind decides whether a review procedure
+  // runs at all, instruction and boundSources open the question sent to the
+  // model, and requiredFacts is what lets the composer say what is missing
+  // before anything is submitted. A "gem" carrying only instructions would sit
+  // in the same list as the built-in eight and do none of it.
+  const { readFile } = await import("node:fs/promises");
+  const source = await readFile(new URL("../src/gems-custom.js", import.meta.url), "utf8");
+
+  // The registry, not the caller's word for it. An id that is not a source is a
+  // line in the prompt telling the model to rely on something it cannot see.
+  assert.match(source, /const unknown = boundSources\.filter/);
+  assert.match(source, /KNOWN_SOURCES\.has/);
+  assert.match(source, /BUILTIN_COMMANDS\.has\(command\)/,
+    "and it cannot take a built-in gem's command");
+
+  // Keywords rather than regular expressions, escaped because they are words
+  // somebody typed.
+  assert.match(source, /escapeForRegex/);
+  assert.match(source, /至少需要一个关键词/);
+
+  // The kind has to be answerable for a custom gem too, or a lookup silently
+  // runs the whole procedure.
+  assert.match(source, /export function customGemKind/);
+
+  const orchestrator = await readFile(new URL("../src/orchestrator.js", import.meta.url), "utf8");
+  assert.match(orchestrator, /GEM_KINDS\[gemId\] \|\| customGemKind\(gemId\)/);
+});
+
+test("one fact rule serves both kinds of gem", async () => {
+  // The built-in eight carry regular expressions and a custom gem carries words.
+  // Both answer "does this draft appear to supply it", so both are answered in
+  // the shared module — two call sites deciding it separately is how the sidebar
+  // and the composer come to disagree about one draft.
+  const { factCoverage, factLabel } = await import("../public/gems.js");
+
+  const builtin = { requiredFacts: [{ key: "a", zh: "注册号", en: "Registration", match: /注册号|[0-9A-Z]{9,20}/ }] };
+  const custom = { requiredFacts: [{ key: "b", label: "最终用户", keywords: ["最终用户", "end user"] }] };
+
+  assert.equal(factCoverage(builtin, "统一社会信用代码 91440300778812XKA")[0].met, true);
+  assert.equal(factCoverage(builtin, "客户在深圳")[0].met, false);
+  assert.equal(factCoverage(custom, "最终用户为某数据中心")[0].met, true);
+  assert.equal(factCoverage(custom, "END USER is a data centre")[0].met, true, "keywords match case-insensitively");
+  assert.equal(factCoverage(custom, "经香港转口")[0].met, false);
+
+  assert.equal(factLabel(builtin.requiredFacts[0], "zh"), "注册号");
+  assert.equal(factLabel(custom.requiredFacts[0], "zh"), "最终用户");
+});

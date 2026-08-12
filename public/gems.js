@@ -21,6 +21,7 @@
 // model quietly guessing and the gap only surfacing in the answer.
 
 export const GEM_GROUPS = {
+  custom: { zh: "自建", en: "Yours" },
   screening: { zh: "名单筛查", en: "Screening" },
   classification: { zh: "物项与许可", en: "Item & licence" },
   diligence: { zh: "第三方尽调", en: "Third-party diligence" },
@@ -226,21 +227,54 @@ export const GEMS = [
 
 export const GEM_BY_ID = new Map(GEMS.map((gem) => [gem.id, gem]));
 
+// The eight plus whatever the reader built. The custom ones are loaded at
+// runtime and handed in here, so every lookup below sees one catalogue: a gem is
+// a gem to the composer, the palette and the sidebar, and only the badge on its
+// card says which kind of thing wrote it.
+let customGems = [];
+export function setCustomGems(list) {
+  customGems = Array.isArray(list) ? list : [];
+  for (const gem of customGems) GEM_BY_ID.set(gem.id, gem);
+}
+export const allGems = () => [...GEMS, ...customGems];
+
 // Which required facts the current draft appears to supply. This is a drafting
 // aid, not a validation gate: it never blocks submission, because a heuristic
 // must not be able to stop a user from asking a question.
 export function factCoverage(gem, text) {
   const value = String(text || "");
-  return gem.requiredFacts.map((fact) => ({ ...fact, met: fact.match.test(value) }));
+  return (gem.requiredFacts || []).map((fact) => ({ ...fact, met: factMet(fact, value) }));
+}
+
+// A built-in fact carries a regular expression; one a reader wrote carries a
+// list of words. Both answer the same question — does the draft appear to supply
+// this — so both are answered here rather than at the two call sites, which is
+// how the sidebar and the composer would come to disagree about the same draft.
+//
+// The keyword form is looser on purpose: /[0-9A-Z]{9,20}/ notices a registration
+// number nobody named, a word list does not. It costs a prompt, never an answer,
+// because this has never been allowed to block a submission.
+function factMet(fact, value) {
+  if (fact.match instanceof RegExp) return fact.match.test(value);
+  const words = Array.isArray(fact.keywords) ? fact.keywords : [];
+  return words.some((word) => word && value.toLowerCase().includes(String(word).toLowerCase()));
+}
+
+// The label of a fact, whichever form it is in. The built-in eight carry zh/en;
+// a custom one carries one label, in whatever language it was written.
+export function factLabel(fact, locale = "zh") {
+  return fact.label || fact[locale] || fact.zh || fact.key || "";
 }
 
 export function matchGems(query) {
   const needle = String(query || "").replace(/^\//, "").toLowerCase().trim();
-  if (!needle) return GEMS;
-  return GEMS.filter((gem) =>
+  if (!needle) return allGems();
+  return allGems().filter((gem) =>
     gem.command.slice(1).toLowerCase().includes(needle)
     || gem.id.includes(needle)
-    || Object.values(gem.name).some((name) => name.toLowerCase().includes(needle))
+    || (typeof gem.name === "string"
+      ? gem.name.toLowerCase().includes(needle)
+      : Object.values(gem.name).some((name) => name.toLowerCase().includes(needle)))
   );
 }
 
