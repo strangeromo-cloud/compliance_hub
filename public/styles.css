@@ -224,6 +224,11 @@ kbd { font-family: var(--mono); border: 1px solid var(--border-strong); border-r
 .card-wide { width: min(620px, calc(100vw - 32px)); }
 .field-row { display: grid; grid-template-columns: 1fr 200px; gap: 10px; }
 .field-hint { display: block; font-size: 10.5px; font-weight: 400; color: var(--text-3); margin: -2px 0 4px; }
+/* Which four of the six a form will not accept without. Marked on the label
+   rather than left to the browser's own message, which only appears after
+   somebody has already pressed save. */
+.field.req > span:first-of-type::after { content: " *"; color: var(--risk-medium); font-weight: 600; }
+.field.opt > span:first-of-type::after { content: attr(data-optional); margin-left: 6px; font-size: 9.5px; font-weight: 400; letter-spacing: .04em; color: var(--text-3); border: 1px solid var(--border); border-radius: 3px; padding: 0 4px; }
 .source-picker { max-height: 150px; overflow-y: auto; scrollbar-width: thin; border: 1px solid var(--border); border-radius: var(--radius); padding: 7px 8px; display: grid; gap: 7px; }
 .sp-group { display: flex; flex-wrap: wrap; gap: 4px; align-items: baseline; }
 .sp-country { font: 600 9.5px/1.6 var(--mono); color: var(--text-3); min-width: 44px; }

@@ -175,19 +175,19 @@
       <h3 data-i18n="gemNew">新建 Gem</h3>
       <p class="card-note" data-i18n="gemNote"></p>
       <div class="field-row">
-        <label class="field"><span data-i18n="skillName">名称</span><input id="gemNameInput" maxlength="80" required></label>
-        <label class="field"><span data-i18n="skillCommand">斜杠命令</span>
+        <label class="field req"><span data-i18n="skillName">名称</span><input id="gemNameInput" maxlength="80" required></label>
+        <label class="field req"><span data-i18n="skillCommand">斜杠命令</span>
           <input id="gemCommandInput" maxlength="40" required placeholder="cn-reexport" pattern="[a-zA-Z0-9][a-zA-Z0-9-]{1,39}"></label>
       </div>
-      <label class="field"><span data-i18n="skillSummary">一句话说明</span><input id="gemSummaryInput" maxlength="240" required></label>
-      <label class="field"><span data-i18n="gemInstruction">给专业线的指令</span>
+      <label class="field req"><span data-i18n="skillSummary">一句话说明</span><input id="gemSummaryInput" maxlength="240" required></label>
+      <label class="field req"><span data-i18n="gemInstruction">给专业线的指令</span>
         <textarea id="gemInstructionInput" rows="5" maxlength="6000" required></textarea></label>
 
-      <label class="field"><span data-i18n="gemSources">可用数据源</span>
+      <label class="field opt"><span data-i18n="gemSources">可用数据源</span>
         <span class="field-hint" data-i18n="gemSourcesHint"></span>
         <div class="source-picker" id="gemSourcePicker"></div></label>
 
-      <label class="field"><span data-i18n="gemFactsLabel">必填事实</span>
+      <label class="field opt"><span data-i18n="gemFactsLabel">问题需包含的事实</span>
         <span class="field-hint" data-i18n="gemFactsHint"></span>
         <div id="gemFactRows"></div>
         <button type="button" class="btn btn-small" id="gemFactAdd" data-i18n="gemFactAdd">＋ 加一项</button></label>
@@ -204,13 +204,13 @@
     <form class="card" method="dialog" id="skillForm">
       <h3 data-i18n="skillNew">新建 Skill</h3>
       <p class="card-note" data-i18n="skillNote"></p>
-      <label class="field"><span data-i18n="skillName">名称</span>
+      <label class="field req"><span data-i18n="skillName">名称</span>
         <input id="skillNameInput" maxlength="80" required></label>
-      <label class="field"><span data-i18n="skillCommand">斜杠命令</span>
+      <label class="field req"><span data-i18n="skillCommand">斜杠命令</span>
         <input id="skillCommandInput" maxlength="40" required placeholder="tpdd-quick" pattern="[a-zA-Z0-9][a-zA-Z0-9-]{1,39}"></label>
-      <label class="field"><span data-i18n="skillSummary">一句话说明</span>
+      <label class="field req"><span data-i18n="skillSummary">一句话说明</span>
         <input id="skillSummaryInput" maxlength="240" required></label>
-      <label class="field"><span data-i18n="skillProcedure">标准提示词 / SOP</span>
+      <label class="field req"><span data-i18n="skillProcedure">标准提示词 / SOP</span>
         <textarea id="skillProcedureInput" rows="7" maxlength="6000" required></textarea></label>
       <p class="card-error hidden" id="skillError"></p>
       <div class="card-actions">
