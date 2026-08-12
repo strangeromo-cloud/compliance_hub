@@ -112,3 +112,33 @@ test("live H100 ECCN query removes route analysis from specialist trace", async 
   assert.deepEqual(result.sources.map((source) => source.id), ["bis-classify", "nvidia-export"]);
   assert.ok(prompts.some((prompt) => prompt.includes("narrow factual product-classification query")));
 });
+
+test("the answer is asked to answer the question, not only to rate it", async () => {
+  // A three-part request for guidance — how to confirm the signing entity, which
+  // list restrictions could apply, what to check separately for services,
+  // software updates and technical access — is answered by none of a risk level,
+  // a step list and a clearance verdict. The shape had a flat three-section cap
+  // written for a review with one thing to say, and a question with three
+  // questions in it lost two of them.
+  //
+  // Pinned on the instruction rather than on a model's output: this file cannot
+  // reach a model, and an instruction quietly dropped is exactly how the answer
+  // goes back to rating instead of answering.
+  const { readFile } = await import("node:fs/promises");
+  const source = await readFile(new URL("../src/orchestrator.js", import.meta.url), "utf8");
+
+  assert.match(source, /Read the question for every distinct thing it asks/,
+    "the synthesis is told to find every question in the question");
+  assert.match(source, /answer each one in its own section/);
+  assert.match(source, /Answer them before the assessment, not instead of it/,
+    "and to answer before rating, which is the failure this exists to stop");
+  assert.match(source, /keep them separate in the answer too/,
+    "cases the question separates stay separate in the answer");
+  assert.doesNotMatch(source, /at most three sections/,
+    "no flat cap on sections: the number of questions decides it, brevity is per line");
+  assert.match(source, /at most three lines under any heading/,
+    "brevity moved to the line, where it costs nothing that was asked for");
+
+  assert.match(source, /Answer what the question asks of your lane before anything else/,
+    "each specialist answers its part of the question too");
+});

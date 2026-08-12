@@ -67,6 +67,8 @@ Return a single JSON object with exactly this shape:
   "recommendedActions": ["..."]
 }
 
+Answer what the question asks of your lane before anything else. If it asks how to establish or verify something, say what to obtain and what distinguishes the cases it names; do not substitute a risk rating for an answer.
+
 Be brief. summary is one sentence. Give at most three findings, each a title plus one or two sentences — the reason and what it rests on, nothing restated from another finding and no repetition of the caveats above. Say a thing once.
 
 Use unknown when facts are insufficient. A source being unavailable is not evidence of no risk. This prototype supports human review and must not provide final legal advice.`;
@@ -194,13 +196,26 @@ function clearanceBrief(clearance) {
 //
 // Markdown, not HTML: everything is escaped before any tag is applied, so no
 // model output can inject markup.
-const SUMMARY_SHAPE = "Write executiveSummary as short markdown sections, not as one paragraph. "
-  + "Use a bold line as a section heading (for example **结论** / **依据**, or **Conclusion** / **Basis**), "
-  + "and a hyphen list under a heading where there is more than one item. "
+// The question is answered first, and every part of it.
+//
+// A compliance review is not always what is being asked for. "How do we confirm
+// which entity we are signing with, which list restrictions could apply to it,
+// and what to check separately for services, software updates and technical
+// access" is three requests for guidance; a risk verdict answers none of them.
+// The shape was capped at three sections on the reasoning that an answer had one
+// thing to say, which crowded a three-part question down to a verdict and left
+// the reader to work out that their questions had gone unanswered.
+//
+// So the cap is per line, not per question: one section for each thing asked,
+// each kept short, and the assessment after them rather than instead of them.
+const SUMMARY_SHAPE = "Read the question for every distinct thing it asks — they are often joined by 以及/、/and or written as a list — and answer each one in its own section, headed by the thing asked. "
+  + "Answer them before the assessment, not instead of it: a question asking how to do something wants the steps, the documents and what distinguishes the cases, not a risk rating. "
+  + "Where the question separates cases — services against software updates against technical access, one entity against another — keep them separate in the answer too, because what differs between them is the thing being asked about. "
+  + "Then a short **结论** / **Conclusion** giving the assessment. "
+  + "Write it as markdown, not one paragraph: a bold line as a section heading, and a hyphen list under a heading where there is more than one item. "
   + "Put the provision or source in parentheses at the end of the line it supports. "
-  + "Omit a section that has nothing in it rather than writing that it is empty. Keep each line to one point. "
-  + "Be brief: at most three sections, at most three lines under any heading, one sentence per line. "
-  + "The specialists' findings, the step list and the exact facts still missing are all shown to the reader elsewhere in the same answer. Do not restate them and do not write a section listing what is outstanding — say what the findings add up to.";
+  + "Keep each line to one point and at most three lines under any heading; omit a section that has nothing in it rather than writing that it is empty. "
+  + "The specialists' findings, the step list and the exact facts still missing are all shown to the reader elsewhere in the same answer. Do not restate them and do not write a section listing what is outstanding.";
 
 async function synthesize(question, locale, results, config, history, grounding, onDelta, outstanding = []) {
   const language = locale === "en" ? "English" : "Simplified Chinese";
