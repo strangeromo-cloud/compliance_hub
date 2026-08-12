@@ -11,7 +11,7 @@ const i18n = {
     gemsLabel: "GEMS", gemsHint: "在输入框键入 / 可随时调用", coverageLabel: "数据覆盖",
     questionLabel: "输入合规情景", placeholder: "描述交易方、产品、路线、最终用户或付款安排……",
     slashHint: "Gem", composerNote: "原型输出仅用于研究与风险分流，不构成法律意见。请勿输入商业秘密或未公开交易数据。", itaAttribution: "This product uses the International Trade Administration\u2019s Data API but is not endorsed or certified by the International Trade Administration.",
-    evidence: "证据与来源", evidenceEmpty: "完成一次分析后，这里显示引用来源、获取状态与访问时间。",
+    evidence: "证据与来源", evidenceEmpty: "完成一次分析后，这里显示引用来源、获取状态与访问时间。", sourceFellBack: "未取到页面正文，本次只用了该来源的摘要。名单筛查不读这些条文页，用的是已同步的名单记录。",
     modelSettings: "模型配置", settingsIntro: "支持 OpenAI-compatible Chat Completions API。", settingsIntroServer: "本部署的模型由服务器提供。你只需填写访问口令。", settingsIntroBlocked: "本部署已配置模型，但服务器未设置访问口令，因此实时模型不可用。", accessSettings: "访问设置", codeNote: "访问口令保存在本浏览器，用于调用受保护的接口。它是共享口令，不是身份认证。", serverModelNote: "模型由服务器提供，无需在此填写 API Key。", show: "显示", hide: "隐藏",
     keyNote: "API Key 仅保存在当前浏览器会话中，用于转发本次调用；不会写入服务器文件或日志。",
     testConnection: "测试连接", saveSession: "保存", analyzing: "正在检索官方来源并组织答案……",
@@ -72,7 +72,7 @@ const i18n = {
     gemsLabel: "GEMS", gemsHint: "type / in the composer at any time", coverageLabel: "Data coverage",
     questionLabel: "Enter a compliance scenario", placeholder: "Describe the party, product, route, end user or payment arrangement…",
     slashHint: "Gem", composerNote: "Prototype output is for research and triage only and is not legal advice. Do not enter trade secrets or confidential transaction data.", itaAttribution: "This product uses the International Trade Administration\u2019s Data API but is not endorsed or certified by the International Trade Administration.",
-    evidence: "Evidence & sources", evidenceEmpty: "After an analysis, cited sources, retrieval status and access time appear here.",
+    evidence: "Evidence & sources", evidenceEmpty: "After an analysis, cited sources, retrieval status and access time appear here.", sourceFellBack: "The page text was not retrieved, so only this source\u2019s own summary was used. List screening does not read these provision pages; it runs on the ingested records.",
     modelSettings: "Model settings", settingsIntro: "Supports OpenAI-compatible Chat Completions APIs.", settingsIntroServer: "This deployment provides the model. You only need the access code.", settingsIntroBlocked: "This deployment has a model configured, but the server has no access code set, so the live model is unavailable.", accessSettings: "Access", codeNote: "The access code is kept in this browser and used to call the protected endpoints. It is a shared code, not authentication.", serverModelNote: "The model is provided by the server; no API key is needed here.", show: "Show", hide: "Hide",
     keyNote: "The API key stays in this browser session and is used only to forward this call. It is never written to server files or logs.",
     testConnection: "Test connection", saveSession: "Save", analyzing: "Retrieving official sources and composing the answer…",
@@ -1098,6 +1098,16 @@ function renderEvidence(sources) {
         ${source.cacheAge ? `<span class="source-age">${esc(source.cacheAge)}</span>` : ""}
         <time>${source.retrievedAt ? new Date(source.retrievedAt).toLocaleTimeString(state.locale === "zh" ? "zh-CN" : "en-US", { hour: "2-digit", minute: "2-digit" }) : "—"}</time>
       </div>
+      ${/* What a failure here costs, because "获取失败" beside a source whose data
+            is synced on the coverage page reads as that source being broken. It is
+            not the same thing: these cards are reference documents a specialist
+            reads, and list screening never touches them — it runs on the ingested
+            records. Saying so is a statement about how the system is wired, not a
+            claim about this particular source's data, which these ids cannot
+            support: the failing page is ofac-50-rule and the synced lists are
+            ofac-ownership and ofac-sls. */ ""}
+      ${["unavailable", "metadata_only"].includes(source.liveStatus)
+        ? `<p class="source-note">${esc(t("sourceFellBack"))}</p>` : ""}
     </article>`).join("");
 }
 

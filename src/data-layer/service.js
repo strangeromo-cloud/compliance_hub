@@ -8,7 +8,19 @@ const activeSyncs = new Map();
 // Citation pages on hosts a deployment cannot reach still have their text in
 // the ingested corpus. Indexing by URL lets a failed live fetch fall back to
 // what was already captured, rather than showing an empty citation.
-const ARCHIVE_SOURCES = ["china-dual-use", "china-licence-catalogue", "china-control-entities", "china-unreliable-entity"];
+// Every registered source, not a hand-picked four.
+//
+// This was a literal list of four Chinese sources, so a US page that failed to
+// fetch was reported unavailable without the archive ever being consulted — even
+// where the source was synced and its records carried the page text. A record
+// either has a sourceUrl and contentText or it does not; that is the whole test,
+// and it does not need a source's name written down anywhere.
+//
+// It does not rescue a source ingested as list rows: OFAC's 19,662 SLS entries
+// and 5,047 ownership relations are records, not documents, so there is no page
+// of theirs to serve. That is a different thing from the screening working,
+// which it does — see the note the evidence card now carries.
+const ARCHIVE_SOURCES = DATA_SOURCE_REGISTRY.map((source) => source.sourceId);
 let archiveIndex = null;
 
 async function buildArchiveIndex() {
