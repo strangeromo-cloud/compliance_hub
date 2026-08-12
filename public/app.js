@@ -183,6 +183,7 @@ const state = {
   conversation: [],
   serverModelConfigured: false,
   serverModel: null,
+  serverEndpoint: null,
   accessPasswordRequired: false,
   liveModelBlocked: false,
   coverage: null,
@@ -2701,7 +2702,7 @@ function openSettings() {
   $("settingsIntro").textContent = t(state.liveModelBlocked ? "settingsIntroBlocked" : serverProvides ? "settingsIntroServer" : "settingsIntro");
   $("settingsTitle").textContent = t(serverProvides ? "accessSettings" : "modelSettings");
   $("keyNoteText").textContent = t(serverProvides ? "codeNote" : "keyNote");
-  $("serverModelName").textContent = state.serverModel || "";
+  $("serverModelName").textContent = [state.serverEndpoint, state.serverModel].filter(Boolean).join(" · ");
   $("testConnectionBtn").hidden = serverProvides;
   $("baseUrlInput").value = config.baseUrl || "https://api.openai.com/v1";
   $("modelInput").value = config.model || "gpt-5.4-mini";
@@ -2757,6 +2758,7 @@ async function loadRuntimeCapabilities() {
     const capabilities = await response.json();
     state.serverModelConfigured = Boolean(capabilities.liveModelConfigured);
     state.serverModel = capabilities.model || null;
+    state.serverEndpoint = capabilities.endpoint || null;
     state.accessPasswordRequired = Boolean(capabilities.accessPasswordRequired);
     state.liveModelBlocked = Boolean(capabilities.liveModelBlocked);
     // Only false says anything: null means the server could not tell, and a

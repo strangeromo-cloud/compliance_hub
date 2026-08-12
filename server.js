@@ -242,6 +242,15 @@ const server = createServer(async (request, response) => {
         // first question.
         liveModelBlocked: Boolean(process.env.OPENAI_API_KEY) && !ACCESS_PASSWORD,
         model: process.env.OPENAI_MODEL || null,
+        // The host, never the key and never the path. A base URL pointing at one
+        // vendor with the other's model name configured fails every call, and the
+        // settings panel would otherwise show a model name that looks perfectly
+        // fine beside "the server provides this". Seeing api.deepseek.com next to
+        // an OpenAI model name makes the mismatch answerable in one glance.
+        endpoint: (() => {
+          try { return new URL(process.env.OPENAI_BASE_URL || "https://api.openai.com/v1").host; }
+          catch { return null; }
+        })(),
         demoMode: "grounded_rules",
         demoLimitation: "Grounded rules cover the built-in compliance domains; an LLM is required for open-ended synthesis."
       });
