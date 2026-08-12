@@ -185,8 +185,14 @@ export function laneQuestion(lane, { blocked = null, runningStep = null, decline
 
 export function laneView(lane, { question = null, declined = [] } = {}) {
   const steps = lane?.steps || [];
+  // A step that concluded "needs evidence" has been reached, whether or not it
+  // has fields to ask for. Without evidence_needed here, a step like 许可例外 —
+  // which wants evidence but has nothing to type in — fell through every arm and
+  // was reported as 未进行, while the header counted it under 需更多证据. Thirty
+  // seven of them across the stored paths, and the reader was right to ask.
   const touched = steps.filter((item) =>
-    SETTLED_STATUS.has(item.status) || item.id === question || stepState(item, declined) === "skipped");
+    SETTLED_STATUS.has(item.status) || item.status === "evidence_needed"
+    || item.id === question || stepState(item, declined) === "skipped");
   // Nothing has happened in this lane yet, so what there is to show is the plan.
   // Showing nothing instead is how the rail went blank the moment a declaration
   // was submitted: the run replans before it re-resolves, and for that moment
