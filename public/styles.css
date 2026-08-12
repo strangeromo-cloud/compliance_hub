@@ -1029,12 +1029,16 @@ details.trace.reasoning > summary { color: var(--text); font-weight: 600; }
 .source-mosaic { display: grid; border-top: 1px solid var(--border); }
 .mosaic-row { display: flex; align-items: center; gap: 8px; padding: 7px 14px; }
 .mosaic-row + .mosaic-row { border-top: 1px solid var(--border); }
-.mosaic-name { flex: 0 0 auto; min-width: 52px; font-size: 11px; color: var(--text-2); }
-.mosaic-count { flex: 0 0 auto; font: 600 10.5px/1 var(--mono); color: var(--text-3); font-variant-numeric: tabular-nums; }
+/* Fixed columns for the name and the count, so the tiles of all three rows
+   start at one x. Right-aligned they ended flush and began wherever their own
+   count left them — sixteen, eleven and ten, three ragged left edges down the
+   middle of the module. */
+.mosaic-name { flex: 0 0 68px; font-size: 11px; color: var(--text-2); }
+.mosaic-count { flex: 0 0 34px; font: 600 10.5px/1 var(--mono); color: var(--text-3); font-variant-numeric: tabular-nums; }
 
 /* No wrap. Sixteen tiles falling onto a second line made the three rows
    different heights and the block read as ragged rather than as a scale. */
-.mosaic-tiles { display: flex; gap: 2px; margin-left: auto; justify-content: flex-end; }
+.mosaic-tiles { display: flex; gap: 2px; justify-content: flex-start; }
 .tile { width: 9px; height: 9px; border-radius: 2px; border: 1px solid var(--border); background: var(--surface-2); display: block; }
 .tile.tone-live { background: var(--accent); border-color: var(--accent); }
 .tile.tone-fallback { background: var(--risk-medium); border-color: var(--risk-medium); }
