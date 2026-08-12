@@ -265,7 +265,12 @@ html[data-theme="light"] .moon-icon { display: block; }
    sections rather than as one long column. */
 .start { max-width: 800px; margin: 0 auto; padding: 44px 22px 8px; display: grid; gap: 34px; }
 .start-head { margin-bottom: 0; }
-.start-head h2 { font-size: 26px; font-weight: 700; letter-spacing: -.02em; line-height: 1.3; margin-bottom: 10px; }
+/* The page's own sentence, at the size of one. It is the first thing on the
+   screen and the only line that says what to do with the thing; below about
+   this it reads as a label sitting above the lead paragraph. clamp so a
+   narrow column steps it down rather than wrapping a slogan across three
+   lines. */
+.start-head h2 { font-size: clamp(24px, 3.4vw, 32px); font-weight: 700; letter-spacing: -.025em; line-height: 1.28; margin-bottom: 12px; }
 .start-head p { font-size: 12.5px; line-height: 1.75; color: var(--text-2); max-width: 62ch; }
 .section-label { display: flex; align-items: baseline; gap: 8px; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--text-3); margin: 0 0 11px; }
 /* The label carries the section name; a heading followed by its own section
