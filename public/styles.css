@@ -504,7 +504,10 @@ details.trace.limits > summary { color: var(--risk-medium); }
 .send-btn svg { width: 14px; height: 14px; grid-area: 1 / 1; }
 /* Stopping is the live action, so it stays fully enabled and reads as one — the
    run is going and this ends it. */
-.send-btn .stop-icon { display: none; fill: currentColor; stroke: none; }
+/* Larger than the arrow's box: a solid square reads smaller than an outline
+   arrow at the same bounds, so matching them on paper leaves it looking
+   like the smaller of the two. */
+.send-btn .stop-icon { display: none; width: 16px; height: 16px; fill: currentColor; stroke: none; }
 .send-btn.is-running { background: var(--risk-high); opacity: 1; cursor: pointer; }
 .send-btn.is-running .send-icon { display: none; }
 .send-btn.is-running .stop-icon { display: block; }

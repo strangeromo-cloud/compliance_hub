@@ -884,6 +884,16 @@ function sourcePanelMarkup(source) {
     </div>`;
 }
 
+// path === null means "redraw what is already there" — a stage or a lane changed
+// and the path has not. clearFlowPanel is how a panel is actually emptied, and
+// the two were the same call for a while, which is why a new conversation opened
+// with the previous run's steps still in the rail.
+function clearFlowPanel() {
+  lastFlowPath = null;
+  lastAnalysed = [];
+  renderFlowPanel(null);
+}
+
 function renderFlowPanel(path, options = {}) {
   if (path) lastFlowPath = path;
   else path = lastFlowPath;
@@ -2564,8 +2574,7 @@ async function analyze(event, options = {}) {
 }
 
 function newConversation() {
-  lastAnalysed = [];
-  renderFlowPanel(null);
+  clearFlowPanel();
   state.conversation = [];
   state.threadId = null;
   state.declaredFacts = {};
