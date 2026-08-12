@@ -408,7 +408,10 @@ a.cc-more:hover { color: var(--text); background: var(--surface-2); }
 .gem-tag { display: inline-block; font-family: var(--mono); font-size: 10.5px; color: var(--accent-text); background: var(--accent-soft); border-radius: 3px; padding: 0 5px; margin-bottom: 5px; }
 
 .msg-assistant { display: grid; grid-template-columns: 24px 1fr; gap: 11px; }
-.avatar { width: 24px; height: 24px; border-radius: 5px; display: grid; place-items: center; background: var(--surface-3); color: var(--text-2); font-size: 9px; font-weight: 700; letter-spacing: .04em; }
+/* The same 24px mark the sidebar carries, in the same green: it is the system
+   speaking, and grey-on-grey made the one thing marking who is talking the
+   faintest thing in the column. */
+.avatar { width: 24px; height: 24px; border-radius: 5px; display: grid; place-items: center; background: var(--accent); color: #fff; font-size: 9px; font-weight: 700; letter-spacing: .04em; }
 .msg-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 10.5px; color: var(--text-3); margin-bottom: 8px; }
 .msg-meta .tag { font-family: var(--mono); }
 .msg-meta .sep { color: var(--border-strong); }
@@ -1169,7 +1172,15 @@ details.analysis-path > summary { color: var(--text); font-weight: 600; flex-wra
 /* Why the lane opened and which procedure it follows, on the lane itself. It was
    a separate block above the answer that also re-listed every lane; only these
    two facts were not already below, so only these two came down. */
-.lane-meta { margin-left: auto; display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+/* Its own line, and spaced off the lane title.
+
+   margin-left:auto was written for a flex row, but .path-lane-label is a block —
+   so this is a block-level flex box that always lands under the title, and the
+   auto margin never did anything. Sitting at line-height with no margin, the
+   procedure link read as a second half of the lane's name. wrap, because at four
+   matched terms the row ran out of width and nowrap squashed the terms instead
+   of breaking; the 5px row gap is what keeps a broken row legible. */
+.lane-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: 5px 6px; margin-top: 5px; min-width: 0; }
 .lane-meta code { font: 400 10px/1.6 var(--mono); padding: 0 5px; border-radius: 3px; background: var(--surface-3); color: var(--text-2); }
 .lane-meta .ll-why { font-size: 10.5px; color: var(--text-3); }
 .lane-meta .ll-std { font-size: 10.5px; color: var(--text-3); text-decoration: none; border-bottom: 1px solid var(--border-strong); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 46ch; }
