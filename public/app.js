@@ -24,7 +24,7 @@ const i18n = {
     hfQuestion: "一个问题", hfAnswer: "统一答案", startersLabel: "快速开始", workspaceEmpty: "工作区还没有 Gem", gemBacking: "数据支撑",
     teachSlashTitle: "在输入框键入 /", teachSlashBody: "呼出 {n} 个 Gem 的完整目录，上下键选择，回车使用。",
     teachPinTitle: "把常用 Gem 加入工作区", teachPinBody: "在目录里点 ★，或在 Gem 详情里点「添加到工作区」，它会常驻左侧栏。",
-    historyLabel: "历史记录", historyEmpty: "暂无记录", historyVolatile: "记录存在容器本地磁盘，重新部署会清空。挂载 Volume 到 data/runtime 可长期保留。", turnUnit: "轮", historyOpenFailed: "无法打开该记录", flowTitle: "执行流程", runPanel: "本次运行", flowRest: "顶部计的是整轮。另有 {n} 步在 {lanes} 本次没有走到 —— 上面这条线还缺证据，所以给出的是阶段性判断而不是结案",
+    historyLabel: "历史记录", historyEmpty: "暂无记录", historyVolatile: "记录存在容器本地磁盘，重新部署会清空。挂载 Volume 到 data/runtime 可长期保留。", turnUnit: "轮", historyOpenFailed: "无法打开该记录", flowTitle: "执行流程", flowDone: "已跑完", flowOf: "共 {n} 步", runPanel: "本次运行", flowRest: "顶部计的是整轮。另有 {n} 步在 {lanes} 本次没有走到 —— 上面这条线还缺证据，所以给出的是阶段性判断而不是结案",
     flowRestDone: "顶部计的是整轮。另有 {n} 步在 {lanes} 本次没有走完（其中 {done} 步已完成）—— 上面这条线还缺证据，所以给出的是阶段性判断而不是结案", briefLead: "本次问题落在以下 {n} 个审查范围：", briefBecause: "命中 ", briefStandard: "标准程序", briefNoStandard: "无对应标准程序", briefDesigned: "系统设计", briefSteps: "{n} 个步骤", briefDesignedN: "其中 {n} 步由系统补充", flowEmpty: "提交一个问题后，这里显示分析路径的执行进度", flowNotRun: "该步骤尚未执行",
     derivMatch_gem: "由所选 Gem 指定为主检查", derivMatch_always: "每次分析都执行", derivMatch_direct_lookup: "直接查询，不进入审查程序", derivMatch_gem_kind: "该 Gem 的产出类型，不进入审查程序", derivMatch_question_terms: "问题中的关键词",
     derivMatch_no_term_matched_all_lanes_run: "问题未命中任何关键词，三条检查全部执行",
@@ -85,7 +85,7 @@ const i18n = {
     hfQuestion: "One question", hfAnswer: "One answer", startersLabel: "Start here", workspaceEmpty: "No gems in your workspace yet", gemBacking: "Data behind it",
     teachSlashTitle: "Press / in the composer", teachSlashBody: "Opens the full catalogue of {n} gems. Arrow keys select, Enter uses.",
     teachPinTitle: "Pin the ones you use", teachPinBody: "Add to workspace from a gem's details and it stays in the sidebar.",
-    historyLabel: "History", historyEmpty: "No cases yet", historyVolatile: "Cases sit on the container\u2019s own disk and are cleared by a redeploy. Mount a volume at data/runtime to keep them.", turnUnit: "turns", historyOpenFailed: "That case could not be opened", flowTitle: "Execution flow", runPanel: "This run", flowRest: "The count above is the whole run. {n} further steps in {lanes} were not reached — the lane above is still short of evidence, so what you have is an interim assessment rather than a closed case",
+    historyLabel: "History", historyEmpty: "No cases yet", historyVolatile: "Cases sit on the container\u2019s own disk and are cleared by a redeploy. Mount a volume at data/runtime to keep them.", turnUnit: "turns", historyOpenFailed: "That case could not be opened", flowTitle: "Execution flow", flowDone: "finished", flowOf: "of {n}", runPanel: "This run", flowRest: "The count above is the whole run. {n} further steps in {lanes} were not reached — the lane above is still short of evidence, so what you have is an interim assessment rather than a closed case",
     flowRestDone: "The count above is the whole run. {n} further steps in {lanes} were not finished ({done} of them are settled) — the lane above is still short of evidence, so what you have is an interim assessment rather than a closed case", briefLead: "This question falls into {n} review scopes:", briefBecause: "matched ", briefStandard: "Standard procedure", briefNoStandard: "No standard procedure", briefDesigned: "designed here", briefSteps: "{n} steps", briefDesignedN: "{n} added by this system", flowEmpty: "Ask a question and the analysis path\u2019s progress appears here", flowNotRun: "That step has not run yet",
     derivMatch_gem: "set as the lead check by the selected gem", derivMatch_always: "runs on every analysis", derivMatch_direct_lookup: "a direct lookup; no review procedure applies", derivMatch_gem_kind: "what this gem produces; no review procedure applies", derivMatch_question_terms: "terms in the question",
     derivMatch_no_term_matched_all_lanes_run: "no term matched, so all three checks run",
@@ -989,16 +989,34 @@ function flowMarkup(path, options = {}) {
   // The local wrapper already reads state.unavailableFacts; passing a second
   // argument would look like it decided something and would not.
   const blocked = options.firstBlocked ?? firstBlockedStep(path);
-  const percent = Math.round((executed / steps.length) * 100);
+  // What the run came to, not how far along it is.
+  //
+  // A fraction over a part-filled bar is a progress reading, and a progress
+  // reading on a finished review says it stalled: "5/17" beside a written
+  // conclusion asks "did it not run?" when the answer is that it ran everything
+  // and 5 of the 17 steps could be settled on what the question carried. The
+  // other twelve are not pending — they are short of evidence, or they were
+  // never reached because an earlier step was. So the bar shows the make-up of
+  // the outcome in three parts rather than one moving edge, and the three
+  // numbers say which is which.
+  const retired = steps.filter((item) => item.status === "evidence_needed").length;
+  const rest = Math.max(0, steps.length - executed - retired);
+  const share = (n) => Math.round((n / steps.length) * 100);
+  const running = Boolean(options.activeLane || options.stage);
 
   return `
     <div class="flow-head">
       <h3>${esc(t("flowTitle"))}</h3>
-      <span class="flow-count">${executed}/${steps.length}</span>
+      <span class="flow-count">${running ? `${executed}/${steps.length}` : esc(t("flowDone"))}</span>
     </div>
-    <div class="flow-bar" role="img" aria-label="${executed}/${steps.length}">
-      <span class="fb-fill" data-bar="${percent}"></span>
+    <div class="flow-bar${running ? "" : " is-mix"}" role="img" aria-label="${executed}/${steps.length}">
+      <span class="fb-fill" data-bar="${share(executed)}"></span>
+      ${running ? "" : `<span class="fb-need" data-bar="${share(retired)}"></span><span class="fb-rest" data-bar="${share(rest)}"></span>`}
     </div>
+    ${running ? "" : `<p class="flow-tally">
+      <b>${executed}</b> ${esc(t("stConfirmed"))}${retired ? ` <span class="ft-sep">·</span> <b class="ft-need">${retired}</b> ${esc(t("stEvidence"))}` : ""}${rest ? ` <span class="ft-sep">·</span> <b class="ft-rest">${rest}</b> ${esc(t("stNotReached"))}` : ""}
+      <span class="ft-of">${esc(t("flowOf").replace("{n}", steps.length))}</span>
+    </p>`}
     ${drawn.map((lane) => {
       // The same view the body draws, from the same rule, so the two panels
       // cannot list different steps for one run.
