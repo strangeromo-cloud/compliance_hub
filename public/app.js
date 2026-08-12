@@ -999,8 +999,27 @@ function flowMarkup(path, options = {}) {
   // never reached because an earlier step was. So the bar shows the make-up of
   // the outcome in three parts rather than one moving edge, and the three
   // numbers say which is which.
-  const retired = steps.filter((item) => item.status === "evidence_needed").length;
-  const rest = Math.max(0, steps.length - executed - retired);
+  // One number per status, not three buckets.
+  //
+  // The first bucket was labelled 已确认 and held everything isDone counts —
+  // confirmed, declared and not applicable together. On a run where the reader
+  // had supplied several facts that read "11 已确认" when three were confirmed,
+  // five were declared and unverified, and three did not apply. Declared is the
+  // one this system may never let drift into confirmed, and a tally that merges
+  // them is exactly that drift. Each status now reports itself, under its own
+  // name and in its own colour, both from STEP_STATUS_VOCAB so the tally, the
+  // bar and the step marks cannot disagree.
+  const ORDER = ["confirmed", "declared", "not_applicable", "evidence_needed", "review_required", "not_reached", "pending"];
+  const counts = new Map();
+  for (const item of steps) counts.set(item.status, (counts.get(item.status) || 0) + 1);
+  // The short name for a tally, the full one for a step. "已声明，待核验" is the
+  // right label above a step the reader just filled in and too long to sit five
+  // abreast in a 316px column; the short forms already exist for the legend.
+  const SHORT = { confirmed: "stConfirmed", declared: "stDeclared", evidence_needed: "stEvidence", not_reached: "stNotReached", pending: "stPending" };
+  const tally = ORDER.filter((status) => counts.get(status)).map((status) => ({
+    status, n: counts.get(status), vocab: STEP_STATUS_VOCAB[status],
+    name: SHORT[status] ? t(SHORT[status]) : label(STEP_STATUS_VOCAB, status, state.locale)
+  }));
   const share = (n) => Math.round((n / steps.length) * 100);
   const running = Boolean(options.activeLane || options.stage);
 
@@ -1010,11 +1029,11 @@ function flowMarkup(path, options = {}) {
       <span class="flow-count">${running ? `${executed}/${steps.length}` : esc(t("flowDone"))}</span>
     </div>
     <div class="flow-bar${running ? "" : " is-mix"}" role="img" aria-label="${executed}/${steps.length}">
-      <span class="fb-fill" data-bar="${share(executed)}"></span>
-      ${running ? "" : `<span class="fb-need" data-bar="${share(retired)}"></span><span class="fb-rest" data-bar="${share(rest)}"></span>`}
+      ${running ? `<span class="fb-fill" data-bar="${share(executed)}"></span>`
+        : tally.map((part) => `<span class="fb-part tone-${esc(part.vocab.tone)}" data-bar="${share(part.n)}"></span>`).join("")}
     </div>
     ${running ? "" : `<p class="flow-tally">
-      <b>${executed}</b> ${esc(t("stConfirmed"))}${retired ? ` <span class="ft-sep">·</span> <b class="ft-need">${retired}</b> ${esc(t("stEvidence"))}` : ""}${rest ? ` <span class="ft-sep">·</span> <b class="ft-rest">${rest}</b> ${esc(t("stNotReached"))}` : ""}
+      ${tally.map((part) => `<span class="ft-part"><b class="tone-${esc(part.vocab.tone)}">${part.n}</b> ${esc(part.name)}</span>`).join(`<span class="ft-sep">·</span>`)}
       <span class="ft-of">${esc(t("flowOf").replace("{n}", steps.length))}</span>
     </p>`}
     ${drawn.map((lane) => {

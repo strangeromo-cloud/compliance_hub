@@ -1348,17 +1348,27 @@ html[lang="en"] .step-needs::before { content: "NEEDS"; font-size: 8px; }
 .flow-count { margin-left: auto; font: 500 11px/1 var(--mono); color: var(--text-2); }
 .flow-bar { height: 3px; border-radius: 2px; background: var(--border); overflow: hidden; margin-bottom: 12px; }
 .fb-fill { display: block; height: 100%; width: var(--pct, 0%); background: var(--accent); transition: width 260ms ease; }
-/* Three parts, not one moving edge: what was settled, what is short of evidence,
-   and what was never reached. A finished review has a make-up, not a position. */
+/* One segment per status, in the status's own colour. A finished review has a
+   make-up, not a position — and the make-up has to name each part, because
+   "settled" covers a confirmed step, a step the reader declared and has not
+   verified, and a step that did not apply, which are three different things. */
 .flow-bar.is-mix { display: flex; margin-bottom: 8px; }
-.fb-need, .fb-rest { display: block; height: 100%; width: var(--pct, 0%); }
-.fb-need { background: var(--risk-medium); }
-.fb-rest { background: var(--border-strong); }
-.flow-tally { margin: 0 0 12px; font-size: 10.5px; line-height: 1.6; color: var(--text-3); }
-.flow-tally b { font: 600 11px/1 var(--mono); color: var(--accent-text); font-variant-numeric: tabular-nums; }
-.flow-tally b.ft-need { color: var(--risk-medium); }
-.flow-tally b.ft-rest { color: var(--text-2); }
-.flow-tally .ft-sep { opacity: .5; }
+.fb-part { display: block; height: 100%; width: var(--pct, 0%); background: var(--border-strong); }
+.fb-part.tone-ok { background: var(--accent); }
+/* Declared is amber like its step mark, but lighter — the mark separates the
+   two with a dashed border, and a bar segment has no border to dash. */
+.fb-part.tone-declared { background: color-mix(in srgb, var(--risk-medium) 52%, transparent); }
+.fb-part.tone-warn { background: var(--risk-medium); }
+.fb-part.tone-crit { background: var(--risk-high); }
+.fb-part.tone-muted, .fb-part.tone-pending { background: var(--border-strong); }
+.flow-tally { margin: 0 0 12px; font-size: 10.5px; line-height: 1.75; color: var(--text-3); }
+.flow-tally .ft-part { white-space: nowrap; }
+.flow-tally b { font: 600 11px/1 var(--mono); font-variant-numeric: tabular-nums; color: var(--text-2); }
+.flow-tally b.tone-ok { color: var(--accent-text); }
+.flow-tally b.tone-declared { color: var(--risk-medium); }
+.flow-tally b.tone-warn { color: var(--risk-medium); }
+.flow-tally b.tone-crit { color: var(--risk-high); }
+.flow-tally .ft-sep { opacity: .5; margin: 0 4px; }
 .flow-tally .ft-of { margin-left: 5px; opacity: .75; }
 .flow-lane { margin-bottom: 10px; }
 .fl-head { display: flex; align-items: baseline; gap: 6px; margin-bottom: 4px; }
