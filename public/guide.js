@@ -91,7 +91,7 @@ const copy = {
     useLead: "两层，一屏都列出来。上面是常驻台：合规总控台（没选时的默认，按问题自动分流），以及贸易、物项与许可、第三方尽调三条线，正是首页图上那三个框；选中一张台就坐在上面，问什么都按那条线的完整流程走，直到你换一张或按 ×。下面是每张台的窄化入口：同一条线，问题已经指向了其中一段。每个入口都是一个可以一直待着的位置。\n每个 Gem 绑定五样东西：产出类型、指令、数据源白名单、必填事实清单、输出模板。产出类型决定它走哪条路——/reg-brief 是简报，不会触发受限方筛查；必填事实清单则让系统在提交前就知道自己缺什么，而不是让模型悄悄猜。",
     gemsLabel: "可用 Gem", gemBound: "个来源", gemRecords: "条记录", gemUnsynced: "个未同步", gemNone: "不绑定外部来源",
     buildTitle: "自己建 Gem 和 Skill",
-    buildLead: "左侧栏 GEMS 和「自建 SKILL」两个标题旁边各有一个 ＋。两者不是并列关系：Gem 是「谁在回答」，选中后一直挂着；Skill 挂在 Gem 下面，是这一问怎么做。",
+    buildLead: "左侧栏 Gems 和 Skills 两个标题旁边各有一个 ＋。内置了一个 Skill（/reg-impact 监管变化影响评估），它在代码里，删不掉也不会被同名覆盖；其余都是自己建的。两者不是并列关系：Gem 是「谁在回答」，选中后一直挂着；Skill 挂在 Gem 下面，是这一问怎么做。",
     cmpGem: {
       title: "Gem — 常驻，四样字段每样都被消费",
       lead: "选中后命令从输入框消失，一直保持到你换一个或按 ×——开新对话、刷新页面都还在它里面。",
@@ -306,7 +306,7 @@ const copy = {
     useLead: "Two levels, all of it on one screen. The desks come first: Compliance Hub \u2014 the default when nothing is chosen, routing by what is asked \u2014 then Trade, Item & licence and Third-party diligence, the three lanes on the home page. Choosing one seats you there: whatever you ask runs that lane's full procedure, until you pick another or press \u00d7. Below each desk are its narrower entries \u2014 the same lane with the question already pointed at one part of it. Every entry is a place you can stay.\nA gem binds five things: what it produces, the instruction, the bound-source whitelist, the facts it requires, and the output template. The first decides which path it takes \u2014 /reg-brief is a briefing and never opens a party screening \u2014 and the fourth is what makes a gem more than a saved prompt: the interface knows what is missing before anything is submitted.",
     gemsLabel: "Available gems", gemBound: "sources", gemRecords: "records", gemUnsynced: "not synced", gemNone: "no bound sources",
     buildTitle: "Build your own gems and skills",
-    buildLead: "A ＋ sits beside each of the two sidebar headings. They are not siblings: a gem is who is answering and stays selected, and skills hang under it as how this one question should be done.",
+    buildLead: "A ＋ sits beside each of the two sidebar headings. One skill ships with the product \u2014 /reg-impact, regulatory-change impact \u2014 and it lives in the code, so it cannot be deleted and nothing can take its command; the rest are yours. They are not siblings: a gem is who is answering and stays selected, and skills hang under it as how this one question should be done.",
     cmpGem: {
       title: "Gem \u2014 it stays, and all four fields are consumed",
       lead: "Choosing one clears the command from the composer and keeps it until you pick another or press \u00d7 \u2014 a new conversation and a page reload are both still inside it.",

@@ -110,8 +110,8 @@ export function createCustomGem(input) {
   // The whole namespace, skills included: the palette lists both under / and the
   // composer parses one token without knowing which kind it belongs to.
   const owner = commandOwner(gem.command);
-  if (owner) fail(owner.kind === "builtin-gem"
-    ? `${gem.command} 是内置 Gem 的命令，换一个`
+  if (owner) fail(owner.kind.startsWith("builtin")
+    ? `${gem.command} 是内置 ${owner.kind === "builtin-gem" ? "Gem" : "Skill"} 的命令，换一个`
     : `${gem.command} 已被一个自建 ${owner.kind === "gem" ? "Gem" : "Skill"} 占用`, 409);
   db().prepare("INSERT INTO custom_gems (gem_id, command, created_at, payload) VALUES (?, ?, ?, ?)")
     .run(gem.id, gem.command, gem.createdAt, JSON.stringify(gem));

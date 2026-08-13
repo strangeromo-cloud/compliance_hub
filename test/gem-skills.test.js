@@ -97,3 +97,43 @@ test("an id for a skill that does not exist never reaches a gem", () => {
   });
   assert.deepEqual(gem.skillIds, [real.id]);
 });
+
+test("the skill that ships with the product cannot be deleted or shadowed", () => {
+  // In the code, not seeded into the database. A row written on first boot needs
+  // a marker to tell "never seeded" from "the reader removed it", and getting
+  // that wrong brings back something somebody threw away. Being built in makes
+  // the question not arise: there is nothing to seed and nothing to delete.
+  const { BUILTIN_SKILLS } = skills;
+  assert.equal(BUILTIN_SKILLS.length, 1);
+  const [builtin] = BUILTIN_SKILLS;
+  assert.ok(builtin.builtin);
+  assert.ok(builtin.procedure.length > 100, "a procedure, not a slogan");
+  assert.ok(builtin.example, "and an example, because the scenario library shows one");
+
+  // It is in the catalogue every reader sees, and it stays there.
+  assert.ok(skills.listSkills().some((item) => item.id === builtin.id));
+  assert.equal(skills.getSkill(builtin.id)?.id, builtin.id);
+  assert.equal(skills.findSkillByCommand(builtin.command)?.id, builtin.id);
+  assert.throws(() => skills.deleteSkill(builtin.id), /不能删除/);
+  assert.ok(skills.listSkills().some((item) => item.id === builtin.id), "still there after the attempt");
+
+  // Nothing may take its command. A skill or a gem answering to /reg-impact
+  // would shadow a command that cannot be renamed out of the way.
+  assert.throws(() => skills.createSkill({
+    name: "撞名", command: builtin.command, summary: "应当被拒",
+    procedure: "这条不该保存成功，因为命令已被内置 Skill 占用。"
+  }), /内置 Skill/);
+  assert.throws(() => gems.createCustomGem({
+    name: "撞名", command: builtin.command, summary: "应当被拒",
+    instruction: "这条不该保存成功，因为命令已被内置 Skill 占用。"
+  }), /内置 Skill/);
+
+  // And a gem may bind it, like any other.
+  const bound = gems.createCustomGem({
+    name: "监管台", command: "reg-desk", summary: "只挂内置那条",
+    instruction: "先确定条文改了什么，再评估它落在哪些业务和控制上。",
+    skillIds: [builtin.id]
+  });
+  assert.deepEqual(bound.skillIds, [builtin.id]);
+  assert.equal(skills.parseInvocation(`/${builtin.command} 上个月的变化`, bound.id).skill?.id, builtin.id);
+});

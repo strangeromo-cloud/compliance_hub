@@ -14,6 +14,7 @@
 
 import { db } from "./data-layer/db.js";
 import { commandOwner, gemSkillIds } from "./command-registry.js";
+import { BUILTIN_SKILLS } from "./skills-builtin.js";
 
 // Two to forty characters, lowercase, starting on a letter or digit. The same
 // shape a gem command has, because they share one namespace: the palette offers
@@ -45,13 +46,20 @@ export function normalizeSkill(input = {}) {
   };
 }
 
+
+const BUILTIN_IDS = new Set(BUILTIN_SKILLS.map((skill) => skill.id));
+export { BUILTIN_SKILLS };
+
+// The built-in first, then what the reader wrote, newest first.
 export function listSkills() {
-  return db().prepare("SELECT payload FROM skills ORDER BY created_at DESC").all()
+  return [...BUILTIN_SKILLS, ...db().prepare("SELECT payload FROM skills ORDER BY created_at DESC").all()
     .map((row) => { try { return JSON.parse(row.payload); } catch { return null; } })
-    .filter(Boolean);
+    .filter(Boolean)];
 }
 
 export function getSkill(id) {
+  const builtin = BUILTIN_SKILLS.find((skill) => skill.id === id);
+  if (builtin) return builtin;
   const row = db().prepare("SELECT payload FROM skills WHERE skill_id = ?").get(String(id || ""));
   if (!row) return null;
   try { return JSON.parse(row.payload); } catch { return null; }
@@ -68,8 +76,8 @@ export function createSkill(input) {
   // /screen-party would be invoked instead of the gem, and the reader would get
   // a prompt where they asked for a procedure that screens against bound sources.
   const owner = commandOwner(skill.command);
-  if (owner) fail(owner.kind === "builtin-gem"
-    ? `/${skill.command} 是内置 Gem 的命令，换一个`
+  if (owner) fail(owner.kind.startsWith("builtin")
+    ? `/${skill.command} 是内置 ${owner.kind === "builtin-gem" ? "Gem" : "Skill"} 的命令，换一个`
     : `/${skill.command} 已被一个自建 ${owner.kind === "gem" ? "Gem" : "Skill"} 占用`, 409);
   db().prepare("INSERT INTO skills (skill_id, command, created_at, payload) VALUES (?, ?, ?, ?)")
     .run(skill.id, skill.command, skill.createdAt, JSON.stringify(skill));
@@ -77,6 +85,10 @@ export function createSkill(input) {
 }
 
 export function deleteSkill(id) {
+  // Refused rather than hidden, for the same reason /eccn cannot be deleted:
+  // hiding needs somewhere to record that it is hidden, and that record is the
+  // thing that goes wrong.
+  if (BUILTIN_IDS.has(String(id || ""))) fail("内置 Skill 不能删除", 409);
   return db().prepare("DELETE FROM skills WHERE skill_id = ?").run(String(id || "")).changes > 0;
 }
 

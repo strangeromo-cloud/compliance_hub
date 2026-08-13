@@ -16,10 +16,15 @@
 
 import { db } from "./data-layer/db.js";
 import { GEMS } from "../public/gems.js";
+import { BUILTIN_SKILLS } from "./skills-builtin.js";
 
 const bare = (command) => String(command || "").replace(/^\/+/, "").toLowerCase();
 
-const BUILTIN = new Set(GEMS.map((gem) => bare(gem.command)));
+// Built-in gems and the built-in skill share this set: both ship in the code,
+// neither can be deleted, and a reader creating either kind under one of these
+// commands would shadow something that cannot be moved out of the way.
+const BUILTIN = new Set([...GEMS.map((gem) => bare(gem.command)), ...BUILTIN_SKILLS.map((skill) => bare(skill.command))]);
+const BUILTIN_GEM_COMMANDS = new Set(GEMS.map((gem) => bare(gem.command)));
 const BUILTIN_IDS = new Set(GEMS.map((gem) => gem.id));
 
 // The skills a gem admits, or null for "all of them".
@@ -49,7 +54,7 @@ export function gemSkillIds(gemId) {
 export function commandOwner(command, { ignoreId = null } = {}) {
   const wanted = bare(command);
   if (!wanted) return null;
-  if (BUILTIN.has(wanted)) return { kind: "builtin-gem", id: null };
+  if (BUILTIN.has(wanted)) return { kind: BUILTIN_GEM_COMMANDS.has(wanted) ? "builtin-gem" : "builtin-skill", id: null };
 
   for (const [table, column, kind] of [["custom_gems", "gem_id", "gem"], ["skills", "skill_id", "skill"]]) {
     const row = db().prepare(`SELECT ${column} AS id, command FROM ${table}`).all()

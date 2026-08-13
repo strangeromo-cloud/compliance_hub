@@ -8,7 +8,7 @@ const i18n = {
     scenarioLibrary: "测试场景", guideLink: "使用说明", scenarioHelp: "场景只填入输入框，不会新建对话。",
     startTitle: "描述交易，或用 / 选择一个 Gem",
     startLead: "范围为美国与中国的出口管制。Master Agent 自动路由到贸易、产品和第三方尽调 Agent，返回一份带证据链的统一答案。",
-    assistantsEyebrow: "ASSISTANTS", sopEyebrow: "SOP LIBRARY", gemsLabel: "Gems", gemsRailHint: "选择一个长期工作的专家助手", skillsRailHint: "点击插入，或在输入框键入 /", ownFoot: "自建的 Gem 和 Skill 不额外调用模型，保存在这台服务器的数据库里。", skillsLabel: "Skills", skillNew: "新建 Skill", skillName: "名称", skillCommand: "斜杠命令", skillSummary: "一句话说明", skillProcedure: "标准提示词 / SOP", skillSave: "保存", skillDelete: "删除", cancel: "取消", optional: "选填", skillSaved: "已保存", skillNote: "Skill 只是追加给模型的一段流程说明。它不绑定数据源，也不要求问题里必须包含什么——那是 Gem 才做的事。它挂在 Gem 下面：当前 Gem 指定了名单，就只有名单里的能调用。", skillEmpty: "还没有自建 Skill", skillNoneHere: "当前 Gem 没有挂 Skill", skillScoped: "「{gem}」下的 Skill，另有 {n} 个不在这个 Gem 里", gemSkills: "挂在下面的 Skill", gemSkillsAllNote: "这个 Gem 没有指定，所以自建 Skill 全部可用", gemSkillsLabel: "这个 Gem 下的 Skill", gemSkillsHint: "不勾就是全都能用；勾了就只有勾中的能在这个 Gem 下调用", gemSkillsAll: "自建 Skill", gemNew: "新建 Gem", gemSaved: "Gem 已保存", gemNote: "Gem 是常驻的——选中后一直挂着，直到你换一个。它比 Skill 多四样：可用的数据源、提交前就会检查的必填事实、给三条专业线的指令，以及挂在它下面的 Skill。", gemInstruction: "给专业线的指令", gemSources: "可用数据源", gemSourcesHint: "勾选后，问题里会写明只依据这些来源", gemFactsLabel: "问题需包含的事实", gemFactsHint: "填名称和会出现在描述里的词；提交前据此提示还缺什么", gemFactAdd: "＋ 加一项", gemFactName: "名称，如：最终用户", gemFactWords: "关键词，用、分隔", gemsHint: "在输入框键入 / 可随时调用", coverageLabel: "数据覆盖",
+    assistantsEyebrow: "ASSISTANTS", sopEyebrow: "SOP LIBRARY", gemsLabel: "Gems", gemsRailHint: "选择一个长期工作的专家助手", skillsRailHint: "点击插入，或在输入框键入 /", ownFoot: "内置一个 Skill；自己建的 Gem 和 Skill 不额外调用模型，保存在这台服务器的数据库里。", skillsLabel: "Skills", skillNew: "新建 Skill", skillName: "名称", skillCommand: "斜杠命令", skillSummary: "一句话说明", skillProcedure: "标准提示词 / SOP", skillSave: "保存", skillDelete: "删除", cancel: "取消", optional: "选填", skillSaved: "已保存", skillNote: "Skill 只是追加给模型的一段流程说明。它不绑定数据源，也不要求问题里必须包含什么——那是 Gem 才做的事。它挂在 Gem 下面：当前 Gem 指定了名单，就只有名单里的能调用。", skillEmpty: "还没有 Skill", skillNoneHere: "当前 Gem 没有挂 Skill", skillScoped: "「{gem}」下的 Skill，另有 {n} 个不在这个 Gem 里", gemSkills: "挂在下面的 Skill", gemSkillsAllNote: "这个 Gem 没有指定，所以全部 Skill 都可用", gemSkillsLabel: "这个 Gem 下的 Skill", gemSkillsHint: "不勾就是全都能用；勾了就只有勾中的能在这个 Gem 下调用", gemSkillsAll: "Skill", gemNew: "新建 Gem", gemSaved: "Gem 已保存", gemNote: "Gem 是常驻的——选中后一直挂着，直到你换一个。它比 Skill 多四样：可用的数据源、提交前就会检查的必填事实、给三条专业线的指令，以及挂在它下面的 Skill。", gemInstruction: "给专业线的指令", gemSources: "可用数据源", gemSourcesHint: "勾选后，问题里会写明只依据这些来源", gemFactsLabel: "问题需包含的事实", gemFactsHint: "填名称和会出现在描述里的词；提交前据此提示还缺什么", gemFactAdd: "＋ 加一项", gemFactName: "名称，如：最终用户", gemFactWords: "关键词，用、分隔", gemsHint: "在输入框键入 / 可随时调用", coverageLabel: "数据覆盖",
     questionLabel: "输入合规情景", placeholder: "描述交易方、产品、路线、最终用户或付款安排……",
     slashHint: "Gem", composerNote: "原型输出仅用于研究与风险分流，不构成法律意见。请勿输入商业秘密或未公开交易数据。", itaAttribution: "This product uses the International Trade Administration\u2019s Data API but is not endorsed or certified by the International Trade Administration.",
     evidence: "证据与来源", evidenceEmpty: "完成一次分析后，这里显示引用来源、获取状态与访问时间。", sourceFellBack: "未取到页面正文，本次只用了该来源的摘要。名单筛查不读这些条文页，用的是已同步的名单记录。",
@@ -23,7 +23,7 @@ const i18n = {
     coverageMore: "查看全部数据源", mosaicUs: "美国", mosaicCn: "中国", mosaicOther: "全球 / 其他",
     hfQuestion: "一个问题", hfAnswer: "统一答案", startersLabel: "快速开始", gemBacking: "数据支撑",
     teachSlashTitle: "键入 / — 选一个 Gem 或 Skill",
-    teachSlashBody: "最上面是常驻台——总控、贸易、物项与许可、第三方尽调；选中一张就一直在上面，开新对话也还在。往下是每张台的窄化入口，同一条线、问题已经指向其中一段。Skill 挂在当前台下面，把一段流程追加给模型。共 {n} 个 Gem、{s} 个自建 Skill。",
+    teachSlashBody: "最上面是常驻台——总控、贸易、物项与许可、第三方尽调；选中一张就一直在上面，开新对话也还在。往下是每张台的窄化入口，同一条线、问题已经指向其中一段。Skill 挂在当前台下面，把一段流程追加给模型。共 {n} 个 Gem、{s} 个 Skill（其中一个内置）。",
     teachAtTitle: "键入 @ — 直查数据源",
     teachAtBody: "在 {n} 个已入库的来源里按实体名、公告号或关键词翻记录。返回的是来源自己的条目，不是判定结论。",
     teachMakeTitle: "＋ 建自己的 Gem 和 Skill",
@@ -49,7 +49,7 @@ const i18n = {
     ground_counterparties: "交易对手候选", ground_ownership: "GLEIF 公司链", ground_stated: "OFAC 声明的关系",
     ground_beneficial: "SEC 13D/G 与 DEF 14A 持股", ground_shareholders: "年报前十大股东",
     groundingNote: "已筛查 {screened} 个名单来源 · {matches} 条潜在命中 · {internal} 条内部主数据关联",
-    filterAll: "全部", filterTrade: "Trade", filterProduct: "Product", filterTpdd: "TPDD", filterCross: "跨域",
+    filterAll: "全部", filterEntry: "Gem / Skill 用法", filterTrade: "Trade", filterProduct: "Product", filterTpdd: "TPDD", filterCross: "跨域",
     runtimeReady: "实时模型", runtimeMissing: "未配置模型",
     routeLabel: "路由", intentReview: "合规审查", intentLookup: "直接查询", intentBriefing: "监管变化简报", intentMemo: "案件备忘录", intentNoReview: "不进入合规审查流程", intentAllLanes: "未匹配到关键词，三条线全跑", routedTo: "已路由至",
     willAsk: "这次会用到：", willAskMore: " 等 {n} 项", send: "发送", stopRun: "停止本次分析", runStopped: "已停止。本次分析未完成，也未存入案件历史。", overallAssessment: "总体判断", nextStep: "下一步", missingInfo: "仍需信息", actions: "建议行动", askFor: "建议补充", planSuggested: "专业 Agent 的其他建议", planSuggestedNote: "这些建议未对应分析路径上的某一步，供人工复核时参考", notClosed: "尚有 {n} 项未补齐", naCount: "{n} 项本次不适用", laneUnreached: "另有 {n} 步本次未进行", stepTriggered: "由前一步的发现触发", flowFolded: "另有 {n} 项不适用", laneFindings: "本条线的分析发现（专业 Agent 输出，非全案结论）", interimVerdict: "阶段性判断（基于现有信息，未结案）", noItems: "暂无", limitations: "结论边界与限制", clearanceTitle: "结案条件 · 五条", clearanceNote: "五个条件分属三条专业线，任何一条线都无法独自定案。沉默不算通过：未说明即为未满足。", clearanceCleared: "五条全部满足 —— 在所述事实下不产生许可要求，这不是批准，也不是放行。", clearanceBlocked: "尚有 {n} 条未满足，因此不出清晰结论。", clearanceOpen: "另有 {n} 个步骤仍在等证据；即使五条全过，未闭合的步骤同样阻断清晰结论。", clearanceMet: "已满足", clearanceUnmet: "未满足", countSuffix: " · {n} 条",
@@ -73,7 +73,7 @@ const i18n = {
     scenarioLibrary: "Test scenarios", guideLink: "Guide", scenarioHelp: "Scenarios only fill the composer; they do not start a new thread.",
     startTitle: "Describe the transaction, or press / for a gem",
     startLead: "Scope is US and PRC export control. The Master Agent routes to the trade, product and third-party diligence agents and returns one answer with its evidence chain.",
-    assistantsEyebrow: "ASSISTANTS", sopEyebrow: "SOP LIBRARY", gemsLabel: "Gems", gemsRailHint: "Pick the expert you are working with", skillsRailHint: "Click to insert, or type / in the composer", ownFoot: "Gems and skills you build cost no extra model call. They live in this server's database.", skillsLabel: "Skills", skillNew: "New skill", skillName: "Name", skillCommand: "Slash command", skillSummary: "One-line description", skillProcedure: "Standard prompt / SOP", skillSave: "Save", skillDelete: "Delete", cancel: "Cancel", optional: "optional", skillSaved: "Saved", skillNote: "A skill is a procedure appended to what the model is already told. It binds no sources and requires no facts \u2014 that is what a gem does. It hangs under a gem: where the selected gem names a set, only that set can be called.", skillEmpty: "No skills of your own yet", skillNoneHere: "This gem carries no skills", skillScoped: "Under {gem} — {n} more sit outside this gem", gemSkills: "Skills under it", gemSkillsAllNote: "This gem names none, so every skill you wrote is available", gemSkillsLabel: "Skills under this gem", gemSkillsHint: "Tick none and all of them work; tick some and only those can be called under this gem", gemSkillsAll: "Your skills", gemNew: "New gem", gemSaved: "Gem saved", gemNote: "A gem stays selected until you pick another. It carries four things a skill does not: the sources it may use, the facts checked before you submit, the instruction the specialists get, and the skills that hang under it.", gemInstruction: "Instruction for the specialists", gemSources: "Sources it may use", gemSourcesHint: "The question will say to rely on these only", gemFactsLabel: "Facts the question must carry", gemFactsHint: "A name and the words a draft carrying it would use; the composer flags what is missing", gemFactAdd: "+ Add one", gemFactName: "Name, e.g. end user", gemFactWords: "Keywords, comma separated", gemsHint: "type / in the composer at any time", coverageLabel: "Data coverage",
+    assistantsEyebrow: "ASSISTANTS", sopEyebrow: "SOP LIBRARY", gemsLabel: "Gems", gemsRailHint: "Pick the expert you are working with", skillsRailHint: "Click to insert, or type / in the composer", ownFoot: "One skill ships with the product. Gems and skills you build cost no extra model call and live in this server's database.", skillsLabel: "Skills", skillNew: "New skill", skillName: "Name", skillCommand: "Slash command", skillSummary: "One-line description", skillProcedure: "Standard prompt / SOP", skillSave: "Save", skillDelete: "Delete", cancel: "Cancel", optional: "optional", skillSaved: "Saved", skillNote: "A skill is a procedure appended to what the model is already told. It binds no sources and requires no facts \u2014 that is what a gem does. It hangs under a gem: where the selected gem names a set, only that set can be called.", skillEmpty: "No skills yet", skillNoneHere: "This gem carries no skills", skillScoped: "Under {gem} — {n} more sit outside this gem", gemSkills: "Skills under it", gemSkillsAllNote: "This gem names none, so every skill is available", gemSkillsLabel: "Skills under this gem", gemSkillsHint: "Tick none and all of them work; tick some and only those can be called under this gem", gemSkillsAll: "Skills", gemNew: "New gem", gemSaved: "Gem saved", gemNote: "A gem stays selected until you pick another. It carries four things a skill does not: the sources it may use, the facts checked before you submit, the instruction the specialists get, and the skills that hang under it.", gemInstruction: "Instruction for the specialists", gemSources: "Sources it may use", gemSourcesHint: "The question will say to rely on these only", gemFactsLabel: "Facts the question must carry", gemFactsHint: "A name and the words a draft carrying it would use; the composer flags what is missing", gemFactAdd: "+ Add one", gemFactName: "Name, e.g. end user", gemFactWords: "Keywords, comma separated", gemsHint: "type / in the composer at any time", coverageLabel: "Data coverage",
     questionLabel: "Enter a compliance scenario", placeholder: "Describe the party, product, route, end user or payment arrangement…",
     slashHint: "Gem", composerNote: "Prototype output is for research and triage only and is not legal advice. Do not enter trade secrets or confidential transaction data.", itaAttribution: "This product uses the International Trade Administration\u2019s Data API but is not endorsed or certified by the International Trade Administration.",
     evidence: "Evidence & sources", evidenceEmpty: "After an analysis, cited sources, retrieval status and access time appear here.", sourceFellBack: "The page text was not retrieved, so only this source\u2019s own summary was used. List screening does not read these provision pages; it runs on the ingested records.",
@@ -88,7 +88,7 @@ const i18n = {
     coverageMore: "See all sources", mosaicUs: "United States", mosaicCn: "China", mosaicOther: "Global / other",
     hfQuestion: "One question", hfAnswer: "One answer", startersLabel: "Start here", gemBacking: "Data behind it",
     teachSlashTitle: "Type / \u2014 a gem or a skill",
-    teachSlashBody: "Desks at the top \u2014 the coordinator, Trade, Item & licence, Third-party diligence. Pick one and you stay there, new conversations included. Below each are its narrower entries: the same lane with the question already pointed at one part of it. Skills hang under the desk you are at. {n} gems and {s} skills of your own.",
+    teachSlashBody: "Desks at the top \u2014 the coordinator, Trade, Item & licence, Third-party diligence. Pick one and you stay there, new conversations included. Below each are its narrower entries: the same lane with the question already pointed at one part of it. Skills hang under the desk you are at. {n} gems and {s} skills, one of them built in.",
     teachAtTitle: "Type @ \u2014 query a source",
     teachAtBody: "Search {n} ingested sources by entity name, notice number or keyword. It returns the source\u2019s own records, not a determination.",
     teachMakeTitle: "\uFF0B Build your own",
@@ -114,7 +114,7 @@ const i18n = {
     ground_counterparties: "Counterparty candidates", ground_ownership: "GLEIF corporate chain", ground_stated: "OFAC stated relationships",
     ground_beneficial: "SEC 13D/G and DEF 14A holdings", ground_shareholders: "Annual-report top ten",
     groundingNote: "{screened} list sources screened · {matches} potential matches · {internal} internal records touched",
-    filterAll: "All", filterTrade: "Trade", filterProduct: "Product", filterTpdd: "TPDD", filterCross: "Cross-domain",
+    filterAll: "All", filterEntry: "Gem / skill usage", filterTrade: "Trade", filterProduct: "Product", filterTpdd: "TPDD", filterCross: "Cross-domain",
     runtimeReady: "Live model", runtimeMissing: "No model configured",
     routeLabel: "Route", intentReview: "Compliance review", intentLookup: "Direct lookup", intentBriefing: "Regulatory briefing", intentMemo: "Case memo", intentNoReview: "no review procedure runs", intentAllLanes: "no term matched, so all three run", routedTo: "Routed to",
     willAsk: "This will use: ", willAskMore: " and {n} more", send: "Send", stopRun: "Stop this analysis", runStopped: "Stopped. This analysis did not finish, and was not saved to the case history.", overallAssessment: "Overall assessment", nextStep: "Next step", missingInfo: "Missing information", actions: "Recommended actions", askFor: "Suggested to supply", planSuggested: "Other suggestions from the specialists", planSuggestedNote: "These do not map onto a step in the analysis path; they are for the reviewer to weigh", notClosed: "{n} items still open", naCount: "{n} not applicable here", laneUnreached: "{n} more not reached", stepTriggered: "triggered by an earlier finding", flowFolded: "{n} more not applicable", laneFindings: "What this lane found (specialist output, not the case conclusion)", interimVerdict: "Interim assessment (on incomplete facts, not a conclusion)", noItems: "None", limitations: "Limits on this conclusion", clearanceTitle: "Clearance conditions · five", clearanceNote: "The five conditions belong to three different lanes, so no lane can close a case on its own. Silence is not a pass: unstated is unmet.", clearanceCleared: "All five are met — no licence requirement arises on the stated facts. This is not an approval and not a release.", clearanceBlocked: "{n} not met, so no clear conclusion is drawn.", clearanceOpen: "{n} step(s) are still waiting on evidence. An open step blocks a clear conclusion even when all five conditions hold.", clearanceMet: "Met", clearanceUnmet: "Not met", countSuffix: " · {n}",
@@ -442,9 +442,12 @@ function renderSkillNav() {
           <span class="gem-name"><code>/${esc(skill.command)}</code><em>${esc(skill.name)}</em></span>
           <small class="gem-sub">${esc(skill.summary)}</small>
         </button>
-        <button type="button" class="gem-drop" data-skill-delete="${esc(skill.id)}" title="${esc(t("skillDelete"))}" aria-label="${esc(t("skillDelete"))}">
+        ${/* The one that ships with the product has no delete, for the same
+              reason /eccn has none: it is in the code, and a control that
+              cannot succeed should not be offered. */ ""}
+        ${skill.builtin ? "" : `<button type="button" class="gem-drop" data-skill-delete="${esc(skill.id)}" title="${esc(t("skillDelete"))}" aria-label="${esc(t("skillDelete"))}">
           <svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg>
-        </button>
+        </button>`}
       </li>`).join("")
     : `<li class="gem-nav-empty">${esc(t(state.skills.length ? "skillNoneHere" : "skillEmpty"))}</li>`;
 }
@@ -2907,13 +2910,48 @@ async function loadRuntimeCapabilities() {
 
 /* ------------------------------------------------------------ scenarios */
 
+// One example per entry, taken from the entry itself.
+//
+// A gem already carries a question that demonstrates it — the placeholder in
+// the composer is exactly that — so writing a second one into the scenario list
+// would be two copies of the same example, drifting apart the first time a gem
+// is edited. Custom gems come along for free, and so does a skill: a skill had
+// nowhere to put an example, which is why the built-in one now carries a field
+// for it.
+//
+// Picking one of these selects the entry as well as filling the composer. That
+// is the difference from the prepared cases below it: those are a question, and
+// these are a question and the thing that answers it.
+function entryScenarios() {
+  const zh = state.locale === "zh";
+  const gems = allGems()
+    .filter((gem) => localized(gem.placeholder))
+    .map((gem) => ({
+      id: gem.icon, category: "entry", gem: gem.id,
+      title: localized(gem.name),
+      meta: `${gem.command} · ${zh ? "选中这个 Gem 并填入示例" : "selects this gem and fills the example"}`,
+      question: localized(gem.placeholder).replace(/^(例：|e\.g\. )/, "")
+    }));
+  const skills = (state.skills || []).filter((skill) => skill.example).map((skill) => ({
+    id: "/", category: "entry", skill: skill.command,
+    title: skill.name,
+    meta: `/${skill.command} · ${zh ? "命令留在文本里，作为流程追加给模型" : "the command stays in the text and appends the procedure"}`,
+    question: skill.example
+  }));
+  return [...gems, ...skills];
+}
+
+function allScenarios() {
+  return [...entryScenarios(), ...scenarios[state.locale]];
+}
+
 function renderScenarios() {
-  const visible = scenarios[state.locale].filter((item) => state.scenarioCategory === "all" || item.category === state.scenarioCategory);
-  $("scenarioFilters").innerHTML = ["all", "trade", "product", "tpdd", "cross"].map((category) => `
+  const visible = allScenarios().filter((item) => state.scenarioCategory === "all" || item.category === state.scenarioCategory);
+  $("scenarioFilters").innerHTML = ["all", "entry", "trade", "product", "tpdd", "cross"].map((category) => `
     <button type="button" class="filter-btn ${state.scenarioCategory === category ? "active" : ""}" data-category="${category}">${t(`filter${category.charAt(0).toUpperCase()}${category.slice(1)}`)}</button>`).join("");
   $("scenarioList").innerHTML = visible.map((item) => `
-    <button type="button" class="scenario-btn" data-scenario="${item.id}">
-      <span class="gem-icon" aria-hidden="true">${esc(item.id)}</span>
+    <button type="button" class="scenario-btn" data-scenario="${esc(item.gem || item.skill || item.id)}">
+      <span class="gem-icon${item.skill ? " is-skill" : ""}" aria-hidden="true">${esc(item.id)}</span>
       <span><strong>${esc(item.title)}</strong><small>${esc(item.meta)}</small></span>
     </button>`).join("");
 }
@@ -3461,7 +3499,9 @@ $("showKeyBtn").addEventListener("click", () => {
   $("showKeyBtn").textContent = field.type === "password" ? t("show") : t("hide");
 });
 $("settingsDialog").addEventListener("click", (event) => { if (event.target === $("settingsDialog")) $("settingsDialog").close(); });
-$("scenarioBtn").addEventListener("click", () => $("scenarioDialog").showModal());
+// Redrawn on open, not once at boot: the usage examples are built from the gem
+// and skill catalogues, and both arrive after the first paint.
+$("scenarioBtn").addEventListener("click", () => { renderScenarios(); $("scenarioDialog").showModal(); });
 $("closeScenarioDialog").addEventListener("click", () => $("scenarioDialog").close());
 $("scenarioDialog").addEventListener("click", (event) => {
   if (event.target === $("scenarioDialog")) return $("scenarioDialog").close();
@@ -3469,9 +3509,15 @@ $("scenarioDialog").addEventListener("click", (event) => {
   if (filter) { state.scenarioCategory = filter.dataset.category; return renderScenarios(); }
   const pick = event.target.closest("[data-scenario]");
   if (!pick) return;
-  const scenario = scenarios[state.locale].find((item) => item.id === pick.dataset.scenario);
+  const key = pick.dataset.scenario;
+  const scenario = allScenarios().find((item) => (item.gem || item.skill || item.id) === key);
   if (!scenario) return;
-  setComposer(scenario.question);
+  // A gem example selects the gem; a skill example puts its command in front of
+  // the question, which is how a skill is actually invoked. Filling the box with
+  // a question and leaving the reader to work out which entry it demonstrates
+  // would be an example of nothing.
+  if (scenario.gem) activateGem(scenario.gem, { focus: false });
+  setComposer(scenario.skill ? `/${scenario.skill} ${scenario.question}` : scenario.question);
   // Some scenarios are a prepared file, not just a question: they carry the
   // declarations a reviewer would already have to hand. Those go into the
   // declared facts, where they stay visible and editable — never asserted by
