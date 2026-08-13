@@ -2222,6 +2222,19 @@ function flushQueued() {
   if ($("questionInput").value.trim()) queueMicrotask(() => $("questionForm").requestSubmit());
 }
 
+// The reader's words, on screen, whatever happens to them next.
+//
+// There are two routes out of the composer — a question that starts a run, and a
+// value handed to a step that is still asking — and only the first one used to
+// leave a trace. The second replaced the box's contents with nothing at all: the
+// box cleared, the analysis resumed inside the answer already there, and what
+// had been typed appeared nowhere. "点击发送不显示用户输入" is that, exactly.
+function showUserMessage(text, gem = null) {
+  $("startPanel").classList.add("hidden");
+  $("threadInner").insertAdjacentHTML("beforeend",
+    `<article class="msg msg-user"><div class="bubble">${gem ? `<span class="gem-tag">${esc(gem.command)}</span><br>` : ""}${esc(text)}</div></article>`);
+}
+
 // Ends the run the reader is watching. The request is aborted, which drops the
 // connection — the server notices and stops before the next specialist rather
 // than finishing and filing a case nobody asked it to keep.
@@ -2356,9 +2369,7 @@ async function analyze(event, options = {}) {
   const priorHistory = state.conversation.slice(-6);
   if (!resuming) {
     state.conversation.push({ role: "user", content: question });
-    $("startPanel").classList.add("hidden");
-    $("threadInner").insertAdjacentHTML("beforeend",
-      `<article class="msg msg-user"><div class="bubble">${gem ? `<span class="gem-tag">${esc(gem.command)}</span><br>` : ""}${esc(raw)}</div></article>`);
+    showUserMessage(raw, gem);
     setComposer("");
     updateRouteHint();
     renderActiveGem();
@@ -3507,6 +3518,12 @@ $("questionForm").addEventListener("submit", (event) => {
     const field = pending.querySelector(".si-text");
     if (field) {
       field.value = text;
+      // Shown before it is consumed. A value handed to a step still ends up in
+      // that step, where the reader can see what was recorded and against which
+      // field — but it was typed into the conversation, so it belongs in the
+      // conversation too.
+      showUserMessage(text, state.activeGem);
+      state.conversation.push({ role: "user", content: text });
       setComposer("");
       pending.querySelector(".si-submit")?.click();
       return;

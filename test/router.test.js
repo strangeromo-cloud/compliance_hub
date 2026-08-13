@@ -721,3 +721,24 @@ test("a question asked mid-run is asked, not used to abandon the run", async () 
     "both the analysis and the source query release it");
   assert.match(app, /function flushQueued\(\) \{[\s\S]*?requestSubmit\(\)/);
 });
+
+test("what the reader types is shown, whichever route it takes", async () => {
+  // Two routes out of the composer: a question that starts a run, and a value
+  // handed to a step that is still asking. Only the first left a trace. The
+  // second cleared the box, resumed the analysis inside the answer already on
+  // screen, and put what had been typed nowhere at all — "点击发送不显示用户输入"
+  // is that, exactly, and it needs no run in flight and no unusual phrasing.
+  const app = await (await import("node:fs/promises"))
+    .readFile(new URL("../public/app.js", import.meta.url), "utf8");
+
+  assert.match(app, /function showUserMessage\(text, gem = null\) \{/,
+    "one place that puts the reader's words on screen");
+  // Both routes call it, and nothing else writes a user bubble by hand.
+  assert.equal([...app.matchAll(/showUserMessage\(/g)].length, 3,
+    "defined once, called from the run and from the step-answer branch");
+  assert.equal([...app.matchAll(/class="msg msg-user"/g)].length, 2,
+    "and the markup exists in that helper and in the case replay, nowhere else");
+
+  // The value still reaches the step — it is shown as well, not instead.
+  assert.match(app, /showUserMessage\(text, state\.activeGem\);\s*\n\s*state\.conversation\.push\(\{ role: "user", content: text \}\);\s*\n\s*setComposer\(""\);\s*\n\s*pending\.querySelector\("\.si-submit"\)\?\.click\(\);/);
+});
