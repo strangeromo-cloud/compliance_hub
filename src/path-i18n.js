@@ -24,6 +24,11 @@ const TERMS = {
   "查询": "Lookup",
   "监管变化简报": "Regulatory briefing",
   "案件备忘录": "Case memo",
+  "问题中给出了型号或 part number": "The question gives a model or part number",
+  "问题中给出了管制编码": "The question gives a control code",
+  "问题中给出了受控美国原产内容占比": "The question gives the controlled US-origin content share",
+  "名称相近但不完全相同，不能据此归属所有权": "The names are close but not identical; ownership cannot be attributed on that",
+  "名称不匹配": "The names do not match",
   "问答": "Q&A",
   "直接回答所问，不重开审查": "Answers what was asked; it does not reopen the review",
 
@@ -162,6 +167,12 @@ const isPair = (line) => line && typeof line === "object" && typeof line.zh === 
 // picks its side, a plain string goes through the term table.
 export const localizeLine = (line, locale) =>
   (isPair(line) ? (locale === "en" ? line.en : line.zh) : translateTerm(line, locale));
+
+// Either half of something that may or may not be a pair. A label built by one
+// module and interpolated by another is exactly where a bi() pair turns into
+// "[object Object]" on screen, so the reach-through is written once.
+export const zh = (line) => (isPair(line) ? line.zh : String(line ?? ""));
+export const en = (line) => (isPair(line) ? line.en : String(line ?? ""));
 
 export const localizeLines = (lines, locale) => (lines || []).map((line) => localizeLine(line, locale));
 

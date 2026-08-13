@@ -151,7 +151,10 @@ async function runAgent(agent, question, locale, sources, config, history, groun
 function localizeClearance(clearance, locale) {
   return {
     cleared: clearance.cleared,
-    openSteps: clearance.openSteps,
+    // These are step titles, and the term table already holds every one of them
+    // — they were the only part of a clearance that went out untranslated, so an
+    // English conclusion listed the conditions blocking it in Chinese.
+    openSteps: localizeLines(clearance.openSteps, locale),
     checks: clearance.checks.map((check) => ({
       id: check.id,
       met: check.met,
@@ -580,8 +583,8 @@ async function answerLookup({ question, locale, lookup, onEvent, gemId = null })
       : {
         overallRisk: null,
         headline: isEn ? `${lookup.asked.join(", ")} is not in the ingested records` : `${lookup.asked.join("、")} 不在已接入的数据中`,
-        executiveSummary: `${isEn ? "Searched: " : "已检索："}${lookup.searched.map((source) => source.label).join("、")}。${lookup.elsewhere}`,
-        nextStep: lookup.elsewhere
+        executiveSummary: `${isEn ? "Searched: " : "已检索："}${lookup.searched.map((source) => localizeLine(source.label, locale)).join(isEn ? ", " : "、")}${isEn ? ". " : "。"}${localizeLine(lookup.elsewhere, locale)}`,
+        nextStep: localizeLine(lookup.elsewhere, locale)
       };
 
   const result = {
@@ -722,7 +725,12 @@ export async function assessScenario({ question, locale = "zh", config = {}, his
     // then dropped here, which is why the step went on asking for a name that
     // had already been found.
     partyCandidates: grounding.partyCandidates || [],
-    ownership: grounding.ownership || null,
+    // Why an ownership edge was not attributed is this system's own reasoning
+    // about a name, so it belongs to the reader's language — it was the last
+    // thing in a grounding that reached an English answer in Chinese.
+    ownership: grounding.ownership
+      ? { ...grounding.ownership, rejected: (grounding.ownership.rejected || []).map((row) => ({ ...row, why: localizeLine(row.why, locale) })) }
+      : null,
     statedOwnership: grounding.statedOwnership || null,
     parentScreening: grounding.parentScreening || null,
     limitations: localizeLines(grounding.limitations, locale),
@@ -854,7 +862,7 @@ export async function assessScenario({ question, locale = "zh", config = {}, his
   // Flagged so the client knows the sequence has finished and a step may now ask
   // the user for input; a form offered mid-run would be answered against a path
   // that is still moving.
-  analysisPath = { ...analysisPath, awaitingInput: awaiting ? { step: awaiting.id, title: awaiting.title } : null };
+  analysisPath = { ...analysisPath, awaitingInput: awaiting ? { step: awaiting.id, title: localizeLine(awaiting.title, locale) } : null };
   // Localized like the six path events before it. Sent raw, this one frame put
   // the other language's lane labels on the page — Chinese headings in an
   // English run — until the done payload arrived and corrected them. Brief, but
@@ -868,7 +876,7 @@ export async function assessScenario({ question, locale = "zh", config = {}, his
     // The run stopped to ask rather than finishing. Everything downstream — the
     // conclusion, the case record, the thread summary — has to be able to tell
     // "not answered yet" from "answered".
-    awaitingInput: awaiting ? { step: awaiting.id, title: awaiting.title } : null,
+    awaitingInput: awaiting ? { step: awaiting.id, title: localizeLine(awaiting.title, locale) } : null,
     // What the user said they could not supply. The steps stay outstanding — a
     // declined question is not an answered one — but the run does not stop there
     // again.

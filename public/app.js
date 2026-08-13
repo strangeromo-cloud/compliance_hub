@@ -439,10 +439,10 @@ function renderSkillNav() {
   $("skillNav").innerHTML = shown.length
     ? shown.map((skill) => `
       <li>
-        <button type="button" data-skill="${esc(skill.command)}" title="${esc(skill.summary)}">
+        <button type="button" data-skill="${esc(skill.command)}" title="${esc(localized(skill.summary))}">
           <span class="gem-icon is-skill" aria-hidden="true">/</span>
-          <span class="gem-name"><code>/${esc(skill.command)}</code><em>${esc(skill.name)}</em></span>
-          <small class="gem-sub">${esc(skill.summary)}</small>
+          <span class="gem-name"><code>/${esc(skill.command)}</code><em>${esc(localized(skill.name))}</em></span>
+          <small class="gem-sub">${esc(localized(skill.summary))}</small>
         </button>
         ${/* The one that ships with the product has no delete, for the same
               reason /eccn has none: it is in the code, and a control that
@@ -812,7 +812,7 @@ function openPalette(query) {
   // procedure somebody wrote.
   const needle = String(query || "").toLowerCase();
   const skills = visibleSkills().filter((skill) => !needle
-    || skill.command.includes(needle) || skill.name.toLowerCase().includes(needle));
+    || skill.command.includes(needle) || String(localized(skill.name)).toLowerCase().includes(needle));
   state.palette = { open: true, items: [...matchGems(query), ...skills], index: 0 };
   renderPalette();
 }
@@ -857,7 +857,7 @@ function renderPalette() {
       ${skills.map((skill) => `
         <button type="button" class="palette-item ${items.indexOf(skill) === index ? "active" : ""}" data-skill="${esc(skill.command)}" role="option">
           <span class="gem-icon is-skill" aria-hidden="true">/</span>
-          <span><strong>${esc(skill.name)}</strong><small>${esc(skill.summary)}</small></span>
+          <span><strong>${esc(localized(skill.name))}</strong><small>${esc(localized(skill.summary))}</small></span>
           <code class="palette-cmd">/${esc(skill.command)}</code>
         </button>`).join("")}
     </div>` : "")
@@ -3095,9 +3095,9 @@ function entryScenarios() {
     }));
   const skills = (state.skills || []).filter((skill) => skill.example).map((skill) => ({
     id: "/", category: "entry", skill: skill.command,
-    title: skill.name,
+    title: localized(skill.name),
     meta: `/${skill.command} · ${zh ? "命令留在文本里，作为流程追加给模型" : "the command stays in the text and appends the procedure"}`,
-    question: skill.example
+    question: localized(skill.example)
   }));
   return [...gems, ...skills];
 }
@@ -3573,7 +3573,7 @@ function renderGemSkillPicker() {
   $("gemSkillPicker").innerHTML = state.skills.length
     ? `<div class="sp-group"><span class="sp-country">${esc(t("gemSkillsAll"))}</span>
         ${state.skills.map((skill) => `
-          <label class="sp-item" title="${esc(skill.summary)}">
+          <label class="sp-item" title="${esc(localized(skill.summary))}">
             <input type="checkbox" value="${esc(skill.id)}">
             <code>/${esc(skill.command)}</code>
           </label>`).join("")}

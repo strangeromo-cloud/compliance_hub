@@ -251,11 +251,17 @@ async function productFacts(question) {
     facts.push({
       sourceId: "internal-master-data",
       dataClass: "synthetic",
-      fact: `内部主数据（合成演示数据）: ${product.partNumber} 声明 ECCN ${product.eccnUs}`
-        + `${product.cnControlCode ? `、中国管制编码 ${product.cnControlCode}` : ""}`
-        + `，原产地 ${product.originCountry}，制造地 ${product.manufacturingSite}，受控美国原产内容占比 ${product.usContentPercent}%`
-        + `${controlledParts.length ? `，BOM 中受控件 ${controlledParts.length} 项（${controlledParts.slice(0, 3).map((component) => `${component.componentId} ${component.eccnUs}`).join("；")}）` : ""}`
-        + `。该分类为演示派生值（${product.classificationConfidence}），不能作为实际分类依据。`
+      fact: bi(
+        `内部主数据（合成演示数据）: ${product.partNumber} 声明 ECCN ${product.eccnUs}`
+          + `${product.cnControlCode ? `、中国管制编码 ${product.cnControlCode}` : ""}`
+          + `，原产地 ${product.originCountry}，制造地 ${product.manufacturingSite}，受控美国原产内容占比 ${product.usContentPercent}%`
+          + `${controlledParts.length ? `，BOM 中受控件 ${controlledParts.length} 项（${controlledParts.slice(0, 3).map((component) => `${component.componentId} ${component.eccnUs}`).join("；")}）` : ""}`
+          + `。该分类为演示派生值（${product.classificationConfidence}），不能作为实际分类依据。`,
+        `Internal master data (synthetic demonstration data): ${product.partNumber} declares ECCN ${product.eccnUs}`
+          + `${product.cnControlCode ? `, PRC control code ${product.cnControlCode}` : ""}`
+          + `, origin ${product.originCountry}, made at ${product.manufacturingSite}, controlled US-origin content ${product.usContentPercent}%`
+          + `${controlledParts.length ? `, ${controlledParts.length} controlled item(s) in the BOM (${controlledParts.slice(0, 3).map((component) => `${component.componentId} ${component.eccnUs}`).join("; ")})` : ""}`
+          + `. This classification is a demonstration-derived value (${product.classificationConfidence}) and cannot be relied on as an actual classification.`)
     });
   }
   return facts;

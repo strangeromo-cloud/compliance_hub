@@ -293,7 +293,10 @@ test("a lookup answers from the data and says what it searched", async () => {
   const missing = await resolveLookup("ZZ-999999999 的 ECCN 是什么");
   assert.equal(missing.found.length, 0);
   assert.ok(missing.searched.length, "it must still say which records it read");
-  assert.match(missing.elsewhere, /厂商|BIS/, "and where the answer actually lives");
+  // Both halves, because this is what an English reader is shown too: it used to
+  // be one Chinese string that reached an English answer unchanged.
+  assert.match(missing.elsewhere.zh, /厂商|BIS/, "and where the answer actually lives");
+  assert.match(missing.elsewhere.en, /manufacturer|BIS/i, "in either language");
 
   const { assessScenario } = await import("../src/orchestrator.js");
   const answer = await assessScenario({ question: "ZZ-999999999 的 ECCN 是什么", locale: "zh", config: stub.config });
@@ -1123,4 +1126,55 @@ test("what the keyword rules cannot see, a reading of the question can", async (
     .readFile(new URL("../src/orchestrator.js", import.meta.url), "utf8");
   assert.match(orchestrator, /describesNewTransaction\(question\)\s*\n?\s*\?\s*null/,
     "and the orchestrator checks it before asking");
+});
+
+test("an English run puts no Chinese on screen", async () => {
+  // Spot-fixing this never finished: the reader reported two strings and a scan
+  // of what an English run actually returns found thirty-five. Two causes, and
+  // the second is why a dictionary alone could never have closed it.
+  //
+  //   fixed phrases with no entry, or with an entry nothing ever applied —
+  //   clearance.openSteps and awaitingInput.title went out untranslated because
+  //   only path steps were being put through the table
+  //
+  //   strings assembled around data — "已检索 X（N 条，采集于 D）", the internal
+  //   master-data fact, a manufacturer's classification detail. A term table
+  //   cannot reach inside those; they have to be written in both languages
+  //   where they are built, which is what bi() is for
+  //
+  // So this walks everything an English run returns rather than naming strings.
+  // A term added without a translation fails here, which is the only way this
+  // stays closed.
+  const { assessScenario } = await import("../src/orchestrator.js");
+  const CJK = /[一-鿿]/;
+
+  const found = new Map();
+  const walk = (value, path) => {
+    if (typeof value === "string") { if (CJK.test(value)) found.set(path, value.slice(0, 90)); return; }
+    if (Array.isArray(value)) return value.forEach((item, index) => walk(item, `${path}[${index}]`));
+    if (value && typeof value === "object") {
+      for (const [key, inner] of Object.entries(value)) {
+        // A bi() pair keeps its Chinese half by design; the English side is what
+        // an English reader is shown, and that is what this checks.
+        if (key === "zh") continue;
+        walk(inner, `${path}.${key}`);
+      }
+    }
+  };
+
+  for (const question of [
+    "Customer Aveox Technologies (Shenzhen) Co., Ltd., Shenzhen China, direct customer, buying TS-6200-DM rack servers made in Hefei with 28% controlled US content, exported to a data centre in India. Is a licence required?",
+    "New consultant Silverline Advisory Ltd. (BVI) requests a 15% success fee to a BVI account and has not disclosed its UBO. What diligence is required?",
+    "Summarize regulatory changes over the past six months",
+    "What is part 100-000000009's ECCN?"
+  ]) {
+    const answer = await assessScenario({ question, locale: "en", config: stub.config });
+    walk({
+      analysisPath: answer.analysisPath, grounding: answer.grounding,
+      actionPlan: answer.actionPlan, agents: answer.agents
+    }, question.slice(0, 24));
+  }
+
+  assert.deepEqual([...found.entries()], [],
+    "every string an English run produces is English");
 });

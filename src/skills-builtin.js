@@ -25,8 +25,14 @@ export const BUILTIN_SKILLS = [
     id: "skill-reg-impact",
     builtin: true,
     command: "reg-impact",
-    name: "监管变化影响评估",
-    summary: "先确定条文改了什么，再逐层评估它落在哪些业务、产品、供应链和内部控制上。",
+    // Bilingual, because this one ships with the product. A skill a reader wrote
+    // is in whatever language they wrote it in and stays there; this one appeared
+    // under an English heading in Chinese.
+    name: { zh: "监管变化影响评估", en: "Regulatory change impact" },
+    summary: {
+      zh: "先确定条文改了什么，再逐层评估它落在哪些业务、产品、供应链和内部控制上。",
+      en: "Establish what a provision changed, then work outward to the businesses, products, supply chain and internal controls it lands on."
+    },
     procedure: [
       "按以下顺序处理，每一步说清楚依据的是哪一份正文：",
       "1. 变化本身：旧状态、新状态、改动的条款、发布日、生效日、过渡期。只拿到摘要时标明这是摘要级初判，不要推测条文差异。",
@@ -35,7 +41,10 @@ export const BUILTIN_SKILLS = [
       "4. 内部政策与控制：除非问题里给了内部材料，否则一律作为「待确认项」提出——候选政策、候选控制、可能的责任人、可能的缺口，并写明需要什么材料才能确认。",
       "5. 动作：立即要做的、需要排期的、有截止日触发点的、需要法务或人工复核的，分开列。"
     ].join("\n"),
-    example: "美国 BIS 上个月更新了先进计算物项的管制范围，对我们意味着什么？",
+    example: {
+      zh: "美国 BIS 上个月更新了先进计算物项的管制范围，对我们意味着什么？",
+      en: "BIS updated the scope of controls on advanced computing items last month — what does that mean for us?"
+    },
     createdAt: "2026-08-12T00:00:00.000Z"
   }
 ];

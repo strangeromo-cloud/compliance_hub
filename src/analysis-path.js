@@ -22,7 +22,7 @@
 
 import { GEMS } from "../public/gems.js";
 import { triage } from "./triage.js";
-import { bi, localizeLine, translateTerm } from "./path-i18n.js";
+import { bi, en, localizeLine, translateTerm, zh } from "./path-i18n.js";
 import { triggeredDependencies } from "./lane-dependencies.js";
 import { invokeCapability, licenceExceptionOutcome } from "./agent-capabilities.js";
 
@@ -427,8 +427,9 @@ function lookupSteps(grounding) {
   const lookup = grounding.lookup;
   if (!lookup) return [step("data_lookup", "在已接入数据中检索", "not_reached", {})];
   const searched = [
-    ...lookup.searched.map((source) => `已检索 ${source.label}`),
-    ...(lookup.unavailable || []).map((source) => `未检索 ${source.label}（该来源未同步）`)
+    ...lookup.searched.map((source) => bi(`已检索 ${zh(source.label)}`, `Searched ${en(source.label)}`)),
+    ...(lookup.unavailable || []).map((source) => bi(`未检索 ${zh(source.label)}（该来源未同步）`,
+      `Not read: ${en(source.label)} (not synced)`))
   ];
   if (lookup.found.length) {
     return [step("data_lookup", "在已接入数据中检索", "confirmed", {
@@ -461,10 +462,10 @@ function briefingSteps(grounding) {
     bi(`窗口：${brief.window.since} 起至今（${brief.window.days} 天，${brief.window.stated ? "取自问题" : "默认，问题未指定"}）`,
       `Window: ${brief.window.since} to today (${brief.window.days} days, ${brief.window.stated ? "taken from the question" : "default; none was stated"})`),
     ...brief.searched.map((source) => bi(
-      `已检索 ${source.label}（${source.recordCount} 条${source.fallback ? "，时点副本" : ""}）`,
-      `Read ${source.sourceId} (${source.recordCount} records${source.fallback ? ", committed copy" : ""})`)),
+      `已检索 ${zh(source.label)}（${source.recordCount} 条${source.fallback ? "，时点副本" : ""}）`,
+      `Read ${en(source.label)} (${source.recordCount} records${source.fallback ? ", committed copy" : ""})`)),
     ...brief.unavailable.map((source) => bi(
-      `未检索 ${source.label}（该来源未同步）`, `Not read: ${source.sourceId} (not synced)`))
+      `未检索 ${zh(source.label)}（该来源未同步）`, `Not read: ${en(source.label)} (not synced)`))
   ];
   if (!brief.items.length) {
     return [step("notice_timeline", "按时间顺序汇总已发布公告", "confirmed",
@@ -902,7 +903,9 @@ function productSteps(question, grounding, results, declaredFacts = {}) {
   steps.push(step("classify", "分类（ECCN）",
     classificationFacts.length ? "confirmed" : "evidence_needed",
     classificationFacts.length
-      ? { basis: classificationFacts.slice(0, 3).map((fact) => `${fact.sourceId}${fact.noticeNumber ? `（${fact.noticeNumber}）` : ""}：${String(fact.fact).slice(0, 90)}`) }
+      ? { basis: classificationFacts.slice(0, 3).map((fact) => bi(
+        `${fact.sourceId}${fact.noticeNumber ? `（${fact.noticeNumber}）` : ""}：${zh(fact.fact).slice(0, 90)}`,
+        `${fact.sourceId}${fact.noticeNumber ? ` (${fact.noticeNumber})` : ""}: ${en(fact.fact).slice(0, 90)}`)) }
       : { needs: ["关键技术参数与厂商分类信息", ...needsMatching(results, "product", /参数|分类|eccn|编码/i)] }));
 
   const classified = classificationFacts.length > 0;
@@ -911,7 +914,8 @@ function productSteps(question, grounding, results, declaredFacts = {}) {
     !classified ? "not_reached" : hasDestination ? "evidence_needed" : "evidence_needed",
     !classified
       ? { needs: ["分类成立后方可查 Country Chart"] }
-      : { needs: ["最终目的地，以及该 ECCN 的管制理由在 Country Chart 上对应的单元", ...needsMatching(results, "product", /目的地|国别|矩阵/i)] }));
+      : { needs: [bi("最终目的地，以及该 ECCN 的管制理由在 Country Chart 上对应的单元",
+        "The final destination, and the Country Chart cell where this ECCN's reasons for control meet it"), ...needsMatching(results, "product", /目的地|国别|矩阵/i)] }));
 
   // The knowledge standard is what General Prohibition Ten turns on, and a
   // payment route is evidence about knowledge — which is the diligence lane's
