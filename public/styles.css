@@ -194,9 +194,11 @@ kbd { font-family: var(--mono); border: 1px solid var(--border-strong); border-r
    A rule on one edge marks where a row starts; a ring says the whole row is the
    selected thing, which is what a two-line row with a description needs. The
    ring is an inset shadow rather than a border so the row does not shift by a
-   pixel when it becomes the selected one. */
+   pixel when it becomes the selected one.
+   The ring is what carries the state, so the fill can stay light: 26% behind a
+   description line was a tinted block with text on it rather than a row. */
 .gem-nav button.active {
-  background: color-mix(in srgb, var(--accent) 26%, transparent); color: var(--text);
+  background: color-mix(in srgb, var(--accent) 13%, transparent); color: var(--text);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 62%, transparent);
 }
 .gem-nav .gem-name { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
