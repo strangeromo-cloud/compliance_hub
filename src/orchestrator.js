@@ -6,6 +6,7 @@ import { callJsonModel, callJsonModelStream, readableProjection } from "./llm.js
 import { assessClearance } from "./clearance.js";
 import { skillBrief } from "./skills.js";
 import { customGemKind } from "./gems-custom.js";
+import { gemBrief } from "./gem-brief.js";
 import { resolveLookup } from "./lookup.js";
 import { localizePath, localizeLines, localizeLine } from "./path-i18n.js";
 import { buildBriefing } from "./briefing.js";
@@ -123,12 +124,12 @@ function applyIntentScope(result, intent, question, locale) {
   };
 }
 
-async function runAgent(agent, question, locale, sources, config, history, grounding, onDelta, onMeta, skill = null) {
+async function runAgent(agent, question, locale, sources, config, history, grounding, onDelta, onMeta, skill = null, gemId = null) {
   const relevantSources = sources.filter((source) => source.agents.includes(agent));
   // Manufacturer classification values and internal master data now arrive
   // through the structured grounding block instead of a literal prompt string.
   const result = await callJsonModelStream(config, [
-    { role: "system", content: agentInstructions(agent, locale, grounding.intent, skill) },
+    { role: "system", content: `${agentInstructions(agent, locale, grounding.intent, skill)}${gemBrief(gemId, locale)}` },
     { role: "user", content: `Recent conversation (context only):\n${conversationContext(history)}\n\nCurrent user question:\n${question}\n\nStructured grounding:\n${groundingContext(grounding)}\n\nPublic sources:\n${sourceContext(relevantSources)}` }
   ], (text) => onDelta?.(text), (meta) => onMeta?.(meta));
   return applyIntentScope(normalizeAgentResult(result, agent), grounding.intent, question, locale);
@@ -220,12 +221,12 @@ const SUMMARY_SHAPE = "Read the question for every distinct thing it asks — th
   + "Keep each line to one point and at most three lines under any heading; omit a section that has nothing in it rather than writing that it is empty. "
   + "The specialists' findings, the step list and the exact facts still missing are all shown to the reader elsewhere in the same answer. Do not restate them and do not write a section listing what is outstanding.";
 
-async function synthesize(question, locale, results, config, history, grounding, onDelta, outstanding = [], skill = null) {
+async function synthesize(question, locale, results, config, history, grounding, onDelta, outstanding = [], skill = null, gemId = null) {
   const language = locale === "en" ? "English" : "Simplified Chinese";
   const result = await callJsonModelStream(config, [
     {
       role: "system",
-      content: `${outstandingBrief(outstanding)}${clearanceBrief(grounding.clearance)}You are the Compliance Hub Master Agent. Synthesize specialist findings without overruling them or inventing facts. Respond in ${language}. The headline and executiveSummary must answer the current question directly and specifically. Never replace a requested policy explanation or factual value with a generic human-review statement. ${intentScope(grounding.intent)} Distinguish controlled status, license requirement and prohibition only when those issues are actually in scope. Return JSON only: {"overallRisk":"low|medium|high|unknown","headline":"...","executiveSummary":"...","nextStep":"..."}. ${SUMMARY_SHAPE} Missing critical information must not become a low-risk result. This is not legal advice.${skillBrief(skill)}`
+      content: `${outstandingBrief(outstanding)}${clearanceBrief(grounding.clearance)}You are the Compliance Hub Master Agent. Synthesize specialist findings without overruling them or inventing facts. Respond in ${language}. The headline and executiveSummary must answer the current question directly and specifically. Never replace a requested policy explanation or factual value with a generic human-review statement. ${intentScope(grounding.intent)} Distinguish controlled status, license requirement and prohibition only when those issues are actually in scope. Return JSON only: {"overallRisk":"low|medium|high|unknown","headline":"...","executiveSummary":"...","nextStep":"..."}. ${SUMMARY_SHAPE} Missing critical information must not become a low-risk result. This is not legal advice.${skillBrief(skill)}${gemBrief(gemId, locale)}`
     },
     { role: "user", content: `Recent conversation:\n${conversationContext(history)}\n\nCurrent question:\n${question}\n\nQuestion intent: ${grounding.intent}\n\nSpecialist outputs:\n${JSON.stringify(results)}` }
   ], (text) => onDelta?.(text));
@@ -789,7 +790,7 @@ export async function assessScenario({ question, locale = "zh", config = {}, his
       agent, question, locale, sources, config, history, grounding,
       (text) => onEvent({ type: "agent_delta", agent, text }),
       (meta) => onEvent({ type: "stream_mode", agent, ...meta }),
-      skill
+      skill, gemId
     )));
     results.push(...reported);
     reported.forEach((result) => onEvent({ type: "agent", result }));
@@ -818,7 +819,7 @@ export async function assessScenario({ question, locale = "zh", config = {}, his
   }
   onEvent({ type: "synthesizing" });
   synthesis = await synthesize(question, locale, results, config, history, grounding,
-    (text) => onEvent({ type: "synthesis_delta", text }), outstanding, skill);
+    (text) => onEvent({ type: "synthesis_delta", text }), outstanding, skill, gemId);
 
   // Resolved the same way the question was chosen, always. Returning a less
   // resolved path than the one the ask came from meant the step being asked about

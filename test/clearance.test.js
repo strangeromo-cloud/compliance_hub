@@ -980,3 +980,56 @@ test("a question about the review is answered, not turned into another review", 
   assert.ok(fresh.analysisPath.lanes.some((lane) => ["trade", "product", "tpdd"].includes(lane.lane)),
     "with no prior turn there is nothing to answer from, so the review runs");
 });
+
+test("a gem's instruction never rides in front of what the reader typed", async () => {
+  // The composer used to send `${instruction}\n\n${sources}\n\n${raw}` as the
+  // question, and everything downstream judged that string. It survived while a
+  // gem was chosen deliberately and rarely, and stopped surviving the moment one
+  // was always selected: the coordinator's instruction is a hundred and twenty
+  // characters, and a follow-up is recognised partly by being short. Every
+  // follow-up measured long enough to be a scenario and got the review it exists
+  // to avoid.
+  const { GEMS } = await import("../public/gems.js");
+  const { consultKind } = await import("../public/intent.js");
+  const { gemBrief } = await import("../src/gem-brief.js");
+  const { assessScenario } = await import("../src/orchestrator.js");
+
+  const hub = GEMS.find((gem) => gem.id === "hub");
+  const asked = "如果我把注册号补上，是不是就能拿到明确结论？";
+  assert.equal(consultKind(asked, { hasHistory: true }), "followup");
+  assert.equal(consultKind(`${hub.instruction.zh}\n\n${asked}`, { hasHistory: true }), null,
+    "which is exactly what the old composer sent");
+
+  // Asserted against the composer's source, because the rule is about what the
+  // browser sends and no call to assessScenario can observe it: this test passed
+  // unchanged with the old glue put back, which is the whole reason the defect
+  // survived a suite that already covered consultKind and the dispatch.
+  const app = await (await import("node:fs/promises"))
+    .readFile(new URL("../public/app.js", import.meta.url), "utf8");
+  assert.match(app, /^\s*const question = raw;$/m,
+    "the composer sends what the reader typed");
+  assert.doesNotMatch(app, /仅使用以下来源作为依据：\$\{gem\.boundSources/,
+    "and builds no prompt of its own — the bound-source line is the server's to write");
+
+  // The instruction reaches the model as a system message instead, on the same
+  // footing a skill has: it shapes the work and licenses no claim.
+  const brief = gemBrief("screen-party", "zh");
+  assert.match(brief, /主体筛查/);
+  assert.match(brief, /仅使用以下来源作为依据/);
+  assert.match(brief, /It is not evidence/);
+  assert.equal(gemBrief(null, "zh"), "");
+  assert.equal(gemBrief("no-such-gem", "zh"), "");
+
+  // End to end: the same question, with a gem selected, is answered rather than
+  // reviewed. This is the assertion the earlier consult test could not make,
+  // because it never went through a gem.
+  const history = [
+    { role: "user", content: "客户 Aveox Technologies (Shenzhen) Co., Ltd.，深圳，直销客户，需要许可吗" },
+    { role: "assistant", content: "尚不能定论：缺注册号，主体身份未确立。" }
+  ];
+  const answered = await assessScenario({
+    question: asked, locale: "zh", config: stub.config, history, gemId: "hub"
+  });
+  assert.deepEqual(answered.analysisPath.lanes.map((lane) => lane.lane), ["consult"]);
+  assert.equal(answered.synthesis.overallRisk, null);
+});

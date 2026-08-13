@@ -2310,11 +2310,19 @@ async function analyze(event, options = {}) {
   if (state.liveModelBlocked) { toast(t("access_code_unset")); return; }
   if (state.accessPasswordRequired && !accessHeaders()["x-access-password"]) { toast(t("accessRequired")); return openSettings(); }
 
-  // The gem contributes its instruction and its bound-source whitelist; the
-  // user's text stays verbatim so the transcript shows what was actually asked.
-  const question = gem
-    ? `${localized(gem.instruction)}\n\n${gem.boundSources.length ? `仅使用以下来源作为依据：${gem.boundSources.join(", ")}。\n\n` : ""}${raw}`
-    : raw;
+  // What the reader typed, and nothing else.
+  //
+  // The gem's instruction and its bound-source whitelist used to be glued to the
+  // front of this and sent as one string. Everything downstream then judged that
+  // string: routing read it, the case store saved it, the transcript replayed it
+  // as the previous turn — and the follow-up detector measured it. A follow-up is
+  // recognised partly by being short, so once a gem was always selected, the
+  // coordinator's hundred-and-twenty-character instruction rode in front of every
+  // question and every follow-up measured long enough to be a scenario.
+  //
+  // It is an instruction to the model, so it is a system message, and the server
+  // builds it from gemId — the same shape a skill already had.
+  const question = raw;
 
   const priorHistory = state.conversation.slice(-6);
   if (!resuming) {
