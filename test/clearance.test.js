@@ -931,6 +931,16 @@ test("a question about the review is answered, not turned into another review", 
 
   const asked = [
     ["如果我把注册号补上，是不是就能拿到明确结论？", true, "followup"],
+    // 吗 / 呢 / 么 are the sentence-final question particles and were missing from
+    // the list, which started from written questions — a trailing ？ or a phrase
+    // like 可以吗 matched as one contiguous string. This sentence ends in a comma
+    // and its 可以 and its 吗 are nine characters apart, so it matched nothing and
+    // went to the specialists. Everything else about it said follow-up.
+    ["补充上述三个信息就可以得出最终结论了吗，", true, "followup"],
+    ["补充上述三个信息就可以得出最终结论了吗", true, "followup"],
+    ["这三项补齐了能定论吗", true, "followup"],
+    ["上面说的补上就够了吗", true, "followup"],
+    ["If I provide the registration number, will that be enough?", true, "followup"],
     ["上面那一步为什么跳过了？", true, "followup"],
     ["你刚才说还缺最终用户，提供了之后能定论吗？", true, "followup"],
     ["If I provide the registration number, can you reach a firm conclusion?", true, "followup"],

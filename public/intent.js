@@ -220,7 +220,13 @@ export function isMemoRequest(question = "") {
 // question that describes a transaction gets the review, whatever else it
 // looks like. That is what keeps "客户 X 在深圳，我们要出口服务器，需要许可吗" a
 // review even though it ends in a question mark.
-const ASKS = /[？?]\s*$|是否|能否|可以吗|行不行|是不是|要不要|什么|为什么|为何|怎么|如何|哪些|多久|区别|意思|\bwhat\b|\bwhy\b|\bhow\b|\bwhich\b|\bcan\b|\bcould\b|\bshould\b|\bdoes\b|\bis it\b|\bdo we\b/i;
+// 吗 / 呢 / 么 are the sentence-final question particles, and they were missing.
+// The list started from written questions — a trailing ？ or a phrase like 可以吗
+// matched as one contiguous string — and "补充上述三个信息就可以得出最终结论了吗，"
+// contains neither: it ends in a comma, and its 可以 and its 吗 are nine
+// characters apart. Everything else about it said follow-up. A bare 吗 is safe
+// to match because it does nothing else in Chinese.
+const ASKS = /[？?]\s*$|[吗呢么]\s*[？?。，,！!]?\s*$|是否|能否|行不行|是不是|要不要|什么|为什么|为何|怎么|如何|哪些|多久|区别|意思|\bwhat\b|\bwhy\b|\bhow\b|\bwhich\b|\bcan\b|\bcould\b|\bshould\b|\bwill\b|\bwould\b|\bdoes\b|\bis it\b|\bdo we\b|\benough\b/i;
 
 // Pointing at the analysis on screen, or at the gap it reported.
 const ABOUT_THE_RUN = /上(一)?(轮|次|面)|以上|上述|刚才|刚刚|前面|这次|本次|之前(的)?(分析|结论|回答)|你(刚才|上面)?(说|提到|给出)|结论|判断依据|这一步|那一步|为什么(跳过|没有|不)|补(上|充|齐)|提供(了)?|填(上|了)|给出后|拿到|定论|明确结论|还(缺|差|需要)|previous|earlier|above|last (answer|run|turn)|you said|that step|skipped|if (i|we) (provide|supply|add|give)|once (i|we) (provide|supply|add)/i;
