@@ -520,8 +520,10 @@ async function openCase(id) {
       last = turn;
     }
     renderEvidence(last?.sources || []);
-    // A reopened case shows the flow it reached, not an empty rail.
-    renderFlowPanel(last?.analysisPath, { analysed: (last?.results || []).map((item) => item.agent) });
+    // A reopened case shows the flow it reached, not an empty rail — and an
+    // empty rail when the last turn was answered rather than reviewed.
+    if (last?.analysisPath) renderFlowPanel(last.analysisPath, { analysed: (last.results || []).map((item) => item.agent) });
+    else clearFlowPanel();
     renderCaseNav();
     closeDrawer();
     $("threadInner").lastElementChild?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -2781,7 +2783,12 @@ async function analyze(event, options = {}) {
     // Cleared before the rail is drawn, or the rail keeps marking the step the
     // finished run started from as still running.
     state.resumingStep = null;
-    renderFlowPanel(finished.analysisPath, { analysed: (finished.results || []).map((item) => item.agent) });
+    // Cleared, not redrawn, when the turn has no path. renderFlowPanel takes null
+    // to mean "redraw what is already there", so an answer that ran no procedure
+    // — a question answered rather than reviewed — left the previous run's steps
+    // sitting in the rail beside it.
+    if (finished.analysisPath) renderFlowPanel(finished.analysisPath, { analysed: (finished.results || []).map((item) => item.agent) });
+    else clearFlowPanel();
     live.classList.remove("resuming");
     state.resumingStep = null;
     renderEvidence(finished.sources || []);

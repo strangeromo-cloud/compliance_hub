@@ -473,12 +473,21 @@ async function answerConsult({ question, locale, history, config, onEvent, gemId
     : (isEn
       ? "A general answer about the rules; it settles nothing about any particular transaction."
       : "这是对规则本身的一般性回答，不构成对任何具体交易的判断。"));
+  grounding.limitations.push(isEn
+    ? "To have a transaction judged, describe it: that opens the review procedure."
+    : "要对某笔交易下判断，请描述该交易，系统会开审查流程。");
   grounding.limitations = localizeLines(grounding.limitations, locale);
   onEvent({ type: "grounding", intent: grounding.intent, grounding });
 
-  let path = planAnalysisPath({ agents: ["consult"], question });
-  path = resolveAnalysisPath(path, { question, grounding, results: [], declaredFacts: {}, final: true });
-  onEvent({ type: "path", path: localizePath(path, locale) });
+  // No path. An answer is not a procedure, and dressing one in the procedure's
+  // furniture is what made a two-line reply arrive under a lane header, a
+  // methodology line, a step, a status and a tick — eight lines of framework
+  // around the thing the reader asked for. Worse, the row said "该 Gem 的产出
+  // 类型，不进入审查程序" when no gem decided anything: the question did.
+  //
+  // What the framework was carrying that is worth keeping — what the answer
+  // stands on, and how to get a transaction judged — is in the limitations
+  // above, which the conclusion already shows.
 
   const rules = kind === "followup"
     ? "The reader is asking about the analysis already in this conversation — what is still blocking it, what supplying a value would settle, why a step was not reached. Answer from the prior turns. State plainly which conclusions those turns established and which they did not, and never present as settled something they left open. If the question asks whether supplying a value would produce a firm conclusion, say which step that value unblocks and what else would still be outstanding after it."
@@ -504,7 +513,7 @@ async function answerConsult({ question, locale, history, config, onEvent, gemId
   };
 
   return {
-    id, createdAt: new Date().toISOString(), analysisPath: localizePath(path, locale), awaitingInput: null,
+    id, createdAt: new Date().toISOString(), analysisPath: null, awaitingInput: null,
     unavailableFacts: [], actionPlan: [], declaredFacts: {},
     gemId,
     mode: "live-model",

@@ -977,8 +977,16 @@ test("a question about the review is answered, not turned into another review", 
   const followup = await assessScenario({
     question: "如果我把注册号补上，是不是就能拿到明确结论？", locale: "zh", config: stub.config, history
   });
-  assert.deepEqual(followup.analysisPath.lanes.map((lane) => lane.lane), ["consult"]);
+  // No path at all. An answer is not a procedure, and it used to arrive wearing
+  // the procedure's furniture: a lane header, a methodology line, a step, a
+  // status and a tick around two lines of reply — with the derivation row saying
+  // "该 Gem 的产出类型" when no gem had decided anything.
+  assert.equal(followup.analysisPath, null, "an answer runs no procedure and shows none");
+  assert.deepEqual(followup.agents, ["consult"]);
   assert.equal(followup.synthesis.overallRisk, null, "nothing here judged a transaction, so it carries no risk level");
+  // What the framework was carrying that is worth keeping stays, in the limits.
+  assert.ok(followup.grounding.limitations.some((line) => /要对某笔交易下判断/.test(line)),
+    "including how to get a transaction judged");
   assert.equal(followup.awaitingInput, null, "and it asks for nothing — it was the one answering");
   assert.ok(followup.grounding.limitations.some((line) => /未对交易重新审查/.test(line)));
 
@@ -1040,7 +1048,8 @@ test("a gem's instruction never rides in front of what the reader typed", async 
   const answered = await assessScenario({
     question: asked, locale: "zh", config: stub.config, history, gemId: "hub"
   });
-  assert.deepEqual(answered.analysisPath.lanes.map((lane) => lane.lane), ["consult"]);
+  assert.equal(answered.analysisPath, null);
+  assert.deepEqual(answered.agents, ["consult"]);
   assert.equal(answered.synthesis.overallRisk, null);
 });
 
