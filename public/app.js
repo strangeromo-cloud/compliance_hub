@@ -2388,10 +2388,47 @@ async function analyze(event, options = {}) {
       : live.querySelector("[data-resume-stream]")
         || live.querySelector(`[data-lane-stream="${CSS.escape(lane)}"]`);
     setStream(box, who, text);
-    // The box scrolls itself, so the page only follows while the reader is
-    // already at the bottom of it.
-    const thread = $("thread");
-    if (thread.scrollHeight - thread.scrollTop - thread.clientHeight < 120) thread.scrollTop = thread.scrollHeight;
+    // Follow the step being worked on, not the bottom of the thread.
+    //
+    // This used to jump to scrollHeight, and only when the reader was already
+    // within 120px of the bottom. Both halves were wrong for a long run: a
+    // specialist streams for tens of seconds while the page grows under it, so
+    // the reader falls out of that 120px band within a second or two and nothing
+    // moves again until the next lane starts — and when it did move it went to
+    // the end of everything rather than to the step the text is about.
+    //
+    // The synthesis is the exception and keeps the old behaviour: it writes into
+    // the box at the very bottom, and there is no step for it to be about.
+    if (lane === "review") {
+      const thread = $("thread");
+      if (!readerScrolledAway()) thread.scrollTop = thread.scrollHeight;
+      return;
+    }
+    followSoon();
+  }
+
+  // Whether the reader has taken the page somewhere themselves. Following is for
+  // a reader watching the work; someone who scrolled up to re-read a finished
+  // lane should not be dragged back by the next token.
+  //
+  // Measured against our own last scroll rather than against distance from the
+  // bottom. Distance from the bottom is the right test in a chat, where new text
+  // is always at the end — here the step being worked on is in the middle of the
+  // document with the rest of the path below it, so a reader watching the work
+  // is a long way from the bottom and would have been read as having left.
+  function readerScrolledAway() {
+    return lastFollowTop >= 0 && Math.abs($("thread").scrollTop - lastFollowTop) > 8;
+  }
+
+  // Streamed text arrives many times a second and every call measures layout, so
+  // the follow is collapsed to one per frame.
+  let followFrame = 0;
+  function followSoon() {
+    if (followFrame) return;
+    followFrame = requestAnimationFrame(() => {
+      followFrame = 0;
+      if (!readerScrolledAway()) followRunning();
+    });
   }
 
   // Lane state and streamed reasoning are written into the path that is already
@@ -2454,6 +2491,11 @@ async function analyze(event, options = {}) {
     return { top: box.top + bar, bottom: box.bottom };
   }
 
+  // Where the last automatic scroll left the page, so a scroll the reader made
+  // can be told from one this code made. -1 until the first follow, because
+  // before that there is nothing to have moved away from.
+  let lastFollowTop = -1;
+
   function followRunning() {
     // The step, not the lane. Following the lane worked while a lane was shorter
     // than the viewport; at six steps the header scrolls into view once, the
@@ -2473,6 +2515,7 @@ async function analyze(event, options = {}) {
     // often nowhere at all. Following a running process is also not a case where
     // easing helps: the work moved, and the page should already be there.
     node.scrollIntoView({ block: "start" });
+    lastFollowTop = $("thread").scrollTop;
   }
 
   function drawPath() {
@@ -2585,6 +2628,9 @@ async function analyze(event, options = {}) {
       // inside the steps it is reasoning about.
       progress.activeLane = event.agent;
       progress.runningLanes.add(event.agent);
+      // A new specialist is a new phase, so following is handed back whatever
+      // the reader did during the last one.
+      lastFollowTop = -1;
       // Retrieval and screening are over once a specialist speaks. Leaving the
       // stage set would put the waiting animation back on the first lane every
       // time a lane finished and the next had not yet started — and again on the
@@ -2616,9 +2662,27 @@ async function analyze(event, options = {}) {
       progress.doneLanes.add(event.result.agent);
       progress.summary[event.result.agent] = event.result;
       progress.runningLanes.delete(event.result.agent);
-      if (progress.activeLane === event.result.agent) progress.activeLane = null;
+      // Handed to another lane still running, not dropped.
+      //
+      // The three specialists go out together, so "the active lane" is one of
+      // several. Setting it to null when the one it happened to name finished
+      // left activeLane null and stage null — agent_start clears the stage — and
+      // currentStepId has no lane to read from in that state, so nothing on the
+      // path was marked running for the rest of the run. Nothing marked running
+      // is nothing for followRunning to follow, which is what "the page stopped
+      // scrolling to the step being worked on" was.
+      if (progress.activeLane === event.result.agent) {
+        progress.activeLane = [...progress.runningLanes][0] || null;
+      }
       drawPath();
       renderFlowPanel(collected.path, { activeLane: progress.activeLane, stage: progress.stage, analysed: [...progress.doneLanes] });
+      // A lane finishing rewrites the path above the lanes still working — its
+      // steps resolve, its folds change height — so where the running step sits
+      // on screen is not where it sat a moment ago. Following on lane start and
+      // not on lane finish meant the page tracked the beginning of a phase and
+      // then let the frontier drift for the rest of it.
+      lastFollowTop = -1;
+      followRunning();
     }
     if (event.type === "synthesis_delta") {
       progress.text.review = event.text;
