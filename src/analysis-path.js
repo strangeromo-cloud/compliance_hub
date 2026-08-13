@@ -157,6 +157,12 @@ const LANE_PLANS = {
     steps: [["notice_timeline", "按时间顺序汇总已发布公告", null,
       { cite: "直接汇总", methodology: "derived", note: "问题问的是一段时间内发布了什么，不是一笔交易；没有交易就没有可审查的程序" }]]
   },
+  consult: {
+    label: "问答",
+    methodology: "derived",
+    steps: [["answer_question", "直接回答所问，不重开审查", null,
+      { cite: "直接回答", methodology: "derived", note: "问的是规则本身或本会话已产出的结论，不是一笔新交易；没有新交易就没有可审查的程序" }]]
+  },
   memo: {
     label: "案件备忘录",
     methodology: "derived",
@@ -278,7 +284,7 @@ export function planAnalysisPath({ agents = [], gemId = null, routeReasons = {},
   // A lookup is its own lane and never runs alongside the review lanes: the
   // question asks for a stored value, so there is no transaction to review and
   // no closing decision to route to a person.
-  if (agents.length === 1 && ["lookup", "briefing", "memo"].includes(agents[0])) return laneOnly(agents[0]);
+  if (agents.length === 1 && ["lookup", "briefing", "memo", "consult"].includes(agents[0])) return laneOnly(agents[0]);
 
   const routed = ["trade", "product", "tpdd"].filter((lane) => agents.includes(lane));
   const kept = routed.filter((lane) => !gates.droppedLanes.includes(lane));
@@ -965,6 +971,11 @@ export function resolveAnalysisPath(plan, { question, grounding, results = [], d
     tpdd: () => tpddSteps(question, grounding, results, declaredFacts),
     lookup: () => lookupSteps(grounding),
     briefing: () => briefingSteps(grounding),
+    consult: () => [step("answer_question", "直接回答所问，不重开审查", "confirmed",
+      { basis: [grounding.consult === "followup"
+        ? bi("依据本会话已产出的结论与其列出的缺口作答", "Answered from what this session already established and the gaps it reported")
+        : bi("回答的是规则本身，不针对任何具体交易", "Answers the rule itself; it applies to no particular transaction"),
+      "要对某笔交易下判断，请描述该交易，系统会开审查流程"] })],
     memo: () => memoSteps(grounding),
     review: () => [step("human_review", "Compliance / Legal 人工复核", "review_required",
       { needs: ["以上步骤的结论与证据需经人工确认；系统不做交易放行"] })]

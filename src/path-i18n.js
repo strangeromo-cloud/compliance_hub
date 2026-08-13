@@ -24,6 +24,8 @@ const TERMS = {
   "查询": "Lookup",
   "监管变化简报": "Regulatory briefing",
   "案件备忘录": "Case memo",
+  "问答": "Q&A",
+  "直接回答所问，不重开审查": "Answers what was asked; it does not reopen the review",
 
   // Trade steps
   "确定交易主体的法律实体": "Identify the counterparty's legal entity",
@@ -81,6 +83,8 @@ const TERMS = {
   "问题问的是一个已登记的值，不是一笔交易；没有交易就没有可审查的程序": "The question asks for a recorded value, not about a transaction; with no transaction there is no procedure to run",
   "问题问的是一段时间内发布了什么，不是一笔交易；没有交易就没有可审查的程序": "The question asks what was published over a period, not about a transaction; with no transaction there is no procedure to run",
   "备忘录记录既有分析，不产生新的判断": "A memo records existing analysis; it produces no new judgement",
+  "问的是规则本身或本会话已产出的结论，不是一笔新交易；没有新交易就没有可审查的程序": "The question is about the rules, or about what this session already established \u2014 not a new transaction, and without one there is no procedure to run",
+  "要对某笔交易下判断，请描述该交易，系统会开审查流程": "To have a transaction judged, describe it and the review procedure opens",
   "系统不做交易放行": "This system does not release transactions",
 
   // Input labels

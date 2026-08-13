@@ -1642,7 +1642,11 @@ html[lang="en"] .step-needs::before { content: "NEEDS"; font-size: 8px; }
   color: var(--risk-medium);
   background: color-mix(in srgb, var(--risk-medium) 12%, transparent);
 }
-.is-interim .answer-head h3 { font-size: 14px; }
+/* Not shrunk. An interim conclusion is still the conclusion, and setting it a
+   point and a half below the closed one made the smallest heading on the card
+   the thing the card is about. The interim flag above already says it is not
+   closed; the size does not have to say it again. */
+.is-interim .answer-head h3 { font-size: 15.5px; }
 
 /* ---- the path is the body of the answer, not a collapsible aside ---- */
 .analysis-path { border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); padding: 14px 16px; margin-bottom: 14px; }
@@ -1706,8 +1710,19 @@ html[lang="en"] .step-needs::before { content: "NEEDS"; font-size: 8px; }
    are the same kind of thing: a name for the block under it. They were set at
    two different sizes and weights, so the conclusion read as three designs. */
 .ae-label { font-size: 11px; font-weight: 600; letter-spacing: .07em; margin-bottom: 5px; }
-.answer-extra.is-limits .ae-label { color: var(--risk-medium); }
-.answer-extra.is-suggested .ae-label { color: var(--text-2); }
+/* Everything behind the answer, under one rule. The summary is set quieter than
+   a block label because opening it is optional in a way that reading the
+   conclusion is not, and the parts inside are separated by space rather than by
+   more rules — the point of folding them together was to stop the card being a
+   stack of equal-weight bands. */
+.answer-extra.is-reference { padding-top: 10px; padding-bottom: 11px; }
+.answer-extra.is-reference > details > summary { font-size: 11px; color: var(--text-3); letter-spacing: .04em; }
+.answer-extra.is-reference[open] > details > summary, .answer-extra.is-reference > details[open] > summary { margin-bottom: 10px; }
+.ref-part { margin-top: 14px; }
+.ref-part:first-of-type { margin-top: 0; }
+.ref-part .ae-label { color: var(--text-2); }
+/* Already inside the fold, so it brings no rule and no padding of its own. */
+.is-reference .answer-extra.is-clearance { padding: 0; border-top: 0; margin-top: 14px; }
 /* What to supply is the one block here the reader can act on directly, so it
    carries the accent the other two do not. */
 .answer-extra.is-askfor .ae-label { color: var(--accent-text); }
@@ -1716,7 +1731,9 @@ html[lang="en"] .step-needs::before { content: "NEEDS"; font-size: 8px; }
 .answer-extra ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; font-size: 11.5px; color: var(--text-2); }
 .answer-extra li { padding-left: 13px; position: relative; line-height: 1.7; }
 .answer-extra li::before { content: ""; position: absolute; left: 0; top: 8px; width: 5px; height: 5px; border-radius: 1px; background: var(--border-strong); }
-.answer-extra.is-limits li::before { background: var(--risk-medium); }
+/* The limits keep their amber bullet inside the fold: they are the one part of
+   the reference block that qualifies the answer rather than supporting it. */
+.ref-part:last-child li::before { background: var(--risk-medium); }
 
 /* The clearance checklist. It carries its own list rather than reusing the
    bullet list above, because each condition is four things — name, state, the

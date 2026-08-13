@@ -204,6 +204,67 @@ export function isMemoRequest(question = "") {
   return /[一-龥]/.test(text) ? text.length <= MEMO_BRIEF : words <= 8;
 }
 
+// A question about the review, rather than a transaction to review.
+//
+// Everything that was not a memo or a lookup became a review, so "如果我把注册号
+// 补上，是不是就能定论？" opened a second full procedure over the same case —
+// four model calls to re-derive a state the last run already holds — and never
+// answered what was asked. So did "de minimis 是什么意思".
+//
+// Two shapes, one treatment:
+//   followup  about the analysis already on screen: what is still blocking it,
+//             what supplying a value would settle, why a step was skipped
+//   general   about the rules themselves, naming no party and no item
+//
+// The guard is the same one the lookup uses and the product states out loud: a
+// question that describes a transaction gets the review, whatever else it
+// looks like. That is what keeps "客户 X 在深圳，我们要出口服务器，需要许可吗" a
+// review even though it ends in a question mark.
+const ASKS = /[？?]\s*$|是否|能否|可以吗|行不行|是不是|要不要|什么|为什么|为何|怎么|如何|哪些|多久|区别|意思|\bwhat\b|\bwhy\b|\bhow\b|\bwhich\b|\bcan\b|\bcould\b|\bshould\b|\bdoes\b|\bis it\b|\bdo we\b/i;
+
+// Pointing at the analysis on screen, or at the gap it reported.
+const ABOUT_THE_RUN = /上(一)?(轮|次|面)|以上|上述|刚才|刚刚|前面|这次|本次|之前(的)?(分析|结论|回答)|你(刚才|上面)?(说|提到|给出)|结论|判断依据|这一步|那一步|为什么(跳过|没有|不)|补(上|充|齐)|提供(了)?|填(上|了)|给出后|拿到|定论|明确结论|还(缺|差|需要)|previous|earlier|above|last (answer|run|turn)|you said|that step|skipped|if (i|we) (provide|supply|add|give)|once (i|we) (provide|supply|add)/i;
+
+// About the rules rather than about a case.
+//
+// Deliberately narrow. The first draft accepted 是什么, 规则 and 原理, which
+// swallowed "这个料号的 CCL 管制清单条目是什么" — a lookup about a value — and
+// "50% 规则怎么算合计持股", a trade question. Asking what a term means is not the
+// same as asking what a particular thing's value is, and only the first belongs
+// here.
+const ABOUT_THE_RULES = /是什么意思|什么意思|指的是什么|的定义|定义是|有什么区别|区别是什么|有什么不同|怎么理解|该怎么理解|一般(是)?(怎么|如何)|通常(是)?(怎么|如何)|what (is|are) (a |an |the )?\w+ mean|what does .{0,40} mean|what.s the difference|difference between|how does .{0,40} work/i;
+
+// A question naming a concrete part, company or code is about that thing, not
+// about the rules — whatever phrasing it wears.
+const NAMES_A_SUBJECT = /这(个|家|批|款)|该(公司|主体|物项|料号|型号)|\b[0-9A-Z]{2,6}-[0-9A-Z]{3,}\b|料号|型号|\bpart number\b|eccn\s*\d|\d[A-E]\d{3}/i;
+
+// New material, as opposed to a question about material already given: a part
+// number, a registered company, a percentage. A follow-up naming none of these
+// is asking about the case, not restating it.
+const NEW_MATERIAL = /\b[0-9A-Z]{2,6}-[0-9A-Z]{3,}\b|co\.?,? ?ltd|gmbh|\bpte\b|\binc\b|\bs\.a\b|有限公司|股份|\d+\s*%|eccn\s*\d/i;
+const SHORT_ZH = 60;
+const SHORT_EN = 28;
+
+const brief = (text) => (/[一-龥]/.test(text) ? text.length <= SHORT_ZH : text.split(/\s+/).filter(Boolean).length <= SHORT_EN);
+
+export function consultKind(question = "", { hasHistory = false } = {}) {
+  const text = String(question).trim();
+  if (!text || !ASKS.test(text)) return null;
+
+  // A follow-up is judged on different terms from a fresh question. "你刚才说还
+  //缺最终用户，提供了之后能定论吗" names 最终用户 — a transaction word — but it is
+  // quoting the gap the last run reported, not describing a deal. So what rules
+  // it out is new material and length, not vocabulary: a follow-up is a
+  // sentence, a scenario is a paragraph.
+  if (hasHistory && ABOUT_THE_RUN.test(text) && brief(text) && !NEW_MATERIAL.test(text)) return "followup";
+
+  // A fresh question gets the blunt guard, which is the one the product states
+  // out loud: describe a transaction and you get the review.
+  if (DESCRIBES_TRANSACTION.test(text) || NAMES_A_SUBJECT.test(text)) return null;
+  if (ABOUT_THE_RULES.test(text)) return "general";
+  return null;
+}
+
 // The whole judgement, in the order the run makes it — because the order is the
 // judgement. A gem that produces a briefing or a memo settles it before anything
 // else is read: those questions name no counterparty and no item, and running a
@@ -211,7 +272,7 @@ export function isMemoRequest(question = "") {
 // no party in it. Then a lookup, which is a question about a recorded value and
 // has no transaction to review. Only what is left is a compliance review, and
 // only then does it matter which lanes it needs.
-export function judgeIntent({ question = "", gemKind = null } = {}) {
+export function judgeIntent({ question = "", gemKind = null, hasHistory = false } = {}) {
   const text = String(question).trim();
   const intent = classifyQuestionIntent(text);
 
@@ -229,6 +290,13 @@ export function judgeIntent({ question = "", gemKind = null } = {}) {
   const subject = lookupSubject(text);
   if (subject) {
     return { kind: "lookup", review: false, agents: [], intent, reasons: {}, matched: true, because: subject.kind };
+  }
+
+  // After the lookup, because "华为在实体清单上吗" is a question about a recorded
+  // value and is answered from the list, not discussed.
+  const consult = consultKind(text, { hasHistory });
+  if (consult) {
+    return { kind: "consult", review: false, agents: [], intent, reasons: {}, matched: true, because: consult };
   }
 
   const routed = routeQuestion(text, false);

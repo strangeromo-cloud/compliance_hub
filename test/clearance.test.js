@@ -920,3 +920,63 @@ test("a write-up is asked for in the conversation, and a transaction that mentio
   assert.ok(reviewed.analysisPath.lanes.some((lane) => lane.lane === "product"),
     "a transaction with the word in it is still reviewed");
 });
+
+test("a question about the review is answered, not turned into another review", async () => {
+  // Everything that was not a memo or a lookup became a review, so "如果我把注册号
+  // 补上，是不是就能拿到明确结论" opened a second full procedure over the same case
+  // — four model calls to re-derive a state the previous turn already holds —
+  // and never answered what was asked.
+  const { consultKind, judgeIntent } = await import("../public/intent.js");
+  const { assessScenario } = await import("../src/orchestrator.js");
+
+  const asked = [
+    ["如果我把注册号补上，是不是就能拿到明确结论？", true, "followup"],
+    ["上面那一步为什么跳过了？", true, "followup"],
+    ["你刚才说还缺最终用户，提供了之后能定论吗？", true, "followup"],
+    ["If I provide the registration number, can you reach a firm conclusion?", true, "followup"],
+    ["de minimis 是什么意思？", false, "general"],
+    ["What is the difference between the Entity List and the SDN list?", false, "general"]
+  ];
+  for (const [question, hasHistory, kind] of asked) {
+    assert.equal(consultKind(question, { hasHistory }), kind, question);
+    assert.equal(judgeIntent({ question, hasHistory }).kind, "consult", `the composer must say so too: ${question}`);
+  }
+
+  // What must still get the review. The last two are the ones that make this
+  // safe: a follow-up quoting the gap it was told about ("还缺最终用户") reads
+  // like a transaction word by word, so what separates them is new material and
+  // length — not vocabulary.
+  const reviewed = [
+    ["如果我把注册号补上，是不是就能拿到明确结论？", false],
+    ["客户 Aveox Technologies (Shenzhen) Co., Ltd. 出口至印度，需要许可吗？", true],
+    ["我们通过新加坡代理商向中国最终用户出口服务器", true],
+    ["接着上面，客户改成 Orchard Networks Pte. Ltd.，还需要许可吗？", true],
+    ["这个料号的 CCL 管制清单条目是什么", true],
+    ["50% 规则怎么算合计持股", true]
+  ];
+  for (const [question, hasHistory] of reviewed) {
+    assert.equal(consultKind(question, { hasHistory }), null, `${question} must not be treated as a question about the review`);
+  }
+
+  // And the run does it. A follow-up gets one lane, no risk level, and says
+  // out loud that it did not re-examine anything.
+  const history = [
+    { role: "user", content: "客户 Aveox Technologies (Shenzhen) Co., Ltd.，深圳，直销客户，需要许可吗" },
+    { role: "assistant", content: "尚不能定论：缺注册号，主体身份未确立。" }
+  ];
+  const followup = await assessScenario({
+    question: "如果我把注册号补上，是不是就能拿到明确结论？", locale: "zh", config: stub.config, history
+  });
+  assert.deepEqual(followup.analysisPath.lanes.map((lane) => lane.lane), ["consult"]);
+  assert.equal(followup.synthesis.overallRisk, null, "nothing here judged a transaction, so it carries no risk level");
+  assert.equal(followup.awaitingInput, null, "and it asks for nothing — it was the one answering");
+  assert.ok(followup.grounding.limitations.some((line) => /未对交易重新审查/.test(line)));
+
+  // The same sentence with nothing to follow up on is a scenario nobody has
+  // described yet, and it gets the review.
+  const fresh = await assessScenario({
+    question: "如果我把注册号补上，是不是就能拿到明确结论？", locale: "zh", config: stub.config, history: []
+  });
+  assert.ok(fresh.analysisPath.lanes.some((lane) => ["trade", "product", "tpdd"].includes(lane.lane)),
+    "with no prior turn there is nothing to answer from, so the review runs");
+});

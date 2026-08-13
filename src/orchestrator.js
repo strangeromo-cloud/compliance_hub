@@ -1,5 +1,5 @@
 import { AGENT_META, routeQuestion, routeReasons } from "./router.js";
-import { isMemoRequest } from "../public/intent.js";
+import { consultKind, isMemoRequest } from "../public/intent.js";
 import { sourcesForAgents } from "./sources.js";
 import { retrievePublicSources } from "./retrieval.js";
 import { callJsonModel, callJsonModelStream, readableProjection } from "./llm.js";
@@ -440,6 +440,77 @@ async function answerMemo({ question, locale, history, onEvent, gemId = null }) 
   };
 }
 
+// A question about the review, answered instead of starting another one.
+//
+// Everything that was not a memo or a lookup became a review, so "如果我把注册号
+// 补上，是不是就能定论" opened a second full procedure over the same case — four
+// model calls to re-derive a state the previous turn already holds — and never
+// answered what was asked. So did "de minimis 是什么意思".
+//
+// One model call, and it is given the prior turns rather than fresh retrieval:
+// a follow-up is about what was already established and what was already
+// reported missing, and going back to the sources would produce a different
+// answer to the question of what this session found. It carries no risk level
+// for the same reason a briefing carries none — nothing here judged a
+// transaction.
+async function answerConsult({ question, locale, history, config, onEvent, gemId = null, kind = "general", skill = null }) {
+  const id = `CASE-${Date.now().toString(36).toUpperCase()}`;
+  const isEn = locale === "en";
+  const language = isEn ? "English" : "Simplified Chinese";
+  onEvent({ type: "routed", id, agents: ["consult"], mode: "live-model" });
+  onEvent({ type: "stage", key: "consult" });
+
+  const grounding = {
+    intent: kind === "followup" ? "case_followup" : "compliance_question", consult: kind,
+    facts: [], listMatches: [], internalParties: [], screening: null, limitations: []
+  };
+  grounding.limitations.push(kind === "followup"
+    ? (isEn
+      ? "Answered from what this session already established; nothing here re-examines the transaction."
+      : "本次回答依据本会话已产出的结论，未对交易重新审查。")
+    : (isEn
+      ? "A general answer about the rules; it settles nothing about any particular transaction."
+      : "这是对规则本身的一般性回答，不构成对任何具体交易的判断。"));
+  grounding.limitations = localizeLines(grounding.limitations, locale);
+  onEvent({ type: "grounding", intent: grounding.intent, grounding });
+
+  let path = planAnalysisPath({ agents: ["consult"], question });
+  path = resolveAnalysisPath(path, { question, grounding, results: [], declaredFacts: {}, final: true });
+  onEvent({ type: "path", path: localizePath(path, locale) });
+
+  const rules = kind === "followup"
+    ? "The reader is asking about the analysis already in this conversation — what is still blocking it, what supplying a value would settle, why a step was not reached. Answer from the prior turns. State plainly which conclusions those turns established and which they did not, and never present as settled something they left open. If the question asks whether supplying a value would produce a firm conclusion, say which step that value unblocks and what else would still be outstanding after it."
+    : "The reader is asking about the rules themselves, not about a transaction. Answer the question directly and at the length it deserves. Cite the provision or the source where you can; where you are stating a general principle rather than a cited rule, say so. Do not invent provision numbers, thresholds or list entries.";
+
+  const result = await callJsonModelStream(config, [
+    {
+      role: "system",
+      content: `You are the Compliance Hub Master Agent answering a question, not running a review. Respond in ${language}. ${rules} Do not open a review procedure, do not assign a risk level, and do not approve or clear any transaction. If answering properly needs the transaction examined, say so and say what to submit. Return JSON only: {"headline":"...","executiveSummary":"...","nextStep":"..."}. This is not legal advice.${skillBrief(skill)}`
+    },
+    { role: "user", content: `Recent conversation:\n${conversationContext(history)}\n\nQuestion:\n${question}` }
+  ], (text) => onEvent({ type: "agent_delta", agent: "consult", text }));
+
+  const synthesis = {
+    overallRisk: null,
+    headline: String(result?.headline || (isEn ? "Answer" : "回答")),
+    executiveSummary: String(result?.executiveSummary || (isEn
+      ? "The model returned nothing usable for this question."
+      : "模型没有返回可用于回答该问题的内容。")),
+    nextStep: String(result?.nextStep || (isEn
+      ? "Describe the transaction to have it reviewed."
+      : "需要对某笔交易下判断时，请描述该交易。"))
+  };
+
+  return {
+    id, createdAt: new Date().toISOString(), analysisPath: localizePath(path, locale), awaitingInput: null,
+    unavailableFacts: [], actionPlan: [], declaredFacts: {},
+    gemId,
+    mode: "live-model",
+    intent: grounding.intent, grounding, agents: ["consult"],
+    synthesis, results: [], sources: [], disclaimer: disclaimerFor(locale)
+  };
+}
+
 async function answerLookup({ question, locale, lookup, onEvent, gemId = null }) {
   const id = `CASE-${Date.now().toString(36).toUpperCase()}`;
   const isEn = locale === "en";
@@ -562,6 +633,14 @@ export async function assessScenario({ question, locale = "zh", config = {}, his
 
   const lookup = await resolveLookup(question).catch(() => null);
   if (lookup) return await answerLookup({ question, locale, lookup, onEvent, gemId });
+
+  // A question about the review rather than a transaction to review. After the
+  // lookup, because "华为在实体清单上吗" is answered from the list rather than
+  // discussed; before the review, because that is the branch it exists to stop.
+  const consult = consultKind(question, { hasHistory: (history || []).some((item) => item.role === "assistant") });
+  if (consult) {
+    return await answerConsult({ question, locale, history, config, onEvent, gemId, kind: consult, skill });
+  }
 
   const directAgents = routeQuestion(question, false);
   const contextualQuestion = `${history.filter((item) => item.role === "user").map((item) => item.content).join("\n")}\n${question}`;
