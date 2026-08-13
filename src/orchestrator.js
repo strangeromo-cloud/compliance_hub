@@ -1,5 +1,6 @@
 import { AGENT_META, routeQuestion, routeReasons } from "./router.js";
-import { consultKind, isMemoRequest } from "../public/intent.js";
+import { consultKind, describesNewTransaction, isMemoRequest } from "../public/intent.js";
+import { classifyIntent } from "./intent-classifier.js";
 import { sourcesForAgents } from "./sources.js";
 import { retrievePublicSources } from "./retrieval.js";
 import { callJsonModel, callJsonModelStream, readableProjection } from "./llm.js";
@@ -638,7 +639,21 @@ export async function assessScenario({ question, locale = "zh", config = {}, his
   // A question about the review rather than a transaction to review. After the
   // lookup, because "华为在实体清单上吗" is answered from the list rather than
   // discussed; before the review, because that is the branch it exists to stop.
-  const consult = consultKind(question, { hasHistory: (history || []).some((item) => item.role === "assistant") });
+  //
+  // Two passes, in this order:
+  //
+  //   the keyword rules, which are cheap, shared with the composer's preview,
+  //   and right where they fire — but blind to every phrasing nobody listed
+  //
+  //   then, only if they found nothing and the message brings no transaction of
+  //   its own, one small call that reads it. That is where 出口至-not-出口到 and
+  //   the whole English half kept turning into bugs one phrasing at a time.
+  //
+  // The hard gate sits between them and the model does not get to argue with it.
+  const consult = consultKind(question, { hasHistory: (history || []).some((item) => item.role === "assistant") })
+    || (describesNewTransaction(question)
+      ? null
+      : (await classifyIntent({ question, history, config }))?.kind || null);
   if (consult) {
     return await answerConsult({ question, locale, history, config, onEvent, gemId, kind: consult, skill });
   }

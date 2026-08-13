@@ -1043,3 +1043,75 @@ test("a gem's instruction never rides in front of what the reader typed", async 
   assert.deepEqual(answered.analysisPath.lanes.map((lane) => lane.lane), ["consult"]);
   assert.equal(answered.synthesis.overallRisk, null);
 });
+
+test("what the keyword rules cannot see, a reading of the question can", async () => {
+  // Keyword matching produced a stream of near-identical bugs: 出口至 was not
+  // 出口到, 吗 was only recognised inside 可以吗, "China" was absent where 中国 was
+  // present, and the English half was permanently behind because it was written
+  // second. Each fix covered one phrasing and the next phrasing was the next bug.
+  //
+  // So a reading of the question sits behind the rules. These are the properties
+  // that make it safe to put there.
+  const { classifyIntent } = await import("../src/intent-classifier.js");
+  const { describesNewTransaction } = await import("../public/intent.js");
+  const { createServer } = await import("node:http");
+
+  // A stand-in that answers whatever it is told to, so the wiring is tested
+  // rather than a model's opinion.
+  const said = [];
+  let reply = { kind: "followup", because: "asks about the prior answer" };
+  const server = createServer((req, res) => {
+    let body = "";
+    req.on("data", (c) => { body += c; });
+    req.on("end", () => {
+      said.push(JSON.parse(body));
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ choices: [{ message: { content: JSON.stringify(reply) } }] }));
+    });
+  });
+  await new Promise((r) => server.listen(0, "127.0.0.1", r));
+  const config = { baseUrl: `http://127.0.0.1:${server.address().port}/v1`, model: "stub", apiKey: "stub-none" };
+  const history = [
+    { role: "user", content: "客户 Aveox Technologies (Shenzhen) Co., Ltd.，需要许可吗" },
+    { role: "assistant", content: "尚不能定论：缺注册号。" }
+  ];
+
+  try {
+    // A phrasing no rule lists, in either language.
+    assert.deepEqual(
+      await classifyIntent({ question: "Would that be sufficient to close it out?", history, config }),
+      { kind: "followup", because: "asks about the prior answer" });
+
+    // followup needs something to follow. Offered over an empty conversation it
+    // is an answer about a conversation that does not exist.
+    assert.equal(await classifyIntent({ question: "Would that be sufficient?", history: [], config }), null);
+
+    // It can only move a question out of the review, never into one.
+    reply = { kind: "review", because: "describes a deal" };
+    assert.equal(await classifyIntent({ question: "anything", history, config }), null);
+
+    // An unusable reply is not an answer. Any shape it does not recognise runs
+    // the review, which is the direction that costs three model calls rather
+    // than a missed assessment.
+    for (const bad of [{ kind: "chat" }, { agent: "trade", riskLevel: "medium" }, {}, "not json at all"]) {
+      reply = bad;
+      assert.equal(await classifyIntent({ question: "anything", history, config }), null, JSON.stringify(bad));
+    }
+
+    // And so is no model at all: with no key it never calls and never answers.
+    said.length = 0;
+    assert.equal(await classifyIntent({ question: "anything", history, config: {} }), null);
+    assert.equal(said.length, 0, "and it does not reach for a model it has no key for");
+  } finally {
+    await new Promise((r) => server.close(r));
+  }
+
+  // The gate the reading is not allowed past. This is checked before the call,
+  // so a message that changes the deal is never handed to it.
+  assert.equal(describesNewTransaction("接着上面，客户改成 Orchard Networks Pte. Ltd.，还需要许可吗？"), true);
+  assert.equal(describesNewTransaction("如果我把注册号补上，是不是就能拿到明确结论？"), false);
+  const orchestrator = await (await import("node:fs/promises"))
+    .readFile(new URL("../src/orchestrator.js", import.meta.url), "utf8");
+  assert.match(orchestrator, /describesNewTransaction\(question\)\s*\n?\s*\?\s*null/,
+    "and the orchestrator checks it before asking");
+});

@@ -61,7 +61,7 @@
 
 <g class="c-amber"><rect x="60" y="246" width="450" height="116" rx="4"/>
 <text class="sub" x="78" y="270">主 Agent —— 全系统只有一个</text>
-<text class="tn" x="78" y="291">判断意图与调度：<tspan font-weight="600">规则匹配，0 次模型</tspan>；综合：1 次模型调用</text>
+<text class="tn" x="78" y="291">判断意图：<tspan font-weight="600">先规则，规则没命中再问一次模型</tspan>；综合：1 次模型调用</text>
 <text class="tn" x="78" y="308">进出都是它，不是两个角色；条文结论一律由专业 Agent 给出</text>
 <text class="tn" x="78" y="329">三种进入方式：直接描述交易 · / 选 Gem 或 Skill · @ 直查数据源</text>
 <text class="tn" x="78" y="346">Gem 内置 8 个 + 自建，各自声明必需字段；Skill 只是追加给模型的一段流程</text></g>

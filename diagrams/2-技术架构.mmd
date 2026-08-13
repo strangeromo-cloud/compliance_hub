@@ -16,9 +16,10 @@ SRV --> MINE["<b>读者自建的两样 · skills / custom_gems 两张表</b><br/
 
 MINE --> LLM
 MINE --> DB
-SRV --> DET["<b>确定性部分 · 不调模型</b><br/>intent 路由 · triage 触发门 · clearance 五条件<br/>analysis-path 规划与解析 · lane-dependencies<br/>grounding 名单筛查 · entity-matching 名称比对<br/>ownership 穿透 · ownership-graph 50% 合计<br/>lookup · briefing<br/>简报 / 备忘录 / 直查：0 次模型"]
+SRV --> CLS["<b>意图判定 · 两层</b><br/>先关键字规则（public/intent.js，和输入框预览同一份）<br/>规则没命中、且这句没带新的交易材料时，再问一次模型<br/>「描述了交易就进审查」是硬闸，在调用之前判，模型改不了<br/>调用失败、返回读不懂：一律进审查"]
+CLS --> DET["<b>确定性部分 · 不调模型</b><br/>triage 触发门 · clearance 五条件<br/>analysis-path 规划与解析 · lane-dependencies<br/>grounding 名单筛查 · entity-matching 名称比对<br/>ownership 穿透 · ownership-graph 50% 合计<br/>lookup · briefing<br/>简报 / 备忘录 / 直查：0 次模型"]
 
-SRV --> LLM["<b>调模型的两处，一次审查最多 4 次</b><br/>runAgent —— 三条专业线同时发出，各一次<br/>synthesize —— 三条都回来后，主 Agent 综合一次<br/>4 次调用，但只有两轮等待：三条线不通信，没有先后可言<br/>llm.js：OpenAI 兼容，参数被拒即降级并记住<br/>剥离 think 块，配平花括号取 JSON<br/>没有可用模型时直接拒答，不存在规则模式"]
+SRV --> LLM["<b>调模型的两处，一次审查最多 4 次</b><br/>runAgent —— 三条专业线同时发出，各一次<br/>synthesize —— 三条都回来后，主 Agent 综合一次<br/>4 次调用，但只有两轮等待：三条线不通信，没有先后可言<br/>规则没命中时，前面另有 1 次意图判定调用<br/>llm.js：OpenAI 兼容，参数被拒即降级并记住<br/>剥离 think 块，配平花括号取 JSON<br/>没有可用模型时直接拒答，不存在规则模式"]
 
 DET --> CAP["<b>agent-capabilities.js · 4 条具名能力</b><br/>纯函数，必带条文出处，不碰模型也不碰网络<br/>describeCapabilities() 产出目录，可原样发布为 MCP 工具"]
 
@@ -45,7 +46,7 @@ classDef data   fill:#E1F5EE,stroke:#0F6E56,stroke-width:1px,color:#04342C
 
 class SRV master
 class LLM master
-class DET,CAP agent
+class DET,CAP,CLS agent
 class B1,B2,B3,SH,MCP plain
 class DB,SYNC,LIVE data
 class OWN agent

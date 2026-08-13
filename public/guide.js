@@ -22,7 +22,7 @@ const copy = {
       ["监管简报", "问一段时间内发布了什么变化", "按公告汇总：新增多少家、分别进了哪份清单、来自哪些国家，再逐份列出动作与公告号", "不判断这些变化是否影响某笔交易——那是审查"],
       ["案件备忘录", "在对话里说「把上面的整理成备忘录」——没有对应的 Gem，说一句就行", "记录既有结论与证据来源", "不产生新判断。会话为空时直接说没有可整理的内容；描述了交易的问题仍然走审查，哪怕里面出现「备忘录」三个字"]
     ],
-    kindsGemNote: "Gem 声明自己属于哪一类，所以选中 /reg-brief 不会触发受限方筛查。但描述了交易的问题始终走审查——不论选了哪个 Gem。",
+    kindsGemNote: "Gem 声明自己属于哪一类，所以选中 /reg-brief 不会触发受限方筛查。但描述了交易的问题始终走审查——不论选了哪个 Gem。\n怎么判断走哪一类：先按关键字规则（和输入框里那行预览同一份）；规则没命中、且这句话没带新的交易材料时，再花一次模型调用读一遍这句话。「描述了交易就进审查」是硬闸，在调用之前判，模型改不了；调用失败或返回读不懂，一律进审查。",
 
     autoLabel: "自动完成的部分", autoTitle: "不该让人手填的，就别问",
     autoLead: "每问一次就要填一堆表格，是这类工具最劝退的地方。凡是公开数据能回答的，先查再问。",
@@ -237,7 +237,7 @@ const copy = {
       ["Regulatory briefing", "What was published over a period", "The period totalled \u2014 how many entities added, to which list, from where \u2014 then each notice with its action and number", "Judge whether any of it reaches a given transaction; that is a review"],
       ["Case memo", "Ask for it in the conversation \u2014 \u201cwrite the above up as a memo\u201d. There is no gem for it; saying so is enough", "The conclusions and their evidence, recorded", "Produce new judgements. Over an empty session it says there is nothing to write up, and a question that describes a transaction still gets the review even with the word in it"]
     ],
-    kindsGemNote: "A gem declares which kind it is, so selecting /reg-brief does not open a party screening. A question that describes a transaction still gets the review, whichever gem is selected.",
+    kindsGemNote: "A gem declares which kind it is, so selecting /reg-brief does not open a party screening. A question that describes a transaction still gets the review, whichever gem is selected.\nHow the kind is decided: the keyword rules first \u2014 the same ones the composer previews with \u2014 and where they match nothing and the message brings no new transaction of its own, one small call reads it. The transaction rule is a hard gate checked before that call, so no reading of the question can lift it; a call that fails or returns something unusable runs the review.",
 
     autoLabel: "Resolved automatically", autoTitle: "What should not have to be typed",
     autoLead: "Filling in forms on every question is what makes tools like this unusable. Anything public data can answer is looked up before it is asked for.",
@@ -597,7 +597,7 @@ function render() {
           <thead><tr>${t.kindsHeads.map((head) => `<th>${esc(head)}</th>`).join("")}</tr></thead>
           <tbody>${t.kinds.map((row) => `<tr>${row.map((cell, index) => `<td>${index === 0 ? `<b>${esc(cell)}</b>` : esc(cell)}</td>`).join("")}</tr>`).join("")}</tbody>
         </table></div>
-        <p class="guide-note">${esc(t.kindsGemNote)}</p>
+        ${t.kindsGemNote.split("\n").map((line) => `<p class="guide-note">${esc(line)}</p>`).join("")}
       </div>
     </section>
 

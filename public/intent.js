@@ -253,6 +253,18 @@ const SHORT_EN = 28;
 
 const brief = (text) => (/[一-龥]/.test(text) ? text.length <= SHORT_ZH : text.split(/\s+/).filter(Boolean).length <= SHORT_EN);
 
+// The one thing no reading of the question may overturn: a message that
+// describes a transaction and brings material of its own gets the procedure.
+//
+// Exported because the semantic classifier is checked against it rather than
+// trusted over it. The rule is the product's, it is on the guide page, and a
+// model that read "接着上面，客户改成 Orchard Networks Pte. Ltd." as a follow-up
+// would be answering a question about a deal nobody had assessed.
+export function describesNewTransaction(question = "") {
+  const text = String(question).trim();
+  return DESCRIBES_TRANSACTION.test(text) && NEW_MATERIAL.test(text);
+}
+
 export function consultKind(question = "", { hasHistory = false } = {}) {
   const text = String(question).trim();
   if (!text || !ASKS.test(text)) return null;
