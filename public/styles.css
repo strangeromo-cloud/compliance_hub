@@ -188,7 +188,11 @@ kbd { font-family: var(--mono); border: 1px solid var(--border-strong); border-r
   background: transparent; text-align: left; cursor: pointer; color: var(--text-2);
 }
 .gem-nav button:hover { background: var(--surface-2); color: var(--text); }
-.gem-nav button.active { background: var(--accent-soft); color: var(--text); box-shadow: inset 2px 0 0 var(--accent); }
+/* The fill is the state, on its own. The inset rule beside it was doing the
+   work the fill should have been doing, and accent-soft is 9–12% — faint enough
+   that without the rule the row read as unselected. So the fill carries it:
+   strong enough to see at a glance, still quiet enough to sit under a heading. */
+.gem-nav button.active { background: color-mix(in srgb, var(--accent) 26%, transparent); color: var(--text); }
 .gem-nav .gem-name { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .gem-nav .pin { font-size: 9px; color: var(--accent-text); }
 
