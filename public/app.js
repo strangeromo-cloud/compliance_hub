@@ -21,7 +21,7 @@ const i18n = {
     gemSourcesUnit: "个来源", gemRecordsUnit: "条记录", gemUnsynced: "个未同步", gemNoData: "无绑定来源", gemNoCoverage: "数据状态未知",
     factsShort: "必填", railCollapse: "收起侧边栏", railExpand: "展开侧边栏",
     coverageMore: "查看全部数据源", mosaicUs: "美国", mosaicCn: "中国", mosaicOther: "全球 / 其他",
-    hfQuestion: "一个问题", hfAnswer: "统一答案", startersLabel: "快速开始", workspaceEmpty: "工作区还没有 Gem", gemBacking: "数据支撑",
+    hfQuestion: "一个问题", hfAnswer: "统一答案", startersLabel: "快速开始", gemBacking: "数据支撑",
     teachSlashTitle: "键入 / — 选一个 Gem 或 Skill",
     teachSlashBody: "先是三张常驻台——贸易、物项与许可、第三方尽调；选中一张就一直在上面，开新对话也还在。每张台下面是它的窄化入口，键入关键词直接命中。Skill 挂在当前台下面，把一段流程追加给模型。共 {n} 个 Gem、{s} 个自建 Skill。",
     teachAtTitle: "键入 @ — 直查数据源",
@@ -86,7 +86,7 @@ const i18n = {
     gemSourcesUnit: "sources", gemRecordsUnit: "records", gemUnsynced: "not synced", gemNoData: "no bound sources", gemNoCoverage: "coverage unknown",
     factsShort: "Facts", railCollapse: "Collapse sidebar", railExpand: "Expand sidebar",
     coverageMore: "See all sources", mosaicUs: "United States", mosaicCn: "China", mosaicOther: "Global / other",
-    hfQuestion: "One question", hfAnswer: "One answer", startersLabel: "Start here", workspaceEmpty: "No gems in your workspace yet", gemBacking: "Data behind it",
+    hfQuestion: "One question", hfAnswer: "One answer", startersLabel: "Start here", gemBacking: "Data behind it",
     teachSlashTitle: "Type / \u2014 a gem or a skill",
     teachSlashBody: "Three desks first \u2014 Trade, Item & licence, Third-party diligence. Pick one and you stay there, new conversations included. Each desk's narrower entries sit under it, and typing reaches them directly. Skills hang under the desk you are at. {n} gems and {s} skills of your own.",
     teachAtTitle: "Type @ \u2014 query a source",
@@ -366,19 +366,30 @@ function refreshStartCounts() {
 
 function renderGemNav() {
   const pinned = workspaceGemIds();
+  const row = (gem, extra = "") => `
+    <li${extra}>
+      <button type="button" data-gem="${gem.id}" class="${state.activeGem?.id === gem.id ? "active" : ""}" title="${esc(localized(gem.name))} ${esc(gem.command)}">
+        ${gemIconMarkup(gem)}
+        <span class="gem-name">${esc(localized(gem.name))}</span>
+      </button>
+    </li>`;
+
+  // The three desks are always here, and they are not pinned.
+  //
+  // Pinning is a choice about shortcuts; a desk is the lane itself, and there
+  // are exactly three. Making them a default pin would have meant telling "never
+  // touched" apart from "unpinned every one of them", which workspaceGemIds
+  // cannot do — localStorage.getItem returns null for the first and JSON.parse
+  // gives [] for the second, and both come out of that function as []. A reader
+  // who removed all three would have found them back after a reload.
+  const desks = allGems().filter((gem) => gem.desk);
   // The sidebar is the workspace, not the catalogue — the palette is the
   // catalogue. Showing all eight here made pinning meaningless, because it only
   // reordered a list that already held everything.
-  const shown = allGems().filter((gem) => pinned.includes(gem.id) || state.activeGem?.id === gem.id);
-  $("gemNav").innerHTML = shown.length
-    ? shown.map((gem) => `
-      <li>
-        <button type="button" data-gem="${gem.id}" class="${state.activeGem?.id === gem.id ? "active" : ""}" title="${esc(localized(gem.name))} ${esc(gem.command)}">
-          ${gemIconMarkup(gem)}
-          <span class="gem-name">${esc(localized(gem.name))}</span>
-        </button>
-      </li>`).join("")
-    : `<li class="gem-nav-empty">${esc(t("workspaceEmpty"))}</li>`;
+  const shown = allGems().filter((gem) => !gem.desk
+    && (pinned.includes(gem.id) || state.activeGem?.id === gem.id));
+  $("gemNav").innerHTML = desks.map((gem) => row(gem)).join("")
+    + shown.map((gem, index) => row(gem, index === 0 ? ' class="gem-nav-cut"' : "")).join("");
 }
 
 async function loadGems() {
@@ -833,8 +844,11 @@ function renderPalette() {
                 pinned differed only by colour, and a colour difference on a 12px
                 glyph at the end of a busy row is a difference nobody has to
                 notice. The shape is the state; the colour just agrees with it. */ ""}
-          <span class="palette-pin ${workspaceGemIds().includes(gem.id) ? "on" : ""}" data-pin="${gem.id}" role="button" tabindex="-1"
-                title="${esc(t(workspaceGemIds().includes(gem.id) ? "gemRemove" : "gemAdd"))}">${workspaceGemIds().includes(gem.id) ? "★" : "☆"}</span>
+          ${/* No star on a desk. The sidebar holds all three whatever the pin
+                store says, so the control would have been one that changed
+                nothing a reader could see. */ ""}
+          ${gem.desk ? "" : `<span class="palette-pin ${workspaceGemIds().includes(gem.id) ? "on" : ""}" data-pin="${gem.id}" role="button" tabindex="-1"
+                title="${esc(t(workspaceGemIds().includes(gem.id) ? "gemRemove" : "gemAdd"))}">${workspaceGemIds().includes(gem.id) ? "★" : "☆"}</span>`}
         </button>`).join("")}
     </div>`).join("")
     + (skills.length ? `<div class="palette-group">
@@ -900,7 +914,7 @@ function openGemDetail(gemId) {
       <div class="gem-spec-row"><dt>${t("gemBacking")}</dt><dd>${gemBackingMarkup(gem)}</dd></div>
     </dl>
     <div class="card-actions">
-      <button class="btn" data-toggle-workspace="${gem.id}" type="button">${pinned ? t("gemRemove") : t("gemAdd")}</button>
+      ${gem.desk ? "" : `<button class="btn" data-toggle-workspace="${gem.id}" type="button">${pinned ? t("gemRemove") : t("gemAdd")}</button>`}
       <button class="btn btn-primary" data-use-gem="${gem.id}" type="button">${t("gemUse")}</button>
     </div>`;
   $("gemDialog").showModal();

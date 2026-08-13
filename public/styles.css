@@ -352,6 +352,11 @@ html[data-theme="light"] .moon-icon { display: block; }
 .starter strong { display: block; font-size: 12.5px; font-weight: 600; margin-bottom: 3px; line-height: 1.45; }
 .starter small { display: block; font-size: 11px; color: var(--text-3); }
 
+/* Where the fixed part of the list ends and the reader's own shortcuts begin.
+   Without it the desks and the pinned gems read as one list, and unpinning the
+   entry directly under a desk looks like it should have been possible on the
+   desk too. */
+.gem-nav-cut { border-top: 1px solid var(--border); margin-top: 5px; padding-top: 5px; }
 .gem-nav-empty { font-size: 11px; color: var(--text-3); padding: 4px 7px; line-height: 1.5; }
 .app.rail .gem-nav-empty { display: none; }
 

@@ -545,4 +545,13 @@ test("every gem sits at a desk, and the desks are the lanes", async () => {
   const app = await (await import("node:fs/promises")).readFile(new URL("../public/app.js", import.meta.url), "utf8");
   assert.match(app, /state\.activeGem\?\.kind === "memo"\) clearGem\(\)/,
     "and the interface drops it once it has run");
+
+  // The sidebar holds the three whatever the pin store says. Making them a
+  // default pin would mean telling "never touched" from "unpinned all three",
+  // and workspaceGemIds cannot: getItem gives null for the first and JSON.parse
+  // gives [] for the second, and both leave that function as []. The reader who
+  // removed all three would have found them back after a reload.
+  assert.match(app, /const desks = allGems\(\)\.filter\(\(gem\) => gem\.desk\)/);
+  assert.match(app, /allGems\(\)\.filter\(\(gem\) => !gem\.desk\s*\n?\s*&& \(pinned\.includes/,
+    "and the pinned list holds everything else, so a desk is never listed twice");
 });
