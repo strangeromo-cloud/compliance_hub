@@ -586,3 +586,34 @@ test("a gem's own example satisfies its own required facts", async () => {
     }
   }
 });
+
+test("the live progress line does not report a screening that never happened", async () => {
+  // The grounding handler was written for the review and then reached by all
+  // five paths. Two things came out of that on a question answered rather than
+  // reviewed: "专业 Agent 分析" as the stage, over a run where no specialist would
+  // ever speak, and "已筛查 0 个名单来源 · undefined 条潜在命中 · undefined 条内部主
+  // 数据关联" — three fields the answer paths do not carry.
+  const app = await (await import("node:fs/promises"))
+    .readFile(new URL("../public/app.js", import.meta.url), "utf8");
+
+  // The counts, not the screening object. A review whose question named no party
+  // carries screening: null with real counts of zero, so gating on the object
+  // would take the line off the runs it belongs to as well.
+  assert.match(app, /if \(typeof g\.listMatchCount === "number"\) \{/,
+    "the screening line is drawn only where there are counts");
+  assert.doesNotMatch(app, /\.replace\("\{matches\}", g\.listMatchCount\)/,
+    "and never from a field that may be undefined");
+
+  // And the stage only advances to the specialists when specialists are coming.
+  assert.match(app, /progress\.specialists = event\.agents\.some/);
+  assert.match(app, /if \(progress\.specialists\) renderSteps\(live, done, "agents"\)/);
+
+  // Four of the five paths route to a lane that is not a specialist, which is
+  // what made this reachable rather than theoretical.
+  const orchestrator = await (await import("node:fs/promises"))
+    .readFile(new URL("../src/orchestrator.js", import.meta.url), "utf8");
+  for (const lane of ["briefing", "memo", "lookup", "consult"]) {
+    assert.match(orchestrator, new RegExp(`type: "routed", id, agents: \\["${lane}"\\]`),
+      `${lane} routes to itself, not to a specialist`);
+  }
+});

@@ -2353,7 +2353,7 @@ async function analyze(event, options = {}) {
   // "the lane that started last" stopped meaning "the lane that is running".
   // activeLane survives alongside it because the stage banner and the scroll
   // still need one lane to point at.
-  const progress = { activeLane: null, runningLanes: new Set(), doneLanes: new Set(), text: {}, summary: {}, index: 0, total: 0, clock: null, stage: null };
+  const progress = { activeLane: null, runningLanes: new Set(), doneLanes: new Set(), text: {}, summary: {}, index: 0, total: 0, clock: null, stage: null, specialists: false };
 
   // Each delta carries the whole readable text of the call that produced it, not
   // an increment — the projection re-normalizes whitespace, so diffing against the
@@ -2557,6 +2557,11 @@ async function analyze(event, options = {}) {
     if (event.type === "routed") {
       done.add("routed");
       progress.total = event.agents.length;
+      // Whether specialists are coming. Four of the five answer paths route to a
+      // single lane that is not one — briefing, memo, lookup, consult — and the
+      // grounding handler below used to announce "专业 Agent 分析" for all of
+      // them, over a run where no specialist would ever speak.
+      progress.specialists = event.agents.some((agent) => ["trade", "product", "tpdd"].includes(agent));
       const meta = live.querySelector("[data-live-meta]");
       if (meta) meta.innerHTML =
         `<span class="tag">${esc(event.id)}</span><span class="sep">·</span>`
@@ -2575,13 +2580,26 @@ async function analyze(event, options = {}) {
       done.add("grounding");
       collected.grounding = event.grounding;
       const g = event.grounding;
-      const screened = g.screening?.screenedSources?.length || 0;
-      live.querySelector("[data-live-steps]")?.insertAdjacentHTML("afterend",
-        `<p class="live-note">${esc(t("groundingNote")
-          .replace("{screened}", screened)
-          .replace("{matches}", g.listMatchCount)
-          .replace("{internal}", g.internalImpactCount))}</p>`);
-      renderSteps(live, done, "agents");
+      // Only where there are counts to report. The review path sets them; the
+      // four answer paths build a grounding object without them, and this
+      // printed "已筛查 0 个名单来源 · undefined 条潜在命中" over an answer that
+      // screened nothing because it had no transaction to screen.
+      //
+      // Keyed on the count and not on g.screening: a review whose question named
+      // no party to screen carries screening: null and real counts of zero, and
+      // gating on the object would have taken the line off the runs it belongs
+      // to as well as the ones it does not.
+      if (typeof g.listMatchCount === "number") {
+        live.querySelector("[data-live-steps]")?.insertAdjacentHTML("afterend",
+          `<p class="live-note">${esc(t("groundingNote")
+            .replace("{screened}", g.screening.screenedSources?.length || 0)
+            .replace("{matches}", g.listMatchCount || 0)
+            .replace("{internal}", g.internalImpactCount || 0))}</p>`);
+      }
+      // And the stage only moves to the specialists when there are specialists.
+      // Otherwise the answer path's own stage stands: it emitted one before this
+      // and this overwrote it.
+      if (progress.specialists) renderSteps(live, done, "agents");
     }
     // A specialist gets its panel the moment it starts, so its reasoning can be
     // shown as it is written rather than appearing complete out of nowhere.
