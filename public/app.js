@@ -23,7 +23,7 @@ const i18n = {
     coverageMore: "查看全部数据源", mosaicUs: "美国", mosaicCn: "中国", mosaicOther: "全球 / 其他",
     hfQuestion: "一个问题", hfAnswer: "统一答案", startersLabel: "快速开始", gemBacking: "数据支撑",
     teachSlashTitle: "键入 / — 选一个 Gem 或 Skill",
-    teachSlashBody: "先是三张常驻台——贸易、物项与许可、第三方尽调；选中一张就一直在上面，开新对话也还在。每张台下面是它的窄化入口，键入关键词直接命中。Skill 挂在当前台下面，把一段流程追加给模型。共 {n} 个 Gem、{s} 个自建 Skill。",
+    teachSlashBody: "最上面是常驻台——总控、贸易、物项与许可、第三方尽调；选中一张就一直在上面，开新对话也还在。往下是每张台的窄化入口，同一条线、问题已经指向其中一段。Skill 挂在当前台下面，把一段流程追加给模型。共 {n} 个 Gem、{s} 个自建 Skill。",
     teachAtTitle: "键入 @ — 直查数据源",
     teachAtBody: "在 {n} 个已入库的来源里按实体名、公告号或关键词翻记录。返回的是来源自己的条目，不是判定结论。",
     teachMakeTitle: "＋ 建自己的 Gem 和 Skill",
@@ -65,7 +65,7 @@ const i18n = {
     gemAdd: "添加到工作区", gemRemove: "从工作区移除", gemUse: "使用此 Gem", gemAdded: "已添加到工作区", gemRemoved: "已从工作区移除",
     gemDetail: "详情", gemNoSources: "不绑定外部来源，基于当前对话生成", factsLabel: "必填事实",
     factsMet: "已提供", boundLabel: "绑定来源",
-    paletteEmpty: "没有匹配的 Gem", paletteMore: "还有 {n} 个",  paletteNav: "↑↓ 选择", paletteEnter: "Enter 使用", paletteEsc: "Esc 关闭",
+    paletteEmpty: "没有匹配的 Gem", paletteNav: "↑↓ 选择", paletteEnter: "Enter 使用", paletteEsc: "Esc 关闭",
     model_auth_error: "认证失败（401）：API Key 无效或不属于该服务。", model_permission_error: "权限被拒绝（403）。", model_endpoint_or_name_not_found: "接口或模型不存在（404）：检查 Base URL 是否含 /v1。", model_quota_or_rate_limit: "被限流或额度不足（429）。", model_invalid_request: "接口拒绝了请求（400/422）。", model_non_json_body: "接口没有返回 JSON —— 通常是网关或代理返回了错误页，不是模型本身的问题。", model_empty_content: "模型返回了空内容 —— 常见于触发了内容过滤，或输出被 token 上限截断。", model_text_not_json: "模型返回的不是 JSON —— 它按自然语言作答了。若该供应商不支持 response_format，换一个支持的模型更稳。", model_invalid_response: "响应不是兼容的 Chat Completions JSON。", model_timeout: "连接超时。", model_network_error: "无法连接模型接口。", model_provider_error: "模型服务异常。", model_unknown_error: "连接失败。"
   },
   en: {
@@ -88,7 +88,7 @@ const i18n = {
     coverageMore: "See all sources", mosaicUs: "United States", mosaicCn: "China", mosaicOther: "Global / other",
     hfQuestion: "One question", hfAnswer: "One answer", startersLabel: "Start here", gemBacking: "Data behind it",
     teachSlashTitle: "Type / \u2014 a gem or a skill",
-    teachSlashBody: "Three desks first \u2014 Trade, Item & licence, Third-party diligence. Pick one and you stay there, new conversations included. Each desk's narrower entries sit under it, and typing reaches them directly. Skills hang under the desk you are at. {n} gems and {s} skills of your own.",
+    teachSlashBody: "Desks at the top \u2014 the coordinator, Trade, Item & licence, Third-party diligence. Pick one and you stay there, new conversations included. Below each are its narrower entries: the same lane with the question already pointed at one part of it. Skills hang under the desk you are at. {n} gems and {s} skills of your own.",
     teachAtTitle: "Type @ \u2014 query a source",
     teachAtBody: "Search {n} ingested sources by entity name, notice number or keyword. It returns the source\u2019s own records, not a determination.",
     teachMakeTitle: "\uFF0B Build your own",
@@ -130,7 +130,7 @@ const i18n = {
     gemAdd: "Add to workspace", gemRemove: "Remove from workspace", gemUse: "Use this gem", gemAdded: "Added to workspace", gemRemoved: "Removed from workspace",
     gemDetail: "Details", gemNoSources: "No external sources; works from the current thread", factsLabel: "Required facts",
     factsMet: "provided", boundLabel: "Bound sources",
-    paletteEmpty: "No matching gem", paletteMore: "{n} more",  paletteNav: "↑↓ navigate", paletteEnter: "Enter to use", paletteEsc: "Esc to close",
+    paletteEmpty: "No matching gem", paletteNav: "↑↓ navigate", paletteEnter: "Enter to use", paletteEsc: "Esc to close",
     model_auth_error: "Authentication failed (401): the API key is invalid or belongs to another service.", model_permission_error: "Permission denied (403).", model_endpoint_or_name_not_found: "Endpoint or model not found (404): check that the Base URL includes /v1.", model_quota_or_rate_limit: "Rate limited or out of quota (429).", model_invalid_request: "The endpoint rejected the request (400/422).", model_non_json_body: "The endpoint did not return JSON — usually a gateway or proxy error page rather than the model itself.", model_empty_content: "The model returned empty content — typically a content filter, or output cut off by the token limit.", model_text_not_json: "The model answered in prose rather than JSON. If this provider does not support response_format, a model that does will be steadier.", model_invalid_response: "The response was not compatible Chat Completions JSON.", model_timeout: "The request timed out.", model_network_error: "The model endpoint could not be reached.", model_provider_error: "The provider returned an error.", model_unknown_error: "Connection failed."
   }
 };
@@ -208,10 +208,7 @@ const state = {
   activeGem: null,
   skills: [],
   sourceOptions: [],
-  palette: { open: false, items: [], index: 0, query: "" },
-  // Desks the reader opened by hand. Not persisted: it is about the panel that
-  // is on screen now, and a desk left open from yesterday is not a preference.
-  paletteOpen: new Set()
+  palette: { open: false, items: [], index: 0 }
 };
 
 const $ = (id) => document.getElementById(id);
@@ -805,28 +802,8 @@ function openPalette(query) {
   const needle = String(query || "").toLowerCase();
   const skills = visibleSkills().filter((skill) => !needle
     || skill.command.includes(needle) || skill.name.toLowerCase().includes(needle));
-  state.palette = { open: true, items: [...paletteGems(query), ...skills], index: 0, query: String(query || "").trim() };
+  state.palette = { open: true, items: [...matchGems(query), ...skills], index: 0 };
   renderPalette();
-}
-
-// The demotion, and the reason it is not a matter of hiding things.
-//
-// The eight used to be one flat list of peers, four of which lead the same
-// lane. Grouping them under the desks says so, but grouping alone still puts
-// eight narrow entries in front of somebody who wanted to pick a place to work.
-// So with an empty draft the list is the three desks and the one action, and a
-// desk's narrower entries appear when you are at that desk or you open it.
-//
-// Typing is never narrowed: /ecc finds /eccn from anywhere. That is what keeps
-// this a demotion rather than a removal — the catalogue is all still reachable
-// by the means people actually reach it by, and only the first screen is
-// opinionated about where to start.
-function paletteGems(query) {
-  const matched = matchGems(query);
-  if (String(query || "").trim()) return matched;
-  const open = new Set([deskFor(state.activeGem), ...state.paletteOpen].filter(Boolean));
-  return matched.filter((gem) => gem.desk || gem.group === "action" || gem.group === "custom"
-    || open.has(deskFor(gem)));
 }
 
 function closePalette() {
@@ -842,17 +819,13 @@ function renderPalette() {
   if (!items.length) { host.innerHTML = `<div class="palette-empty">${t("paletteEmpty")}</div>`; return; }
   const groups = Object.keys(GEM_GROUPS).filter((group) => items.some((gem) => gem.group === group));
   const skills = items.filter((item) => item.procedure);
-  // Which desks have entries the empty list is holding back, so the header can
-  // say how many rather than hiding the fact that it is hiding anything.
-  const held = {};
-  if (!state.palette.query) {
-    for (const gem of GEMS) if (!gem.desk && !items.includes(gem)) held[gem.group] = (held[gem.group] || 0) + 1;
-  }
-  host.innerHTML = groups.concat(Object.keys(held)).filter((group, index, all) => all.indexOf(group) === index).map((group) => `
+  // Every entry, always. The desks used to lead and each desk's narrower entries
+  // stayed folded behind a count — which put the two levels on screen but cost a
+  // click to see a list of ten. The group order carries the hierarchy on its own:
+  // desks first, then what sits under each of them, then the action.
+  host.innerHTML = groups.map((group) => `
     <div class="palette-group">
-      <div class="palette-group-label">${esc(localized(GEM_GROUPS[group]))}${held[group]
-        ? `<button type="button" class="pg-more" data-open-group="${esc(group)}">${esc(t("paletteMore").replace("{n}", held[group]))}</button>`
-        : ""}</div>
+      <div class="palette-group-label">${esc(localized(GEM_GROUPS[group]))}</div>
       ${items.filter((gem) => gem.group === group).map((gem) => `
         <button type="button" class="palette-item ${items.indexOf(gem) === index ? "active" : ""}" data-gem="${gem.id}" role="option">
           ${gemIconMarkup(gem)}
@@ -3033,15 +3006,6 @@ $("palette").addEventListener("click", (event) => {
   if (source) return activateSourceQuery(source.dataset.source);
   // The star curates without selecting, so the catalogue is also where a
   // workspace gets built.
-  // Opens a desk's narrower entries in place. It does not select the desk: a
-  // reader looking at what is under Trade has not said they want Trade.
-  const more = event.target.closest("[data-open-group]");
-  if (more) {
-    event.stopPropagation();
-    const gem = GEMS.find((item) => item.group === more.dataset.openGroup);
-    if (gem) state.paletteOpen.add(deskFor(gem));
-    return openPalette(paletteQuery() || "");
-  }
   const pin = event.target.closest("[data-pin]");
   if (pin) {
     event.stopPropagation();
