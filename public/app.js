@@ -52,7 +52,7 @@ const i18n = {
     filterAll: "全部", filterEntry: "Gem / Skill 用法", filterTrade: "Trade", filterProduct: "Product", filterTpdd: "TPDD", filterCross: "跨域",
     runtimeReady: "实时模型", runtimeMissing: "未配置模型",
     routeLabel: "路由", intentReview: "合规审查", intentLookup: "直接查询", intentBriefing: "监管变化简报", intentMemo: "案件备忘录", intentConsultFollowup: "针对上一轮的追问", intentConsultGeneral: "一般性问题", intentNoReview: "不进入合规审查流程", intentAllLanes: "未匹配到关键词；提交后先由模型判断是回答还是审查，是审查就三条线全跑", routedTo: "已路由至",
-    willAsk: "这次会用到：", willAskMore: " 等 {n} 项", send: "发送", stopRun: "停止本次分析", runStopped: "已停止。本次分析未完成，也未存入案件历史。", overallAssessment: "总体判断", nextStep: "下一步", missingInfo: "仍需信息", actions: "建议行动", askFor: "建议补充", planSuggested: "专业 Agent 的其他建议", planSuggestedNote: "这些建议未对应分析路径上的某一步，供人工复核时参考", notClosed: "尚有 {n} 项未补齐", naCount: "{n} 项本次不适用", laneUnreached: "另有 {n} 步本次未进行", stepTriggered: "由前一步的发现触发", flowFolded: "另有 {n} 项不适用", laneFindings: "本条线的分析发现（专业 Agent 输出，非全案结论）", interimVerdict: "阶段性判断（基于现有信息，未结案）", noItems: "暂无", limitations: "结论边界与限制", reference: "参考与依据", askUnnamed: "；另有 {n} 步未列出具体字段", clearanceTitle: "结案条件 · 五条", clearanceNote: "五个条件分属三条专业线，任何一条线都无法独自定案。沉默不算通过：未说明即为未满足。", clearanceCleared: "五条全部满足 —— 在所述事实下不产生许可要求，这不是批准，也不是放行。", clearanceBlocked: "尚有 {n} 条未满足，因此不出清晰结论。", clearanceOpen: "另有 {n} 个步骤仍在等证据；即使五条全过，未闭合的步骤同样阻断清晰结论。", clearanceMet: "已满足", clearanceUnmet: "未满足", countSuffix: " · {n} 条",
+    willAsk: "这次会用到：", willAskMore: " 等 {n} 项", send: "发送", stopRun: "停止本次分析", runStopped: "已停止。本次分析未完成，也未存入案件历史。", queuedAfterRun: "本轮分析结束后自动发出", overallAssessment: "总体判断", nextStep: "下一步", missingInfo: "仍需信息", actions: "建议行动", askFor: "建议补充", planSuggested: "专业 Agent 的其他建议", planSuggestedNote: "这些建议未对应分析路径上的某一步，供人工复核时参考", notClosed: "尚有 {n} 项未补齐", naCount: "{n} 项本次不适用", laneUnreached: "另有 {n} 步本次未进行", stepTriggered: "由前一步的发现触发", flowFolded: "另有 {n} 项不适用", laneFindings: "本条线的分析发现（专业 Agent 输出，非全案结论）", interimVerdict: "阶段性判断（基于现有信息，未结案）", noItems: "暂无", limitations: "结论边界与限制", reference: "参考与依据", askUnnamed: "；另有 {n} 步未列出具体字段", clearanceTitle: "结案条件 · 五条", clearanceNote: "五个条件分属三条专业线，任何一条线都无法独自定案。沉默不算通过：未说明即为未满足。", clearanceCleared: "五条全部满足 —— 在所述事实下不产生许可要求，这不是批准，也不是放行。", clearanceBlocked: "尚有 {n} 条未满足，因此不出清晰结论。", clearanceOpen: "另有 {n} 个步骤仍在等证据；即使五条全过，未闭合的步骤同样阻断清晰结论。", clearanceMet: "已满足", clearanceUnmet: "未满足", countSuffix: " · {n} 条",
     sourceLive: "实时获取", sourceMetadata: "元数据", sourceUnavailable: "获取失败", sourceNotFetched: "未获取", sourceArchived: "已采集副本", sourceCitationOnly: "仅引用", sourceCached: "缓存", noQueryableSource: "暂无可直查的来源（需先同步）", sourceQueryHint: "@ 直查数据源", srcAuthority: "发布机构", srcCountry: "法域", srcUpdates: "更新频率", srcCaptured: "本地采集于", srcBoundary: "这里返回来源自己的记录，不是判定结论。", sourceQueryPlaceholder: "输入实体名、公告号或条文关键词（按相关性排序；留空则浏览全部）…",
     queryEmpty: "请输入查询内容", queryHits: "{total} 条命中", browseCount: "共 {total} 条", browseAll: "浏览全部", pagePrev: "上一页", pageNext: "下一页", relMatched: "命中", relMissed: "未命中", relPartial: "另有 {n} 条仅命中部分检索词，未列出", queryNoHit: "该来源中未找到匹配记录", queryTruncated: "显示前 {shown} 条，共 {total} 条",
     queryEscalate: "以此发起完整筛查 →", escalatePrefix: "请对 {q} 做完整合规筛查",
@@ -117,7 +117,7 @@ const i18n = {
     filterAll: "All", filterEntry: "Gem / skill usage", filterTrade: "Trade", filterProduct: "Product", filterTpdd: "TPDD", filterCross: "Cross-domain",
     runtimeReady: "Live model", runtimeMissing: "No model configured",
     routeLabel: "Route", intentReview: "Compliance review", intentLookup: "Direct lookup", intentBriefing: "Regulatory briefing", intentMemo: "Case memo", intentConsultFollowup: "Follow-up on the last answer", intentConsultGeneral: "General question", intentNoReview: "no review procedure runs", intentAllLanes: "no term matched; on send a model decides whether to answer or review, and a review runs all three", routedTo: "Routed to",
-    willAsk: "This will use: ", willAskMore: " and {n} more", send: "Send", stopRun: "Stop this analysis", runStopped: "Stopped. This analysis did not finish, and was not saved to the case history.", overallAssessment: "Overall assessment", nextStep: "Next step", missingInfo: "Missing information", actions: "Recommended actions", askFor: "Suggested to supply", planSuggested: "Other suggestions from the specialists", planSuggestedNote: "These do not map onto a step in the analysis path; they are for the reviewer to weigh", notClosed: "{n} items still open", naCount: "{n} not applicable here", laneUnreached: "{n} more not reached", stepTriggered: "triggered by an earlier finding", flowFolded: "{n} more not applicable", laneFindings: "What this lane found (specialist output, not the case conclusion)", interimVerdict: "Interim assessment (on incomplete facts, not a conclusion)", noItems: "None", limitations: "Limits on this conclusion", reference: "Reference and working", askUnnamed: "; {n} more step(s) name no specific field", clearanceTitle: "Clearance conditions · five", clearanceNote: "The five conditions belong to three different lanes, so no lane can close a case on its own. Silence is not a pass: unstated is unmet.", clearanceCleared: "All five are met — no licence requirement arises on the stated facts. This is not an approval and not a release.", clearanceBlocked: "{n} not met, so no clear conclusion is drawn.", clearanceOpen: "{n} step(s) are still waiting on evidence. An open step blocks a clear conclusion even when all five conditions hold.", clearanceMet: "Met", clearanceUnmet: "Not met", countSuffix: " · {n}",
+    willAsk: "This will use: ", willAskMore: " and {n} more", send: "Send", stopRun: "Stop this analysis", runStopped: "Stopped. This analysis did not finish, and was not saved to the case history.", queuedAfterRun: "Will be sent when this analysis finishes", overallAssessment: "Overall assessment", nextStep: "Next step", missingInfo: "Missing information", actions: "Recommended actions", askFor: "Suggested to supply", planSuggested: "Other suggestions from the specialists", planSuggestedNote: "These do not map onto a step in the analysis path; they are for the reviewer to weigh", notClosed: "{n} items still open", naCount: "{n} not applicable here", laneUnreached: "{n} more not reached", stepTriggered: "triggered by an earlier finding", flowFolded: "{n} more not applicable", laneFindings: "What this lane found (specialist output, not the case conclusion)", interimVerdict: "Interim assessment (on incomplete facts, not a conclusion)", noItems: "None", limitations: "Limits on this conclusion", reference: "Reference and working", askUnnamed: "; {n} more step(s) name no specific field", clearanceTitle: "Clearance conditions · five", clearanceNote: "The five conditions belong to three different lanes, so no lane can close a case on its own. Silence is not a pass: unstated is unmet.", clearanceCleared: "All five are met — no licence requirement arises on the stated facts. This is not an approval and not a release.", clearanceBlocked: "{n} not met, so no clear conclusion is drawn.", clearanceOpen: "{n} step(s) are still waiting on evidence. An open step blocks a clear conclusion even when all five conditions hold.", clearanceMet: "Met", clearanceUnmet: "Not met", countSuffix: " · {n}",
     sourceLive: "Live", sourceMetadata: "Metadata", sourceUnavailable: "Unavailable", sourceNotFetched: "Not fetched", sourceArchived: "Archived copy", sourceCitationOnly: "Cited only", sourceCached: "Cached", noQueryableSource: "No queryable source yet (sync one first)", sourceQueryHint: "@ query a source", srcAuthority: "Published by", srcCountry: "Jurisdiction", srcUpdates: "Updated", srcCaptured: "Captured locally", srcBoundary: "This returns the source's own records, not a determination.", sourceQueryPlaceholder: "Entity name, notice number or keyword — ranked by relevance; leave empty to browse all…",
     queryEmpty: "Enter something to look up", queryHits: "{total} matches", browseCount: "{total} records", browseAll: "Browse all", pagePrev: "Previous", pageNext: "Next", relMatched: "matched", relMissed: "not matched", relPartial: "{n} more records matched only part of the query and are not listed", queryNoHit: "No matching record in this source", queryTruncated: "Showing {shown} of {total}",
     queryEscalate: "Run a full screening on this →", escalatePrefix: "Run a full compliance screening on {q}",
@@ -200,6 +200,8 @@ const state = {
   declaredFacts: {},
   unavailableFacts: [],
   resumingStep: null,
+  // A question asked while a run was still going, waiting for it to finish.
+  queued: false,
   sourceQuery: null,
   factsOpen: false,
   rail: localStorage.getItem("compliance-rail") === "1",
@@ -2163,9 +2165,15 @@ function syncSubmitState() {
   // While an analysis is running the button stops it. It used to grey out, which
   // left a run with no way out of it at all: four model calls and a minute of
   // waiting, and nothing to press.
-  const running = state.busy && Boolean(state.run);
+  // Stop only while there is nothing to send. With a question in the box the
+  // button is a send button whose send happens when the run ends.
+  const running = state.busy && Boolean(state.run) && empty;
   button.classList.toggle("is-running", running);
-  button.disabled = running ? false : state.busy || (empty && !state.sourceQuery);
+  // Disabled only when pressing it could do nothing: an empty box that is not a
+  // stop and not a source to browse. Keying this off state.busy disabled it
+  // whenever a question was typed mid-run — so the queue below could never be
+  // reached, because the press that fills it never happened.
+  button.disabled = !running && empty && !state.sourceQuery;
   button.setAttribute("aria-label", t(running ? "stopRun" : "send"));
   button.title = running ? t("stopRun") : "";
 }
@@ -2204,6 +2212,15 @@ function pendingStepForm() {
 const NEW_SCENARIO = /(出口|进口|销售|采购|转口|再出口|export|import|re-?export|ship|sell|supply)/i;
 const readsAsNewScenario = (text) => text.length > 120 || NEW_SCENARIO.test(text);
 const readsAsDeclaredFact = (text) => !readsAsNewScenario(text) && !readsAsQuestion(text);
+
+// Whatever was asked while a run was in the way goes now. Re-entered through the
+// form so it takes exactly the path a question typed at any other moment takes,
+// including the branch that hands text to a step still asking.
+function flushQueued() {
+  if (!state.queued) return;
+  state.queued = false;
+  if ($("questionInput").value.trim()) queueMicrotask(() => $("questionForm").requestSubmit());
+}
 
 // Ends the run the reader is watching. The request is aborted, which drops the
 // connection — the server notices and stops before the next specialist rather
@@ -2276,7 +2293,7 @@ async function runSourceQuery(event, options = {}) {
   } catch (error) {
     toast(`${t("error")}: ${error.message}`);
   } finally {
-    state.busy = false; syncSubmitState();
+    state.busy = false; syncSubmitState(); flushQueued();
   }
 }
 
@@ -2906,6 +2923,10 @@ async function analyze(event, options = {}) {
     // A run that failed before it produced a path leaves the column holding
     // nothing, and busy is no longer keeping it open on its own.
     syncEvidenceVisibility();
+    // Whatever was asked while this was running goes now. Re-entered through the
+    // form so it takes exactly the path a question typed at any other moment
+    // takes — including the step-answer branch above it.
+    flushQueued();
   }
 }
 
@@ -3460,7 +3481,21 @@ document.addEventListener("click", (event) => {
 // button then, and Enter in the composer has to mean the same thing the button
 // says.
 $("questionForm").addEventListener("submit", (event) => {
-  if (state.busy && state.run) { event.preventDefault(); return stopRun(); }
+  if (state.busy) {
+    event.preventDefault();
+    // An empty box means stop — that is what the button says it is. Text in the
+    // box means ask this, and it cannot also mean abandon the run: submitting a
+    // typed question used to kill the analysis and discard the question with it,
+    // so a reader who asked something while waiting lost both.
+    //
+    // state.busy, not state.busy && state.run: a source query is busy with
+    // nothing to abort, and falling past this into analyze() returned silently
+    // on its own busy check — a press that did nothing and said nothing.
+    if (!$("questionInput").value.trim()) return state.run ? stopRun() : undefined;
+    state.queued = true;
+    syncSubmitState();
+    return toast(t("queuedAfterRun"));
+  }
   // A message typed while a step is still asking is that step's answer, and the
   // review carries on with it rather than starting a second one. Routed through
   // the form the step already owns, so there is one path for a declared fact and

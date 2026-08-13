@@ -344,17 +344,22 @@ test("a disposition with no translation is not shown as its own key", async () =
 });
 
 test("the composer never refuses a click it should accept", async () => {
-  // Two ways this went wrong. An empty box in lookup mode is a request to browse
-  // the whole source — the placeholder says exactly that — and it sat behind a
-  // button that behaved as though there were nothing to send. And assigning to
-  // .value fires no input event, so prefilling a question and then refusing to
-  // send it was one keystroke away every time.
+  // Three ways this went wrong. An empty box in lookup mode is a request to
+  // browse the whole source — the placeholder says exactly that — and it sat
+  // behind a button that behaved as though there were nothing to send. Assigning
+  // to .value fires no input event, so prefilling a question and then refusing
+  // to send it was one keystroke away every time. And a question typed while a
+  // run was going was refused because state.busy alone disabled the button,
+  // which made the queue that catches such a question unreachable: the press
+  // that fills it never happened.
   const { readFile } = await import("node:fs/promises");
   const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
 
   assert.match(app, /function syncSubmitState\(\)/, "one definition of whether send is available");
-  assert.match(app, /state\.busy \|\| \(empty && !state\.sourceQuery\)/,
-    "an empty box only blocks send outside lookup mode");
+  assert.match(app, /button\.disabled = !running && empty && !state\.sourceQuery;/,
+    "send is refused only when pressing it could do nothing");
+  assert.doesNotMatch(app, /button\.disabled = [^\n]*state\.busy/,
+    "and never merely because a run is in flight — that is what the queue is for");
 
   // Every programmatic fill goes through setComposer, because hunting call sites
   // is how the state drifted apart to begin with.
@@ -690,4 +695,29 @@ test("a question typed while a step is asking is a question, not that step's ans
   assert.match(app, /const readsAsDeclaredFact = \(text\) => !readsAsNewScenario\(text\) && !readsAsQuestion\(text\);/);
   assert.match(app, /if \(pending && text\.length >= 2 && readsAsDeclaredFact\(text\)\)/,
     "and the composer checks all three cases before treating a message as a fact");
+});
+
+test("a question asked mid-run is asked, not used to abandon the run", async () => {
+  // The send button doubles as the stop button while a run is going, so
+  // submitting a typed question called stopRun: the analysis died with "已停止。
+  // 本次分析未完成，也未存入案件历史" and the question went with it. A reader who
+  // asks something while waiting loses both.
+  const app = await (await import("node:fs/promises"))
+    .readFile(new URL("../public/app.js", import.meta.url), "utf8");
+
+  // Empty box means stop. Text in the box cannot also mean stop.
+  assert.match(app, /if \(!\$\("questionInput"\)\.value\.trim\(\)\) return state\.run \? stopRun\(\) : undefined;/);
+  assert.match(app, /state\.queued = true;/);
+
+  // state.busy, not state.busy && state.run: a source query is busy with nothing
+  // to abort, and falling past this into analyze returned on its own busy check
+  // — a press that did nothing and said nothing.
+  assert.match(app, /\$\("questionForm"\)\.addEventListener\("submit", \(event\) => \{\s*\n\s*if \(state\.busy\) \{/);
+
+  // Released by whichever kind of run was in the way, and re-entered through the
+  // form so the queued text takes the same path it would have taken at any other
+  // moment — including the branch that hands text to a step still asking.
+  assert.equal([...app.matchAll(/flushQueued\(\);/g)].length, 2,
+    "both the analysis and the source query release it");
+  assert.match(app, /function flushQueued\(\) \{[\s\S]*?requestSubmit\(\)/);
 });
