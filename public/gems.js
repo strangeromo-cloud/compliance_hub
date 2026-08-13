@@ -121,11 +121,11 @@ export const GEMS = [
     boundSources: ["trade-csl", "ofac-sls", "ofac-ownership", "china-control-entities", "china-unreliable-entity", "bis-ear-744", "gleif-lei"],
     requiredFacts: [
       { key: "legalName", zh: "交易方全称", en: "Full name of the party", match: /[一-龥A-Za-z][一-龥A-Za-z0-9.,&()\- ]{4,}/ },
-      { key: "country", zh: "注册国家/地区", en: "Country of registration", match: /国家|注册地|country|registered in|美国|中国|德国|新加坡|日本|印度|墨西哥|荷兰|\bUS\b|\bCN\b|\bDE\b|\bSG\b/i },
-      { key: "role", zh: "交易角色", en: "Transaction role", match: /客户|供应商|经销商|代理|最终用户|收货|customer|vendor|supplier|distributor|consignee|end.?user/i }
+      { key: "country", zh: "注册国家/地区", en: "Country of registration", match: /国家|注册地|country|registered in|美国|中国|香港|台湾|德国|新加坡|日本|印度|墨西哥|荷兰|韩国|越南|china|hong kong|taiwan|united states|germany|singapore|japan|india|mexico|netherlands|korea|vietnam|canada|malaysia|\bUS\b|\bCN\b|\bDE\b|\bSG\b|\bHK\b/i },
+      { key: "role", zh: "交易角色", en: "Transaction role", match: /客户|供应商|经销商|分销|代理|最终用户|收货|买方|卖方|customer|vendor|supplier|distributor|consignee|end.?user/i }
     ],
     outputTemplate: { zh: "各方身份与筛查结论 · 所有权合计 · 已成立与未成立的分界 · 待补证据", en: "Party identity and screening outcome · ownership aggregation · what is settled and what is not · outstanding evidence" },
-    placeholder: { zh: "例：拟与 Aveox Technologies (Shenzhen) Co., Ltd. 签订分销协议，对方由一家香港公司持股 60%。", en: "e.g. A distribution agreement with Aveox Technologies (Shenzhen) Co., Ltd., 60% held by a Hong Kong company." }
+    placeholder: { zh: "例：拟与 Aveox Technologies (Shenzhen) Co., Ltd. 签订分销协议，对方由一家香港公司持股 60%。", en: "e.g. A distribution agreement making Aveox Technologies (Shenzhen) Co., Ltd. our distributor in China, 60% held by a Hong Kong company." }
   },
   {
     id: "product-desk",
@@ -149,10 +149,10 @@ export const GEMS = [
       { key: "partNumber", zh: "准确型号 / part number", en: "Exact model / part number", match: /[A-Z]{2}-\d{4}|part\s*(number|no)|型号|900-\d{5}|h100|h200|\bpn\b/i },
       { key: "specs", zh: "关键技术参数", en: "Key technical parameters", match: /参数|规格|tpp|app|性能|频率|加密|位数|bit|ghz|spec|parameter|performance/i },
       { key: "mfgCountry", zh: "制造国", en: "Country of manufacture", match: /制造|生产|工厂|原产地|产地|manufactured|produced|made in|origin|合肥|深圳|hefei|shenzhen/i },
-      { key: "destination", zh: "目的地与最终用途", en: "Destination and end use", match: /目的地|出口到|运往|最终用途|用于|destination|export to|ship to|end.?use|used for/i }
+      { key: "destination", zh: "目的地与最终用途", en: "Destination and end use", match: /目的地|出口[到至]|运[往至]|发往|销往|最终用途|用于|destination|export(ed)? to|ship(ped)? to|sold to|end.?use|used for/i }
     ],
     outputTemplate: { zh: "归类与管制理由 · 管辖判定 · 许可要求与例外 · 缺失参数", en: "Classification and reasons for control · jurisdiction · licence requirement and exceptions · missing parameters" },
-    placeholder: { zh: "例：TS-6200-DM 机架服务器在合肥制造，受控美国原产内容 28%，出口至印度数据中心。", en: "e.g. TS-6200-DM rack server made in Hefei, 28% controlled US content, exported to a data centre in India." }
+    placeholder: { zh: "例：TS-6200-DM 机架服务器在合肥制造，64 核 CPU、主频 2.4GHz，受控美国原产内容 28%，出口至印度数据中心自用。", en: "e.g. TS-6200-DM rack server made in Hefei, 64-core CPU at 2.4 GHz, 28% controlled US content, exported to a data centre in India for their own use." }
   },
   {
     id: "screen-party",
@@ -173,9 +173,9 @@ export const GEMS = [
     boundSources: ["trade-csl", "ofac-sls", "china-control-entities", "china-unreliable-entity", "bis-ear-744"],
     requiredFacts: [
       { key: "legalName", zh: "法律实体全称", en: "Full legal entity name", match: /[一-龥A-Za-z][一-龥A-Za-z0-9.,&()\- ]{4,}/ },
-      { key: "country", zh: "注册国家/地区", en: "Country of registration", match: /国家|注册地|country|registered in|美国|中国|德国|新加坡|日本|印度|墨西哥|荷兰|\bUS\b|\bCN\b|\bDE\b|\bSG\b/i },
+      { key: "country", zh: "注册国家/地区", en: "Country of registration", match: /国家|注册地|country|registered in|美国|中国|香港|台湾|德国|新加坡|日本|印度|墨西哥|荷兰|韩国|越南|china|hong kong|taiwan|united states|germany|singapore|japan|india|mexico|netherlands|korea|vietnam|canada|malaysia|\bUS\b|\bCN\b|\bDE\b|\bSG\b|\bHK\b/i },
       { key: "registrationNumber", zh: "注册号 / 统一社会信用代码", en: "Registration number / USCC", match: /注册号|统一社会信用代码|uscc|registration (number|no)|\buei\b|\blei\b|[0-9A-Z]{9,20}/i },
-      { key: "role", zh: "交易角色", en: "Transaction role", match: /客户|供应商|经销商|代理|最终用户|收货|customer|vendor|supplier|distributor|consignee|end.?user/i }
+      { key: "role", zh: "交易角色", en: "Transaction role", match: /客户|供应商|经销商|分销|代理|最终用户|收货|买方|卖方|customer|vendor|supplier|distributor|consignee|end.?user/i }
     ],
     outputTemplate: { zh: "筛查结论 · 身份要素比对表 · 引用的名单条目与公告号 · 待补证据", en: "Screening outcome · identity comparison table · cited list entries and notice numbers · outstanding evidence" },
     placeholder: { zh: "例：客户 Aveox Technologies (Shenzhen) Co., Ltd.，注册号 91440300778812XKA，中国深圳，直销客户。", en: "e.g. Customer Aveox Technologies (Shenzhen) Co., Ltd., registration 91440300778812XKA, Shenzhen China, direct customer." }
@@ -200,10 +200,10 @@ export const GEMS = [
     requiredFacts: [
       { key: "partNumber", zh: "准确型号 / part number", en: "Exact model / part number", match: /[A-Z]{2}-\d{4}|part\s*(number|no)|型号|900-\d{5}|h100|h200|\bpn\b/i },
       { key: "specs", zh: "关键技术参数", en: "Key technical parameters", match: /参数|规格|tpp|app|性能|频率|加密|位数|bit|ghz|spec|parameter|performance/i },
-      { key: "origin", zh: "原产地", en: "Country of origin", match: /原产地|产地|制造地|origin|manufactured in|made in/i }
+      { key: "origin", zh: "原产地", en: "Country of origin", match: /原产地|产地|制造地|制造|生产|产自|origin|manufactured in|made in|produced in/i }
     ],
     outputTemplate: { zh: "ECCN 与管制理由 · 依据的条目原文 · 分类置信度 · 缺失参数", en: "ECCN and reasons for control · cited list text · classification confidence · missing parameters" },
-    placeholder: { zh: "例：TS-6200-DM 机架服务器，含 TPM 2.0 与 64 核 CPU，中国合肥制造。", en: "e.g. TS-6200-DM rack server with TPM 2.0 and a 64-core CPU, manufactured in Hefei, China." }
+    placeholder: { zh: "例：TS-6200-DM 机架服务器，64 核 CPU、主频 2.4GHz、含 TPM 2.0 加密模块，中国合肥制造。", en: "e.g. TS-6200-DM rack server, 64-core CPU at 2.4 GHz with a TPM 2.0 encryption module, manufactured in Hefei, China." }
   },
   {
     id: "cn-dual-use",
@@ -225,11 +225,11 @@ export const GEMS = [
     requiredFacts: [
       { key: "item", zh: "物项名称与材质/成分", en: "Item name and material", match: /物项|材料|成分|器件|模块|设备|item|material|component|module/i },
       { key: "specs", zh: "技术参数", en: "Technical parameters", match: /参数|规格|纯度|含量|频率|功率|spec|parameter|purity|frequency/i },
-      { key: "destination", zh: "最终目的地", en: "Final destination", match: /目的地|出口到|运往|destination|export to|ship to/i },
+      { key: "destination", zh: "最终目的地", en: "Final destination", match: /目的地|出口[到至]|运[往至]|发往|销往|destination|export(ed)? to|ship(ped)? to|sold to/i },
       { key: "endUse", zh: "最终用户与最终用途", en: "End user and end use", match: /最终用户|最终用途|用于|end.?user|end.?use|used for/i }
     ],
     outputTemplate: { zh: "管制编码与公告文号 · 生效/暂停状态 · 许可要求 · 申报材料清单", en: "Control code and notice number · in-force or suspended status · licence requirement · document checklist" },
-    placeholder: { zh: "例：PT-7700-GA 镓基射频功放模块，从深圳出口至德国电信客户，用于基站维修。", en: "e.g. PT-7700-GA gallium RF amplifier module exported from Shenzhen to a German telecom customer for base-station repair." }
+    placeholder: { zh: "例：PT-7700-GA 镓基射频功放模块，输出功率 40W、工作频率 3.5GHz，从深圳出口至德国电信客户，最终用途为基站维修。", en: "e.g. PT-7700-GA gallium RF amplifier module, 40 W output at a frequency of 3.5 GHz, exported to a German telecom customer in Germany; the end user is the operator and the end use is base-station repair." }
   },
   {
     id: "de-minimis",
@@ -252,7 +252,7 @@ export const GEMS = [
       { key: "partNumber", zh: "产品型号", en: "Product model", match: /[A-Z]{2}-\d{4}|型号|part\s*(number|no)/i },
       { key: "mfgCountry", zh: "制造国", en: "Country of manufacture", match: /制造|生产|工厂|manufactured|produced|made in|合肥|深圳|hefei|shenzhen/i },
       { key: "usContent", zh: "受控美国原产内容占比", en: "Controlled US-origin content share", match: /美国.*内容|含量|占比|us content|de minimis|\d+(\.\d+)?\s*%/i },
-      { key: "destination", zh: "目的地国家", en: "Destination country", match: /目的地|出口到|运往|destination|export to|ship to/i }
+      { key: "destination", zh: "目的地国家", en: "Destination country", match: /目的地|出口[到至]|运[往至]|发往|销往|destination|export(ed)? to|ship(ped)? to|sold to/i }
     ],
     outputTemplate: { zh: "是否 subject to the EAR · de minimis 计算依据 · FDP 触发判断 · 下一步分析", en: "Subject to the EAR or not · de minimis basis · FDP trigger assessment · next analysis step" },
     placeholder: { zh: "例：TS-6200-DM 在合肥制造，受控美国原产内容 28%，出口至印度企业数据中心。", en: "e.g. TS-6200-DM manufactured in Hefei with 28% controlled US-origin content, exported to an enterprise data centre in India." }
@@ -276,12 +276,12 @@ export const GEMS = [
     boundSources: ["bis-ccl", "bis-country-chart", "bis-ear-740", "bis-ear", "bis-ear-744"],
     requiredFacts: [
       { key: "eccn", zh: "ECCN", en: "ECCN", match: /\b\d[A-E]\d{3}\b|eccn|ear99/i },
-      { key: "destination", zh: "目的地国家", en: "Destination country", match: /目的地|出口到|运往|destination|export to|ship to/i },
+      { key: "destination", zh: "目的地国家", en: "Destination country", match: /目的地|出口[到至]|运[往至]|发往|销往|destination|export(ed)? to|ship(ped)? to|sold to/i },
       { key: "endUser", zh: "最终用户", en: "End user", match: /最终用户|收货方|end.?user|consignee/i },
       { key: "endUse", zh: "最终用途", en: "End use", match: /最终用途|用于|end.?use|used for/i }
     ],
     outputTemplate: { zh: "逐步判定链 · 每步引用条文 · 许可结论或阻塞点 · 可能适用的例外", en: "Step chain · provision cited at each step · licence conclusion or blocking gap · candidate exceptions" },
-    placeholder: { zh: "例：ECCN 4A090.a 的 AI 训练系统，从美国出口至墨西哥经销商，最终安装地待确认。", en: "e.g. An ECCN 4A090.a AI training system exported from the US to a Mexican distributor, final installation site unconfirmed." }
+    placeholder: { zh: "例：ECCN 4A090.a 的 AI 训练系统，从美国出口至墨西哥经销商 Vantage Trading，最终用户为该国一家商业银行，最终用途是内部风控模型训练。", en: "e.g. An ECCN 4A090.a AI training system exported to a distributor in Mexico; the end user is a commercial bank there and the end use is training its internal risk models." }
   },
   {
     id: "tpdd",

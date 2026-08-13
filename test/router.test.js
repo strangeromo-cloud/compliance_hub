@@ -560,3 +560,29 @@ test("every gem sits at a desk, and the desks are the lanes", async () => {
   assert.match(app, /allGems\(\)\.filter\(\(gem\) => !gem\.desk\s*\n?\s*&& \(pinned\.includes/,
     "and the pinned list holds everything else, so a desk is never listed twice");
 });
+
+test("a gem's own example satisfies its own required facts", async () => {
+  // The scenario library shows each gem's placeholder as its worked example, and
+  // nobody had ever run one past the check the gem performs on it. Seven of the
+  // nine came back incomplete — /licence at 1 of 4 — so the product was
+  // demonstrating its own entries by handing the reader a draft it then marked
+  // as missing things.
+  //
+  // Most of it was the matcher rather than the example: the destination fact
+  // accepted 出口到 and not 出口至, and the country fact listed 中国 and 德国 but
+  // not China or Germany, so the English half of the same sentence failed where
+  // the Chinese half passed. Those are gaps a real draft falls into too, which
+  // is what makes this worth a test rather than a one-off correction.
+  const { GEMS, factCoverage, factLabel } = await import("../public/gems.js");
+
+  for (const locale of ["zh", "en"]) {
+    for (const gem of GEMS) {
+      const example = String(gem.placeholder?.[locale] || "").replace(/^(例：|e\.g\. )/, "");
+      if (!gem.requiredFacts.length) continue;
+      assert.ok(example, `${gem.command} has no ${locale} example`);
+      const missing = factCoverage(gem, example).filter((fact) => !fact.met).map((fact) => factLabel(fact, locale));
+      assert.deepEqual(missing, [],
+        `${gem.command} (${locale}) shows an example its own composer marks incomplete: ${missing.join(", ")}`);
+    }
+  }
+});
