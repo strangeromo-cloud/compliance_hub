@@ -9,6 +9,10 @@
 //             still gets the procedure, whichever gem is selected)
 //   briefing  what changed over a window — read the notices, order them
 //   memo      write up a case that has already been analysed
+//   route     let the question decide — the coordinator's answer, and the only
+//             one that is a deferral rather than a choice. It is a named value
+//             rather than a null because "we have not decided" and "we decided
+//             the question decides" must not look the same in a catalogue.
 //
 // A gem is four things bound together:
 //   instruction     what the specialist agents are told to produce
@@ -44,17 +48,63 @@ export const GEM_GROUPS = {
 export const DESK_BY_LANE = { trade: "trade-desk", product: "product-desk", tpdd: "tpdd" };
 export const deskFor = (gem) => (gem?.desk ? gem.id : DESK_BY_LANE[gem?.lane] || null);
 
+// The assistant a reader is talking to when they have not picked one. There is
+// always one: "no gem" was a state the interface could not name, and naming it
+// is the whole of what this id is for.
+export const DEFAULT_GEM_ID = "hub";
+
 export const GEMS = [
-  // The three desks. A desk is the whole of its lane — you sit at it and ask
-  // whatever comes, and the lane's full procedure runs. The narrower entries
-  // below each desk are the same lane with the question already pointed at one
-  // part of it.
+  // The coordinator, and the one selected when nobody has chosen.
+  //
+  // This is not a new behaviour — it is the behaviour a question got when no
+  // gem was selected at all, given a name and a row in the sidebar. Under a
+  // model where a gem is who is answering, "nothing is answering" was never a
+  // state worth having: the reader was always talking to something, and the
+  // interface simply did not say what.
+  //
+  // kind is route and lane is null on purpose, and only one of those two is
+  // load-bearing. The lane is: it decides which specialist the plan leads with,
+  // and a coordinator leads none — that is what fanning out to all three means,
+  // and a lane here would silently reorder every unselected question.
+  //
+  // The kind is not, today. Only briefing and memo branch on it (orchestrator.js
+  // and judgeIntent both), so review, lookup and route are one case as far as
+  // the code is concerned — "what is this part's ECCN" is answered rather than
+  // reviewed because resolveLookup reads the question, not because /eccn says
+  // lookup. route is here to say what this gem decided, not to make it happen.
+  {
+    id: "hub",
+    lane: null,
+    coordinator: true,
+    desk: true,
+    kind: "route",
+    command: "/hub",
+    icon: "CH",
+    group: "desk",
+    name: { zh: "合规总控台", en: "Compliance Hub" },
+    summary: {
+      zh: "跨 Trade、Product 与 TPDD 的总控合规助手，按问题自动分流。",
+      en: "The coordinating assistant across Trade, Product and TPDD, routing by what is asked."
+    },
+    instruction: {
+      zh: "作为合规总控助手，先判断问题的范围，再交给相关的专业线。优先给出实际判断、依据、还缺什么信息、以及下一步该做什么。不编造事实，不自动批准交易，不替代法务审核。哪些结论已经成立、哪些还没有，要分开说清楚。",
+      en: "Act as the coordinating compliance assistant. Establish the scope of the question first, then hand it to the relevant specialist lanes. Lead with the actual assessment, the evidence, what information is still missing and what to do next. Do not invent facts, auto-approve a transaction, or stand in for legal review. Keep what is established separate from what is not."
+    },
+    boundSources: [],
+    requiredFacts: [],
+    outputTemplate: { zh: "判断 · 依据 · 未确立事项 · 下一步", en: "Assessment · evidence · what is unsettled · next step" },
+    placeholder: { zh: "描述交易方、产品、路线、最终用户或付款安排……", en: "Describe the parties, product, route, end user or payment arrangement…" }
+  },
+  // The three lane desks. A desk is the whole of its lane — you sit at it and
+  // ask whatever comes, and the lane's full procedure runs. The narrower entries
+  // grouped under each are the same lane with the question already pointed at
+  // one part of it.
   //
   // Trade and Product had no entry of their own until now: every way into those
-  // lanes was a narrow one, so "screen this party" and "classify this item"
-  // were offered and "review this transaction on the trade side" was not. TPDD
-  // already had one, and that is why /tpdd was the only entry that read as a
-  // place rather than a step.
+  // lanes was a narrow one, so "screen this party" and "classify this item" were
+  // offered and "review this transaction on the trade side" was not. TPDD
+  // already had one, and that is why /tpdd was the only entry among the eight
+  // that read as a place rather than a step.
   {
     id: "trade-desk",
     lane: "trade",

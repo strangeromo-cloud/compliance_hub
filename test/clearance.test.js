@@ -404,8 +404,12 @@ test("a gem's kind decides whether a review procedure applies at all", async () 
   const { GEMS } = await import("../public/gems.js");
 
   // Every gem declares one, so a new gem cannot be added without deciding.
+  // "route" is a decision too — the coordinator's, that the question decides —
+  // and it is a named value rather than a null so that it cannot be confused
+  // with a gem whose author never said.
   for (const gem of GEMS) {
-    assert.ok(["review", "lookup", "briefing", "memo"].includes(gem.kind), `${gem.id} has no usable kind`);
+    assert.ok(["review", "lookup", "briefing", "memo", "route"].includes(gem.kind), `${gem.id} has no usable kind`);
+    if (gem.kind === "route") assert.ok(gem.coordinator, "only the coordinator defers its kind to the question");
     assert.equal(GEM_KINDS[gem.id], gem.kind, "the server reads the same catalogue the page does");
   }
 
@@ -428,6 +432,22 @@ test("a gem's kind decides whether a review procedure applies at all", async () 
     question: "我们通过新加坡代理商向中国最终用户出口服务器", locale: "zh", config: stub.config, gemId: "screen-party"
   });
   assert.ok(review.analysisPath.lanes.some((lane) => lane.lane === "trade"));
+
+  // The coordinator changes nothing about how a question is answered — it is
+  // the behaviour of no gem at all, with a name. It is selected by default, so
+  // anything it forced would be forced on every question asked without choosing.
+  // What it could force is the lead lane: a lane here reorders the plan, and the
+  // assertion below is the one that catches it.
+  const asHub = await assessScenario({
+    question: "我们通过新加坡代理商向中国最终用户出口服务器", locale: "zh", config: stub.config, gemId: "hub"
+  });
+  const asNone = await assessScenario({
+    question: "我们通过新加坡代理商向中国最终用户出口服务器", locale: "zh", config: stub.config
+  });
+  assert.deepEqual(asHub.analysisPath.lanes.map((lane) => lane.lane), asNone.analysisPath.lanes.map((lane) => lane.lane),
+    "the coordinator leads no lane, so the plan is the one an unselected question gets");
+  assert.equal(asHub.analysisPath.lanes.filter((lane) => lane.leading).length, 0,
+    "and nothing leads — fanning out to all three is what it means");
 });
 
 test("a briefing states its window and what it could not read", async () => {

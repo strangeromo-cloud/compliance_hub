@@ -512,13 +512,22 @@ test("every gem sits at a desk, and the desks are the lanes", async () => {
   // GEM_LEAD_LANE said so before anything in the interface did. So the desks are
   // the three lanes the whole product is built on, and the rest are the same
   // lane with the question already pointed at part of it.
-  const { GEMS, DESK_BY_LANE, deskFor } = await import("../public/gems.js");
+  const { GEMS, DESK_BY_LANE, DEFAULT_GEM_ID, deskFor } = await import("../public/gems.js");
   const { GEM_LEAD_LANE } = await import("../src/analysis-path.js");
 
-  const desks = GEMS.filter((gem) => gem.desk);
+  const desks = GEMS.filter((gem) => gem.desk && !gem.coordinator);
   assert.deepEqual(desks.map((gem) => gem.lane).sort(), ["product", "tpdd", "trade"],
     "one desk per lane, and a lane with no desk is a lane with no way in but a narrow one");
   assert.equal(new Set(desks.map((gem) => gem.id)).size, desks.length);
+
+  // Exactly one coordinator, it leads no lane, and it is what a reader who has
+  // picked nothing is talking to. Two would make "the default" ambiguous; none
+  // would put back the unnameable state this replaced.
+  const coordinators = GEMS.filter((gem) => gem.coordinator);
+  assert.equal(coordinators.length, 1);
+  assert.equal(coordinators[0].id, DEFAULT_GEM_ID);
+  assert.equal(coordinators[0].lane, null, "the coordinator leads no lane — it fans out to all three");
+  assert.equal(coordinators[0].requiredFacts.length, 0, "and it takes any question, so it demands nothing");
   for (const [lane, id] of Object.entries(DESK_BY_LANE)) {
     assert.equal(GEMS.find((gem) => gem.id === id)?.lane, lane, `${id} must be the ${lane} desk`);
   }
@@ -526,13 +535,14 @@ test("every gem sits at a desk, and the desks are the lanes", async () => {
   for (const gem of GEMS) {
     // The group is the lane, so the palette cannot file a gem under one desk
     // while the plan leads another.
-    assert.ok(gem.lane, `${gem.id} must say which lane it is about`);
+    assert.ok(gem.lane || gem.coordinator, `${gem.id} must say which lane it is about`);
     assert.equal(GEM_LEAD_LANE[gem.id], gem.lane,
       "the plan's lead lane is read off the catalogue, not kept as a second copy");
     if (gem.desk) assert.equal(gem.group, "desk");
     else if (gem.kind === "memo") assert.equal(gem.group, "action");
     else assert.equal(gem.group, gem.lane, `${gem.id} is grouped under the desk it belongs to`);
     assert.equal(deskFor(gem), gem.kind === "memo" ? null : (gem.desk ? gem.id : DESK_BY_LANE[gem.lane]));
+    assert.ok(gem.summary, `${gem.id} needs a one-line description — the sidebar rows carry it`);
   }
 
   // An action is not a place to work from, and this is the field that says so —

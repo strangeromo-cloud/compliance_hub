@@ -29,22 +29,31 @@
       </div>
 
       <div class="sidebar-scroll">
+        <p class="rail-eyebrow" data-i18n="assistantsEyebrow">ASSISTANTS</p>
         <p class="rail-label">
-          <span data-i18n="gemsLabel">GEMS</span>
+          <span data-i18n="gemsLabel">Gems</span>
           <button type="button" class="rail-add" id="gemAddBtn" title="新建 Gem">＋</button>
         </p>
-        <ul class="gem-nav" id="gemNav"></ul>
+        <p class="rail-sub" data-i18n="gemsRailHint">选择一个长期工作的专家助手</p>
+        <ul class="gem-nav gem-nav-rich" id="gemNav"></ul>
 
         <!-- Skills the reader wrote, under the gems rather than beside them: a
              gem is who is answering and stays selected, and the list here is
              what that gem offers. A gem that names no skills offers all of
              them, which is every built-in one. -->
-        <p class="rail-label rail-label-spaced">
-          <span data-i18n="skillsLabel">自建 Skill</span>
+        <p class="rail-eyebrow rail-label-spaced" data-i18n="sopEyebrow">SOP LIBRARY</p>
+        <p class="rail-label">
+          <span data-i18n="skillsLabel">Skills</span>
           <button type="button" class="rail-add" id="skillAddBtn" title="新建 Skill">＋</button>
         </p>
+        <p class="rail-sub" data-i18n="skillsRailHint">点击插入，或在输入框键入 /</p>
         <p class="rail-sub hidden" id="skillScope"></p>
-        <ul class="gem-nav" id="skillNav"></ul>
+        <ul class="gem-nav gem-nav-rich" id="skillNav"></ul>
+        <!-- What creating one actually costs and where it goes. The reference
+             prototype says "saved on this machine"; ours is not — a gem or a
+             skill is a row in the server's database, which is the thing a
+             reader needs to know before typing a procedure into it. -->
+        <p class="rail-foot" data-i18n="ownFoot"></p>
 
         <p class="rail-label rail-label-spaced" data-i18n="historyLabel">历史记录</p>
         <ul class="case-nav" id="caseNav"></ul>
