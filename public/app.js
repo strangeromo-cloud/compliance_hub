@@ -2716,15 +2716,6 @@ async function analyze(event, options = {}) {
         answer.scrollIntoView({ behavior: "smooth", block: "start" });
       }
     });
-    // An action does not stay. /case-memo takes a thread that has already been
-    // analysed and writes it up — leaving it selected would mean every question
-    // after it is also a memo, which is not a place anybody works from. The
-    // field that decides this is the one the orchestrator already routes on.
-    //
-    // Here rather than in the finally: a run that failed or was stopped has not
-    // produced the memo, and dropping the gem then would make the reader pick
-    // it again to retry the thing that just did not happen.
-    if (state.activeGem?.kind === "memo") clearGem();
     loadCases();
   } catch (error) {
     // Stopping is not failing. The reader asked for this, so it gets no error

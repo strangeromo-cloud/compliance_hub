@@ -8,7 +8,6 @@
 //             when the question is one (a question that describes a transaction
 //             still gets the procedure, whichever gem is selected)
 //   briefing  what changed over a window — read the notices, order them
-//   memo      write up a case that has already been analysed
 //   route     let the question decide — the coordinator's answer, and the only
 //             one that is a deferral rather than a choice. It is a named value
 //             rather than a null because "we have not decided" and "we decided
@@ -32,19 +31,16 @@
 // lane, and the first level is the three desks the whole product is built on:
 // Trade, Product, Ethics & TPDD, the three boxes on the home page.
 //
-// desk first, then what each desk narrows to, then the one entry that is an
-// action rather than a place to sit.
+// desk first, then what each desk narrows to.
 export const GEM_GROUPS = {
   desk: { zh: "常驻台", en: "Desks" },
   custom: { zh: "自建", en: "Yours" },
   trade: { zh: "贸易线下的做法", en: "Under Trade" },
   product: { zh: "物项与许可线下的做法", en: "Under Item & licence" },
-  tpdd: { zh: "第三方尽调线下的做法", en: "Under TPDD" },
-  action: { zh: "动作 — 用完即退", en: "Actions — they do not stay" }
+  tpdd: { zh: "第三方尽调线下的做法", en: "Under TPDD" }
 };
 
-// Which desk a gem sits at. A desk answers with its own id, and the action has
-// no desk: writing a memo is not a place you work from.
+// Which desk a gem sits at. A desk answers with its own id.
 export const DESK_BY_LANE = { trade: "trade-desk", product: "product-desk", tpdd: "tpdd" };
 export const deskFor = (gem) => (gem?.desk ? gem.id : DESK_BY_LANE[gem?.lane] || null);
 
@@ -67,9 +63,9 @@ export const GEMS = [
   // and a coordinator leads none — that is what fanning out to all three means,
   // and a lane here would silently reorder every unselected question.
   //
-  // The kind is not, today. Only briefing and memo branch on it (orchestrator.js
-  // and judgeIntent both), so review, lookup and route are one case as far as
-  // the code is concerned — "what is this part's ECCN" is answered rather than
+  // The kind is not, today. Only briefing branches on it in this catalogue
+  // (orchestrator.js and judgeIntent both), so review, lookup and route are one
+  // case as far as the code is concerned — "what is this part's ECCN" is answered rather than
   // reviewed because resolveLookup reads the question, not because /eccn says
   // lookup. route is here to say what this gem decided, not to make it happen.
   {
@@ -337,29 +333,6 @@ export const GEMS = [
     ],
     outputTemplate: { zh: "变化清单（文号/日期/类型/生效） · 沿革关系 · 内部影响面 · 建议动作", en: "Change list (notice, date, type, effective) · supersession links · internal impact · recommended actions" },
     placeholder: { zh: "例：汇总最近 6 个月中国出口管制管控名单和两用物项公告的变化。", en: "e.g. Summarize changes to the PRC control list and dual-use notices over the past six months." }
-  },
-  {
-    id: "case-memo",
-    lane: "review",
-    kind: "memo",
-    command: "/case-memo",
-    icon: "MM",
-    group: "action",
-    name: { zh: "案件备忘录", en: "Case memo" },
-    summary: {
-      zh: "把当前对话整理成带证据链和结论边界的备忘录，供人工复核归档。",
-      en: "Turn the current thread into a memo with an evidence chain and explicit limits, ready for human review."
-    },
-    instruction: {
-      zh: "将本次对话整理成合规备忘录。结构为：事实摘要、已确立结论、未确立事项、依据来源（含检索时间和快照标识）、缺失信息、建议动作、复核要求。明确区分哪些是官方来源支持的结论，哪些是待人工确认的推断。备忘录不构成法律意见。",
-      en: "Turn this thread into a compliance memo: facts, established conclusions, unestablished points, sources cited with retrieval time and snapshot identifier, missing information, recommended actions, and the review required. Separate what the official sources support from what remains an inference awaiting human confirmation. The memo is not legal advice."
-    },
-    boundSources: [],
-    requiredFacts: [
-      { key: "thread", zh: "至少一轮已完成的分析", en: "At least one completed analysis", match: /.{10,}/ }
-    ],
-    outputTemplate: { zh: "事实 · 已确立结论 · 未确立事项 · 证据链 · 缺失信息 · 复核要求", en: "Facts · established · unestablished · evidence chain · gaps · review required" },
-    placeholder: { zh: "例：把上面关于 Red Cat Holdings 的筛查整理成备忘录，供法务复核。", en: "e.g. Turn the Red Cat Holdings screening above into a memo for legal review." }
   }
 ];
 

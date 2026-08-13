@@ -19,8 +19,7 @@ const copy = {
     kinds: [
       ["合规审查", "描述了一笔交易——有交易方、物项、目的地或最终用户", "按已公布程序逐步执行，每步带条文依据；缺资料不停下，跑完给出阶段性判断并列出还缺什么；结论带风险等级与边界", "不放行交易。最后一步永远是人工复核"],
       ["直接查询", "问一个已登记的值：料号的 ECCN、管制编码的含义、某主体是否在某份清单上", "单步检索，直接给值和来源；查不到时说明查了哪些记录、答案在谁那里", "不推断。未收录不等于不受管制"],
-      ["监管简报", "问一段时间内发布了什么变化", "按公告汇总：新增多少家、分别进了哪份清单、来自哪些国家，再逐份列出动作与公告号", "不判断这些变化是否影响某笔交易——那是审查"],
-      ["案件备忘录", "把本会话已完成的分析整理成文书", "记录既有结论与证据来源", "不产生新判断。会话为空时直接说没有可整理的内容"]
+      ["监管简报", "问一段时间内发布了什么变化", "按公告汇总：新增多少家、分别进了哪份清单、来自哪些国家，再逐份列出动作与公告号", "不判断这些变化是否影响某笔交易——那是审查"]
     ],
     kindsGemNote: "Gem 声明自己属于哪一类，所以选中 /reg-brief 不会触发受限方筛查。但描述了交易的问题始终走审查——不论选了哪个 Gem。",
 
@@ -88,7 +87,7 @@ const copy = {
     procGemHeads: ["Gem", "起步线", "起步程序", "可能追加"],
     procLaneNames: { trade: "Trade — 受限方与主体", product: "Product — 物项与许可", tpdd: "Ethics & TPDD — 第三方", review: "结案", lookup: "查询", briefing: "监管变化简报", memo: "案件备忘录" },
     useLabel: "使用方法", useTitle: "在输入框键入 /",
-    useLead: "两层，一屏都列出来。上面是常驻台：合规总控台（没选时的默认，按问题自动分流），以及贸易、物项与许可、第三方尽调三条线，正是首页图上那三个框；选中一张台就坐在上面，问什么都按那条线的完整流程走，直到你换一张或按 ×。下面是每张台的窄化入口：同一条线，问题已经指向了其中一段。/case-memo 不是台，是动作，写完自动退出。\n每个 Gem 绑定五样东西：产出类型、指令、数据源白名单、必填事实清单、输出模板。产出类型决定它走哪条路——/reg-brief 是简报，不会触发受限方筛查；必填事实清单则让系统在提交前就知道自己缺什么，而不是让模型悄悄猜。",
+    useLead: "两层，一屏都列出来。上面是常驻台：合规总控台（没选时的默认，按问题自动分流），以及贸易、物项与许可、第三方尽调三条线，正是首页图上那三个框；选中一张台就坐在上面，问什么都按那条线的完整流程走，直到你换一张或按 ×。下面是每张台的窄化入口：同一条线，问题已经指向了其中一段。每个入口都是一个可以一直待着的位置。\n每个 Gem 绑定五样东西：产出类型、指令、数据源白名单、必填事实清单、输出模板。产出类型决定它走哪条路——/reg-brief 是简报，不会触发受限方筛查；必填事实清单则让系统在提交前就知道自己缺什么，而不是让模型悄悄猜。",
     gemsLabel: "可用 Gem", gemBound: "个来源", gemRecords: "条记录", gemUnsynced: "个未同步", gemNone: "不绑定外部来源",
     buildTitle: "自己建 Gem 和 Skill",
     buildLead: "左侧栏 GEMS 和「自建 SKILL」两个标题旁边各有一个 ＋。两者不是并列关系：Gem 是「谁在回答」，选中后一直挂着；Skill 挂在 Gem 下面，是这一问怎么做。",
@@ -234,8 +233,7 @@ const copy = {
     kinds: [
       ["Compliance review", "A transaction is described \u2014 a party, an item, a destination or an end user", "The published procedure step by step, each step citing its provision; it stops at a step where evidence is missing; the conclusion carries a risk level and its limits", "Release a transaction. The last step is always human review"],
       ["Direct lookup", "A published value is asked for: a part\u2019s ECCN, what a control code means, whether a party is on a named list", "One step: the value and its source. Where it is not held, which records were read and who would know", "Infer. Absent from this data is not absent from control"],
-      ["Regulatory briefing", "What was published over a period", "The period totalled \u2014 how many entities added, to which list, from where \u2014 then each notice with its action and number", "Judge whether any of it reaches a given transaction; that is a review"],
-      ["Case memo", "Write up analysis already performed in this session", "The conclusions and their evidence, recorded", "Produce new judgements. Over an empty session it says there is nothing to write up"]
+      ["Regulatory briefing", "What was published over a period", "The period totalled \u2014 how many entities added, to which list, from where \u2014 then each notice with its action and number", "Judge whether any of it reaches a given transaction; that is a review"]
     ],
     kindsGemNote: "A gem declares which kind it is, so selecting /reg-brief does not open a party screening. A question that describes a transaction still gets the review, whichever gem is selected.",
 
@@ -303,7 +301,7 @@ const copy = {
     procGemHeads: ["Gem", "Opening lane", "Opening procedure", "May add"],
     procLaneNames: { trade: "Trade — parties", product: "Product — item & licence", tpdd: "Ethics & TPDD", review: "Close", lookup: "Lookup", briefing: "Regulatory briefing", memo: "Case memo" },
     useLabel: "How to use", useTitle: "Press / in the composer",
-    useLead: "Two levels, all of it on one screen. The desks come first: Compliance Hub \u2014 the default when nothing is chosen, routing by what is asked \u2014 then Trade, Item & licence and Third-party diligence, the three lanes on the home page. Choosing one seats you there: whatever you ask runs that lane's full procedure, until you pick another or press \u00d7. Below each desk are its narrower entries \u2014 the same lane with the question already pointed at one part of it. /case-memo is not a desk but an action, and it steps aside once the memo is written.\nA gem binds five things: what it produces, the instruction, the bound-source whitelist, the facts it requires, and the output template. The first decides which path it takes \u2014 /reg-brief is a briefing and never opens a party screening \u2014 and the fourth is what makes a gem more than a saved prompt: the interface knows what is missing before anything is submitted.",
+    useLead: "Two levels, all of it on one screen. The desks come first: Compliance Hub \u2014 the default when nothing is chosen, routing by what is asked \u2014 then Trade, Item & licence and Third-party diligence, the three lanes on the home page. Choosing one seats you there: whatever you ask runs that lane's full procedure, until you pick another or press \u00d7. Below each desk are its narrower entries \u2014 the same lane with the question already pointed at one part of it. Every entry is a place you can stay.\nA gem binds five things: what it produces, the instruction, the bound-source whitelist, the facts it requires, and the output template. The first decides which path it takes \u2014 /reg-brief is a briefing and never opens a party screening \u2014 and the fourth is what makes a gem more than a saved prompt: the interface knows what is missing before anything is submitted.",
     gemsLabel: "Available gems", gemBound: "sources", gemRecords: "records", gemUnsynced: "not synced", gemNone: "no bound sources",
     buildTitle: "Build your own gems and skills",
     buildLead: "A ＋ sits beside each of the two sidebar headings. They are not siblings: a gem is who is answering and stays selected, and skills hang under it as how this one question should be done.",

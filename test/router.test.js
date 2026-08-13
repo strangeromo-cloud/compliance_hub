@@ -126,7 +126,6 @@ test("only an assessment carries a risk level", async () => {
   const { assessScenario } = await import("../src/orchestrator.js");
   const noRisk = [
     { gemId: "reg-brief", question: "汇总最近 6 个月的公告变化" },
-    { gemId: "case-memo", question: "把本会话整理成案件备忘录" },
     { gemId: "eccn-watch", question: "100-000000009 的 ECCN 是什么？" }
   ];
   for (const { gemId, question } of noRisk) {
@@ -206,9 +205,9 @@ test("the page and the run judge a question the same way", async () => {
     if (item.kind === "review") assert.deepEqual(routeQuestion(item.q, false), verdict.agents, item.q);
   }
 
-  // A gem that produces a briefing or a memo settles it before the question is
-  // read at all — those name no counterparty and no item.
-  for (const gemId of ["reg-brief", "case-memo"]) {
+  // A gem that produces a briefing settles it before the question is read at
+  // all — a summary of what was published names no counterparty and no item.
+  for (const gemId of ["reg-brief"]) {
     const verdict = judgeIntent({ question: "华为是否在实体清单上？", gemKind: GEM_KINDS[gemId] });
     assert.equal(verdict.review, false, gemId);
     assert.deepEqual(verdict.agents, [], `${gemId} opens no review procedure`);
@@ -539,22 +538,18 @@ test("every gem sits at a desk, and the desks are the lanes", async () => {
     assert.equal(GEM_LEAD_LANE[gem.id], gem.lane,
       "the plan's lead lane is read off the catalogue, not kept as a second copy");
     if (gem.desk) assert.equal(gem.group, "desk");
-    else if (gem.kind === "memo") assert.equal(gem.group, "action");
     else assert.equal(gem.group, gem.lane, `${gem.id} is grouped under the desk it belongs to`);
-    assert.equal(deskFor(gem), gem.kind === "memo" ? null : (gem.desk ? gem.id : DESK_BY_LANE[gem.lane]));
+    assert.equal(deskFor(gem), gem.desk ? gem.id : DESK_BY_LANE[gem.lane]);
     assert.ok(gem.summary, `${gem.id} needs a one-line description — the sidebar rows carry it`);
   }
 
-  // An action is not a place to work from, and this is the field that says so —
-  // the same one the orchestrator routes on, so "it does not stay" and "it does
-  // not run a review procedure" can never disagree.
-  const memos = GEMS.filter((gem) => gem.kind === "memo");
-  assert.equal(memos.length, 1);
-  assert.equal(deskFor(memos[0]), null, "a memo belongs to no desk");
+  // Every entry is a place to work from. /case-memo was the one that was not —
+  // it took a thread that had already been analysed and wrote it up — and it is
+  // gone: the answer a run already produces is the write-up.
+  assert.equal(GEMS.filter((gem) => gem.kind === "memo").length, 0);
+  assert.ok(GEMS.every((gem) => deskFor(gem)), "every gem sits at a desk");
 
   const app = await (await import("node:fs/promises")).readFile(new URL("../public/app.js", import.meta.url), "utf8");
-  assert.match(app, /state\.activeGem\?\.kind === "memo"\) clearGem\(\)/,
-    "and the interface drops it once it has run");
 
   // The sidebar holds the three whatever the pin store says. Making them a
   // default pin would mean telling "never touched" from "unpinned all three",

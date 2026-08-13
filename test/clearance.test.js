@@ -408,7 +408,7 @@ test("a gem's kind decides whether a review procedure applies at all", async () 
   // and it is a named value rather than a null so that it cannot be confused
   // with a gem whose author never said.
   for (const gem of GEMS) {
-    assert.ok(["review", "lookup", "briefing", "memo", "route"].includes(gem.kind), `${gem.id} has no usable kind`);
+    assert.ok(["review", "lookup", "briefing", "route"].includes(gem.kind), `${gem.id} has no usable kind`);
     if (gem.kind === "route") assert.ok(gem.coordinator, "only the coordinator defers its kind to the question");
     assert.equal(GEM_KINDS[gem.id], gem.kind, "the server reads the same catalogue the page does");
   }
@@ -422,10 +422,6 @@ test("a gem's kind decides whether a review procedure applies at all", async () 
   assert.equal(brief.results.length, 0);
   assert.ok(brief.grounding.limitations.some((line) => /属于审查而非汇总/.test(line)),
     "listing what was published is not the same as saying it applies");
-
-  const memo = await assessScenario({ question: "生成案件备忘录", locale: "zh", config: stub.config, gemId: "case-memo", history: [] });
-  assert.deepEqual(memo.analysisPath.lanes.map((lane) => lane.lane), ["memo"]);
-  assert.match(memo.synthesis.headline, /尚无可整理/, "a memo over nothing says so rather than inventing a document");
 
   // A review gem still gets the procedure.
   const review = await assessScenario({
