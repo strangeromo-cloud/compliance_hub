@@ -505,6 +505,7 @@ async function openCase(id) {
     $("startPanel").classList.add("hidden");
 
     let last = null;
+    let reviewed = null;
     for (const turn of record.turns) {
       $("threadInner").insertAdjacentHTML("beforeend",
         `<article class="msg msg-user"><div class="bubble">${esc(turn.question || "")}</div></article>`);
@@ -518,11 +519,14 @@ async function openCase(id) {
       state.conversation.push({ role: "user", content: turn.question || "" });
       state.conversation.push({ role: "assistant", content: `${turn.synthesis?.headline || ""}\n${turn.synthesis?.executiveSummary || ""}` });
       last = turn;
+      // The panel belongs to the last turn that ran a procedure, which is not
+      // always the last turn: a case can end on a question that was answered
+      // from the analysis above it, and that answer has no flow of its own. It
+      // is about the one before it, so that is the one to show.
+      if (turn.analysisPath) reviewed = turn;
     }
-    renderEvidence(last?.sources || []);
-    // A reopened case shows the flow it reached, not an empty rail — and an
-    // empty rail when the last turn was answered rather than reviewed.
-    if (last?.analysisPath) renderFlowPanel(last.analysisPath, { analysed: (last.results || []).map((item) => item.agent) });
+    renderEvidence(reviewed?.sources || []);
+    if (reviewed) renderFlowPanel(reviewed.analysisPath, { analysed: (reviewed.results || []).map((item) => item.agent) });
     else clearFlowPanel();
     renderCaseNav();
     closeDrawer();
@@ -2805,11 +2809,17 @@ async function analyze(event, options = {}) {
     // to mean "redraw what is already there", so an answer that ran no procedure
     // — a question answered rather than reviewed — left the previous run's steps
     // sitting in the rail beside it.
+    // A turn that ran no procedure leaves the panel alone. The reader asked
+    // about the analysis that is in it — clearing it takes away the thing the
+    // answer is about, and the next review replaces it anyway. A new
+    // conversation is what empties it, which newConversation still does.
     if (finished.analysisPath) renderFlowPanel(finished.analysisPath, { analysed: (finished.results || []).map((item) => item.agent) });
-    else clearFlowPanel();
     live.classList.remove("resuming");
     state.resumingStep = null;
-    renderEvidence(finished.sources || []);
+    // Same rule for the sources. An answer cites no new ones, and blanking the
+    // list would leave the reader looking at "0" beside a reply drawn from the
+    // very evidence that was there a moment ago.
+    if (finished.analysisPath || (finished.sources || []).length) renderEvidence(finished.sources || []);
     // One deliberate scroll, and only one: to the conclusion.
     //
     // It used to go to the step still waiting on the reader, from when the run

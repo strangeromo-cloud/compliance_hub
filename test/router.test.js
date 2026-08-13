@@ -627,3 +627,31 @@ test("the live progress line does not report a screening that never happened", a
       `${lane} routes to itself, not to a specialist`);
   }
 });
+
+test("a turn that ran no procedure leaves the run panel alone", async () => {
+  // The panel holds the analysis a follow-up is asking about. Clearing it when
+  // the answer arrives takes away the thing the answer is about — and the reader
+  // asked for it not to go. Three states, three different rules:
+  //
+  //   answered        the panel stays exactly as the review left it
+  //   reviewed again  it is replaced, because there is a new procedure to show
+  //   new conversation  it is emptied, which is the one case that should empty it
+  const app = await (await import("node:fs/promises"))
+    .readFile(new URL("../public/app.js", import.meta.url), "utf8");
+
+  // No else-branch on the finish: a turn with no path falls through untouched.
+  assert.match(app, /if \(finished\.analysisPath\) renderFlowPanel\(finished\.analysisPath[^\n]*\n(?![^\n]*else clearFlowPanel)/,
+    "an answered turn does not clear the flow panel");
+  assert.match(app, /if \(finished\.analysisPath \|\| \(finished\.sources \|\| \[\]\)\.length\) renderEvidence/,
+    "nor blank the evidence list");
+
+  // Reopening a case shows the last turn that actually ran one, which is not
+  // always the last turn: a case can end on a question answered from the
+  // analysis above it.
+  assert.match(app, /if \(turn\.analysisPath\) reviewed = turn;/);
+  assert.match(app, /if \(reviewed\) renderFlowPanel\(reviewed\.analysisPath/);
+
+  // And a new conversation still empties it — the defect this rule must not
+  // bring back.
+  assert.match(app, /function newConversation\(\) \{\s*\n\s*clearFlowPanel\(\);/);
+});
