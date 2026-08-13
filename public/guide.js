@@ -19,7 +19,8 @@ const copy = {
     kinds: [
       ["合规审查", "描述了一笔交易——有交易方、物项、目的地或最终用户", "按已公布程序逐步执行，每步带条文依据；缺资料不停下，跑完给出阶段性判断并列出还缺什么；结论带风险等级与边界", "不放行交易。最后一步永远是人工复核"],
       ["直接查询", "问一个已登记的值：料号的 ECCN、管制编码的含义、某主体是否在某份清单上", "单步检索，直接给值和来源；查不到时说明查了哪些记录、答案在谁那里", "不推断。未收录不等于不受管制"],
-      ["监管简报", "问一段时间内发布了什么变化", "按公告汇总：新增多少家、分别进了哪份清单、来自哪些国家，再逐份列出动作与公告号", "不判断这些变化是否影响某笔交易——那是审查"]
+      ["监管简报", "问一段时间内发布了什么变化", "按公告汇总：新增多少家、分别进了哪份清单、来自哪些国家，再逐份列出动作与公告号", "不判断这些变化是否影响某笔交易——那是审查"],
+      ["案件备忘录", "在对话里说「把上面的整理成备忘录」——没有对应的 Gem，说一句就行", "记录既有结论与证据来源", "不产生新判断。会话为空时直接说没有可整理的内容；描述了交易的问题仍然走审查，哪怕里面出现「备忘录」三个字"]
     ],
     kindsGemNote: "Gem 声明自己属于哪一类，所以选中 /reg-brief 不会触发受限方筛查。但描述了交易的问题始终走审查——不论选了哪个 Gem。",
 
@@ -233,7 +234,8 @@ const copy = {
     kinds: [
       ["Compliance review", "A transaction is described \u2014 a party, an item, a destination or an end user", "The published procedure step by step, each step citing its provision; it stops at a step where evidence is missing; the conclusion carries a risk level and its limits", "Release a transaction. The last step is always human review"],
       ["Direct lookup", "A published value is asked for: a part\u2019s ECCN, what a control code means, whether a party is on a named list", "One step: the value and its source. Where it is not held, which records were read and who would know", "Infer. Absent from this data is not absent from control"],
-      ["Regulatory briefing", "What was published over a period", "The period totalled \u2014 how many entities added, to which list, from where \u2014 then each notice with its action and number", "Judge whether any of it reaches a given transaction; that is a review"]
+      ["Regulatory briefing", "What was published over a period", "The period totalled \u2014 how many entities added, to which list, from where \u2014 then each notice with its action and number", "Judge whether any of it reaches a given transaction; that is a review"],
+      ["Case memo", "Ask for it in the conversation \u2014 \u201cwrite the above up as a memo\u201d. There is no gem for it; saying so is enough", "The conclusions and their evidence, recorded", "Produce new judgements. Over an empty session it says there is nothing to write up, and a question that describes a transaction still gets the review even with the word in it"]
     ],
     kindsGemNote: "A gem declares which kind it is, so selecting /reg-brief does not open a party screening. A question that describes a transaction still gets the review, whichever gem is selected.",
 

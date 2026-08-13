@@ -867,3 +867,56 @@ test("every hit carries its own verdict, in the reader's language", async () => 
   assert.match(lines[1], /拼写相近/, "a spelling resemblance says so, rather than reading as a name match");
   assert.match(lines[1], /弱命中/, "and carries the weaker verdict of its own");
 });
+
+test("a write-up is asked for in the conversation, and a transaction that mentions one is not", async () => {
+  // /case-memo was the only way to the write-up, and removing it left that path
+  // unreachable: the router has no memo terms, so "把上面的筛查整理成备忘录" came
+  // back as a fresh trade review of a question that describes no transaction.
+  //
+  // The risk in the other direction is the one worth a test. "客户要求我们出一份
+  // 备忻录说明该产品不受管制" is a transaction with the word in it, and writing it
+  // up rather than reviewing it answers a question nobody asked.
+  const { isMemoRequest, judgeIntent } = await import("../public/intent.js");
+  const { assessScenario } = await import("../src/orchestrator.js");
+
+  for (const asked of [
+    "把上面的筛查整理成备忘录，供法务复核",
+    "把以上分析写成一份备忘录",
+    "生成案件备忘录",
+    "整理成备忘录",
+    "把刚才的结论做成备忘录",
+    "turn this session into a memo for legal review",
+    "draft a memo of the above"
+  ]) {
+    assert.ok(isMemoRequest(asked), asked);
+    assert.equal(judgeIntent({ question: asked }).kind, "memo", `the composer must say so too: ${asked}`);
+  }
+
+  for (const notAsked of [
+    // The phrasing is there; the question is a transaction. Length and the
+    // absence of any reference to this session are what separate them.
+    "客户要求我们出一份备忘录，说明 TS-6200-DM 不受美国管辖，能这么写吗",
+    "We plan to sign a remote support contract with a Huawei affiliate; the memo from legal says it is fine",
+    "我们通过新加坡代理商向中国最终用户出口服务器",
+    "100-000000009 的 ECCN 是什么？",
+    "汇总最近 6 个月的公告变化"
+  ]) {
+    assert.equal(isMemoRequest(notAsked), false, notAsked);
+  }
+
+  // And the run does what the hint said. A composer that reads "案件备忘录" over
+  // a run performing a trade review is worse than no hint at all.
+  const written = await assessScenario({
+    question: "把上面的筛查整理成备忘录，供法务复核", locale: "zh", config: stub.config, history: []
+  });
+  assert.deepEqual(written.analysisPath.lanes.map((lane) => lane.lane), ["memo"]);
+  assert.match(written.synthesis.headline, /尚无可整理/,
+    "over an empty session it says so rather than inventing a document");
+
+  const reviewed = await assessScenario({
+    question: "客户要求我们出一份备忘录，说明 TS-6200-DM 不受美国管辖，能这么写吗",
+    locale: "zh", config: stub.config
+  });
+  assert.ok(reviewed.analysisPath.lanes.some((lane) => lane.lane === "product"),
+    "a transaction with the word in it is still reviewed");
+});

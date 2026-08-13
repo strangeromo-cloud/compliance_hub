@@ -1,4 +1,5 @@
 import { AGENT_META, routeQuestion, routeReasons } from "./router.js";
+import { isMemoRequest } from "../public/intent.js";
 import { sourcesForAgents } from "./sources.js";
 import { retrievePublicSources } from "./retrieval.js";
 import { callJsonModel, callJsonModelStream, readableProjection } from "./llm.js";
@@ -551,7 +552,13 @@ export async function assessScenario({ question, locale = "zh", config = {}, his
   // review procedure — the one decision this value makes.
   const kind = GEM_KINDS[gemId] || customGemKind(gemId) || null;
   if (kind === "briefing") return await answerBriefing({ question, locale, onEvent, gemId });
-  if (kind === "memo") return await answerMemo({ question, locale, history, onEvent, gemId });
+  // A write-up is asked for in the conversation now that no gem offers one. The
+  // rule is in public/intent.js, so the composer's route hint and this dispatch
+  // read the same one — a hint that says "案件备忘录" over a run that performs a
+  // trade review is worse than no hint.
+  if (kind === "memo" || isMemoRequest(question)) {
+    return await answerMemo({ question, locale, history, onEvent, gemId });
+  }
 
   const lookup = await resolveLookup(question).catch(() => null);
   if (lookup) return await answerLookup({ question, locale, lookup, onEvent, gemId });

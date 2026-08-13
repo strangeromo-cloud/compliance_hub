@@ -176,6 +176,34 @@ export function lookupSubject(question = "") {
   return null;
 }
 
+// Asking, in the conversation, for what was just analysed to be written up.
+//
+// /case-memo used to be the only way here, and removing it left the write-up
+// unreachable — the router has no memo terms, so "把上面的筛查整理成备忘录" came
+// back as a fresh trade review of a question that describes no transaction.
+//
+// Two conditions, and the second is the one that matters. The phrasing alone is
+// not enough: "客户要求我们出一份备忘录说明该产品不受管制" is a transaction with
+// the word in it, and writing it up instead of reviewing it would answer a
+// question nobody asked. So it must also either point at this session — 上面,
+// 以上, 本次, 刚才 — or be short enough that the request is the whole of it.
+//
+// The rule the product states elsewhere still holds and this sits under it: a
+// question that describes a transaction gets the review.
+const MEMO_PHRASE = /(整理|归纳|汇总|写|出|生成|做)[成一份个的份]{0,3}\s*(案件)?(备忘录|memo)|(write|draft|turn)[^.?!]{0,40}\b(memo|memorandum)\b|\bcase memo\b/i;
+const MEMO_SCOPE = /上面|以上|上述|本次|这次|本会话|刚才|前面|刚刚|above|this (session|thread|conversation)|so far/i;
+const MEMO_BRIEF = 18;
+
+export function isMemoRequest(question = "") {
+  const text = String(question).trim();
+  if (!MEMO_PHRASE.test(text)) return false;
+  if (MEMO_SCOPE.test(text)) return true;
+  // Short enough that the request is all there is. Counted in characters for
+  // Chinese and in words for English, because 18 of one is not 18 of the other.
+  const words = text.split(/\s+/).filter(Boolean).length;
+  return /[一-龥]/.test(text) ? text.length <= MEMO_BRIEF : words <= 8;
+}
+
 // The whole judgement, in the order the run makes it — because the order is the
 // judgement. A gem that produces a briefing or a memo settles it before anything
 // else is read: those questions name no counterparty and no item, and running a
@@ -191,6 +219,12 @@ export function judgeIntent({ question = "", gemKind = null } = {}) {
     return { kind: gemKind, review: false, agents: [], intent, reasons: {}, matched: true, because: "gem" };
   }
   if (!text) return { kind: "empty", review: false, agents: [], intent, reasons: {}, matched: false, because: null };
+
+  // Before the lookup, because "把上面的 ECCN 整理成备忘录" carries a part number
+  // and is still a request to write up rather than a question about a value.
+  if (isMemoRequest(text)) {
+    return { kind: "memo", review: false, agents: [], intent, reasons: {}, matched: true, because: "asked" };
+  }
 
   const subject = lookupSubject(text);
   if (subject) {
