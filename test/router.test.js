@@ -655,3 +655,39 @@ test("a turn that ran no procedure leaves the run panel alone", async () => {
   // bring back.
   assert.match(app, /function newConversation\(\) \{\s*\n\s*clearFlowPanel\(\);/);
 });
+
+test("a question typed while a step is asking is a question, not that step's answer", async () => {
+  // The composer routes what you type into a step still waiting on a value, so
+  // the review carries on with one more fact rather than starting a second one.
+  // The only guard was "does this read as a new transaction" — and a question is
+  // neither a transaction nor a fact.
+  //
+  // So a follow-up asked after supplying a value was recorded as the value of
+  // whichever field the next step wanted. That path resumes into the previous
+  // message instead of adding one, which is why the reader's own words never
+  // appeared anywhere: no bubble, no answer of its own, and the run reported
+  // against a step nobody had been asked about.
+  const { readsAsQuestion } = await import("../public/intent.js");
+
+  for (const asked of [
+    "补充上述三个信息就可以得出最终结论了吗，",
+    "那一般来说 de minimis 门槛是怎么算的",
+    "这样就够了吗",
+    "为什么跳过了那一步",
+    "Would that be enough?"
+  ]) assert.equal(readsAsQuestion(asked), true, asked);
+
+  // And the values a step actually wants are still values. Guessing this way
+  // costs a resumed review; guessing the other way silently records a sentence
+  // as a fact.
+  for (const supplied of [
+    "10–25%", "< 10%", "Aveox Technologies (Shenzhen) Co., Ltd.",
+    "91440300778812XKA", "中国深圳", "该数据中心自用"
+  ]) assert.equal(readsAsQuestion(supplied), false, supplied);
+
+  const app = await (await import("node:fs/promises"))
+    .readFile(new URL("../public/app.js", import.meta.url), "utf8");
+  assert.match(app, /const readsAsDeclaredFact = \(text\) => !readsAsNewScenario\(text\) && !readsAsQuestion\(text\);/);
+  assert.match(app, /if \(pending && text\.length >= 2 && readsAsDeclaredFact\(text\)\)/,
+    "and the composer checks all three cases before treating a message as a fact");
+});

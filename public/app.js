@@ -1,6 +1,6 @@
 import { DEFAULT_GEM_ID, GEMS, GEM_BY_ID, GEM_GROUPS, allGems, deskFor, factCoverage, factLabel, matchGems, setCustomGems, skillsForGem, toggleWorkspaceGem, workspaceGemIds } from "/gems.js";
 import { EVIDENCE_STATUS, FOLDED, SETTLED_STATUS, STEP_STATUS_VOCAB, currentStepId, firstBlockedStep as blockedStep, isAskable as askable, isDone, label, laneQuestion, laneView, stepState as state_, tone, visibleLanes } from "/status-vocabulary.js";
-import { AGENT_META, judgeIntent } from "/intent.js";
+import { AGENT_META, judgeIntent, readsAsQuestion } from "/intent.js";
 
 const i18n = {
   zh: {
@@ -2196,8 +2196,14 @@ function pendingStepForm() {
 // reader can start over; guessing the other way silently abandons a review in
 // progress and re-runs every specialist on a sentence that describes no
 // transaction. An export verb or a long message reads as a new scenario.
+//
+// A question is the third case and was missing. It is neither a transaction nor
+// a fact, so it was recorded as the value of whichever field the step wanted —
+// and because that path resumes into the previous message rather than starting
+// a new one, the reader's own words never appeared anywhere on screen.
 const NEW_SCENARIO = /(出口|进口|销售|采购|转口|再出口|export|import|re-?export|ship|sell|supply)/i;
 const readsAsNewScenario = (text) => text.length > 120 || NEW_SCENARIO.test(text);
+const readsAsDeclaredFact = (text) => !readsAsNewScenario(text) && !readsAsQuestion(text);
 
 // Ends the run the reader is watching. The request is aborted, which drops the
 // connection — the server notices and stops before the next specialist rather
@@ -3461,7 +3467,7 @@ $("questionForm").addEventListener("submit", (event) => {
   // one place where the analysis resumes.
   const pending = pendingStepForm();
   const text = $("questionInput").value.trim();
-  if (pending && text.length >= 2 && !readsAsNewScenario(text)) {
+  if (pending && text.length >= 2 && readsAsDeclaredFact(text)) {
     event.preventDefault();
     const field = pending.querySelector(".si-text");
     if (field) {

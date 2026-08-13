@@ -265,6 +265,17 @@ export function describesNewTransaction(question = "") {
   return DESCRIBES_TRANSACTION.test(text) && NEW_MATERIAL.test(text);
 }
 
+// Whether a message is being asked rather than supplied.
+//
+// The composer routes what you type into a step that is still asking, so the
+// review carries on with one more fact instead of starting a second one. The
+// only guard on that was "does this read as a new transaction" — and a question
+// is neither a transaction nor a fact, so "补充上述三个信息就可以得出最终结论了吗"
+// was recorded as the value of whichever field the step wanted, and answered by
+// resuming the analysis into the previous message with no sign of what had been
+// typed.
+export const readsAsQuestion = (text = "") => ASKS.test(String(text).trim());
+
 export function consultKind(question = "", { hasHistory = false } = {}) {
   const text = String(question).trim();
   if (!text || !ASKS.test(text)) return null;
