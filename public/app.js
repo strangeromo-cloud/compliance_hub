@@ -2592,7 +2592,7 @@ async function analyze(event, options = {}) {
       if (typeof g.listMatchCount === "number") {
         live.querySelector("[data-live-steps]")?.insertAdjacentHTML("afterend",
           `<p class="live-note">${esc(t("groundingNote")
-            .replace("{screened}", g.screening.screenedSources?.length || 0)
+            .replace("{screened}", g.screening?.screenedSources?.length || 0)
             .replace("{matches}", g.listMatchCount || 0)
             .replace("{internal}", g.internalImpactCount || 0))}</p>`);
       }

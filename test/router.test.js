@@ -604,6 +604,16 @@ test("the live progress line does not report a screening that never happened", a
   assert.doesNotMatch(app, /\.replace\("\{matches\}", g\.listMatchCount\)/,
     "and never from a field that may be undefined");
 
+  // screening is null on a review that named no party, which is the same case
+  // that made the count the right thing to gate on. Reading through it without
+  // the optional chain took the whole run down with "Cannot read properties of
+  // null (reading 'screenedSources')" — a crash introduced by the fix for the
+  // undefined above, in the line the fix rewrote.
+  assert.match(app, /g\.screening\?\.screenedSources\?\.length \|\| 0/,
+    "and it reads through a screening that may be null");
+  assert.doesNotMatch(app, /g\.screening\.screenedSources/,
+    "never straight off it");
+
   // And the stage only advances to the specialists when specialists are coming.
   assert.match(app, /progress\.specialists = event\.agents\.some/);
   assert.match(app, /if \(progress\.specialists\) renderSteps\(live, done, "agents"\)/);
