@@ -20,21 +20,101 @@
 // the interface show what is still missing BEFORE submitting, instead of the
 // model quietly guessing and the gap only surfacing in the answer.
 
+// Two levels, not one list.
+//
+// The eight were grouped by subject — screening, classification, diligence,
+// data — and read as eight peers. They are not peers: GEM_LEAD_LANE already
+// said so, and four of the eight lead the same lane. So the grouping is the
+// lane, and the first level is the three desks the whole product is built on:
+// Trade, Product, Ethics & TPDD, the three boxes on the home page.
+//
+// desk first, then what each desk narrows to, then the one entry that is an
+// action rather than a place to sit.
 export const GEM_GROUPS = {
+  desk: { zh: "常驻台", en: "Desks" },
   custom: { zh: "自建", en: "Yours" },
-  screening: { zh: "名单筛查", en: "Screening" },
-  classification: { zh: "物项与许可", en: "Item & licence" },
-  diligence: { zh: "第三方尽调", en: "Third-party diligence" },
-  data: { zh: "数据与输出", en: "Data & output" }
+  trade: { zh: "贸易线下的做法", en: "Under Trade" },
+  product: { zh: "物项与许可线下的做法", en: "Under Item & licence" },
+  tpdd: { zh: "第三方尽调线下的做法", en: "Under TPDD" },
+  action: { zh: "动作 — 用完即退", en: "Actions — they do not stay" }
 };
 
+// Which desk a gem sits at. A desk answers with its own id, and the action has
+// no desk: writing a memo is not a place you work from.
+export const DESK_BY_LANE = { trade: "trade-desk", product: "product-desk", tpdd: "tpdd" };
+export const deskFor = (gem) => (gem?.desk ? gem.id : DESK_BY_LANE[gem?.lane] || null);
+
 export const GEMS = [
+  // The three desks. A desk is the whole of its lane — you sit at it and ask
+  // whatever comes, and the lane's full procedure runs. The narrower entries
+  // below each desk are the same lane with the question already pointed at one
+  // part of it.
+  //
+  // Trade and Product had no entry of their own until now: every way into those
+  // lanes was a narrow one, so "screen this party" and "classify this item"
+  // were offered and "review this transaction on the trade side" was not. TPDD
+  // already had one, and that is why /tpdd was the only entry that read as a
+  // place rather than a step.
+  {
+    id: "trade-desk",
+    lane: "trade",
+    desk: true,
+    kind: "review",
+    command: "/trade",
+    icon: "TR",
+    group: "desk",
+    name: { zh: "贸易合规台", en: "Trade compliance desk" },
+    summary: {
+      zh: "交易方、名单、所有权穿透与管辖：贸易线的完整流程，问什么都从这条线起。",
+      en: "Parties, lists, ownership and jurisdiction — the whole Trade lane, whatever you ask."
+    },
+    instruction: {
+      zh: "以贸易合规的视角审查这笔交易。按顺序处理：交易主体的法律身份、双边受限方名单筛查、名称与身份要素比对、所有权穿透与 50% 合计。名称相似不等于同一主体；比对分数永远不构成身份认定。逐项说明哪些结论已经成立、哪些还缺证据，以及缺的是什么。",
+      en: "Review the transaction from the trade-compliance side, in order: the legal identity of each party, screening against both jurisdictions' restricted-party lists, comparison of name and identity elements, and ownership aggregation under the 50 percent rule. A similar name is not the same party, and a match score is never an identification. Say which conclusions are established, which are not, and what evidence each one is waiting on."
+    },
+    boundSources: ["trade-csl", "ofac-sls", "ofac-ownership", "china-control-entities", "china-unreliable-entity", "bis-ear-744", "gleif-lei"],
+    requiredFacts: [
+      { key: "legalName", zh: "交易方全称", en: "Full name of the party", match: /[一-龥A-Za-z][一-龥A-Za-z0-9.,&()\- ]{4,}/ },
+      { key: "country", zh: "注册国家/地区", en: "Country of registration", match: /国家|注册地|country|registered in|美国|中国|德国|新加坡|日本|印度|墨西哥|荷兰|\bUS\b|\bCN\b|\bDE\b|\bSG\b/i },
+      { key: "role", zh: "交易角色", en: "Transaction role", match: /客户|供应商|经销商|代理|最终用户|收货|customer|vendor|supplier|distributor|consignee|end.?user/i }
+    ],
+    outputTemplate: { zh: "各方身份与筛查结论 · 所有权合计 · 已成立与未成立的分界 · 待补证据", en: "Party identity and screening outcome · ownership aggregation · what is settled and what is not · outstanding evidence" },
+    placeholder: { zh: "例：拟与 Aveox Technologies (Shenzhen) Co., Ltd. 签订分销协议，对方由一家香港公司持股 60%。", en: "e.g. A distribution agreement with Aveox Technologies (Shenzhen) Co., Ltd., 60% held by a Hong Kong company." }
+  },
+  {
+    id: "product-desk",
+    lane: "product",
+    desk: true,
+    kind: "review",
+    command: "/product",
+    icon: "PR",
+    group: "desk",
+    name: { zh: "物项与许可台", en: "Item & licence desk" },
+    summary: {
+      zh: "归类、管辖、de minimis、许可与例外：物项线的完整流程，中美两个法域一起走。",
+      en: "Classification, jurisdiction, de minimis, licence and exceptions — the whole Item lane, both jurisdictions."
+    },
+    instruction: {
+      zh: "以物项与许可的视角审查这笔交易。按顺序处理：物项归类（依据准确型号与技术参数，产品名称本身不决定分类）、是否受 EAR 管辖（de minimis 比例与外国直接产品规则）、中国两用物项管制清单是否覆盖、许可要求与可用例外。法域由目的地和制造地决定，两边都要说到。逐项说明哪些结论已经成立、哪些还缺参数，以及缺的是哪一项。",
+      en: "Review the transaction from the item-and-licence side, in order: classification from the exact model and technical parameters (a product name never determines it), whether the item is subject to the EAR (de minimis share and the foreign direct product rules), whether the PRC dual-use control list reaches it, and the licence requirement with any available exception. Jurisdiction follows the destination and the place of manufacture, and both are to be addressed. Say which conclusions are established and which parameter each unsettled one is waiting on."
+    },
+    boundSources: ["bis-ccl", "bis-classify", "bis-ear-734", "bis-ear", "china-dual-use", "china-licence-catalogue", "nvidia-export", "amd-export", "internal-master-data"],
+    requiredFacts: [
+      { key: "partNumber", zh: "准确型号 / part number", en: "Exact model / part number", match: /[A-Z]{2}-\d{4}|part\s*(number|no)|型号|900-\d{5}|h100|h200|\bpn\b/i },
+      { key: "specs", zh: "关键技术参数", en: "Key technical parameters", match: /参数|规格|tpp|app|性能|频率|加密|位数|bit|ghz|spec|parameter|performance/i },
+      { key: "mfgCountry", zh: "制造国", en: "Country of manufacture", match: /制造|生产|工厂|原产地|产地|manufactured|produced|made in|origin|合肥|深圳|hefei|shenzhen/i },
+      { key: "destination", zh: "目的地与最终用途", en: "Destination and end use", match: /目的地|出口到|运往|最终用途|用于|destination|export to|ship to|end.?use|used for/i }
+    ],
+    outputTemplate: { zh: "归类与管制理由 · 管辖判定 · 许可要求与例外 · 缺失参数", en: "Classification and reasons for control · jurisdiction · licence requirement and exceptions · missing parameters" },
+    placeholder: { zh: "例：TS-6200-DM 机架服务器在合肥制造，受控美国原产内容 28%，出口至印度数据中心。", en: "e.g. TS-6200-DM rack server made in Hefei, 28% controlled US content, exported to a data centre in India." }
+  },
   {
     id: "screen-party",
+    lane: "trade",
     kind: "review",
     command: "/screen-party",
     icon: "SP",
-    group: "screening",
+    group: "trade",
     name: { zh: "主体筛查", en: "Party screening" },
     summary: {
       zh: "对交易方做中美双边名单筛查，并用身份要素区分真实命中与误报。",
@@ -56,10 +136,11 @@ export const GEMS = [
   },
   {
     id: "eccn",
+    lane: "product",
     kind: "lookup",
     command: "/eccn",
     icon: "EC",
-    group: "classification",
+    group: "product",
     name: { zh: "美国物项归类", en: "US item classification" },
     summary: {
       zh: "确定 ECCN 与管制理由，区分已确立的分类事实和尚未成立的许可结论。",
@@ -80,10 +161,11 @@ export const GEMS = [
   },
   {
     id: "cn-dual-use",
+    lane: "product",
     kind: "lookup",
     command: "/cn-dual-use",
     icon: "CN",
-    group: "classification",
+    group: "product",
     name: { zh: "中国两用物项判定", en: "PRC dual-use check" },
     summary: {
       zh: "对照统一管制清单与许可证目录，判断从中国出口是否需要两用物项许可。",
@@ -105,10 +187,11 @@ export const GEMS = [
   },
   {
     id: "de-minimis",
+    lane: "product",
     kind: "review",
     command: "/de-minimis",
     icon: "DM",
-    group: "classification",
+    group: "product",
     name: { zh: "美国管辖判定", en: "US jurisdiction check" },
     summary: {
       zh: "境外制造产品是否受 EAR 管辖：de minimis 比例与外国直接产品规则。",
@@ -130,10 +213,11 @@ export const GEMS = [
   },
   {
     id: "licence",
+    lane: "product",
     kind: "review",
     command: "/licence",
     icon: "LP",
-    group: "classification",
+    group: "product",
     name: { zh: "许可判定路径", en: "Licence determination path" },
     summary: {
       zh: "ECCN → 管制理由 → 国别矩阵 → 许可例外，逐步给出许可结论或缺口。",
@@ -155,10 +239,12 @@ export const GEMS = [
   },
   {
     id: "tpdd",
+    lane: "tpdd",
+    desk: true,
     kind: "review",
     command: "/tpdd",
     icon: "DD",
-    group: "diligence",
+    group: "desk",
     name: { zh: "第三方尽调", en: "Third-party diligence" },
     summary: {
       zh: "评估商业合理性、UBO、费用与付款路径，把红旗当作问题而不是结论。",
@@ -181,10 +267,11 @@ export const GEMS = [
   },
   {
     id: "reg-brief",
+    lane: "trade",
     kind: "briefing",
     command: "/reg-brief",
     icon: "RB",
-    group: "data",
+    group: "trade",
     name: { zh: "监管变化简报", en: "Regulatory change brief" },
     summary: {
       zh: "汇总已同步来源中的新增、暂停与废止公告，并标出影响到的内部主数据。",
@@ -203,10 +290,11 @@ export const GEMS = [
   },
   {
     id: "case-memo",
+    lane: "review",
     kind: "memo",
     command: "/case-memo",
     icon: "MM",
-    group: "data",
+    group: "action",
     name: { zh: "案件备忘录", en: "Case memo" },
     summary: {
       zh: "把当前对话整理成带证据链和结论边界的备忘录，供人工复核归档。",

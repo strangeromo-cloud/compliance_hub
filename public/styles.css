@@ -596,7 +596,11 @@ details.trace.limits > summary { color: var(--risk-medium); }
 html[data-theme="light"] .palette { box-shadow: 0 14px 36px rgba(0,0,0,.14); }
 .palette-group { padding: 4px 0; border-bottom: 1px solid var(--border); }
 .palette-group:last-child { border-bottom: 0; }
-.palette-group-label { font-size: 9.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--text-3); padding: 5px 11px 3px; }
+.palette-group-label { font-size: 9.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--text-3); padding: 5px 11px 3px; display: flex; align-items: baseline; gap: 8px; }
+/* The count of what this group is holding back, on the group's own line. A list
+   that quietly drops entries reads as a list that has them all. */
+.pg-more { border: 0; background: transparent; padding: 0; cursor: pointer; font: inherit; letter-spacing: inherit; color: var(--accent-text); }
+.pg-more:hover { text-decoration: underline; }
 .palette-item { width: 100%; display: grid; grid-template-columns: 22px 1fr auto; gap: 9px; align-items: center; padding: 7px 11px; border: 0; background: transparent; text-align: left; cursor: pointer; }
 .palette-item:hover, .palette-item.active { background: var(--surface-2); }
 .palette-item.active { box-shadow: inset 2px 0 0 var(--accent); }

@@ -88,7 +88,7 @@ const copy = {
     procGemHeads: ["Gem", "起步线", "起步程序", "可能追加"],
     procLaneNames: { trade: "Trade — 受限方与主体", product: "Product — 物项与许可", tpdd: "Ethics & TPDD — 第三方", review: "结案", lookup: "查询", briefing: "监管变化简报", memo: "案件备忘录" },
     useLabel: "使用方法", useTitle: "在输入框键入 /",
-    useLead: "上下键选择 Gem，回车确认。每个 Gem 绑定五样东西：产出类型、指令、数据源白名单、必填事实清单、输出模板。产出类型决定它走哪条路——/reg-brief 是简报，不会触发受限方筛查；必填事实清单则让系统在提交前就知道自己缺什么，而不是让模型悄悄猜。",
+    useLead: "两层。上面三个是常驻台——贸易、物项与许可、第三方尽调，正是首页图上那三条线；选中一张台就坐在上面，问什么都按那条线的完整流程走，直到你换一张或按 ×。下面是每张台的窄化入口：同一条线，问题已经指向了其中一段。/case-memo 不是台，是动作，写完自动退出。\n每个 Gem 绑定五样东西：产出类型、指令、数据源白名单、必填事实清单、输出模板。产出类型决定它走哪条路——/reg-brief 是简报，不会触发受限方筛查；必填事实清单则让系统在提交前就知道自己缺什么，而不是让模型悄悄猜。",
     gemsLabel: "可用 Gem", gemBound: "个来源", gemRecords: "条记录", gemUnsynced: "个未同步", gemNone: "不绑定外部来源",
     buildTitle: "自己建 Gem 和 Skill",
     buildLead: "左侧栏 GEMS 和「自建 SKILL」两个标题旁边各有一个 ＋。两者不是并列关系：Gem 是「谁在回答」，选中后一直挂着；Skill 挂在 Gem 下面，是这一问怎么做。",
@@ -303,7 +303,7 @@ const copy = {
     procGemHeads: ["Gem", "Opening lane", "Opening procedure", "May add"],
     procLaneNames: { trade: "Trade — parties", product: "Product — item & licence", tpdd: "Ethics & TPDD", review: "Close", lookup: "Lookup", briefing: "Regulatory briefing", memo: "Case memo" },
     useLabel: "How to use", useTitle: "Press / in the composer",
-    useLead: "Arrow keys select a gem, Enter confirms. A gem binds five things: what it produces, the instruction, the bound-source whitelist, the facts it requires, and the output template. The first decides which path it takes \u2014 /reg-brief is a briefing and never opens a party screening \u2014 and the fourth is what makes a gem more than a saved prompt: the interface knows what is missing before anything is submitted.",
+    useLead: "Two levels. The three at the top are desks \u2014 Trade, Item & licence, Third-party diligence, the three lanes on the home page. Choosing one seats you there: whatever you ask runs that lane's full procedure, until you pick another or press \u00d7. Below each desk are its narrower entries \u2014 the same lane with the question already pointed at one part of it. /case-memo is not a desk but an action, and it steps aside once the memo is written.\nA gem binds five things: what it produces, the instruction, the bound-source whitelist, the facts it requires, and the output template. The first decides which path it takes \u2014 /reg-brief is a briefing and never opens a party screening \u2014 and the fourth is what makes a gem more than a saved prompt: the interface knows what is missing before anything is submitted.",
     gemsLabel: "Available gems", gemBound: "sources", gemRecords: "records", gemUnsynced: "not synced", gemNone: "no bound sources",
     buildTitle: "Build your own gems and skills",
     buildLead: "A ＋ sits beside each of the two sidebar headings. They are not siblings: a gem is who is answering and stays selected, and skills hang under it as how this one question should be done.",
@@ -647,10 +647,15 @@ function render() {
       <div class="guide-gutter">${esc(t.useLabel)}</div>
       <div class="guide-body">
         <h2>${esc(t.useTitle)}</h2>
-        <p>${esc(t.useLead)}</p>
+        ${/* Split on the newline rather than rendered as one block: esc() puts
+              the \n through as a space, so the two paragraphs ran together into
+              a wall. */ ""}
+        ${t.useLead.split("\n").map((para) => `<p>${esc(para)}</p>`).join("")}
 
         <h3>${esc(t.gemsLabel)}</h3>
-        <div class="guide-gems">${GEMS.map((gem) => {
+        ${/* Desks first, then everything else, so the page shows the shape the
+              palette does rather than one flat run of ten cards. */ ""}
+        <div class="guide-gems">${[...GEMS].sort((a, b) => Number(Boolean(b.desk)) - Number(Boolean(a.desk))).map((gem) => {
           const b = gemBacking(gem);
           const meta = b
             ? `${b.total} ${t.gemBound}${b.records ? ` · ${b.records.toLocaleString()} ${t.gemRecords}` : ""}${b.missing ? ` · <span class="warn">${b.missing} ${t.gemUnsynced}</span>` : ""}`

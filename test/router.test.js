@@ -506,3 +506,43 @@ test("gems and skills share one slash namespace and one check on it", async () =
   assert.doesNotMatch(registry, /from "\.\/skills\.js"/);
   assert.doesNotMatch(registry, /from "\.\/gems-custom\.js"/);
 });
+
+test("every gem sits at a desk, and the desks are the lanes", async () => {
+  // The eight were one flat list of peers, and four of them led the same lane —
+  // GEM_LEAD_LANE said so before anything in the interface did. So the desks are
+  // the three lanes the whole product is built on, and the rest are the same
+  // lane with the question already pointed at part of it.
+  const { GEMS, DESK_BY_LANE, deskFor } = await import("../public/gems.js");
+  const { GEM_LEAD_LANE } = await import("../src/analysis-path.js");
+
+  const desks = GEMS.filter((gem) => gem.desk);
+  assert.deepEqual(desks.map((gem) => gem.lane).sort(), ["product", "tpdd", "trade"],
+    "one desk per lane, and a lane with no desk is a lane with no way in but a narrow one");
+  assert.equal(new Set(desks.map((gem) => gem.id)).size, desks.length);
+  for (const [lane, id] of Object.entries(DESK_BY_LANE)) {
+    assert.equal(GEMS.find((gem) => gem.id === id)?.lane, lane, `${id} must be the ${lane} desk`);
+  }
+
+  for (const gem of GEMS) {
+    // The group is the lane, so the palette cannot file a gem under one desk
+    // while the plan leads another.
+    assert.ok(gem.lane, `${gem.id} must say which lane it is about`);
+    assert.equal(GEM_LEAD_LANE[gem.id], gem.lane,
+      "the plan's lead lane is read off the catalogue, not kept as a second copy");
+    if (gem.desk) assert.equal(gem.group, "desk");
+    else if (gem.kind === "memo") assert.equal(gem.group, "action");
+    else assert.equal(gem.group, gem.lane, `${gem.id} is grouped under the desk it belongs to`);
+    assert.equal(deskFor(gem), gem.kind === "memo" ? null : (gem.desk ? gem.id : DESK_BY_LANE[gem.lane]));
+  }
+
+  // An action is not a place to work from, and this is the field that says so —
+  // the same one the orchestrator routes on, so "it does not stay" and "it does
+  // not run a review procedure" can never disagree.
+  const memos = GEMS.filter((gem) => gem.kind === "memo");
+  assert.equal(memos.length, 1);
+  assert.equal(deskFor(memos[0]), null, "a memo belongs to no desk");
+
+  const app = await (await import("node:fs/promises")).readFile(new URL("../public/app.js", import.meta.url), "utf8");
+  assert.match(app, /state\.activeGem\?\.kind === "memo"\) clearGem\(\)/,
+    "and the interface drops it once it has run");
+});

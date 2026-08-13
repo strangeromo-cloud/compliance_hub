@@ -20,6 +20,7 @@
 // something a reviewer can check.
 
 
+import { GEMS } from "../public/gems.js";
 import { triage } from "./triage.js";
 import { bi, localizeLine, translateTerm } from "./path-i18n.js";
 import { triggeredDependencies } from "./lane-dependencies.js";
@@ -172,16 +173,12 @@ const LANE_PLANS = {
 
 // A gem states which lane its question is really about, so the plan leads with
 // it instead of always presenting the lanes in a fixed order.
-export const GEM_LEAD_LANE = {
-  "screen-party": "trade",
-  eccn: "product",
-  "cn-dual-use": "product",
-  "de-minimis": "product",
-  licence: "product",
-  tpdd: "tpdd",
-  "reg-brief": "trade",
-  "case-memo": "review"
-};
+//
+// Read off the catalogue rather than written out again. This was a hand-kept
+// copy of a mapping the gems already carried, and it is the same mapping the
+// palette now groups by — a second copy would let the plan lead one lane while
+// the interface filed the gem under another.
+export const GEM_LEAD_LANE = Object.freeze(Object.fromEntries(GEMS.map((gem) => [gem.id, gem.lane])));
 
 // What the guide page renders. Written out from the plans rather than
 // transcribed into the page, because a documented procedure that has drifted
