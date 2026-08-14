@@ -9,7 +9,7 @@ import { createCustomGem, deleteCustomGem, listCustomGems } from "./src/gems-cus
 import { DATA_SOURCE_REGISTRY } from "./src/data-source-registry.js";
 import { classifyModelError, testModelConnection } from "./src/llm.js";
 import { getDataSourceCoverage, queryDataSource, syncSource } from "./src/data-layer/service.js";
-import { deleteThread, evolutionSignals, listThreads, readThread, saveCase, storageDurability } from "./src/case-store.js";
+import { countThreads, deleteThread, evolutionSignals, listThreads, readThread, saveCase, storageDurability } from "./src/case-store.js";
 import { DECLARABLE_FIELDS, describeProcedures } from "./src/analysis-path.js";
 import { describeCapabilities } from "./src/agent-capabilities.js";
 import { closeDb, DB_PATH, REQUIRED_NODE_MAJOR } from "./src/data-layer/db.js";
@@ -422,7 +422,10 @@ const server = createServer(async (request, response) => {
     }
 
     if (request.method === "GET" && url.pathname === "/api/threads") {
-      return sendJson(response, 200, { threads: await listThreads(url.searchParams.get("limit")) });
+      return sendJson(response, 200, {
+        threads: await listThreads(url.searchParams.get("limit")),
+        total: await countThreads()
+      });
     }
 
     if (request.method === "GET" && url.pathname.startsWith("/api/threads/")) {

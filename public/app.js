@@ -200,6 +200,8 @@ const state = {
   declaredFacts: {},
   unavailableFacts: [],
   resumingStep: null,
+  // How many cases exist, which is not how many are listed.
+  caseTotal: 0,
   // A question asked while a run was still going, waiting for it to finish.
   queued: false,
   historyFolded: localStorage.getItem("compliance-history-folded") === "1",
@@ -216,6 +218,9 @@ const state = {
 
 const $ = (id) => document.getElementById(id);
 const t = (key) => i18n[state.locale][key] || key;
+// The sidebar draws this many; asking for more downloads rows nobody sees.
+const CASE_LIST_LIMIT = 12;
+
 const localized = (value) => (value && typeof value === "object" ? value[state.locale] || value.zh : value);
 const agentName = (agent) => ({ trade: "Trade", product: "Product", tpdd: "Ethics & TPDD", lookup: "Lookup", briefing: "Briefing", memo: "Memo", consult: "Q&A" })[agent] || agent;
 const esc = (value = "") => String(value).replace(/[&<>'"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[c]);
@@ -479,15 +484,16 @@ function setHistoryFolded(folded) {
 
 function renderCaseNav() {
   const threads = state.cases || [];
-  // What is actually in the list, and how many there are when those differ. The
-  // list stops at twelve; a header reading "20" over twelve rows is a count of
-  // something the reader cannot see.
-  const shown = Math.min(threads.length, 12);
-  $("historyCount").textContent = threads.length
-    ? (threads.length > shown ? `${shown} / ${threads.length}` : String(shown))
+  // What is in the list, over how many cases exist. The denominator used to be
+  // threads.length — the number the request asked for — so a deployment holding
+  // fifty cases read "12 / 20", a total nobody has.
+  const shown = Math.min(threads.length, CASE_LIST_LIMIT);
+  const total = state.caseTotal ?? shown;
+  $("historyCount").textContent = shown
+    ? (total > shown ? `${shown} / ${total}` : String(shown))
     : "";
   $("caseNav").innerHTML = threads.length
-    ? threads.slice(0, 12).map((item) => `
+    ? threads.slice(0, CASE_LIST_LIMIT).map((item) => `
       <li><button type="button" data-case="${esc(item.threadId)}" class="${state.threadId === item.threadId ? "active" : ""}" title="${esc(item.title)}">
         <span class="case-risk risk-${esc(item.overallRisk)}" aria-hidden="true"></span>
         <span class="case-text">
@@ -509,9 +515,15 @@ function renderHistoryDurability() {
 
 async function loadCases() {
   try {
-    const response = await fetch("/api/threads?limit=20");
+    // The list stops at twelve, so twelve is what is fetched. Twenty was asked
+    // for and twelve drawn, and the eight in between were downloaded to be
+    // thrown away — and counted, in a fraction whose denominator was this
+    // number rather than how many cases exist.
+    const response = await fetch(`/api/threads?limit=${CASE_LIST_LIMIT}`);
     if (!response.ok) return;
-    state.cases = (await response.json()).threads || [];
+    const payload = await response.json();
+    state.cases = payload.threads || [];
+    state.caseTotal = Number.isFinite(payload.total) ? payload.total : state.cases.length;
     renderCaseNav();
   } catch (error) {
     console.error("Case history load failed:", error);

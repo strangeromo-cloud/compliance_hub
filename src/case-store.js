@@ -172,6 +172,14 @@ export async function listThreads(limit = 50) {
     }));
 }
 
+// How many there are, as opposed to how many were asked for. The sidebar shows
+// a fraction, and its denominator was the request's own limit — so a deployment
+// with fifty cases and a limit of twenty read "12 / 20", which is a count of
+// nothing anybody has.
+export async function countThreads() {
+  return db().prepare("SELECT COUNT(*) AS n FROM threads").get()?.n ?? 0;
+}
+
 export async function readThread(id) {
   const tid = threadId(id);
   if (!tid) return null;
