@@ -1095,13 +1095,21 @@ details.trace.reasoning > summary { color: var(--text); font-weight: 600; }
    use, and / switches gems without the sidebar at all. */
 .app:not(.rail) .rail-history:not(.is-folded) { flex: 1 1 auto; min-height: 96px; }
 .app:not(.rail) .rail-history:not(.is-folded) .history-body { order: 1; }
-.app:not(.rail) .rail-history:not(.is-folded) .history-toggle { order: 2; margin-top: 8px; padding-top: 10px; }
+.app:not(.rail) .rail-history:not(.is-folded) .history-toggle { order: 2; }
 .app:not(.rail) .sidebar-scroll.history-open .rail-top { display: none; }
 .app:not(.rail) .rail-history.is-folded { flex: 0 0 auto; }
+/* One set of metrics for both states, so only colour changes when it opens.
+   The handle carried the rail-label classes folded and a padded bordered box
+   open, which moved the word "历史记录" three pixels down and three across at the
+   moment of the press — the control shifting under the finger that pressed it.
+   The border is always there and merely turns transparent. */
 .history-toggle {
-  width: 100%; border: 0; background: transparent; cursor: pointer; text-align: left;
+  width: 100%; box-sizing: border-box; cursor: pointer; text-align: left;
   display: flex; align-items: center; gap: 7px; color: var(--text-2); font: inherit;
   font-size: 10.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+  margin-top: 10px; padding: 7px 8px;
+  border: 1px solid transparent; border-radius: var(--radius); background: transparent;
+  transition: background .15s, border-color .15s;
 }
 .history-toggle:hover { color: var(--text); }
 .history-count { font: 400 10px/1.6 var(--mono); color: var(--text-3); letter-spacing: 0; }
@@ -1118,8 +1126,7 @@ details.trace.reasoning > summary { color: var(--text); font-weight: 600; }
 .history-action { margin-left: auto; font-size: 10px; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--text-3); }
 .history-toggle:hover .history-action, .history-toggle:hover .history-chevron { color: var(--accent-text); }
 .app:not(.rail) .sidebar-scroll.history-open .history-toggle {
-  background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius);
-  padding: 7px 9px; margin-top: 8px;
+  background: var(--surface-2); border-color: var(--border);
 }
 .app:not(.rail) .sidebar-scroll.history-open .history-toggle:hover {
   background: var(--surface-3); border-color: var(--border-strong);
