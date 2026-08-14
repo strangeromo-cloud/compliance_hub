@@ -55,9 +55,20 @@
              reader needs to know before typing a procedure into it. -->
         <p class="rail-foot" data-i18n="ownFoot"></p>
 
-        <p class="rail-label rail-label-spaced" data-i18n="historyLabel">历史记录</p>
-        <ul class="case-nav" id="caseNav"></ul>
-        <p class="case-volatile hidden" id="historyVolatile"></p>
+        <!-- A drawer, because it is the one part of this rail nobody reads on
+             the way in. Folded it drops to the foot of the sidebar and gives its
+             room to the gems and skills above; opened it takes it back. -->
+        <section class="rail-history" id="historySection">
+          <button type="button" class="rail-label rail-label-spaced history-toggle" id="historyToggle" aria-expanded="true" aria-controls="historyBody">
+            <span data-i18n="historyLabel">历史记录</span>
+            <span class="history-count" id="historyCount"></span>
+            <svg class="history-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <div class="history-body" id="historyBody">
+            <ul class="case-nav" id="caseNav"></ul>
+            <p class="case-volatile hidden" id="historyVolatile"></p>
+          </div>
+        </section>
       </div>
 
       <div class="sidebar-foot">

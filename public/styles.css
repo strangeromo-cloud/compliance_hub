@@ -1075,6 +1075,32 @@ details.trace.reasoning > summary { color: var(--text); font-weight: 600; }
 /* The gap does the separating, with a hairline where the gap alone was not
    enough to say a new section starts here rather than a new item. */
 .rail-label-spaced { margin-top: 18px; padding-top: 13px; border-top: 1px solid var(--border); }
+/* The history drawer.
+   Folded, it goes to the foot of the sidebar: margin-top:auto in a flex column
+   takes every pixel the gems and skills are not using and puts the header at the
+   bottom. Opened, the auto margin goes away and it sits where it always did,
+   directly under the skills. */
+.sidebar-scroll { display: flex; flex-direction: column; }
+.rail-history { display: flex; flex-direction: column; min-height: 0; }
+.app:not(.rail) .rail-history.is-folded { margin-top: auto; }
+.history-toggle {
+  width: 100%; border: 0; background: transparent; cursor: pointer; text-align: left;
+  display: flex; align-items: center; gap: 7px; color: var(--text-2); font: inherit;
+  font-size: 10.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+}
+.history-toggle:hover { color: var(--text); }
+.history-count { font: 400 10px/1.6 var(--mono); color: var(--text-3); letter-spacing: 0; }
+.history-chevron { width: 13px; height: 13px; margin-left: auto; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform .15s; }
+.rail-history.is-folded .history-chevron { transform: rotate(-90deg); }
+.rail-history.is-folded .history-body { display: none; }
+.history-body { min-height: 0; overflow-y: auto; scrollbar-width: thin; }
+/* Collapsed to the icon rail there is no drawer to fold: the toggle's label is
+   hidden with every other label, so the control would be a chevron alone. The
+   body comes back with it — folded, then railed, would otherwise hide the
+   history behind a control that is no longer on screen. */
+.app.rail .history-toggle { display: none; }
+.app.rail .rail-history.is-folded .history-body { display: block; }
+
 .case-nav { list-style: none; padding: 0; margin: 0; display: grid; gap: 1px; }
 .case-nav button {
   width: 100%; display: grid; grid-template-columns: 6px 1fr; gap: 9px; align-items: start;

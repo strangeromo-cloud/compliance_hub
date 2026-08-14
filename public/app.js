@@ -28,7 +28,7 @@ const i18n = {
     teachAtBody: "在 {n} 个已入库的来源里按实体名、公告号或关键词翻记录。返回的是来源自己的条目，不是判定结论。",
     teachMakeTitle: "＋ 建自己的 Gem 和 Skill",
     teachMakeBody: "在左侧栏两个标题旁边。Skill 是一段 SOP 加一个斜杠命令；Gem 还能绑定可用的数据源，并规定问题里需要包含哪些事实。",
-    historyLabel: "历史记录", historyEmpty: "暂无记录", historyVolatile: "记录存在容器本地磁盘，重新部署会清空。挂载 Volume 到 data/runtime 可长期保留。", turnUnit: "轮", historyOpenFailed: "无法打开该记录", flowTitle: "执行流程", flowDone: "已跑完", flowOf: "共 {n} 步", runPanel: "本次运行", flowRest: "顶部计的是整轮。另有 {n} 步在 {lanes} 本次没有走到 —— 上面这条线还缺证据，所以给出的是阶段性判断而不是结案",
+    historyLabel: "历史记录", historyExpand: "展开历史记录", historyCollapse: "折叠历史记录", historyEmpty: "暂无记录", historyVolatile: "记录存在容器本地磁盘，重新部署会清空。挂载 Volume 到 data/runtime 可长期保留。", turnUnit: "轮", historyOpenFailed: "无法打开该记录", flowTitle: "执行流程", flowDone: "已跑完", flowOf: "共 {n} 步", runPanel: "本次运行", flowRest: "顶部计的是整轮。另有 {n} 步在 {lanes} 本次没有走到 —— 上面这条线还缺证据，所以给出的是阶段性判断而不是结案",
     flowRestDone: "顶部计的是整轮。另有 {n} 步在 {lanes} 本次没有走完（其中 {done} 步已完成）—— 上面这条线还缺证据，所以给出的是阶段性判断而不是结案", briefLead: "本次问题落在以下 {n} 个审查范围：", briefBecause: "命中 ", briefStandard: "标准程序", briefNoStandard: "无对应标准程序", briefDesigned: "系统设计", briefSteps: "{n} 个步骤", briefDesignedN: "其中 {n} 步由系统补充", flowEmpty: "提交一个问题后，这里显示分析路径的执行进度", flowNotRun: "该步骤尚未执行",
     derivMatch_gem: "由所选 Gem 指定为主检查", derivMatch_always: "每次分析都执行", derivMatch_direct_lookup: "直接查询，不进入审查程序", derivMatch_gem_kind: "该 Gem 的产出类型，不进入审查程序", derivMatch_question_terms: "问题中的关键词",
     derivMatch_no_term_matched_all_lanes_run: "问题未命中任何关键词，三条检查全部执行",
@@ -93,7 +93,7 @@ const i18n = {
     teachAtBody: "Search {n} ingested sources by entity name, notice number or keyword. It returns the source\u2019s own records, not a determination.",
     teachMakeTitle: "\uFF0B Build your own",
     teachMakeBody: "Beside either sidebar heading. A skill is an SOP and a slash command; a gem also binds the sources it may use and the facts a question has to carry.",
-    historyLabel: "History", historyEmpty: "No cases yet", historyVolatile: "Cases sit on the container\u2019s own disk and are cleared by a redeploy. Mount a volume at data/runtime to keep them.", turnUnit: "turns", historyOpenFailed: "That case could not be opened", flowTitle: "Execution flow", flowDone: "finished", flowOf: "of {n}", runPanel: "This run", flowRest: "The count above is the whole run. {n} further steps in {lanes} were not reached — the lane above is still short of evidence, so what you have is an interim assessment rather than a closed case",
+    historyLabel: "History", historyExpand: "Expand history", historyCollapse: "Collapse history", historyEmpty: "No cases yet", historyVolatile: "Cases sit on the container\u2019s own disk and are cleared by a redeploy. Mount a volume at data/runtime to keep them.", turnUnit: "turns", historyOpenFailed: "That case could not be opened", flowTitle: "Execution flow", flowDone: "finished", flowOf: "of {n}", runPanel: "This run", flowRest: "The count above is the whole run. {n} further steps in {lanes} were not reached — the lane above is still short of evidence, so what you have is an interim assessment rather than a closed case",
     flowRestDone: "The count above is the whole run. {n} further steps in {lanes} were not finished ({done} of them are settled) — the lane above is still short of evidence, so what you have is an interim assessment rather than a closed case", briefLead: "This question falls into {n} review scopes:", briefBecause: "matched ", briefStandard: "Standard procedure", briefNoStandard: "No standard procedure", briefDesigned: "designed here", briefSteps: "{n} steps", briefDesignedN: "{n} added by this system", flowEmpty: "Ask a question and the analysis path\u2019s progress appears here", flowNotRun: "That step has not run yet",
     derivMatch_gem: "set as the lead check by the selected gem", derivMatch_always: "runs on every analysis", derivMatch_direct_lookup: "a direct lookup; no review procedure applies", derivMatch_gem_kind: "what this gem produces; no review procedure applies", derivMatch_question_terms: "terms in the question",
     derivMatch_no_term_matched_all_lanes_run: "no term matched, so all three checks run",
@@ -202,6 +202,7 @@ const state = {
   resumingStep: null,
   // A question asked while a run was still going, waiting for it to finish.
   queued: false,
+  historyFolded: localStorage.getItem("compliance-history-folded") === "1",
   sourceQuery: null,
   factsOpen: false,
   rail: localStorage.getItem("compliance-rail") === "1",
@@ -457,8 +458,22 @@ function renderSkillNav() {
 // The pipeline the question actually travels, drawn from the same tokens as
 // everything else. Decoration that states something true about the system beats
 // decoration that just fills space.
+// Folded or not, and how many are in there. The count is on the header because
+// that is all a folded drawer shows, and "历史记录" alone says nothing about
+// whether opening it is worth the click.
+const HISTORY_KEY = "compliance-history-folded";
+
+function setHistoryFolded(folded) {
+  state.historyFolded = folded;
+  localStorage.setItem(HISTORY_KEY, folded ? "1" : "0");
+  $("historySection").classList.toggle("is-folded", folded);
+  $("historyToggle").setAttribute("aria-expanded", String(!folded));
+  $("historyToggle").title = t(folded ? "historyExpand" : "historyCollapse");
+}
+
 function renderCaseNav() {
   const threads = state.cases || [];
+  $("historyCount").textContent = threads.length ? String(threads.length) : "";
   $("caseNav").innerHTML = threads.length
     ? threads.slice(0, 12).map((item) => `
       <li><button type="button" data-case="${esc(item.threadId)}" class="${state.threadId === item.threadId ? "active" : ""}" title="${esc(item.title)}">
@@ -3133,6 +3148,7 @@ function applyLocale(locale) {
   renderStartPanel();
   renderGemNav();
   renderCaseNav();
+  setHistoryFolded(state.historyFolded);
   renderActiveGem();
   updateModePill();
   document.querySelector('#settingsBtn .side-label').textContent = t(state.serverModelConfigured ? "accessSettings" : "modelSettings");
@@ -3531,6 +3547,7 @@ $("questionForm").addEventListener("submit", (event) => {
   }
   return analyze(event);
 });
+$("historyToggle").addEventListener("click", () => setHistoryFolded(!state.historyFolded));
 $("newChatBtn").addEventListener("click", newConversation);
 
 $("skillNav").addEventListener("click", (event) => {
@@ -3712,6 +3729,7 @@ $("scenarioDialog").addEventListener("click", (event) => {
 
 setTheme(localStorage.getItem("compliance-theme") || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark"));
 setRail(state.rail);
+setHistoryFolded(state.historyFolded);
 setEvidenceCollapsed(state.evidenceCollapsed);
 applyLocale(state.locale);
 renderEvidence([]);
