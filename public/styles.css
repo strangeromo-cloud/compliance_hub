@@ -1105,8 +1105,25 @@ details.trace.reasoning > summary { color: var(--text); font-weight: 600; }
 }
 .history-toggle:hover { color: var(--text); }
 .history-count { font: 400 10px/1.6 var(--mono); color: var(--text-3); letter-spacing: 0; }
-.history-chevron { width: 13px; height: 13px; margin-left: auto; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform .15s; }
-.rail-history.is-folded .history-chevron { transform: rotate(-90deg); }
+.history-chevron { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform .15s; }
+/* Points the way the list will travel. The handle is at the foot, so folded the
+   list comes up and open it goes down — a chevron turned sideways was left over
+   from when this opened downward from a heading, and after the drawer moved to
+   the bottom it pointed at nothing. */
+.rail-history.is-folded .history-chevron { transform: rotate(180deg); }
+
+/* Opened, the handle is the only thing on screen that closes it, so it stops
+   looking like a heading and starts looking like a bar you press: its own
+   surface, a rule above the list it carries, and the verb spelled out. */
+.history-action { margin-left: auto; font-size: 10px; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--text-3); }
+.history-toggle:hover .history-action, .history-toggle:hover .history-chevron { color: var(--accent-text); }
+.app:not(.rail) .sidebar-scroll.history-open .history-toggle {
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 7px 9px; margin-top: 8px;
+}
+.app:not(.rail) .sidebar-scroll.history-open .history-toggle:hover {
+  background: var(--surface-3); border-color: var(--border-strong);
+}
 .rail-history.is-folded .history-body { display: none; }
 .history-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding-right: 2px; }
 /* Collapsed to the icon rail there is no drawer to fold: the toggle's label is
