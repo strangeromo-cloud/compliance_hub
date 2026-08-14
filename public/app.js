@@ -2984,6 +2984,16 @@ async function analyze(event, options = {}) {
 // whole of "常驻": you are in a gem, and starting over inside it is still inside
 // it. Leaving is the × on the composer row, or Escape.
 function newConversation() {
+  // Whatever was running belongs to the conversation being left, so it is
+  // abandoned with it. Leaving it in flight kept state.busy true with nothing on
+  // screen to account for it, and the next thing typed was held back with
+  // "本轮分析结束后自动发出" — queued behind a run the reader had already walked
+  // away from, in a thread that no longer existed.
+  stopRun();
+  state.busy = false;
+  state.queued = false;
+  syncSubmitState();
+
   clearFlowPanel();
   state.conversation = [];
   state.threadId = null;

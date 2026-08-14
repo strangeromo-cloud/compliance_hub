@@ -657,8 +657,9 @@ test("a turn that ran no procedure leaves the run panel alone", async () => {
   assert.match(app, /if \(reviewed\) renderFlowPanel\(reviewed\.analysisPath/);
 
   // And a new conversation still empties it — the defect this rule must not
-  // bring back.
-  assert.match(app, /function newConversation\(\) \{\s*\n\s*clearFlowPanel\(\);/);
+  // bring back. Not pinned to the first line: stopping the run it is leaving
+  // comes before this, and where in the function it sits is not the rule.
+  assert.match(app.slice(app.indexOf("function newConversation()")), /^[\s\S]{0,900}?clearFlowPanel\(\);/);
 });
 
 test("a question typed while a step is asking is a question, not that step's answer", async () => {
@@ -741,4 +742,28 @@ test("what the reader types is shown, whichever route it takes", async () => {
 
   // The value still reaches the step — it is shown as well, not instead.
   assert.match(app, /showUserMessage\(text, state\.activeGem\);\s*\n\s*state\.conversation\.push\(\{ role: "user", content: text \}\);\s*\n\s*setComposer\(""\);\s*\n\s*pending\.querySelector\("\.si-submit"\)\?\.click\(\);/);
+});
+
+test("a new conversation abandons the run it left behind", async () => {
+  // Pressing 新对话 emptied the thread and left the analysis running. state.busy
+  // stayed true with nothing on screen to account for it, so the next question
+  // typed came back "本轮分析结束后自动发出" — queued behind a run the reader had
+  // walked away from, in a thread that no longer existed. It then fired on its
+  // own when that run finished.
+  const app = await (await import("node:fs/promises"))
+    .readFile(new URL("../public/app.js", import.meta.url), "utf8");
+
+  assert.match(app, /function newConversation\(\) \{[\s\S]{0,600}?\n  stopRun\(\);\n  state\.busy = false;\n  state\.queued = false;\n  syncSubmitState\(\);/,
+    "a new conversation stops the run, clears the queue, and says so to the button");
+
+  // Before clearFlowPanel, so nothing downstream of it runs against a state that
+  // still claims to be busy.
+  const body = app.slice(app.indexOf("function newConversation()"));
+  assert.ok(body.indexOf("stopRun();") < body.indexOf("clearFlowPanel();"),
+    "and does it first");
+
+  // The queue itself is unchanged: a question typed while a run is going is
+  // still held rather than discarded.
+  assert.match(app, /state\.queued = true;/);
+  assert.match(app, /function flushQueued\(\) \{/);
 });
