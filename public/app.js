@@ -467,13 +467,22 @@ function setHistoryFolded(folded) {
   state.historyFolded = folded;
   localStorage.setItem(HISTORY_KEY, folded ? "1" : "0");
   $("historySection").classList.toggle("is-folded", folded);
+  // The assistants step aside while the drawer is open, so it can have the whole
+  // column. A class rather than :has(), because this is state the toggle owns.
+  document.querySelector(".sidebar-scroll").classList.toggle("history-open", !folded);
   $("historyToggle").setAttribute("aria-expanded", String(!folded));
   $("historyToggle").title = t(folded ? "historyExpand" : "historyCollapse");
 }
 
 function renderCaseNav() {
   const threads = state.cases || [];
-  $("historyCount").textContent = threads.length ? String(threads.length) : "";
+  // What is actually in the list, and how many there are when those differ. The
+  // list stops at twelve; a header reading "20" over twelve rows is a count of
+  // something the reader cannot see.
+  const shown = Math.min(threads.length, 12);
+  $("historyCount").textContent = threads.length
+    ? (threads.length > shown ? `${shown} / ${threads.length}` : String(shown))
+    : "";
   $("caseNav").innerHTML = threads.length
     ? threads.slice(0, 12).map((item) => `
       <li><button type="button" data-case="${esc(item.threadId)}" class="${state.threadId === item.threadId ? "active" : ""}" title="${esc(item.title)}">

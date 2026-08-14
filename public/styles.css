@@ -1084,10 +1084,19 @@ details.trace.reasoning > summary { color: var(--text); font-weight: 600; }
 .sidebar-scroll { display: flex; flex-direction: column; }
 .rail-history { display: flex; flex-direction: column; min-height: 0; }
 .app:not(.rail) .rail-history.is-folded { margin-top: auto; }
-/* Opened, it takes what is left rather than only what it needs: the list gets
-   the rest of the column and scrolls inside itself, so the gems and skills above
-   stay where they are instead of being pushed up out of a shared scroller. */
+/* Opened, it takes the whole column: twelve cases fit where five did, and the
+   list is capped at twelve, so it never scrolls.
+   The handle does not move. Folded it sits at the foot; opened, the list grows
+   upward over the assistants and the handle stays exactly where it was — press
+   it twice and nothing has travelled. Putting the header at the top on open
+   would have made a control jump away from the finger that pressed it, which is
+   the one thing this arrangement must not do.
+   Nothing is lost while it is covering them: the composer row names the gem in
+   use, and / switches gems without the sidebar at all. */
 .app:not(.rail) .rail-history:not(.is-folded) { flex: 1 1 auto; min-height: 96px; }
+.app:not(.rail) .rail-history:not(.is-folded) .history-body { order: 1; }
+.app:not(.rail) .rail-history:not(.is-folded) .history-toggle { order: 2; margin-top: 8px; padding-top: 10px; }
+.app:not(.rail) .sidebar-scroll.history-open .rail-top { display: none; }
 .app:not(.rail) .rail-history.is-folded { flex: 0 0 auto; }
 .history-toggle {
   width: 100%; border: 0; background: transparent; cursor: pointer; text-align: left;
