@@ -175,7 +175,8 @@ kbd { font-family: var(--mono); border: 1px solid var(--border-strong); border-r
 .rail-toggle:hover { color: var(--text); background: var(--surface-2); }
 .rail-toggle svg { width: 15px; height: 15px; }
 
-.sidebar-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: thin; padding: calc(var(--bar-h) + 12px) 8px 8px; scroll-padding-top: var(--bar-h); }
+.sidebar-scroll { flex: 1 1 auto; min-height: 0; overflow: hidden; padding: calc(var(--bar-h) + 12px) 8px 8px; scroll-padding-top: var(--bar-h); }
+.rail-top { flex: 0 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
 /* Legible as a heading, not just as a hint. At 9.5px in --text-3 these read as
    captions on whatever was above them; the sidebar has three sections and the
    reader has to see where one ends. */
@@ -1083,6 +1084,11 @@ details.trace.reasoning > summary { color: var(--text); font-weight: 600; }
 .sidebar-scroll { display: flex; flex-direction: column; }
 .rail-history { display: flex; flex-direction: column; min-height: 0; }
 .app:not(.rail) .rail-history.is-folded { margin-top: auto; }
+/* Opened, it takes what is left rather than only what it needs: the list gets
+   the rest of the column and scrolls inside itself, so the gems and skills above
+   stay where they are instead of being pushed up out of a shared scroller. */
+.app:not(.rail) .rail-history:not(.is-folded) { flex: 1 1 auto; min-height: 96px; }
+.app:not(.rail) .rail-history.is-folded { flex: 0 0 auto; }
 .history-toggle {
   width: 100%; border: 0; background: transparent; cursor: pointer; text-align: left;
   display: flex; align-items: center; gap: 7px; color: var(--text-2); font: inherit;
@@ -1093,7 +1099,7 @@ details.trace.reasoning > summary { color: var(--text); font-weight: 600; }
 .history-chevron { width: 13px; height: 13px; margin-left: auto; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform .15s; }
 .rail-history.is-folded .history-chevron { transform: rotate(-90deg); }
 .rail-history.is-folded .history-body { display: none; }
-.history-body { min-height: 0; overflow-y: auto; scrollbar-width: thin; }
+.history-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding-right: 2px; }
 /* Collapsed to the icon rail there is no drawer to fold: the toggle's label is
    hidden with every other label, so the control would be a chevron alone. The
    body comes back with it — folded, then railed, would otherwise hide the

@@ -29,6 +29,10 @@
       </div>
 
       <div class="sidebar-scroll">
+        <!-- The assistants and their skills scroll on their own, so the history
+             below can be given the rest of the column instead of competing with
+             them inside one scroller. -->
+        <div class="rail-top">
         <p class="rail-eyebrow" data-i18n="assistantsEyebrow">ASSISTANTS</p>
         <p class="rail-label">
           <span data-i18n="gemsLabel">Gems</span>
@@ -54,6 +58,7 @@
              skill is a row in the server's database, which is the thing a
              reader needs to know before typing a procedure into it. -->
         <p class="rail-foot" data-i18n="ownFoot"></p>
+        </div>
 
         <!-- A drawer, because it is the one part of this rail nobody reads on
              the way in. Folded it drops to the foot of the sidebar and gives its
