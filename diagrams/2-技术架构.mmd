@@ -1,53 +1,45 @@
 flowchart TD
 
-B1["<b>index.html</b> · app.js 工作台<br/>流式消费 NDJSON"]
-B2["<b>data-sources.html</b><br/>覆盖 · 同步 · 直查 · 提问覆盖指标"]
-B3["<b>guide.html</b><br/>程序 · Gem · 能力，目录实时拉取"]
+%% Shape first, prose second. The long version of every box below is in the code
+%% comment beside the thing it describes, and in guide.html for the parts a
+%% reader needs. A diagram that repeats them is a third copy to keep in step.
 
-SH["<b>三份前后端共享模块</b>（同一份规则，不许有第二份拷贝）<br/>intent.js 路由规则 · gems.js Gem 目录（内置八个 + 运行时并入自建）· status-vocabulary.js 步骤状态"]
+FE["<b>浏览器三页</b><br/>工作台 · 数据源 · 使用说明"]
+SH["<b>前后端共读的两份规则</b><br/>intent.js 意图与路由 · gems.js Gem 目录"]
 
-B1 --- SH
-B2 --- SH
-B3 --- SH
+FE --- SH
+SH --> SRV["<b>server.js</b> · Node 24 · 依赖 0<br/>服务端有模型 key 时忽略前端传来的 baseUrl"]
 
-SH --> SRV["<b>server.js · Node 24 · 依赖 0 个 · node_modules 0 个</b><br/>14 条路由 + 静态文件；/api/assess/stream 是 NDJSON 长连接，其余是普通 JSON<br/>服务端配了模型 key 时完全忽略前端传来的 baseUrl —— 防止把密钥送到任意主机"]
+SRV --> MINE["<b>自建 Gem / Skill</b><br/>skills · custom_gems 两张表<br/>斜杠命名空间一处检查，不许重名"]
 
-SRV --> MINE["<b>读者自建的两样 · skills / custom_gems 两张表</b><br/>Skill —— 一段 SOP 加一个斜杠命令；服务端从问题里解析掉<br/>命令，SOP 追加在系统规则之后，标明是读者自己的流程<br/>自建 Gem —— 和内置八个同样四样字段：类型 · 指令 · 绑定来源 · 需包含的事实<br/>必需事实用关键词而非正则；绑定来源必须在注册表里<br/>command-registry.js 一处检查三边，斜杠命名空间不许重名"]
+SRV --> CLS["<b>意图判定</b><br/>先关键字规则；没命中再问一次模型<br/>「描述了交易就进审查」是硬闸，模型改不了"]
 
-MINE --> LLM
+CLS --> KIND{"答复方式"}
+
+KIND --> DET["<b>确定性部分 · 不调模型</b><br/>triage · clearance 五条件 · 路径规划<br/>名单筛查 · 名称比对 · 所有权穿透<br/>直查 / 简报 / 备忘录：0 次模型"]
+
+KIND --> LLM["<b>调模型的四处</b><br/>专业线三次 + 综合一次 = 一次审查最多 4 次<br/>问答 1 次 · 意图判定 1 次<br/>没有可用模型时直接拒答，不存在规则模式"]
+
+DET --> CAP["<b>agent-capabilities.js · 4 条能力</b><br/>纯函数，必带条文出处"]
+CAP -.-> MCP["<b>mcp-server.js</b><br/>stdio JSON-RPC，只读能力"]
+
+DET --> OWN["<b>ownership-graph.js</b><br/>四个来源合一张边表<br/>OFAC 50% 闭包；低于门槛不构成排除"]
+
+%% 同步先声明，所以它排在这一层的最左边。放在右边时 agent-capabilities 到
+%% mcp-server 的虚线要从它底下穿过去，看上去像是同步连出去的。
+SYNC["<b>同步 · 32 个适配器</b><br/>取原文 → 归一 → 一次事务写入并记 SHA-256<br/>数据层唯一的写入方"] --> DB["<b>数据层 · SQLite · WAL</b><br/>11 张表 · 30 个源已入库<br/>编排层只读"]
 MINE --> DB
-SRV --> CLS["<b>意图判定 · 两层</b><br/>先关键字规则（public/intent.js，和输入框预览同一份）<br/>规则没命中、且这句没带新的交易材料时，再问一次模型<br/>「描述了交易就进审查」是硬闸，在调用之前判，模型改不了<br/>调用失败、返回读不懂：一律进审查"]
-CLS --> DET["<b>确定性部分 · 不调模型</b><br/>triage 触发门 · clearance 五条件<br/>analysis-path 规划与解析 · lane-dependencies<br/>grounding 名单筛查 · entity-matching 名称比对<br/>ownership 穿透 · ownership-graph 50% 合计<br/>lookup · briefing<br/>简报 / 备忘录 / 直查：0 次模型"]
-
-SRV --> LLM["<b>调模型的两处，一次审查最多 4 次</b><br/>runAgent —— 三条专业线同时发出，各一次<br/>synthesize —— 三条都回来后，主 Agent 综合一次<br/>4 次调用，但只有两轮等待：三条线不通信，没有先后可言<br/>规则没命中时，前面另有 1 次意图判定调用<br/>llm.js：OpenAI 兼容，参数被拒即降级并记住<br/>剥离 think 块，配平花括号取 JSON<br/>没有可用模型时直接拒答，不存在规则模式"]
-
-DET --> CAP["<b>agent-capabilities.js · 4 条具名能力</b><br/>纯函数，必带条文出处，不碰模型也不碰网络<br/>describeCapabilities() 产出目录，可原样发布为 MCP 工具"]
-
-CAP -.-> MCP["<b>mcp-server.js</b><br/>stdio JSON-RPC · npm run mcp<br/>不暴露任何能跑审查、存案件或碰模型的东西"]
-
-OWN["<b>ownership-graph.js · 一张边表，四个来源</b><br/>OFAC 声明的关系（无比例）· GLEIF 合并母公司（无比例）<br/>SEC 13D/G 与 DEF 14A（有比例）· 用户填报（有比例）<br/>按 OFAC 50% 规则做闭包：跨主体相加，不沿链相乘<br/>算已知合计与待补边，指名说出「哪一个比例能定案」<br/>低于门槛永不构成排除 —— 边集不保证完整"]
-
-DET --> OWN
 OWN --> DB
+CAP --> DB
 
-CAP --> DB["<b>数据层 · 单个 SQLite 文件 · node:sqlite · WAL</b><br/>11 张表：snapshots · records · snapshot_log · sync_status<br/>threads · turns · page_cache · case_signals · sqlite_sequence<br/>skills · custom_gems —— 读者自建的那两张<br/>106,287 条记录 · 30 个源已入库；编排层只读"]
-
-SYNC["<b>同步 · 32 个适配器，30 个可快照</b><br/>手动触发 · 启动时 SYNC_ON_BOOT · 定时 SYNC_INTERVAL_HOURS（串行，默认关闭）<br/>官方来源取原文 → 解析归一 → 一次事务写入并记 SHA-256<br/>验证码源没有适配器，定时任务碰不到；这是数据层唯一的写入方"]
-
-SYNC --> DB
-
-LIVE["<b>运行时实时请求（不入库）</b><br/>引文摘录 · GLEIF 母公司链与另一语言名 · 官方 CSL 匹配器<br/>SEC 13D/G 与 DEF 14A 持股 · cninfo 年报前十大股东<br/>索引已同步，持股按案件即时取"]
-LIVE -.-> DET
+LIVE["<b>运行时实时请求（不入库）</b><br/>引文 · 母公司链 · 持股"] -.-> DET
 
 classDef master fill:#FAEEDA,stroke:#854F0B,stroke-width:1px,color:#412402
 classDef agent  fill:#EEEDFE,stroke:#534AB7,stroke-width:1px,color:#26215C
 classDef plain  fill:#F1EFE8,stroke:#5F5E5A,stroke-width:1px,color:#2C2C2A
 classDef data   fill:#E1F5EE,stroke:#0F6E56,stroke-width:1px,color:#04342C
 
-class SRV master
-class LLM master
-class DET,CAP,CLS agent
-class B1,B2,B3,SH,MCP plain
+class SRV,LLM master
+class CLS,DET,CAP,OWN,MINE agent
+class FE,SH,MCP,KIND plain
 class DB,SYNC,LIVE data
-class OWN agent
-class MINE agent

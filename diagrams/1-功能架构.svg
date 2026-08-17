@@ -36,7 +36,7 @@
 <text class="ts" x="110" y="28">怎么提问</text>
 <g class="c-gray"><rect x="110" y="36" width="336" height="64" rx="4"/><text class="th" x="126" y="58">直接描述交易</text><text class="ts" x="126" y="76">按命中词决定开哪几条线</text><text class="ts" x="126" y="92">词没命中就三条全开</text></g>
 <g class="c-gray"><rect x="467" y="36" width="336" height="64" rx="4"/><text class="th" x="483" y="58">/ 选 Gem 或 Skill</text><text class="ts" x="483" y="76">Gem：提交前标出还缺哪几项，限定依据来源</text><text class="ts" x="483" y="92">Skill：一段流程追加给模型，不绑来源</text></g>
-<g class="c-gray"><rect x="824" y="36" width="336" height="64" rx="4"/><text class="th" x="840" y="58">@ 直查数据源</text><text class="ts" x="840" y="76">翻 106,287 条已入库记录</text><text class="ts" x="840" y="92">绕过主 Agent，不作判断</text></g>
+<g class="c-gray"><rect x="824" y="36" width="336" height="64" rx="4"/><text class="th" x="840" y="58">@ 直查数据源</text><text class="ts" x="840" y="76">翻十万余条已入库记录</text><text class="ts" x="840" y="92">绕过主 Agent，不作判断</text></g>
 
 <path class="arr" d="M278 100 V120 H532 V140" marker-end="url(#a)"/>
 <path class="arr" d="M635 100 V120 H532 V140" marker-end="url(#a)"/>
@@ -46,16 +46,18 @@
 <text class="th" x="130" y="166">主 Agent —— 全系统只有这一个</text>
 <text class="ts" x="130" y="186">进来时判断这是什么问题并决定交给谁做；跑完后回到这里综合。两件事是同一个角色，不是两个 Agent</text>
 <text class="ts" x="130" y="204">只做意图判断、调度与综合 —— 条文结论一律由专业 Agent 给出，它自己不下</text>
-<text class="ts" x="130" y="222">输入框和后台读同一份规则、同一个结论；没有可用模型时直接拒答，不存在退回模板的模式</text></g>
+<text class="ts" x="130" y="222">输入框和后台读同一份关键字规则；规则没命中时由模型判定，以后台为准。没有可用模型时直接拒答，不存在退回模板的模式</text></g>
 
 <path class="arr" d="M211 235 V275" marker-end="url(#a)"/>
 <path class="arr" d="M431 235 V275" marker-end="url(#a)"/>
 <path class="arr" d="M651 235 V275" marker-end="url(#a)"/>
+<path class="arr" d="M871 235 V275" marker-end="url(#a)"/>
 <path class="arr" d="M955 200 H970 V315 H985" marker-end="url(#a)"/>
 
 <g class="c-purple"><rect x="110" y="275" width="202" height="80" rx="4"/><text class="th" x="124" y="297">合规审查</text><text class="tn" x="124" y="315">只开被选中的专业线</text><text class="tn" x="124" y="331">三条线同时发出，各一次</text><text class="tn" x="124" y="347">最多 4 次，两轮等待</text></g>
 <g class="c-gray"><rect x="330" y="275" width="202" height="80" rx="4"/><text class="th" x="344" y="297">监管简报</text><text class="tn" x="344" y="315">读已同步公告排期</text><text class="tn" x="344" y="331">按生效日排序</text><text class="tn" x="344" y="347">0 次模型调用</text></g>
 <g class="c-gray"><rect x="550" y="275" width="202" height="80" rx="4"/><text class="th" x="564" y="297">案件备忘录</text><text class="tn" x="564" y="315">整理本会话结论</text><text class="tn" x="564" y="331">不产生新判断</text><text class="tn" x="564" y="347">0 次模型调用</text></g>
+<g class="c-gray"><rect x="770" y="275" width="202" height="80" rx="4"/><text class="th" x="784" y="297">问答</text><text class="tn" x="784" y="315">追问上一轮，或问规则</text><text class="tn" x="784" y="331">不重开审查</text><text class="tn" x="784" y="347">1 次模型调用</text></g>
 <g class="c-gray"><rect x="985" y="275" width="175" height="80" rx="4"/><text class="th" x="999" y="297">直接查询</text><text class="tn" x="999" y="315">按料号或编码翻库</text><text class="tn" x="999" y="331">出记录，不出结论</text><text class="tn" x="999" y="347">0 次模型调用</text></g>
 
 <path class="arr" d="M211 355 V395" marker-end="url(#a)"/>
@@ -69,7 +71,7 @@
 <text class="ts" x="130" y="524">来源缺失不等于无风险，不会被写成「无命中」</text></g>
 
 <g class="c-teal"><rect x="720" y="395" width="440" height="150" rx="4"/>
-<text class="th" x="738" y="420">数据层 · 37 个官方来源 · 30 个已入库 · 106,287 条</text>
+<text class="th" x="738" y="420">数据层 · 37 个官方来源 · 30 个已入库</text>
 <text class="tn" x="738" y="439">单个 SQLite 文件，编排层只读；按条线分：贸易 16 · 产品 13 · 尽调 8</text>
 <text class="tn" x="738" y="461">美国 16：BIS EAR / CCL / 国别矩阵 · OFAC SDN 与所有权图</text>
 <text class="tn" x="738" y="478">　　　　CSL 综合筛查名单 · UFLPA · DoD 1260H · 联邦公报 · SEC 持股申报</text>

@@ -1,6 +1,6 @@
 <svg width="1220" height="1250" viewBox="0 0 1220 1250" xmlns="http://www.w3.org/2000/svg" role="img">
 <title>Compliance Hub 分层架构</title>
-<desc>两个入口：界面与服务给人用，MCP 给机器用，后者只到共用能力层。中间左右并排：主 Agent 与它的四种产出，以及合规审查内部的三个专业 Agent。底下是数据与来源，再底下是用户记忆与系统进化。</desc>
+<desc>两个入口：界面与服务给人用，MCP 给机器用，后者只到共用能力层。中间左右并排：主 Agent 与它的五种产出，以及合规审查内部的三个专业 Agent。底下是数据与来源，再底下是用户记忆与系统进化。</desc>
 <style>
   svg { background: #ffffff; }
   text { font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", -apple-system, "Segoe UI", sans-serif; }
@@ -35,7 +35,7 @@
 <g class="c-gray"><rect x="40" y="64" width="830" height="116" rx="5"/>
 <text class="layer" x="62" y="94">界面与服务</text>
 <text class="ts" x="200" y="92">工作台 index.html · 数据覆盖 data-sources.html · 使用说明 guide.html</text>
-<text class="ts" x="200" y="112">三份模块前后端共用，同一份规则不许有第二份拷贝：intent.js · gems.js · status-vocabulary.js</text>
+<text class="ts" x="200" y="112">前后端共读两份规则，不许有第二份拷贝：intent.js 意图与路由 · gems.js Gem 目录</text>
 <text class="ts" x="200" y="132">server.js · Node 24 · 第三方依赖 0 个 · 14 条路由 + 静态文件；合规审查走 NDJSON 流式，边跑边出</text>
 <text class="ts" x="200" y="152">服务端配了模型 key 时完全忽略前端传来的 baseUrl —— 防止把密钥送到任意主机</text>
 <text class="ts" x="200" y="172">浏览器直接跑，无构建步骤；没有可用模型时直接拒答</text></g>
@@ -64,17 +64,19 @@
 <text class="tn" x="78" y="291">判断意图：<tspan font-weight="600">先规则，规则没命中再问一次模型</tspan>；综合：1 次模型调用</text>
 <text class="tn" x="78" y="308">进出都是它，不是两个角色；条文结论一律由专业 Agent 给出</text>
 <text class="tn" x="78" y="329">三种进入方式：直接描述交易 · / 选 Gem 或 Skill · @ 直查数据源</text>
-<text class="tn" x="78" y="346">Gem 内置 8 个 + 自建，各自声明必需字段；Skill 只是追加给模型的一段流程</text></g>
+<text class="tn" x="78" y="346">Gem 内置 10 个 + 自建，各自声明必需字段；Skill 只是追加给模型的一段流程</text></g>
 
 <path class="arr" d="M171 362 V386" marker-end="url(#a)"/>
 <path class="arr" d="M403 362 V386" marker-end="url(#a)"/>
 
-<g class="c-gray"><rect x="60" y="386" width="222" height="42" rx="4"/>
-<text class="sub" x="74" y="405">监管简报</text><text class="tn" x="74" y="420">读已同步公告，按生效日排 · 0 次模型</text></g>
-<g class="c-gray"><rect x="60" y="435" width="222" height="42" rx="4"/>
-<text class="sub" x="74" y="454">案件备忘录</text><text class="tn" x="74" y="469">整理本会话已有结论 · 0 次模型</text></g>
-<g class="c-gray"><rect x="60" y="484" width="222" height="42" rx="4"/>
-<text class="sub" x="74" y="503">直接查询 @</text><text class="tn" x="74" y="518">按料号 / 编码 / 名单翻库 · 0 次模型</text></g>
+<g class="c-gray"><rect x="60" y="386" width="222" height="37" rx="4"/>
+<text class="sub" x="74" y="403">监管简报</text><text class="tn" x="74" y="417">读已同步公告，按生效日排 · 0 次模型</text></g>
+<g class="c-gray"><rect x="60" y="427" width="222" height="37" rx="4"/>
+<text class="sub" x="74" y="444">案件备忘录</text><text class="tn" x="74" y="458">整理本会话已有结论 · 0 次模型</text></g>
+<g class="c-gray"><rect x="60" y="468" width="222" height="37" rx="4"/>
+<text class="sub" x="74" y="485">直接查询 @</text><text class="tn" x="74" y="499">按料号 / 编码 / 名单翻库 · 0 次模型</text></g>
+<g class="c-gray"><rect x="60" y="509" width="222" height="37" rx="4"/>
+<text class="sub" x="74" y="526">问答</text><text class="tn" x="74" y="540">追问上一轮，或问规则本身 · 1 次模型</text></g>
 
 <g class="c-purple"><rect x="296" y="386" width="214" height="140" rx="4"/>
 <text class="sub" x="312" y="408">合规审查</text>
@@ -90,7 +92,7 @@
 <g class="c-purple"><rect x="600" y="246" width="560" height="112" rx="4"/>
 <text class="sub" x="616" y="269">② 取材 retrieval ＋ 取证 grounding —— 两件不同的事，取材在前</text>
 <text class="tn" x="616" y="290"><tspan font-weight="600">取材拿法条原文</tspan>：按条线挑官方文档（三条线全开时 14 份），24 小时缓存 + ETag 条件请求</text>
-<text class="tn" x="616" y="307"><tspan font-weight="600">取证拿这笔交易的事实</tspan>：翻已入库的 106,287 条记录，加上用户当次声明</text>
+<text class="tn" x="616" y="307"><tspan font-weight="600">取证拿这笔交易的事实</tspan>：翻已入库的十万余条记录，加上用户当次声明</text>
 <text class="tn" x="616" y="324">　产出：名单命中 · 筛了哪些源 · 哪些没同步 · 名称候选 · 所有权链 · 本次边界</text>
 <text class="tn" x="616" y="346"><tspan font-weight="600">法条原文只发给下面三条线</tspan>；③④ 只看取证结果与用户声明，看不到原文</text></g>
 
@@ -190,7 +192,7 @@
 <text class="ts" x="210" y="910">37 个官方来源：美国 16 · 中国 11 · 其他 10（欧盟 / 英国 / 联合国 / 日本 / 台湾 / GLEIF / 厂商分类）</text>
 <text class="ts" x="210" y="930">32 个适配器（30 个可快照）：手动触发 · 启动时 · 定时；取原文 → 解析归一 → 一次事务写入并记 SHA-256</text>
 <text class="ts" x="210" y="950">3 个有验证码的源没有适配器，明确只人工 —— 不绕验证码，缺了就说缺了</text>
-<text class="ts" x="210" y="970">落到单个 SQLite 文件 · 9 张表 · 106,287 条记录：名单记录 · 原始快照 · 页面缓存 · 案件历史 · 案件信号</text></g>
+<text class="ts" x="210" y="970">落到单个 SQLite 文件 · 11 张表：名单记录 · 原始快照 · 页面缓存 · 案件历史 · 案件信号 · 自建 Gem 与 Skill</text></g>
 
 <path class="arr" d="M300 992 V1024" marker-end="url(#a)"/>
 <path class="arr" d="M880 992 V1024" marker-end="url(#a)"/>
