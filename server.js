@@ -1,3 +1,4 @@
+import { migrationAccess } from "./src/migration-access.js";
 import { createServer } from "node:http";
 import { cpus, totalmem } from "node:os";
 import { readFile, stat } from "node:fs/promises";
@@ -202,6 +203,7 @@ async function serveStatic(pathname, response) {
 
 const server = createServer(async (request, response) => {
   const url = new URL(request.url, `http://${request.headers.host || "localhost"}`);
+  if (!migrationAccess(request, response, url.pathname)) return;
   try {
     if (request.method === "GET" && url.pathname === "/health") {
       // What this box actually is. Asked because "can this deployment host a
